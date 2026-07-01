@@ -1,0 +1,112 @@
+<svg width="1280" height="720" viewBox="0 0 1280 720" fill="none" xmlns="http://www.w3.org/2000/svg" font-family="'Malgun Gothic','Segoe UI',sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1280" y2="720" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0B1220"/>
+      <stop offset="1" stop-color="#10243B"/>
+    </linearGradient>
+    <linearGradient id="zone2" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#12B981"/>
+      <stop offset="1" stop-color="#0EA5A0"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3B82F6"/>
+      <stop offset="1" stop-color="#6366F1"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#12B981" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#12B981" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="6"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1280" height="720" fill="url(#bg)"/>
+  <circle cx="980" cy="240" r="260" fill="url(#glow)"/>
+
+  <!-- Title -->
+  <text x="80" y="92" fill="#FFFFFF" font-size="38" font-weight="700">Galaxy Watch × On-device AI</text>
+  <text x="80" y="138" fill="#12B981" font-size="26" font-weight="600">개인화 Zone 2 러닝 코칭</text>
+
+  <!-- ===== STEP 1 : Runner + Watch (sensing) ===== -->
+  <g transform="translate(150,360)">
+    <circle cx="0" cy="0" r="120" fill="#16263C"/>
+    <circle cx="0" cy="0" r="120" stroke="#1E3A5F" stroke-width="2"/>
+    <!-- simple runner -->
+    <g stroke="#E2E8F0" stroke-width="9" stroke-linecap="round" fill="none">
+      <circle cx="-8" cy="-58" r="16" fill="#E2E8F0" stroke="none"/>
+      <path d="M-8 -40 L 6 0"/>
+      <path d="M6 0 L -22 36"/>
+      <path d="M6 0 L 40 26"/>
+      <path d="M-2 -28 L -38 -6"/>
+      <path d="M-2 -22 L 34 -34"/>
+    </g>
+    <!-- watch on wrist -->
+    <g transform="translate(34,-36)">
+      <rect x="-15" y="-15" width="30" height="30" rx="8" fill="#0EA5A0" stroke="#12B981" stroke-width="2"/>
+      <path d="M-8 0 L -3 0 L -1 -6 L 2 7 L 4 0 L 8 0" stroke="#FFFFFF" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+    <text x="0" y="158" fill="#94A3B8" font-size="20" font-weight="600" text-anchor="middle">① 실시간 센싱</text>
+    <text x="0" y="184" fill="#64748B" font-size="15" text-anchor="middle">심박 · 페이스 · 케이던스</text>
+  </g>
+
+  <!-- HR pulse line flowing right -->
+  <path d="M285 320 H 420 l 14 -34 l 18 70 l 16 -90 l 16 54 H 560"
+        stroke="url(#zone2)" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- ===== STEP 2 : On-device AI / LLM ===== -->
+  <g transform="translate(640,360)">
+    <rect x="-95" y="-95" width="190" height="190" rx="28" fill="#15233A" stroke="url(#accent)" stroke-width="3"/>
+    <!-- chip pins -->
+    <g stroke="#3B82F6" stroke-width="4" stroke-linecap="round">
+      <path d="M-120 -50 H-95 M-120 0 H-95 M-120 50 H-95"/>
+      <path d="M95 -50 H120 M95 0 H120 M95 50 H120"/>
+      <path d="M-50 -120 V-95 M0 -120 V-95 M50 -120 V-95"/>
+      <path d="M-50 95 V120 M0 95 V120 M50 95 V120"/>
+    </g>
+    <!-- brain / AI mark -->
+    <text x="0" y="-12" fill="#FFFFFF" font-size="34" font-weight="800" text-anchor="middle">AI</text>
+    <text x="0" y="22" fill="#93C5FD" font-size="17" font-weight="600" text-anchor="middle">On-device LLM</text>
+    <text x="0" y="158" fill="#94A3B8" font-size="20" font-weight="600" text-anchor="middle">② 학습 · 판정</text>
+    <text x="0" y="184" fill="#64748B" font-size="15" text-anchor="middle">개인 Zone 2 자동 보정</text>
+  </g>
+
+  <!-- arrow AI -> output -->
+  <path d="M760 320 H 880" stroke="#3B82F6" stroke-width="4" fill="none" marker-end="url(#arr)"/>
+  <defs>
+    <marker id="arr" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+      <path d="M0 0 L6 3 L0 6 Z" fill="#3B82F6"/>
+    </marker>
+  </defs>
+
+  <!-- ===== STEP 3 : Zone 2 gauge + voice coaching ===== -->
+  <g transform="translate(1040,330)">
+    <!-- zone gauge (5 arcs) -->
+    <g fill="none" stroke-width="18" stroke-linecap="round">
+      <path d="M-90 30 A100 100 0 0 1 -64 -47" stroke="#334155"/>
+      <path d="M-55 -57 A100 100 0 0 1 8 -100" stroke="#12B981"/>
+      <path d="M20 -98 A100 100 0 0 1 72 -70" stroke="#475569"/>
+      <path d="M80 -62 A100 100 0 0 1 96 -10" stroke="#475569"/>
+    </g>
+    <text x="-24" y="-118" fill="#12B981" font-size="18" font-weight="700" text-anchor="middle">ZONE 2</text>
+    <text x="0" y="0" fill="#FFFFFF" font-size="40" font-weight="800" text-anchor="middle">132</text>
+    <text x="0" y="24" fill="#94A3B8" font-size="14" text-anchor="middle">bpm</text>
+    <text x="0" y="100" fill="#94A3B8" font-size="20" font-weight="600" text-anchor="middle">③ 맞춤 음성 코칭</text>
+  </g>
+
+  <!-- voice coaching bubble -->
+  <g transform="translate(905,560)">
+    <rect x="0" y="0" width="300" height="84" rx="20" fill="url(#zone2)"/>
+    <path d="M40 84 l -16 28 l 40 -28 Z" fill="#0EA5A0"/>
+    <text x="150" y="36" fill="#06281F" font-size="17" font-weight="700" text-anchor="middle">"오르막이에요, 페이스를</text>
+    <text x="150" y="62" fill="#06281F" font-size="17" font-weight="700" text-anchor="middle">살짝 늦춰 Zone 2 유지!"</text>
+  </g>
+  <!-- voice waves -->
+  <g transform="translate(862,602)" stroke="#12B981" stroke-width="4" stroke-linecap="round">
+    <path d="M0 -14 V14"/><path d="M-12 -22 V22"/><path d="M-24 -10 V10"/>
+  </g>
+
+  <!-- bottom caption -->
+  <text x="640" y="690" fill="#64748B" font-size="16" text-anchor="middle">개인별 HR–Pace · Cardiac Drift 학습 → 상황 맥락 반영 음성 코칭</text>
+</svg>
