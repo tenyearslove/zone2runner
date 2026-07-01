@@ -1,5 +1,7 @@
 # zone2runner — Claude Code Harness
 
+> **작업 이어가기**: 진행 상황/설계 결정/다음 할 일은 `HANDOFF.md`에 있다. 새 환경에서 clone 후엔 `HANDOFF.md`를 먼저 읽고 이어간다.
+
 ## 프로젝트 개요
 Android + Galaxy Watch 기반 Zone 2 운동 코칭 앱.
 사용자의 심박수를 실시간으로 모니터링하고, Zone 2 유지 여부를 판단해 피드백을 제공한다.
