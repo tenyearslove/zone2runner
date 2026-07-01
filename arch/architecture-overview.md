@@ -19,8 +19,13 @@ Galaxy Watch가 심박을 실시간 수집해 폰에 보내면, 폰이 개인화
 | DP0 | Watch-Phone Hybrid 구조 (Watch=수집, Phone=AI) | `arch/adr-001-watch-phone-architecture.md` |
 | **DP1** | 개인화 Zone 2 판정 = 규칙 baseline + Bayesian 개인화 (개인화가 핵심) | `arch/adr-003-zone2-classification-approach.md` |
 | **DP2** | LLM 코칭 = 규칙이 방향 결정 + LLM이 표현 + 출력 가드 | `arch/adr-002-ondevice-llm-coaching.md` |
+| **DP3** | 개인화 경계 추정 = 공식 prior + 온라인 Bayesian 적응 | `arch/adr-004-personalization-model-approach.md` |
+| **DP4** | Zone 2 판정기 = 다변량 MLP 분류기 (다신호 비선형 정확성) | `arch/adr-005-zone2-classifier-nn.md` |
 
-두 개의 AI 역량으로 압축된다: (1) **개인화된 Zone 2 경계 추정**, (2) **LLM 상황 코칭**. 판정과 개인화는 별개가 아니라 하나이고, 코칭의 방향은 규칙이 보장한다.
+AI 역량: (1) **다변량 MLP Zone 2 판정기**(학습 산출물), (2) **Bayesian 개인화 경계 추정**, (3) **LLM 상황 코칭**. 판정기(MLP)는 규칙 가드/폴백 위에서 동작하고 Bayesian 개인 경계로 입력이 정규화된다.
+
+- **DP3 개인화**는 신경망이 아니라 경량 Bayesian 적응추정(라벨 불필요, float 산술). 상세 `spec/spec-004`.
+- **DP4 판정기**는 학습된 다변량 MLP. 단일 HR 임계값(선형)으로는 오르막/Drift/노이즈 다신호 상황의 정확성(QA1/85%)을 못 채우기 때문에 도입. 라벨은 시뮬레이터, 콜드스타트는 규칙 폴백, 강건성은 노이즈 증강+가드. 상세 `spec/spec-006`.
 
 ---
 
@@ -35,8 +40,9 @@ HR 1~2초 수집   ──Wearable──▶       │
                                     이상값 가드 (40~220 bpm)         ← QA2
                                     │
                                     Zone 2 판정
-                                    ├ 규칙 baseline (콜드스타트)      ← C02
-                                    └ 개인화 경계 (Bayesian)  ◀─┐    ← QA3 (핵심)
+                                    ├ MLP 분류기 (다신호 판정)       ← QA1/85%
+                                    ├ 규칙 baseline/가드 (폴백)      ← C02/QA2
+                                    └ 개인화 경계 (Bayesian)  ◀─┐    ← QA3 (입력 정규화)
                                     │                          │
                                     ▼                    세션 누적 갱신
                                     코칭 의도 결정 (규칙)          ← QA1 방향
@@ -56,7 +62,7 @@ zone2runner/
 ├── wear/      Galaxy Watch 앱 — HR 수집 + 전송 (최소 companion)
 ├── app/       Galaxy S26 Ultra 앱 — 판정/개인화/코칭/UI
 │   ├─ hr           HrSource 추상화, Data Layer 수신, 이상값 가드   (spec-003)
-│   ├─ zone2        규칙 baseline + 개인화 경계 추정 + 판정         (adr-003, spec-004)
+│   ├─ zone2        MLP 판정기 + 규칙 가드 + 개인화 경계 추정       (adr-003/005, spec-004/006)
 │   ├─ coaching     의도 결정 + LLM 표현 + 출력 가드 + TTS          (adr-002, spec-005)
 │   └─ session      세션 기록/리포트, 개인화 데이터 누적            (FR6)
 └── shared/    공유 도메인 모델 (HR 샘플, Zone 상태, 프로필)
@@ -70,10 +76,10 @@ zone2runner/
 
 | QA | 달성 지점 |
 |:---:|------|
-| QA1 기능정확성 | 코칭 방향을 규칙이 결정 + 출력 가드 (adr-002) |
-| QA2 강건성 | 이상값 가드 40~220 (spec-003), 개인화 급변 방지 (spec-004) |
-| QA3 적응성 | Bayesian 개인화 경계 (adr-003, spec-004) |
-| QA4 효율성 | 프롬프트 최소화 + 템플릿 폴백 (adr-002, spec-005) |
+| QA1 기능정확성 | 판정: 다변량 MLP (adr-005) / 코칭 방향: 규칙+가드 (adr-002) |
+| QA2 강건성 | 이상값 가드 40~220 (spec-003), 노이즈 증강 MLP (spec-006), 개인화 급변 방지 (spec-004) |
+| QA3 적응성 | Bayesian 개인화 경계 (adr-004, spec-004) → MLP 입력 정규화 |
+| QA4 효율성 | 프롬프트 최소화 (adr-002) + 경량 MLP 추론 (spec-006) |
 | QA5 테스트가능성 | HrSource 추상화로 Mock 교체 (spec-003) |
 
 ---
