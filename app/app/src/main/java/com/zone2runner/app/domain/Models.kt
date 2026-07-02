@@ -28,8 +28,12 @@ enum class ZoneJudgment(val label: String, val color: Int) {
     IN("Zone 2 유지", Color.parseColor("#30D158")),
     ABOVE("초과", Color.parseColor("#FF9F0A"));
 
+    val index: Int get() = when (this) { BELOW -> 0; IN -> 1; ABOVE -> 2 }
+
     companion object {
         fun fromIndex(i: Int) = when (i) { 0 -> BELOW; 2 -> ABOVE; else -> IN }
+        /** -1 이면 판정 없음(null). */
+        fun fromIndexOrNull(i: Int): ZoneJudgment? = if (i < 0) null else fromIndex(i)
     }
 }
 
@@ -53,6 +57,14 @@ data class LiveState(
 /** 경로 점(존 색으로 폴리라인 채색). */
 data class TrackPoint(val lat: Double, val lon: Double, val judgment: ZoneJudgment?)
 
+/** 리포트 시계열 한 점(HR/페이스 차트, 심혈관 드리프트 분석용, 다운샘플). */
+data class SeriesPoint(
+    val tSec: Int,
+    val hr: Int,
+    val paceMinKm: Double,
+    val judgmentIndex: Int, // -1=판정없음, 0=미달, 1=유지, 2=초과
+)
+
 /** 세션 종료 리포트. */
 data class RunReport(
     val durationSec: Int,
@@ -69,7 +81,32 @@ data class RunReport(
     val uEstEndFrac: Double,
     val restingHr: Int,
     val maxHrProfile: Int,
+    val series: List<SeriesPoint> = emptyList(),
+    val id: String = "",                   // 저장 식별자(에폭ms 기반), SessionStore가 채움
+    val startedAtEpochMs: Long = 0L,       // 세션 시작 시각
+    val usedModel: Boolean = true,         // MLP 사용(true) vs 규칙 폴백(false)
+    val coachSource: String = "rule",      // 코칭 표현 소스(rule/llm)
+    val sourceMode: String = "sim",        // 입력 소스(sim/live)
 ) {
     val zone2Pct: Int
         get() = if (durationSec > 0) (inSec * 100 / durationSec) else 0
+
+    /**
+     * 심혈관 드리프트(Cardiac Drift) 추정: 세션 전반부 대비 후반부의 HR/페이스 비율 상승률(%).
+     * 유산소(Zone2) 지속의 대표 지표. 같은 페이스에서 HR이 오르면 드리프트 증가.
+     */
+    val cardiacDriftPct: Double
+        get() {
+            val s = series.filter { it.hr > 0 && it.paceMinKm in 0.1..30.0 }
+            if (s.size < 8) return 0.0
+            val half = s.size / 2
+            fun ratio(sub: List<SeriesPoint>): Double {
+                var acc = 0.0; var c = 0
+                for (p in sub) { acc += p.hr / p.paceMinKm; c++ }
+                return if (c > 0) acc / c else 0.0
+            }
+            val r1 = ratio(s.subList(0, half))
+            val r2 = ratio(s.subList(half, s.size))
+            return if (r1 > 0) (r2 / r1 - 1.0) * 100.0 else 0.0
+        }
 }

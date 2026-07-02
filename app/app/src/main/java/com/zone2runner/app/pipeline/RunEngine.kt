@@ -6,6 +6,7 @@ import com.zone2runner.app.domain.LiveState
 import com.zone2runner.app.domain.Profile
 import com.zone2runner.app.domain.RunReport
 import com.zone2runner.app.domain.Sample
+import com.zone2runner.app.domain.SeriesPoint
 import com.zone2runner.app.domain.TrackPoint
 import com.zone2runner.app.domain.ZoneJudgment
 
@@ -36,7 +37,9 @@ class RunEngine(
     private var inSec = 0
     private var aboveSec = 0
     private val track = ArrayList<TrackPoint>()
+    private val series = ArrayList<SeriesPoint>()
     private val coachingLines = ArrayList<String>()
+    var coachSource: String = "rule"
 
     // 코칭/개인화 타이밍
     private var lastCoachSec = -999
@@ -77,8 +80,11 @@ class RunEngine(
             ZoneJudgment.IN -> inSec++
             null -> {}
         }
-        // 경로(3초마다 다운샘플)
-        if (s.tSec % 3 == 0) track += TrackPoint(s.lat, s.lon, judgment)
+        // 경로 + 시계열(3초마다 다운샘플)
+        if (s.tSec % 3 == 0) {
+            track += TrackPoint(s.lat, s.lon, judgment)
+            series += SeriesPoint(s.tSec, clean, s.paceMinKm, judgment?.index ?: -1)
+        }
 
         // 개인화 갱신(5분마다)
         if (s.tSec - lastPersonalizeSec >= 300 && obsCandidates.isNotEmpty()) {
@@ -127,6 +133,9 @@ class RunEngine(
         uEstEndFrac = personalization.boundary().uFrac,
         restingHr = profile.restingHr,
         maxHrProfile = profile.maxHr,
+        series = series.toList(),
+        usedModel = usingModel,
+        coachSource = coachSource,
     )
 
     private fun median(a: List<Double>): Double {
