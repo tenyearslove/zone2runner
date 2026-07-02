@@ -20,12 +20,14 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.zone2runner.app.coaching.LlmCoach
+import com.zone2runner.app.data.MockConfigStore
 import com.zone2runner.app.data.ProfileStore
 import com.zone2runner.app.data.SessionStore
 import com.zone2runner.app.domain.LiveState
 import com.zone2runner.app.pipeline.RunEngine
 import com.zone2runner.app.pipeline.Zone2Classifier
 import com.zone2runner.app.sensor.LiveRunSource
+import com.zone2runner.app.sensor.MockRunSource
 import com.zone2runner.app.sensor.RunSource
 import com.zone2runner.app.sensor.SimulatedRunSource
 import com.zone2runner.app.sensor.WatchHrProvider
@@ -86,9 +88,11 @@ class RunActivity : AppCompatActivity() {
         val model = if (classifier != null)
             "MLP 로드됨 (개인화 acc ${fmt(m?.get("mlp_acc"))}, QA1 ${fmt(m?.get("qa1_coaching_direction"))})"
         else "MLP 미로드 → 규칙 폴백"
-        subtitle.text = if (mode == MODE_LIVE)
-            "$model · 실센서(GPS+워치HR) 모드 — 실기기 필요"
-        else "$model · 시뮬레이션 재생"
+        subtitle.text = when (mode) {
+            MODE_LIVE -> "$model · 실센서(GPS+워치HR) — 실기기 필요"
+            MODE_MOCK -> "$model · 가짜 라이브(테스트) — 워치 없이 실시간 합성"
+            else -> "$model · 시뮬레이션 재생"
+        }
     }
 
     private fun buildUi(): LinearLayout {
@@ -151,6 +155,7 @@ class RunActivity : AppCompatActivity() {
         finished -> "리포트 보기"
         running -> "정지 · 저장"
         mode == MODE_LIVE -> "실센서 러닝 시작"
+        mode == MODE_MOCK -> "가짜 라이브 러닝 시작"
         else -> "파이프라인 시뮬레이션 시작"
     }
 
@@ -177,10 +182,11 @@ class RunActivity : AppCompatActivity() {
         startedAt = System.currentTimeMillis()
         frame = 0
 
-        val src: RunSource = if (mode == MODE_LIVE)
-            LiveRunSource(this, WatchHrProvider(this))
-        else
-            SimulatedRunSource(durationMin = 30, seed = System.nanoTime())
+        val src: RunSource = when (mode) {
+            MODE_LIVE -> LiveRunSource(this, WatchHrProvider(this))
+            MODE_MOCK -> MockRunSource(MockConfigStore.load(this), seed = System.nanoTime())
+            else -> SimulatedRunSource(durationMin = 30, seed = System.nanoTime())
+        }
         source = src
         val renderEvery = if (src.realtime) 1 else 5
 
@@ -282,6 +288,7 @@ class RunActivity : AppCompatActivity() {
         const val EXTRA_MODE = "mode"
         const val MODE_SIM = "sim"
         const val MODE_LIVE = "live"
+        const val MODE_MOCK = "mock"
         private val C_BG = Color.parseColor("#0E1116")
         private val C_TEXT = Color.parseColor("#E8EAED")
         private val C_MUTED = Color.parseColor("#9AA0A6")

@@ -35,6 +35,7 @@ Sample ─ OutlierGuard ─ FeatureExtractor(7특징) ─ Zone2Classifier(MLP) |
 - `SimulatedRunSource`: 물리 시뮬레이터 가속 재생. 실기기 없이 전 파이프라인 구동(기본).
 - `LiveRunSource`: 실 GPS(FusedLocation) + `HrProvider`.
   - `WatchHrProvider`: 워치가 Data Layer(`/hr`)로 보낸 HR 수신. 워치 측은 `wear/`의 `HrForwarder`.
+- `MockRunSource`: 워치 없이 실시간 합성(테스트/시연). 심박/속도 범위를 지정(MockConfigActivity, 프리셋)하면 GPS가 이동하고 페이스가 계산됨. QA 테스트 가능성 지원.
 
 ## 모듈 구조
 
