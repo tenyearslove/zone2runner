@@ -35,17 +35,26 @@
 ## 체크리스트 (진행 표시: [ ]=미착수 [~]=진행중 [x]=완료)
 - [x] 기존 코드 전체 파악
 - [x] 진행상황 문서(이 파일) 작성
-- [~] app/ baseline 빌드 검증 (백그라운드 실행중)
-- [ ] adr-010 (지도: osmdroid/OSM 채택 근거), adr-011 (온디바이스 추론: 순수 Kotlin vs TFLite)
-- [ ] 도메인 확장: RunReport에 HR/페이스 시계열 추가, 세션 저장 모델
-- [ ] SessionStore(JSON 영속화) + HomeActivity + HistoryActivity
-- [ ] ProfileActivity (spec-009: 나이/안정HR/최대HR, 저장)
-- [ ] RunActivity: 시뮬/실센서 모드 선택, 라이브 대시보드 유지
-- [ ] 실센서 소스: LocationSource(FusedLocation 실 GPS), HrSource(시뮬 + 워치 DataLayer 대비 훅)
-- [ ] 리포트 강화: HR/페이스 시계열 차트(TimeSeriesChartView) + 유산소 존 분석 섹션
-- [ ] LlmCoach (ML Kit GenAI Gemini Nano) + 폴백, 코칭 소스 토글
-- [ ] wear: Data Layer로 HR 폰 송신(HrForwarder), 개인 HRmax 반영 훅
-- [ ] 최종 빌드 검증 + HANDOFF 갱신 + 커밋 정리
+- [x] app/ baseline 빌드 검증 (성공, 27s)
+- [x] adr-010 (지도 osmdroid) + adr-011 (순수 Kotlin 추론)
+- [x] 도메인 확장(SeriesPoint 시계열 + cardiacDrift) + RunEngine 기록
+- [x] SessionStore(JSON) + HomeActivity + HistoryActivity + ProfileActivity
+- [x] RunActivity: 시뮬/실센서 모드, 세션 저장, 라이브 대시보드
+- [x] 실센서 소스: RunSource/LiveRunSource(실 GPS) + HrProvider/WatchHrProvider(/hr)
+- [x] 리포트 강화: TimeSeriesChartView + ZoneTimelineView + 유산소 분석
+- [x] LlmCoach(Gemini Nano) + RuleCoach 폴백 + 코칭 소스 표기 + TTS 음성
+- [x] wear: HrForwarder로 HR 폰 송신(Data Layer /hr)
+- [x] 단위 테스트 8건(파이프라인 + 실 모델 추론) 통과
+- [x] spec-011 + app/README + HANDOFF 갱신
+- [x] 최종 빌드 검증(app assembleDebug+test, wear assembleDebug 모두 성공) + 커밋
+
+## 완료 요약 (아침 인수)
+- **상태**: 폰 앱이 전체 플로우(홈→러닝→리포트→기록/프로필)로 동작. 컴파일+단위테스트까지 검증(실기기 실행은 안 함).
+- **검증 방식**: 각 페이즈마다 gradle 빌드, 마지막에 단위 테스트로 실 MLP 추론까지 확인. UI 실행은 못 함.
+- **회사에서 이어갈 때**: 실기기(S26+Watch8)에 `adb install` 후 (1) 시뮬레이션 러닝으로 전체 UI/차트/리포트 시각 확인 → 레이아웃 튜닝, (2) 실센서 러닝으로 GPS 페이스/경사 + 워치 HR 수신 확인, (3) Gemini Nano 코칭 실기기 동작 확인. spec-011의 AC 체크.
+- **알려진 미완**: 실기기 시각 튜닝 필요 가능. 실센서 모드는 워치 앱(wear/) 동시 실행 필요. Gemini Nano 미다운로드 기기에선 규칙 코칭 폴백(정상).
 
 ## 진행 로그(시간순, 최신 위)
-- 00:05 시작. 코드 파악 완료, baseline 빌드 착수, 이 문서 작성.
+- 전 페이즈 완료. spec-011/README/HANDOFF 작성, 최종 빌드+테스트 green, 문서 커밋.
+- Phase A~F + 단위테스트 완료(도메인/영속화/화면/차트/실센서/LLM/wear/TTS). 8건 통과.
+- 00:05 시작. 코드 파악 완료, baseline 빌드 성공, 이 문서 작성.
