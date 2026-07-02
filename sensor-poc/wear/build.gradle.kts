@@ -30,4 +30,5 @@ dependencies {
     implementation("androidx.health:health-services-client:1.1.0-alpha05")
     implementation("com.google.guava:guava:33.3.1-android") // ListenableFuture (health-services async 반환형)
     implementation("com.google.android.gms:play-services-wearable:19.0.0")
+    implementation("androidx.wear:wear:1.3.0") // BoxInsetLayout: 원형 화면 안전영역 배치
 }

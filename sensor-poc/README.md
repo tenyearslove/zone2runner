@@ -28,13 +28,21 @@ adb install -r phone/build/outputs/apk/debug/phone-debug.apk
    - 또는 Android Studio에서 sensor-poc 열고 `wear` 구성으로 워치에 Run
 - 폰→워치 자동 설치는 개발 빌드엔 없음(adr-008). 프로덕션은 Play가 자동 설치.
 
+## UI (디버깅용 실시간 GUI)
+- **워치**: 원형 화면 안전영역(BoxInsetLayout)에 배치. 위 = 최종 HR 큰 숫자, 아래 = 상태 3줄(센서/폰/전송)을 실시간 in-place 갱신. `측정 시작`/`측정 중지` 토글.
+  - 센서 상태: `예열중`(ACQUIRING, 손목 밀착 필요) → `정상`(AVAILABLE). **첫 데이터까지 수 초 걸리는 게 정상** — 예열 표시가 뜨면 그대로 기다린다(다시 누르지 말 것, 콜백 중복 등록 방지됨).
+- **폰**: 카드형 GUI(연결/HR/위치)를 실시간 in-place 갱신 + 하단 이벤트 로그(최근 40줄, 최신이 아래로 자동 스크롤). 5초 무수신 시 HR 카드가 `끊김?`(빨강) 표시.
+
 ## 검증 (실기기)
-1. 폰 앱 실행 → 위치 권한 허용 (야외에서 GPS/고도 잘 잡힘)
-2. 워치 앱 실행 → **측정 시작** → BODY_SENSORS 권한 허용
+1. 폰 앱 실행 → 위치 권한 허용 (야외에서 GPS/고도 잘 잡힘). `워치 연결` 카드가 `연결됨`인지 확인.
+2. 워치 앱 실행 → **측정 시작** → BODY_SENSORS 권한 허용. 센서 상태가 `예열중`→`정상`으로 바뀔 때까지 기다림.
 3. 확인:
-   - 워치 화면: `HR: N bpm` 이 1~2초 주기로 갱신되는지
-   - 폰 화면: `HR ← 워치: N bpm` 수신 + `위치/고도/경사` 표시
+   - 워치 화면: HR 숫자가 1~2초 주기로 갱신되고 `전송  N회 · Ns 전`이 오르는지
+   - 폰 화면: HR 카드에 `N bpm` + `방금 수신`, `위치/고도/경사` 카드 갱신
 4. 잠깐 걸으면 경사(slope) 값이 갱신됨 (오르막/내리막)
+
+> **빌드 JDK**: AGP 8.7 + wear 모듈은 JDK 17+ 필요. 이 PC는 Android Studio JBR(Java 21) 사용:
+> `$env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"` 후 gradle 실행.
 
 ## 확인 포인트 (adr-008 PoC 목표)
 - [ ] 실시간 HR이 워치에서 실제로 나오는가 (Health Services)
