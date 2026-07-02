@@ -32,7 +32,14 @@ class HomeActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(buildUi())
+        // 첫 실행 온보딩: 프로필 미설정이면 프로세스당 1회 프로필 화면 안내
+        if (!ProfileStore.isConfigured(this) && !onboardingShown) {
+            onboardingShown = true
+            startActivity(Intent(this, ProfileActivity::class.java))
+        }
     }
+
+    private companion object { var onboardingShown = false }
 
     override fun onResume() { super.onResume(); setContentView(buildUi()) } // 프로필/기록 변경 반영
 
