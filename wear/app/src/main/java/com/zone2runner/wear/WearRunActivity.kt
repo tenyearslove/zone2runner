@@ -47,6 +47,7 @@ class WearRunActivity : ComponentActivity() {
 
     private val measureClient by lazy { HealthServices.getClient(this).measureClient }
     private lateinit var fused: FusedLocationProviderClient
+    private val hrForwarder by lazy { HrForwarder(this) }
     private val ui = Handler(Looper.getMainLooper())
 
     // 뷰
@@ -75,6 +76,7 @@ class WearRunActivity : ComponentActivity() {
         override fun onDataReceived(data: DataPointContainer) {
             val v = data.getData(DataType.HEART_RATE_BPM).lastOrNull()?.value ?: return
             hr = v.toInt()
+            if (state == State.RUNNING) hrForwarder.send(hr) // 폰으로 실시간 HR 전달(Data Layer)
             ui.post { render() }
         }
     }
@@ -275,6 +277,7 @@ class WearRunActivity : ComponentActivity() {
         state = State.RUNNING
         accumulatedMs = 0L; runStart = SystemClock.elapsedRealtime()
         distanceM = 0.0; lastLoc = null; hr = -1
+        hrForwarder.start()
         startSensors()
         rebuildButtons(); render()
     }

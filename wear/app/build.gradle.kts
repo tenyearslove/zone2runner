@@ -30,5 +30,6 @@ dependencies {
     implementation("androidx.health:health-services-client:1.1.0-alpha05")
     implementation("com.google.guava:guava:33.3.1-android") // ListenableFuture
     implementation("com.google.android.gms:play-services-location:21.3.0") // GPS pace/speed/distance
+    implementation("com.google.android.gms:play-services-wearable:19.0.0") // Data Layer로 폰에 HR 송신
     implementation("androidx.wear:wear:1.3.0") // BoxInsetLayout
 }
