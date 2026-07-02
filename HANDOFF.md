@@ -62,8 +62,13 @@
 - 모델 ~4GB. 제약: 포그라운드 전용(ErrorCode 30) → 러닝 중 화면off 시나리오는 후속 확인.
 - 잔여: 오프라인(비행기모드), Snapdragon Ultra 재확인. → Plan A(Gemini Nano) 채택.
 
+**센서 PoC 빌드 완료 (2026-07-02, adr-008)**: `sensor-poc/` (wear+phone 2모듈).
+- wear: Health Services 실시간 HR → Data Layer(MessageClient /hr) 전송. phone: HR 수신 + 위치/고도/경사(FusedLocation). 날씨 제외.
+- 빌드 성공(phone 3.9MB, wear 12.3MB). **실기기 검증 대기**: 폰 adb 설치 + 워치 무선디버깅 설치 후 HR 수신/위치·경사 확인(README).
+- 배포 답: 개발=워치 직접설치(자동X), 프로덕션=Play 자동설치. 페어링=기존 사용.
+
 **다음 후보 (서두르지 말 것)**:
-- 오프라인/Ultra 재확인, 포그라운드 제약(화면off) 대응 검토.
+- sensor-poc 실기기 검증(HR 수신/위치/경사), 오프라인/Ultra 재확인, 포그라운드 제약(화면off) 대응 검토.
 - 임계 추출 개선(개인화 완성) 또는 한계로 문서화.
 - 보고서(구현·검증/결론) 마무리, app/ 스캐폴딩.
 
