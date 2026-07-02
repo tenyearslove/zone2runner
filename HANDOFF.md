@@ -4,7 +4,7 @@
 
 > **새 세션에서 이어가는 법**: Claude에게 "HANDOFF.md 읽고 이어가자"라고 하면 된다.
 
-최종 갱신: 2026-07-03 (폰 앱 `app/` 야간 빌드 — 전체 플로우 동작)
+최종 갱신: 2026-07-03 (야간 빌드 + 코칭 점검/문서 환류 + 학습 가이드)
 
 ---
 
@@ -41,10 +41,11 @@
 
 ## 4. 문서 현황
 
-- spec-001~009, adr-001~008, arch/architecture-overview, report-001~002. ml/(코드+EXPERIMENT_LOG/COMPARISON/AI_EXPLAINED), llm-verify/, sensor-poc/.
+- spec-001~011, adr-001~011, arch/architecture-overview, report-001~002. ml/(코드+EXPERIMENT_LOG/COMPARISON/AI_EXPLAINED), llm-verify/, sensor-poc/, app/, wear/.
   - 신규(2026-07-02): spec-007(기록/리포트 FR6), spec-008(안전 C03), spec-009(프로필/RHR FR1), ml/AI_EXPLAINED.md(쉬운 AI 설명, 개인용).
-- **읽기 진입점**: arch/architecture-overview.md → adr-005(DP4 NN 근거) → spec-006(MLP) → spec-004(개인화). AI 이해는 ml/AI_EXPLAINED.md.
-- spec-001에 요구사항→설계 추적표 있음.
+  - 신규(2026-07-03): spec-010(워치 대시보드), spec-011(폰 앱), adr-009(백그라운드)/010(지도)/011(추론 런타임), **STUDY_GUIDE.md(루트 — 프로젝트 전체+AI를 바닥부터 배우는 개인 학습서, 실습/Q&A 포함)**.
+- **읽기 진입점**: arch/architecture-overview.md(구현 현황 반영됨) → adr-005(DP4 NN 근거) → spec-006(MLP) → spec-004(개인화). AI/구현 이해는 **STUDY_GUIDE.md**(넓고 깊게) 또는 ml/AI_EXPLAINED.md(개념 요약).
+- spec-001에 요구사항→설계→구현 추적표, spec-002 부록에 QA 검증 현황 스냅샷 있음.
 
 ## 5. 진행 현황 / 스코프 (2026-07-02)
 
@@ -80,7 +81,10 @@
 - 독립 Gradle 프로젝트(appId `com.zone2runner.wear`), JDK 17+(JBR) 빌드. `wear/README.md`.
 - 통합 미완: 폰 Data Layer 전송(spec-003), 개인 HRmax/RHR(spec-009), 세션 저장/요약(spec-007 FR6).
 
+**코칭 점검 (2026-07-03)**: 프로젝트 목적(설계 능력 입증) 대비 궤도 정상 — 설계 체계 완결(요구→QA/ASR→DP/ADR 11→spec 11→추적표), NN 교육요건 충족, 설계가 구현으로 실증(1단계 PoC 완료, QA1/2/5 달성 + QA3 메커니즘 실증). 발견한 갭 "검증 결과의 문서 환류 누락"은 해소함: architecture-overview 현행화(모듈뷰 구현 반영, QA 매핑에 검증 현황 열, 개발단계 완료 표시), spec-002 부록(QA 검증 스냅샷), spec-001 추적표(구현 열 + adr-009~011/spec-010~011). **남은 코칭 지적: spec-003~011 전부 Draft — 구현으로 검증된 것부터 사용자 검토/승인 필요(승인은 사용자 몫)**.
+
 **남은 공백/다음 (서두르지 말 것)**:
+- **Draft spec 검토/승인**(우선: spec-006/011 — 구현 검증 완료분), report-002에 야간 빌드 성과 반영.
 - **wear/ 실기기 검증 + 시각 튜닝**(원형 레이아웃 잘림/폰트/게이지), 예열 문구, 손목 내림 대응.
 - wear ↔ phone Data Layer 통합(현재 wear는 표시 전용, 전송 미구현).
 
