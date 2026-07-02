@@ -14,7 +14,9 @@ import androidx.appcompat.app.AppCompatActivity
 import com.zone2runner.app.domain.RunReport
 import com.zone2runner.app.domain.ZoneJudgment
 import com.zone2runner.app.ui.ReportHolder
+import com.zone2runner.app.ui.TimeSeriesChartView
 import com.zone2runner.app.ui.ZoneBarView
+import com.zone2runner.app.ui.ZoneTimelineView
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
@@ -74,6 +76,9 @@ class ReportActivity : AppCompatActivity() {
             })
         }))
 
+        // 유산소 분석: HR 추이(목표 밴드) + 존 타임라인 + 드리프트/평가
+        addAerobicAnalysis(col, r)
+
         // 개인화 결과
         col.addView(card("개인화 (Bayesian 경계 추정)", TextView(this).apply {
             text = "Zone2 상한 추정: ${(r.uEstStartFrac * 100).toInt()}% → ${(r.uEstEndFrac * 100).toInt()}% HRR\n" +
@@ -103,6 +108,73 @@ class ReportActivity : AppCompatActivity() {
         col.addView(card("코칭 로그 (규칙 방향 + 표현)", coachBox))
 
         return ScrollView(this).apply { setBackgroundColor(C_BG); addView(col) }
+    }
+
+    /** 유산소 존 분석 섹션: HR 추이(Zone2 밴드 음영) + 페이스 추이 + 존 타임라인 + 드리프트/평가. */
+    private fun addAerobicAnalysis(col: LinearLayout, r: RunReport) {
+        val hrPoints = r.series.filter { it.hr > 0 }
+        if (hrPoints.size < 4) return
+
+        // Zone2 목표 밴드(bpm): HRR 대비 (uEstEnd-0.10) ~ uEstEnd
+        val hrr = (r.maxHrProfile - r.restingHr).coerceAtLeast(1)
+        val hi = (r.restingHr + r.uEstEndFrac * hrr).toFloat()
+        val lo = (r.restingHr + (r.uEstEndFrac - 0.10) * hrr).toFloat()
+
+        // HR 추이
+        val hrChart = TimeSeriesChartView(this).also {
+            it.set(hrPoints.map { p -> p.hr.toFloat() }, lo, hi, ZoneJudgment.IN.color, "bpm")
+        }
+        col.addView(card("심박 추이 (초록 밴드 = Zone 2 목표)", LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            addView(hrChart, LinearLayout.LayoutParams(MATCH_PARENT, dp(150)))
+        }))
+
+        // 페이스 추이
+        val paceP = r.series.filter { it.paceMinKm in 0.1..30.0 }
+        if (paceP.size >= 4) {
+            val paceChart = TimeSeriesChartView(this).also {
+                it.set(paceP.map { p -> p.paceMinKm.toFloat() }, Float.NaN, Float.NaN, C_BLUE, "min/km")
+            }
+            col.addView(card("페이스 추이 (min/km, 낮을수록 빠름)", LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                addView(paceChart, LinearLayout.LayoutParams(MATCH_PARENT, dp(120)))
+            }))
+        }
+
+        // 존 타임라인
+        val timeline = ZoneTimelineView(this).also { it.set(r.series.map { p -> p.judgmentIndex }) }
+        col.addView(card("존 타임라인 (시간 순 판정)", LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            addView(timeline, LinearLayout.LayoutParams(MATCH_PARENT, dp(22)))
+            addView(TextView(this@ReportActivity).apply {
+                text = "파랑 미달 · 초록 Zone 2 · 주황 초과"
+                textSize = 11f; setTextColor(C_MUTED); setPadding(0, dp(6), 0, 0)
+            })
+        }))
+
+        // 유산소 평가
+        col.addView(card("유산소 분석", TextView(this).apply {
+            text = aerobicAssessment(r); textSize = 13f; setTextColor(C_TEXT)
+        }))
+    }
+
+    private fun aerobicAssessment(r: RunReport): String {
+        val z2 = r.zone2Pct
+        val drift = r.cardiacDriftPct
+        val base = when {
+            z2 >= 65 -> "유산소(Zone 2) 비중이 높은 좋은 세션이에요. 지방 연소/기초 지구력 향상에 이상적입니다."
+            z2 >= 40 -> "유산소 구간과 그 밖 구간이 섞였어요. 워밍업/오르막에서 존을 벗어난 것으로 보입니다."
+            r.aboveSec > r.belowSec -> "강도가 목표보다 높았어요. 다음엔 더 천천히 시작해 Zone 2를 오래 유지해 보세요."
+            else -> "강도가 목표보다 낮았어요. 조금 더 밀어 Zone 2까지 심박을 올려보세요."
+        }
+        val driftNote = when {
+            drift >= 8 -> "\n후반 심혈관 드리프트가 %.1f%%로 큰 편이에요. 피로/탈수/더위 신호일 수 있습니다.".format(drift)
+            drift >= 4 -> "\n후반부 심박이 %.1f%% 완만히 상승했어요(장시간 러닝의 정상 범위).".format(drift)
+            drift >= 0 -> "\n심박이 %.1f%%로 안정적으로 유지됐어요. 좋은 유산소 컨디션입니다.".format(drift)
+            else -> "\n후반부 심박이 오히려 안정됐어요(워밍업 후 안정화)."
+        }
+        val z2min = r.inSec / 60
+        return "$base\nZone 2 유지 ${z2min}분(${z2}%), 평균 심박 ${r.avgHr} bpm.$driftNote"
     }
 
     private fun drawTrack(mv: MapView, r: RunReport) {
@@ -169,5 +241,6 @@ class ReportActivity : AppCompatActivity() {
         val C_STROKE = Color.parseColor("#2A2F3A")
         val C_TEXT = Color.parseColor("#E8EAED")
         val C_MUTED = Color.parseColor("#9AA0A6")
+        val C_BLUE = Color.parseColor("#5AC8FA")
     }
 }
