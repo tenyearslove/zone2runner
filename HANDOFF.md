@@ -83,6 +83,12 @@
 **남은 공백/다음 (서두르지 말 것)**:
 - **wear/ 실기기 검증 + 시각 튜닝**(원형 레이아웃 잘림/폰트/게이지), 예열 문구, 손목 내림 대응.
 - wear ↔ phone Data Layer 통합(현재 wear는 표시 전용, 전송 미구현).
+
+**백그라운드 서비스화 (2026-07-02, adr-009)**: 실기기 피드백 — 워치 백그라운드 시 전송 끊김/재실행해도 안 됨, 폰도 포그라운드에서만 수신.
+- 원인: MeasureClient는 포그라운드 전용. → **워치: ExerciseClient(RUNNING) + 포그라운드 서비스(`HrService`)**로 전환(화면off 지속). **폰: `WearableListenerService`(`HrReceiverService`)**로 백그라운드 수신 + 알림 증빙.
+- sensor-poc에 먼저 반영(검증용). 구조: 워치 `HrBus`(서비스↔UI 공유상태), 폰 `HrStore`. 빌드 성공. **실기기 재검증 대기**(화면off/앱백그라운드에서 카운트/알림 지속되는지).
+- 남는 제약: LLM 코칭은 폰 포그라운드 전용(adr-007) → 화면off 코칭 후속 과제(짧은 포그라운드 승격/규칙 TTS 폴백/화면유지 모드 중 택).
+- 실 wear/ 앱도 ExerciseClient 기반으로 전환 예정(거리/페이스/속도 네이티브 → spec-010 GPS 손계산 대체).
 - sensor-poc 실기기 검증(HR 수신/위치/경사), 오프라인/Ultra 재확인, 화면off 시나리오(LLM 포그라운드+워치 HR) 대응.
 - 개인 임계 추출 개선(개인화 완성) 또는 한계로 확정.
 - 최종 Architecture 뷰 상세(Module/C&C/Deployment appendix), app/ 통합 스캐폴딩.
