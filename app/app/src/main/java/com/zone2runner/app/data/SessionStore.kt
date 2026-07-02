@@ -51,7 +51,7 @@ object SessionStore {
 
     // ---- 직렬화 ----
 
-    private fun toJson(r: RunReport): JSONObject {
+    internal fun toJson(r: RunReport): JSONObject {
         val o = JSONObject()
         o.put("id", r.id)
         o.put("startedAtEpochMs", r.startedAtEpochMs)
@@ -94,7 +94,7 @@ object SessionStore {
         usedModel = o.optBoolean("usedModel", true),
     )
 
-    private fun fromJson(o: JSONObject): RunReport {
+    internal fun fromJson(o: JSONObject): RunReport {
         val coaching = o.optJSONArray("coachingLines")?.let { a ->
             List(a.length()) { a.getString(it) }
         } ?: emptyList()
