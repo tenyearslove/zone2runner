@@ -1,7 +1,7 @@
 # ADR-007: On-device LLM 실현 방식 및 실기기 검증
 
 - **날짜**: 2026-07-02
-- **상태**: Proposed (S26 Ultra 실기기 검증 후 확정)
+- **상태**: Accepted (Exynos S26 실기기 검증 통과. 오프라인/Ultra 재확인은 잔여)
 - **결정자**: 성시원
 - **보고서 매핑**: 설계 - Architectural Decision (DP2 후속)
 
@@ -33,11 +33,11 @@ DP2(adr-002)는 코칭 문장 생성을 On-device LLM으로 하되 "구체 런�
 
 ## 결정 (검증 조건부)
 
-- **1순위 = A (Gemini Nano via ML Kit Prompt API)**. S26 Ultra 지원 목록에 있고 오프라인/프라이버시/저지연에 부합. 단 **아래 실기기 검증 통과가 조건**.
-- **폴백 = B (자체 탑재, Gemma+LiteRT-LM)**. A가 availability/지연에서 실패 시. 오프라인 유지.
+- **확정 = A (Gemini Nano via ML Kit Prompt API)**. Exynos S26 실기기 검증 통과(AVAILABLE, warm ~2초, 방향 정확). 오프라인/프라이버시/저지연 부합.
+- **폴백 = B (자체 탑재, Gemma+LiteRT-LM)**. 잔여 확인(오프라인/Ultra)에서 문제 시. 오프라인 유지.
 - **최후 = C (서버)**. A/B 모두 불가 시. QA(오프라인/프라이버시)와 상충하므로 지양.
 
-상태 Proposed — 검증 결과로 확정.
+잔여 확인: 오프라인(비행기모드) 동작, 사용자 Snapdragon Ultra 재확인. (문제 없으면 A 그대로)
 
 ## 실기기 검증 계획 (S26 Ultra)
 
@@ -53,11 +53,22 @@ DP2(adr-002)는 코칭 문장 생성을 On-device LLM으로 하되 "구체 런�
 4. **통과 기준**: 오프라인 동작 + 웜 지연이 TTS 포함 5초 예산 내(대략 LLM ≤ 2~3초) + 자유 프롬프트 사용 가능.
    - 통과 → **A 확정**. 실패(가용성/지연) → **B 검증**(Gemma 소형 모델 LiteRT-LM 탑재 후 동일 측정) → 그래도 불가 시 **C**.
 
-## 실기기 관찰 (2026-07-02, 진행 중)
+## 실기기 검증 결과 (2026-07-02, Exynos S26 SM-S942B, Android 16/SDK36)
 
-- 정규 **S26 (Exynos s5e9965, Android 16/SDK36)** 에서 llm-verify 앱 실행 → FeatureStatus가 **DOWNLOADABLE**(UNAVAILABLE 아님) → **Exynos에서도 Gemini Nano 지원 신호**. 모델 다운로드 진행 확인.
-- 최초 1회 모델 다운로드가 수백 MB/수 분 소요 → **최초 실행 다운로드 UX 필요**(spec-005에 반영).
-- 남은 확인: 다운로드 완료 후 warm 생성 지연(≤2~3초), 오프라인 동작, 그리고 사용자 Ultra(Snapdragon)에서의 재확인.
+llm-verify 앱(ML Kit Prompt API `com.google.mlkit:genai-prompt:1.0.0-beta2`)으로 측정.
+
+| 항목 | 결과 | 판정 |
+|------|------|:---:|
+| FeatureStatus | AVAILABLE (다운로드 후) | O |
+| warm 생성 지연 | ~2.0초 (2023/2000ms) | O (≤2~3초) |
+| cold 생성 지연 | ~3.1~3.3초 (최초 1회) | 참고 |
+| 코칭 품질/방향 | "페이스 낮추라" 자연스러운 감속 안내 = 방향 정확 | O |
+| 오프라인(비행기모드) | 미확인 | 잔여 |
+| Snapdragon Ultra | 미확인(Exynos 통과로 가능성 매우 높음) | 잔여 |
+
+- **Exynos S26에서도 Gemini Nano 동작 확인** → 지원 목록(Snapdragon/Tensor/Dimensity)에 명시 안 된 Exynos도 됨.
+- 최초 1회 모델 다운로드가 수백 MB/수 분 소요, 앱을 나가면 백그라운드 다운로드로 전환되어 진행률 추적 끊김 → **다운로드 UX는 포그라운드 관찰 권장**(spec-005 반영).
+- 세션 시작 시 warmup 후 반복 호출은 warm(~2초)로 동작 → QA4 5초 예산 내(LLM 2초 + TTS 여유 3초).
 
 ## 결과 / 영향
 
