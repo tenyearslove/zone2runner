@@ -12,7 +12,10 @@ import kotlinx.coroutines.withTimeout
  * adr-007 검증: S26에서 Gemini Nano(ML Kit Prompt API) 가용성/지연/오프라인 확인.
  * 다운로드 진행률(받은/전체 MB, %) 표시 + 이어받기/백그라운드(DOWNLOADING) 대응.
  */
-class GeminiNanoProbe(private val log: (String) -> Unit) {
+class GeminiNanoProbe(
+    private val log: (String) -> Unit,
+    private val speak: (String) -> Unit = {},
+) {
 
     private var totalBytes = 0L
 
@@ -95,9 +98,16 @@ class GeminiNanoProbe(private val log: (String) -> Unit) {
 
             t = SystemClock.elapsedRealtime()
             val warm = withTimeout(60_000) { model.generateContent(prompt) }
-            log("warm ${SystemClock.elapsedRealtime() - t}ms → ${warm.candidates.firstOrNull()?.text}")
+            val warmText = warm.candidates.firstOrNull()?.text
+            log("warm ${SystemClock.elapsedRealtime() - t}ms → $warmText")
 
-            log("=== 통과 기준: 오프라인(비행기모드)에서도 동작 + 웜 지연 ≤ 2~3초. ===")
+            // end-to-end: 생성된 코칭 문장을 실제 음성으로 출력 (TTS)
+            if (warmText != null) {
+                log("→ TTS로 음성 출력 시도")
+                speak(warmText)
+            }
+
+            log("=== 통과 기준: 오프라인(비행기모드)에서도 동작 + 웜 지연 ≤ 2~3초 + 음성 출력 정상. ===")
             log("비행기 모드로 전환 후 다시 실행해 오프라인 동작을 확인하세요.")
         } catch (e: Throwable) {
             log("probe 예외: ${e.javaClass.simpleName}: ${e.message}")
