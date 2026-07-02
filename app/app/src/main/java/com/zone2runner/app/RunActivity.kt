@@ -18,7 +18,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
-import com.zone2runner.app.coaching.RuleCoach
+import com.zone2runner.app.coaching.LlmCoach
 import com.zone2runner.app.data.ProfileStore
 import com.zone2runner.app.data.SessionStore
 import com.zone2runner.app.domain.LiveState
@@ -57,6 +57,7 @@ class RunActivity : AppCompatActivity() {
     private var classifier: Zone2Classifier? = null
     private var source: RunSource? = null
     private var engine: RunEngine? = null
+    private var coach: LlmCoach? = null
     private var line: Polyline? = null
     private var running = false
     private var finished = false
@@ -162,7 +163,9 @@ class RunActivity : AppCompatActivity() {
         map.overlays.add(line)
 
         val profile = ProfileStore.load(this)
-        val eng = RunEngine(profile, classifier, RuleCoach()).also { it.coachSource = "rule" }
+        val c = LlmCoach(this) // 미가용 기기에선 내부적으로 RuleCoach 폴백
+        coach = c
+        val eng = RunEngine(profile, classifier, c)
         engine = eng
         startedAt = System.currentTimeMillis()
         frame = 0
@@ -196,7 +199,10 @@ class RunActivity : AppCompatActivity() {
         running = false
         source?.stop()
         val eng = engine ?: return
-        val report = eng.report().copy(startedAtEpochMs = startedAt, sourceMode = mode)
+        val report = eng.report().copy(
+            startedAtEpochMs = startedAt, sourceMode = mode,
+            coachSource = coach?.sessionSource() ?: "rule",
+        )
         if (report.durationSec < 5) { // 데이터 너무 적으면 저장 생략
             Toast.makeText(this, "기록이 너무 짧아 저장하지 않았어요", Toast.LENGTH_SHORT).show()
             finished = false; startBtn.text = primaryLabel(); return

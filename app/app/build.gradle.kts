@@ -29,6 +29,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.6")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
     implementation("org.osmdroid:osmdroid-android:6.1.18") // 지도(OSM, API 키 불필요 — adr-010)
-    implementation("com.google.android.gms:play-services-location:21.3.0") // 실기기 GPS(후속)
-    implementation("com.google.android.gms:play-services-wearable:19.0.0") // 워치 DataLayer HrSource(후속)
+    implementation("com.google.android.gms:play-services-location:21.3.0") // 실기기 GPS
+    implementation("com.google.android.gms:play-services-wearable:19.0.0") // 워치 DataLayer HR 수신
+    implementation("com.google.mlkit:genai-prompt:1.0.0-beta2") // 온디바이스 LLM 코칭(Gemini Nano, adr-007)
 }

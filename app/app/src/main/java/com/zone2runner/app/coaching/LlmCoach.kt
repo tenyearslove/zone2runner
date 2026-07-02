@@ -1,0 +1,80 @@
+package com.zone2runner.app.coaching
+
+import android.content.Context
+import com.google.mlkit.genai.common.FeatureStatus
+import com.google.mlkit.genai.prompt.Generation
+import kotlinx.coroutines.withTimeout
+
+/**
+ * 온디바이스 LLM 코치 (Gemini Nano, ML Kit Prompt API — adr-007에서 실기기 검증).
+ * adr-002 원칙: 코칭 "방향(의도)"은 규칙이 결정하고, LLM은 그 의도를 자연스러운 문장으로 "표현"만 한다.
+ * 출력 가드(길이/문장/따옴표 제거)를 거치고, 실패/미가용 시 RuleCoach로 폴백한다.
+ *
+ * 제약(adr-007): 포그라운드 전용, 모델 미다운로드/미지원 기기에서는 미가용 -> 규칙 폴백.
+ * 여기서는 안전하게 모델 자동 다운로드를 트리거하지 않는다(AVAILABLE일 때만 사용).
+ */
+class LlmCoach(
+    context: Context,
+    private val fallback: RuleCoach = RuleCoach(),
+) : Coach {
+    override val name = "llm"
+
+    private val client by lazy { Generation.getClient() }
+    private var checked = false
+    private var available = false
+    private var usedLlmOnce = false
+
+    /** 이번 세션에서 실제로 LLM 문장을 한 번이라도 냈는지(리포트 coachSource 표기용). */
+    fun sessionSource(): String = if (usedLlmOnce) "llm" else "rule"
+
+    private suspend fun ensureReady(): Boolean {
+        if (checked) return available
+        checked = true
+        available = try {
+            val status = client.checkStatus()
+            if (status == FeatureStatus.AVAILABLE) {
+                runCatching { withTimeout(30_000) { client.warmup() } }
+                true
+            } else false // DOWNLOADABLE/DOWNLOADING/UNAVAILABLE -> 폴백(다운로드 트리거 안 함)
+        } catch (e: Throwable) {
+            false
+        }
+        return available
+    }
+
+    override suspend fun say(ctx: CoachContext): String {
+        if (!ensureReady()) return fallback.say(ctx)
+        return try {
+            val res = withTimeout(6_000) { client.generateContent(buildPrompt(ctx)) }
+            val text = res.candidates.firstOrNull()?.text
+            val guarded = guard(text)
+            if (guarded != null) { usedLlmOnce = true; guarded } else fallback.say(ctx)
+        } catch (e: Throwable) {
+            fallback.say(ctx) // 포그라운드 제약(ErrorCode 30)/타임아웃 등 -> 규칙 폴백
+        }
+    }
+
+    /** 규칙이 정한 방향을 프롬프트에 명시(방향 잠금) + 지형 맥락. LLM은 표현만 바꾼다. */
+    private fun buildPrompt(ctx: CoachContext): String {
+        val direction = when (intentOf(ctx.judgment)) {
+            CoachIntent.SPEED_UP -> "페이스를 살짝 올려 심박을 Zone 2로 높이도록"
+            CoachIntent.SLOW_DOWN -> "페이스를 조금 낮춰 심박을 Zone 2로 내리도록"
+            CoachIntent.MAINTAIN -> "지금 페이스를 그대로 유지하도록"
+        }
+        val terrain = when {
+            ctx.slopePct > 2 -> "지형은 오르막"
+            ctx.slopePct < -2 -> "지형은 내리막"
+            else -> "지형은 평지"
+        }
+        return "당신은 러닝 코치입니다. $terrain 입니다. 러너에게 ${direction} " +
+            "격려하는 한국어 한 문장으로 자연스럽게 안내하세요. 25자 내외, 따옴표와 이모지 없이."
+    }
+
+    /** 출력 가드(adr-002): 공백 정리/따옴표 제거/첫 문장/길이 제한. 비면 null(폴백). */
+    private fun guard(raw: String?): String? {
+        val t = raw?.trim()?.replace(Regex("\\s+"), " ")?.trim('"', '\'', '“', '”') ?: return null
+        if (t.isBlank()) return null
+        val firstSentence = t.split(Regex("(?<=[.!?。])")).firstOrNull()?.trim()?.ifBlank { t } ?: t
+        return if (firstSentence.length > 80) firstSentence.take(79) + "…" else firstSentence
+    }
+}

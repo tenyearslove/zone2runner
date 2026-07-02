@@ -48,7 +48,10 @@ class ReportActivity : AppCompatActivity() {
             text = "러닝 리포트"; textSize = 24f; setTypeface(typeface, Typeface.BOLD); setTextColor(C_TEXT)
         })
         col.addView(TextView(this).apply {
-            text = "시뮬레이션 세션 · MLP 판정 + 개인화 + 코칭 파이프라인 결과"
+            val src = if (r.sourceMode == "live") "실센서(GPS+워치HR)" else "시뮬레이션"
+            val judge = if (r.usedModel) "MLP 판정" else "규칙 판정"
+            val coach = if (r.coachSource == "llm") "Gemini Nano 코칭" else "규칙 코칭"
+            text = "$src · $judge + 개인화 + $coach"
             textSize = 11f; setTextColor(C_MUTED); setPadding(0, dp(2), 0, dp(12))
         })
 
