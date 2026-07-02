@@ -53,9 +53,16 @@ DP2(adr-002)는 코칭 문장 생성을 On-device LLM으로 하되 "구체 런�
 4. **통과 기준**: 오프라인 동작 + 웜 지연이 TTS 포함 5초 예산 내(대략 LLM ≤ 2~3초) + 자유 프롬프트 사용 가능.
    - 통과 → **A 확정**. 실패(가용성/지연) → **B 검증**(Gemma 소형 모델 LiteRT-LM 탑재 후 동일 측정) → 그래도 불가 시 **C**.
 
+## 실기기 관찰 (2026-07-02, 진행 중)
+
+- 정규 **S26 (Exynos s5e9965, Android 16/SDK36)** 에서 llm-verify 앱 실행 → FeatureStatus가 **DOWNLOADABLE**(UNAVAILABLE 아님) → **Exynos에서도 Gemini Nano 지원 신호**. 모델 다운로드 진행 확인.
+- 최초 1회 모델 다운로드가 수백 MB/수 분 소요 → **최초 실행 다운로드 UX 필요**(spec-005에 반영).
+- 남은 확인: 다운로드 완료 후 warm 생성 지연(≤2~3초), 오프라인 동작, 그리고 사용자 Ultra(Snapdragon)에서의 재확인.
+
 ## 결과 / 영향
 
 - spec-005(LLM 코칭)의 "LLM 런타임"이 본 검증으로 확정된다.
+- 최초 실행 모델 다운로드 진행 화면 + 다운로드 중 규칙/템플릿 코칭 graceful degradation 필요(spec-005 §모델 준비).
 - PoC 단계에서는 LLM 호출을 인터페이스(`CoachingTextGenerator`)로 추상화해, A/B/C를 교체 가능하게 둔다(Mock 포함). → QA5 및 리스크 격리.
 - 검증은 최소 테스트 앱(Kotlin, ML Kit GenAI Prompt API)으로 수행. 코드는 별도 작성.
 
