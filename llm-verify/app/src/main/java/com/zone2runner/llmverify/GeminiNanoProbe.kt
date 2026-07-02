@@ -57,23 +57,28 @@ class GeminiNanoProbe(private val log: (String) -> Unit) {
                 return
             }
 
-            // 준비될 때까지: download()로 진행률 관찰 + status 재확인 (이어받기 대응)
+            // 준비될 때까지 대기
+            // - DOWNLOADABLE(최초): download()로 진행률(%) 표시
+            // - DOWNLOADING(이어받기/백그라운드): API가 진행률을 안 주므로 상태만 폴링
             var waitedSec = 0
             while (status != FeatureStatus.AVAILABLE) {
-                try {
-                    model.download().collect { ds -> logDownload(ds) }
-                } catch (e: Throwable) {
-                    log("download flow 종료: ${e.javaClass.simpleName}: ${e.message}")
-                }
-                status = model.checkStatus()
-                log("재확인 status = ${name(status)}")
-                if (status != FeatureStatus.AVAILABLE) {
-                    delay(3000); waitedSec += 3
-                    if (waitedSec >= 300) {
-                        log("5분 경과: 아직 준비 안 됨. Wi-Fi/포그라운드 유지 후 다시 시도하세요.")
+                if (status == FeatureStatus.DOWNLOADABLE) {
+                    log("다운로드 시작(진행률 표시)...")
+                    try {
+                        model.download().collect { ds -> logDownload(ds) }
+                    } catch (e: Throwable) {
+                        log("download flow 종료: ${e.javaClass.simpleName}: ${e.message}")
+                    }
+                } else { // DOWNLOADING
+                    log("백그라운드 다운로드 중 — 진행률 미제공(이어받기). 완료 대기 ${waitedSec}s (Wi-Fi/포그라운드 유지)")
+                    delay(5000); waitedSec += 5
+                    if (waitedSec >= 600) {
+                        log("10분 경과: 여전히 DOWNLOADING. 다운로드가 지연/정체일 수 있음. 나중에 다시 시도.")
                         return
                     }
                 }
+                status = model.checkStatus()
+                log("status = ${name(status)}")
             }
 
             log("모델 준비 완료(AVAILABLE). warmup...")
