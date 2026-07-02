@@ -4,7 +4,7 @@
 
 > **새 세션에서 이어가는 법**: Claude에게 "HANDOFF.md 읽고 이어가자"라고 하면 된다.
 
-최종 갱신: 2026-07-02
+최종 갱신: 2026-07-02 (워치 실앱 `wear/` 착수)
 
 ---
 
@@ -71,7 +71,18 @@
 
 **자율 세션 완료분 (2026-07-02)**: ml 데이터 3배 확대 재학습(150러너/40만샘플, 규칙0.544→MLP0.802→개인화0.828, QA1 0.996/QA2 1.0), AI_EXPLAINED 작성, 공백 spec 3종(007/008/009), report-002 최신화, spec-001 추적표. 전체 점검(gap analysis) 완료.
 
+**워치 실앱 착수 (2026-07-02, spec-010)**: `wear/` — sensor-poc와 분리된 실제 Zone2 Runner 워치 앱.
+- sensor-poc의 실시간 GUI 성과를 productize. 원형 화면 **한 화면(무스크롤)** 러닝 대시보드.
+- 표시: 경과시간 / HR 큰숫자+존색상 / 존라벨 / 페이스·거리·속도 3열 / 베젤 존게이지(커스텀 `ZoneGaugeView`, 5구간 아크+마커) / 상태별 버튼.
+- 세션 상태기계: 대기→진행→일시정지→재개→종료(시작/일시정지/재개/종료 버튼). HR=Health Services, 페이스/속도/거리=play-services-location(GPS).
+- 존은 **경량 %HRmax**(Z2 60~70% 목표, HRmax=190 상수) — 정밀/개인화 판정은 폰 MLP(adr-005). 워치는 즉시 피드백용.
+- 빌드 성공(app-debug 12.3MB). **실기기 미검증**: 원형 화면 폰트/여백/게이지 두께 시각 튜닝 필요(코드값은 추정치).
+- 독립 Gradle 프로젝트(appId `com.zone2runner.wear`), JDK 17+(JBR) 빌드. `wear/README.md`.
+- 통합 미완: 폰 Data Layer 전송(spec-003), 개인 HRmax/RHR(spec-009), 세션 저장/요약(spec-007 FR6).
+
 **남은 공백/다음 (서두르지 말 것)**:
+- **wear/ 실기기 검증 + 시각 튜닝**(원형 레이아웃 잘림/폰트/게이지), 예열 문구, 손목 내림 대응.
+- wear ↔ phone Data Layer 통합(현재 wear는 표시 전용, 전송 미구현).
 - sensor-poc 실기기 검증(HR 수신/위치/경사), 오프라인/Ultra 재확인, 화면off 시나리오(LLM 포그라운드+워치 HR) 대응.
 - 개인 임계 추출 개선(개인화 완성) 또는 한계로 확정.
 - 최종 Architecture 뷰 상세(Module/C&C/Deployment appendix), app/ 통합 스캐폴딩.
