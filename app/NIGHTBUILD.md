@@ -44,7 +44,9 @@
 - [x] 리포트 강화: TimeSeriesChartView + ZoneTimelineView + 유산소 분석
 - [x] LlmCoach(Gemini Nano) + RuleCoach 폴백 + 코칭 소스 표기 + TTS 음성
 - [x] wear: HrForwarder로 HR 폰 송신(Data Layer /hr)
-- [x] 단위 테스트 8건(파이프라인 + 실 모델 추론) 통과
+- [x] 단위 테스트 13건(파이프라인/실모델 추론/RunEngine 통합/직렬화 왕복/mock) 통과
+- [x] 가짜 라이브(Mock) 모드: 워치 없이 실시간 합성 입력(심박/속도 범위 지정) — QA 테스트 가능성
+- [x] 어댑티브 런처 아이콘 + 첫 실행 프로필 온보딩
 - [x] spec-011 + app/README + HANDOFF 갱신
 - [x] 최종 빌드 검증(app assembleDebug+test, wear assembleDebug 모두 성공) + 커밋
 
@@ -55,6 +57,7 @@
 - **알려진 미완**: 실기기 시각 튜닝 필요 가능. 실센서 모드는 워치 앱(wear/) 동시 실행 필요. Gemini Nano 미다운로드 기기에선 규칙 코칭 폴백(정상).
 
 ## 진행 로그(시간순, 최신 위)
+- 사용자 요청 반영: 가짜 라이브(Mock) 모드 추가(워치 없이 실시간 합성, 심박/속도 범위 지정). 단위 테스트 13건. 문서 정합성 점검 후 HANDOFF/spec/README 갱신.
 - 전 페이즈 완료. spec-011/README/HANDOFF 작성, 최종 빌드+테스트 green, 문서 커밋.
-- Phase A~F + 단위테스트 완료(도메인/영속화/화면/차트/실센서/LLM/wear/TTS). 8건 통과.
+- Phase A~F + 단위테스트 완료(도메인/영속화/화면/차트/실센서/LLM/wear/TTS). 아이콘/온보딩.
 - 00:05 시작. 코드 파악 완료, baseline 빌드 성공, 이 문서 작성.

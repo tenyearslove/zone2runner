@@ -94,8 +94,8 @@
 - 최종 Architecture 뷰 상세(Module/C&C/Deployment appendix), app/ 통합 스캐폴딩.
 - spec-007/008/009는 Draft → 검토/승인 필요.
 
-**★ 폰 앱 `app/` 야간 빌드 (2026-07-03, spec-011)**: 시뮬레이터 데모였던 `app/`를 사용자가 전체 플로우를 써볼 수 있는 실제 러닝 코칭 앱으로 확장. **app 빌드 성공 + 단위 테스트 8건 통과, wear 빌드 성공**. (문서 `app/README.md`, `app/NIGHTBUILD.md`, `spec/spec-011`, `arch/adr-010`(지도)/`adr-011`(순수 Kotlin 추론))
-- 화면 5개: Home(진입/프로필요약/최근세션) → Run(라이브 지도+HR+존+코칭) → Report(요약/시계열차트/유산소분석/경로지도) / History(기록 목록·삭제) / Profile(spec-009 나이·RHR·maxHR).
+**★ 폰 앱 `app/` 야간 빌드 (2026-07-03, spec-011)**: 시뮬레이터 데모였던 `app/`를 사용자가 전체 플로우를 써볼 수 있는 실제 러닝 코칭 앱으로 확장. **app 빌드 성공 + 단위 테스트 13건 통과, wear 빌드 성공**. (문서 `app/README.md`, `app/NIGHTBUILD.md`, `spec/spec-011`, `arch/adr-010`(지도)/`adr-011`(순수 Kotlin 추론))
+- 화면 6개: Home(진입/프로필요약/최근세션) → Run(라이브 지도+HR+존+코칭) → Report(요약/시계열차트/유산소분석/경로지도) / History(기록 목록,삭제) / Profile(spec-009 나이/RHR/maxHR) / MockConfig(가짜 라이브 설정).
 - AI 파이프라인 온디바이스 적용: OutlierGuard → FeatureExtractor(7특징) → **Zone2Classifier(순수 Kotlin MLP 순전파, TFLite 없음)** | 규칙폴백 → **Personalization(Bayesian)** → **Coach(규칙 방향 + Gemini Nano 표현, 실패 시 규칙 폴백)** → 세션 누적. `assets/zone2_mlp.json`은 `ml/export_model.py` 산출.
 - **실 모델 추론 검증(단위 테스트)**: export 모델 로드 → high→ABOVE/low→BELOW, mlp_acc=0.826/QA1=0.996/QA2=1.0 재현(학습 모델과 동일 방향). 순전파 이식이 정확함을 실증.
 - 입력 소스 추상화(`RunSource`): `SimulatedRunSource`(가속 재생, 기본) / `LiveRunSource`(실 GPS FusedLocation + `WatchHrProvider`가 워치 Data Layer `/hr` 수신) / `MockRunSource`(**가짜 라이브** — 워치 없이 실시간 합성, 심박/속도 범위 지정, QA 테스트 가능성/시연). 워치 측 `wear/HrForwarder`가 HR 송신(sensor-poc 프로토콜).

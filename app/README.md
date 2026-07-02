@@ -6,7 +6,7 @@
 
 - JDK 17+ 필요(Android Studio JBR 권장). SDK 경로는 `local.properties`의 `sdk.dir`.
 - 빌드: `JAVA_HOME=<JBR> ./gradlew.bat assembleDebug` → `app/build/outputs/apk/debug/app-debug.apk`
-- 단위 테스트: `./gradlew.bat testDebugUnitTest` (파이프라인 + 실 모델 추론 8건)
+- 단위 테스트: `./gradlew.bat testDebugUnitTest` (파이프라인/실모델/통합/직렬화/mock 13건)
 - 설치: `adb install -r app/build/outputs/apk/debug/app-debug.apk`
 
 ## 전체 플로우
@@ -41,19 +41,19 @@ Sample ─ OutlierGuard ─ FeatureExtractor(7특징) ─ Zone2Classifier(MLP) |
 
 ```
 app/app/src/main/java/com/zone2runner/app/
-├── HomeActivity / RunActivity / ReportActivity / HistoryActivity / ProfileActivity
+├── HomeActivity / RunActivity / ReportActivity / HistoryActivity / ProfileActivity / MockConfigActivity
 ├── domain/Models.kt          # Profile, Sample, ZoneJudgment, LiveState, RunReport, SeriesPoint
 ├── pipeline/                 # OutlierGuard, FeatureExtractor, Zone2Classifier, Personalization, RunEngine
 ├── coaching/                 # Coach(Rule), LlmCoach
-├── sensor/                   # RunSource, SimulatedRunSource, LiveRunSource, HrProvider, WatchHrProvider
+├── sensor/                   # RunSource, SimulatedRunSource, LiveRunSource, MockRunSource, HrProvider, WatchHrProvider
 ├── sim/RunSimulator.kt       # 물리 기반 러닝 시뮬레이터(ml/simulator.py 포팅)
-├── data/                     # ProfileStore(Prefs), SessionStore(JSON)
+├── data/                     # ProfileStore, SessionStore(JSON), MockConfigStore
 └── ui/                       # Ui(팔레트/헬퍼), Charts(시계열/타임라인), ZoneBarView, ReportHolder
 ```
 
 ## 검증 현황
 
-- 빌드: `assembleDebug` 성공(app-debug ≈ 5MB). 단위 테스트 8건 통과.
+- 빌드: `assembleDebug` 성공(app-debug ≈ 8.4MB, ML Kit GenAI/GMS 포함). 단위 테스트 13건 통과.
 - 실 모델 추론 검증: export된 `zone2_mlp.json` 로드 → high→ABOVE, low→BELOW, mlp_acc=0.826/QA1=0.996/QA2=1.0 재현.
 - **실기기 미검증**: 실센서 모드 GPS/워치 HR end-to-end, Gemini Nano 실기기 코칭, 화면 레이아웃 시각 튜닝.
 
