@@ -1,0 +1,136 @@
+package com.zone2runner.app.pipeline
+
+import com.zone2runner.app.coaching.Coach
+import com.zone2runner.app.coaching.CoachContext
+import com.zone2runner.app.domain.LiveState
+import com.zone2runner.app.domain.Profile
+import com.zone2runner.app.domain.RunReport
+import com.zone2runner.app.domain.Sample
+import com.zone2runner.app.domain.TrackPoint
+import com.zone2runner.app.domain.ZoneJudgment
+
+/**
+ * 전체 러닝 파이프라인 오케스트레이터 (arch/architecture-overview 데이터 흐름).
+ *   샘플 → 이상치 가드 → 특징추출 → (MLP 판정 | 규칙 폴백) → 개인화 갱신 → 코칭 → 세션 누적
+ * 시뮬레이터/실기기 공통. onSample을 1Hz로 호출.
+ */
+class RunEngine(
+    private val profile: Profile,
+    private val classifier: Zone2Classifier?, // null이면 규칙 폴백
+    private val coach: Coach,
+) {
+    private val extractor = FeatureExtractor()
+    private val personalization = Personalization(profile)
+    private val uEstStart = personalization.boundary().uFrac
+
+    private var lastValidHr: Int? = null
+    private var judgment: ZoneJudgment? = null
+
+    // 누적
+    private var elapsed = 0
+    private var distanceM = 0.0
+    private var hrSum = 0L
+    private var hrCount = 0
+    private var maxHr = 0
+    private var belowSec = 0
+    private var inSec = 0
+    private var aboveSec = 0
+    private val track = ArrayList<TrackPoint>()
+    private val coachingLines = ArrayList<String>()
+
+    // 코칭/개인화 타이밍
+    private var lastCoachSec = -999
+    private var lastJudgmentForCoach: ZoneJudgment? = null
+    private var lastPersonalizeSec = 0
+    private val obsCandidates = ArrayList<Double>() // decoupling 임계 부근 지속HR(bpm)
+
+    val usingModel: Boolean get() = classifier != null
+
+    /** 1Hz 샘플 처리. 필요 시 coach.say 호출(suspend). LiveState 반환. */
+    suspend fun onSample(s: Sample): LiveState {
+        elapsed = s.tSec + 1
+        val clean = OutlierGuard.clean(s.hr, lastValidHr)
+        if (clean == null) return liveState(s) // 아직 유효 HR 없음
+        lastValidHr = clean
+
+        // 누적 지표
+        hrSum += clean; hrCount++; if (clean > maxHr) maxHr = clean
+        val mps = 16.667 / s.paceMinKm.coerceAtLeast(0.1)
+        distanceM += mps
+        extractor.add(clean.toDouble(), s.paceMinKm, s.spm, s.slopePct)
+
+        val b = personalization.boundary()
+        val feat = extractor.extractAt(s.tSec, profile, b.uFrac, b.lFrac)
+        if (feat != null) {
+            judgment = classifier?.classify(feat)?.judgment ?: Zone2Classifier.ruleClassify(feat)
+            // 개인화 관측 후보: decoupling(=feat[5]) 임계 부근의 지속 HR
+            val hrFrac = feat[0] + b.uFrac
+            val hrRecent = profile.restingHr + hrFrac * profile.hrr
+            if (feat[5] in 0.03..0.10) obsCandidates += hrRecent
+            // 코칭: 판정이 바뀌고 최소 간격 지난 경우
+            maybeCoach(s)
+        }
+        // 존 체류 시간(초 단위 누적)
+        when (judgment) {
+            ZoneJudgment.BELOW -> belowSec++
+            ZoneJudgment.ABOVE -> aboveSec++
+            ZoneJudgment.IN -> inSec++
+            null -> {}
+        }
+        // 경로(3초마다 다운샘플)
+        if (s.tSec % 3 == 0) track += TrackPoint(s.lat, s.lon, judgment)
+
+        // 개인화 갱신(5분마다)
+        if (s.tSec - lastPersonalizeSec >= 300 && obsCandidates.isNotEmpty()) {
+            personalization.update(median(obsCandidates))
+            obsCandidates.clear()
+            lastPersonalizeSec = s.tSec
+        }
+        return liveState(s)
+    }
+
+    private suspend fun maybeCoach(s: Sample) {
+        val j = judgment ?: return
+        val changed = j != lastJudgmentForCoach
+        if (changed && s.tSec - lastCoachSec >= 20) {
+            val line = coach.say(CoachContext(j, s.slopePct, s.paceMinKm, s.tSec))
+            coachingLines += "[%02d:%02d] %s".format(s.tSec / 60, s.tSec % 60, line)
+            lastCoachSec = s.tSec
+            lastJudgmentForCoach = j
+            lastCoachText = line
+        }
+    }
+
+    private var lastCoachText = ""
+
+    private fun liveState(s: Sample) = LiveState(
+        elapsedSec = elapsed,
+        hr = lastValidHr ?: -1,
+        judgment = judgment,
+        paceMinKm = s.paceMinKm,
+        speedKmh = if (s.paceMinKm > 0.1) 60.0 / s.paceMinKm else 0.0,
+        distanceM = distanceM,
+        coaching = lastCoachText,
+        uEstFrac = personalization.boundary().uFrac,
+    )
+
+    fun report(): RunReport = RunReport(
+        durationSec = elapsed,
+        distanceM = distanceM,
+        avgHr = if (hrCount > 0) (hrSum / hrCount).toInt() else 0,
+        maxHr = maxHr,
+        belowSec = belowSec, inSec = inSec, aboveSec = aboveSec,
+        avgPaceMinKm = if (distanceM > 1) (elapsed / 60.0) / (distanceM / 1000.0) else 0.0,
+        coachingLines = coachingLines.toList(),
+        track = track.toList(),
+        uEstStartFrac = uEstStart,
+        uEstEndFrac = personalization.boundary().uFrac,
+        restingHr = profile.restingHr,
+        maxHrProfile = profile.maxHr,
+    )
+
+    private fun median(a: List<Double>): Double {
+        val s = a.sorted(); val n = s.size
+        return if (n % 2 == 1) s[n / 2] else (s[n / 2 - 1] + s[n / 2]) / 2
+    }
+}
