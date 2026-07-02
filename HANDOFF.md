@@ -41,8 +41,10 @@
 
 ## 4. 문서 현황
 
-- 완료(커밋됨): spec-001(FR), spec-002(QA+Utility Tree+ASR→DP), adr-001~005, spec-003(HR파이프라인), spec-004(개인화 모델 상세+검증 시뮬레이터), spec-005(LLM 코칭), spec-006(MLP 설계/학습/평가/배포), arch/architecture-overview(진입 문서), report-001(슬라이드1~2).
-- **읽기 진입점**: arch/architecture-overview.md → adr-005(DP4 NN 근거) → spec-006(MLP 상세) → spec-004(개인화).
+- spec-001~009, adr-001~008, arch/architecture-overview, report-001~002. ml/(코드+EXPERIMENT_LOG/COMPARISON/AI_EXPLAINED), llm-verify/, sensor-poc/.
+  - 신규(2026-07-02): spec-007(기록/리포트 FR6), spec-008(안전 C03), spec-009(프로필/RHR FR1), ml/AI_EXPLAINED.md(쉬운 AI 설명, 개인용).
+- **읽기 진입점**: arch/architecture-overview.md → adr-005(DP4 NN 근거) → spec-006(MLP) → spec-004(개인화). AI 이해는 ml/AI_EXPLAINED.md.
+- spec-001에 요구사항→설계 추적표 있음.
 
 ## 5. 진행 현황 / 스코프 (2026-07-02)
 
@@ -67,10 +69,13 @@
 - 빌드 성공(phone 3.9MB, wear 12.3MB). **실기기 검증 대기**: 폰 adb 설치 + 워치 무선디버깅 설치 후 HR 수신/위치·경사 확인(README).
 - 배포 답: 개발=워치 직접설치(자동X), 프로덕션=Play 자동설치. 페어링=기존 사용.
 
-**다음 후보 (서두르지 말 것)**:
-- sensor-poc 실기기 검증(HR 수신/위치/경사), 오프라인/Ultra 재확인, 포그라운드 제약(화면off) 대응 검토.
-- 임계 추출 개선(개인화 완성) 또는 한계로 문서화.
-- 보고서(구현·검증/결론) 마무리, app/ 스캐폴딩.
+**자율 세션 완료분 (2026-07-02)**: ml 데이터 3배 확대 재학습(150러너/40만샘플, 규칙0.544→MLP0.802→개인화0.828, QA1 0.996/QA2 1.0), AI_EXPLAINED 작성, 공백 spec 3종(007/008/009), report-002 최신화, spec-001 추적표. 전체 점검(gap analysis) 완료.
+
+**남은 공백/다음 (서두르지 말 것)**:
+- sensor-poc 실기기 검증(HR 수신/위치/경사), 오프라인/Ultra 재확인, 화면off 시나리오(LLM 포그라운드+워치 HR) 대응.
+- 개인 임계 추출 개선(개인화 완성) 또는 한계로 확정.
+- 최종 Architecture 뷰 상세(Module/C&C/Deployment appendix), app/ 통합 스캐폴딩.
+- spec-007/008/009는 Draft → 검토/승인 필요.
 
 ## 6. 작업 방침 (사용자 요청)
 
