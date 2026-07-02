@@ -7,6 +7,7 @@ import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
+import android.speech.tts.TextToSpeech
 import android.view.Gravity
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
@@ -63,6 +64,9 @@ class RunActivity : AppCompatActivity() {
     private var finished = false
     private var startedAt = 0L
     private var frame = 0
+    private var tts: TextToSpeech? = null
+    private var ttsReady = false
+    private var lastSpoken = ""
 
     private val mode: String by lazy { intent.getStringExtra(EXTRA_MODE) ?: MODE_SIM }
 
@@ -70,6 +74,9 @@ class RunActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         Configuration.getInstance().userAgentValue = packageName
         classifier = runCatching { Zone2Classifier.fromAssets(this) }.getOrNull()
+        tts = TextToSpeech(this) { status ->
+            if (status == TextToSpeech.SUCCESS) { tts?.language = java.util.Locale.KOREAN; ttsReady = true }
+        }
         setContentView(buildUi())
         updateSubtitle()
     }
@@ -223,8 +230,17 @@ class RunActivity : AppCompatActivity() {
         timeView.text = "%02d:%02d".format(s.elapsedSec / 60, s.elapsedSec % 60)
         distView.text = if (s.distanceM < 1000) "${s.distanceM.toInt()}m" else "%.2fkm".format(s.distanceM / 1000)
         paceView.text = if (s.paceMinKm in 0.1..30.0) "%d'%02d\"".format(s.paceMinKm.toInt(), ((s.paceMinKm % 1) * 60).toInt()) else "--"
-        if (s.coaching.isNotBlank()) coachView.text = "🗣 ${s.coaching}"
+        if (s.coaching.isNotBlank()) {
+            coachView.text = "🗣 ${s.coaching}"
+            if (s.coaching != lastSpoken) { lastSpoken = s.coaching; speak(s.coaching) }
+        }
         uEstView.text = "개인 Zone2 상한 추정: ${(s.uEstFrac * 100).toInt()}% HRR (개인화 갱신 중)"
+    }
+
+    /** 코칭 문장을 음성으로(llm-verify에서 검증한 TTS end-to-end). 세션 종료 문구는 제외. */
+    private fun speak(text: String) {
+        if (!ttsReady || !running || text.contains("세션 종료")) return
+        tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "coach")
     }
 
     // ---- 권한 ----
@@ -257,7 +273,10 @@ class RunActivity : AppCompatActivity() {
 
     override fun onResume() { super.onResume(); map.onResume() }
     override fun onPause() { super.onPause(); map.onPause() }
-    override fun onDestroy() { super.onDestroy(); source?.stop() }
+    override fun onDestroy() {
+        super.onDestroy(); source?.stop()
+        tts?.stop(); tts?.shutdown()
+    }
 
     companion object {
         const val EXTRA_MODE = "mode"
