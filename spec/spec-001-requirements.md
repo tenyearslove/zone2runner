@@ -28,5 +28,22 @@
 
 ---
 
+## 요구사항 → 설계 추적
+
+| 요구 | 설계 문서 |
+|:---:|------|
+| FR1 초기 Zone2 산정 | spec-009(프로필/RHR), adr-003(HRR baseline) |
+| FR2 웨어러블 HR 수집·전달 | adr-001(Hybrid), adr-008(HR API/배포), spec-003(파이프라인), sensor-poc |
+| FR3 실시간 Zone2 판정 | adr-003(DP1), adr-005(DP4 MLP), spec-006 |
+| FR4 상황 코칭 + TTS | adr-002(DP2), adr-007(LLM 런타임 검증), spec-005, llm-verify |
+| FR5 개인화 보정 | adr-004(DP3 Bayesian), spec-004, spec-007(세션 데이터) |
+| FR6 기록 저장·리포트 | spec-007 |
+| C01 웨어러블 접근 제약 | adr-001, adr-008 |
+| C02 초기 개인화 정확도 | adr-003(콜드스타트), spec-009, spec-004 |
+| C03 의료 범위 제한/안전 | spec-008(안전 가드) |
+
+- **참고(FR2 정합)**: spec-001은 실시간 HR 소스로 Samsung Health Sensor SDK를 상정했으나, adr-008에서 **PoC는 Wear OS Health Services**(승인 불필요)로 채택하고 HRV/화면off 필요 시 Samsung SDK로 승격하기로 정함.
+
 ## 관련 문서
-- ADR: `arch/adr-001-*.md` (작성 예정)
+- 설계 전반: `arch/architecture-overview.md`, `arch/adr-001`~`adr-008`
+- 품질: `spec/spec-002-quality-attributes.md`

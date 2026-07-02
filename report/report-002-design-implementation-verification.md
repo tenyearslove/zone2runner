@@ -110,11 +110,11 @@ HR 1~2초  ──Data Layer──▶        → Zone2 판정: 규칙 + 개인 �
 
 **구현**: 물리 시뮬레이터로 라벨 생성(정답 부재 해소) → 다변량 MLP(7→32→16→3) PyTorch 학습 → TFLite 온디바이스.
 
-**검증 결과** (러너 60명/360세션, 러너 단위 분할)
+**검증 결과** (러너 150명/1200세션 ≈ 40만 샘플, 러너 단위 분할)
 
 | 지표 | 결과 | 목표 |
 |------|:---:|:---:|
-| 설계 사다리: 규칙 → +MLP → +개인화 | 0.485 → 0.780 → 0.826 | - |
+| 설계 사다리: 규칙 → +MLP → +개인화 | 0.544 → 0.802 → 0.828 | - |
 | QA1 코칭 방향 정확성 | **0.996** | 0.95 |
 | QA2 이상치 기각율 | **1.000** | 1.0 |
 
@@ -151,18 +151,34 @@ HR 1~2초  ──Data Layer──▶        → Zone2 판정: 규칙 + 개인 �
 
 ---
 
-## 슬라이드 12 — 결론
+## 슬라이드 12 — 구현 및 검증 (3): 온디바이스 LLM + 센서 실기기 PoC
+
+**온디바이스 LLM (adr-007, Galaxy S26 실기기)**
+
+- Gemini Nano(ML Kit Prompt API) **실제 동작 확인**: warm 생성 **~2.0초**(목표 ≤2~3초), 코칭 방향 정확
+- **LLM → TTS end-to-end** 음성 출력까지 동작 (한국어)
+- 발견/제약: 모델 ~4GB(최초 다운로드 UX 필요), 포그라운드 전용(화면off 시나리오는 과제)
+
+**Watch+Phone 센서 (adr-008, sensor-poc)**
+
+- 워치 Health Services 실시간 HR → Data Layer(MessageClient) → 폰 수신 + 위치/고도/경사. 2모듈 빌드 완료(실기기 검증 진행)
+- 배포: 개발=워치 직접 설치, 프로덕션=Play 자동 설치. 기존 페어링 활용
+
+---
+
+## 슬라이드 13 — 결론
 
 **주요 성과**
 
 - Galaxy Watch + On-device LLM 기반 개인화 Zone 2 코칭 아키텍처 설계 (DP0~DP4, 대안 비교 기반)
-- 다변량 MLP 판정기 구현/학습, QA1 코칭 방향 0.996 / QA2 이상치 기각 1.0 달성
+- 다변량 MLP 판정기 구현/학습(40만 샘플), QA1 코칭 방향 0.996 / QA2 이상치 기각 1.0 달성
 - 개인화 적응(Bayesian) 수렴 메커니즘 실증 (QA3)
+- **온디바이스 LLM 실기기 검증**(Gemini Nano warm ~2초 + TTS), 워치-폰 센서 파이프라인 PoC
 
 **한계 및 향후 계획**
 
 - 개인 임계의 필드 데이터 추출이 핵심 난제(현 단계 한계) → 실데이터 기반 개선
-- On-device LLM/Watch 실연동, app 스캐폴딩은 후속 구현 단계
+- 화면off 러닝(LLM 포그라운드 제약/워치 HR 지속측정) 대응, app 통합 스캐폴딩은 후속 단계
 
 **기대효과**: 고가 장비 없이 개인 맞춤 Zone 2 코칭 가능성 검증, Samsung Health 기반 AI 코칭 확장 근거.
 
@@ -170,6 +186,6 @@ HR 1~2초  ──Data Layer──▶        → Zone2 판정: 규칙 + 개인 �
 
 ## 관련 문서
 - 요구/품질: spec-001, spec-002
-- 설계: arch/adr-001~006, arch/architecture-overview
-- 상세: spec-003(HR), spec-004(개인화), spec-005(LLM), spec-006(MLP)
-- 구현·검증: ml/EXPERIMENT_LOG.md, ml/COMPARISON.md, ml/personalization.py
+- 설계: arch/adr-001~008, arch/architecture-overview
+- 상세 spec: 003(HR), 004(개인화), 005(LLM), 006(MLP), 007(기록/리포트), 008(안전), 009(프로필/RHR)
+- 구현·검증: ml/EXPERIMENT_LOG.md, ml/COMPARISON.md, ml/personalization.py, llm-verify/(온디바이스 LLM), sensor-poc/(Watch+Phone)
