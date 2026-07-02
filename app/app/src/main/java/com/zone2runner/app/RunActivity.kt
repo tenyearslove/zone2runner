@@ -1,6 +1,8 @@
 package com.zone2runner.app
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
@@ -11,7 +13,10 @@ import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.zone2runner.app.coaching.RuleCoach
 import com.zone2runner.app.data.ProfileStore
@@ -19,12 +24,11 @@ import com.zone2runner.app.data.SessionStore
 import com.zone2runner.app.domain.LiveState
 import com.zone2runner.app.pipeline.RunEngine
 import com.zone2runner.app.pipeline.Zone2Classifier
-import com.zone2runner.app.sim.RunSimulator
+import com.zone2runner.app.sensor.LiveRunSource
+import com.zone2runner.app.sensor.RunSource
+import com.zone2runner.app.sensor.SimulatedRunSource
+import com.zone2runner.app.sensor.WatchHrProvider
 import com.zone2runner.app.ui.ReportHolder
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
@@ -32,9 +36,10 @@ import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Polyline
 
 /**
- * 러닝(라이브) — 시뮬레이터가 만든 세션을 가속 재생하며 전체 파이프라인을 구동한다.
- * [HrSource → 이상치가드 → 특징 → MLP판정 → 개인화 → 코칭 → 세션] 전 구간.
- * 종료 시 RunReport를 SessionStore에 저장하고 리포트로 이동. 실센서/실 GPS 연동은 후속(Phase D).
+ * 러닝(라이브) — 입력 소스(RunSource)를 갈아끼워 전체 파이프라인을 구동한다.
+ *   sim  = 물리 시뮬레이터 가속 재생(실기기 없이 데모).
+ *   live = 실 GPS(FusedLocation) + 워치 심박(Data Layer). 위치 권한 필요.
+ * [소스 → 이상치가드 → 특징 → MLP판정 → 개인화 → 코칭 → 세션]. 종료 시 SessionStore 저장 후 리포트.
  */
 class RunActivity : AppCompatActivity() {
 
@@ -50,19 +55,32 @@ class RunActivity : AppCompatActivity() {
     private lateinit var subtitle: TextView
 
     private var classifier: Zone2Classifier? = null
-    private var job: Job? = null
+    private var source: RunSource? = null
+    private var engine: RunEngine? = null
     private var line: Polyline? = null
+    private var running = false
     private var finished = false
+    private var startedAt = 0L
+    private var frame = 0
+
+    private val mode: String by lazy { intent.getStringExtra(EXTRA_MODE) ?: MODE_SIM }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Configuration.getInstance().userAgentValue = packageName
         classifier = runCatching { Zone2Classifier.fromAssets(this) }.getOrNull()
         setContentView(buildUi())
+        updateSubtitle()
+    }
+
+    private fun updateSubtitle() {
         val m = classifier?.metrics
-        subtitle.text = if (classifier != null)
-            "MLP 로드됨 (개인화 acc ${fmt(m?.get("mlp_acc"))}, QA1 ${fmt(m?.get("qa1_coaching_direction"))}) · 시뮬레이션 재생"
-        else "MLP 미로드 → 규칙 폴백 · 시뮬레이션 재생"
+        val model = if (classifier != null)
+            "MLP 로드됨 (개인화 acc ${fmt(m?.get("mlp_acc"))}, QA1 ${fmt(m?.get("qa1_coaching_direction"))})"
+        else "MLP 미로드 → 규칙 폴백"
+        subtitle.text = if (mode == MODE_LIVE)
+            "$model · 실센서(GPS+워치HR) 모드 — 실기기 필요"
+        else "$model · 시뮬레이션 재생"
     }
 
     private fun buildUi(): LinearLayout {
@@ -112,7 +130,7 @@ class RunActivity : AppCompatActivity() {
         dash.addView(uEstView)
 
         startBtn = Button(this).apply {
-            text = "파이프라인 시뮬레이션 시작"
+            text = primaryLabel()
             setOnClickListener { onPrimary() }
         }
         dash.addView(startBtn, mt(8))
@@ -121,46 +139,73 @@ class RunActivity : AppCompatActivity() {
         return root
     }
 
-    private fun onPrimary() {
-        if (finished) { openReport(); return }
-        if (job?.isActive == true) { job?.cancel(); startBtn.text = "파이프라인 시뮬레이션 시작"; return }
-        startReplay()
+    private fun primaryLabel(): String = when {
+        finished -> "리포트 보기"
+        running -> "정지 · 저장"
+        mode == MODE_LIVE -> "실센서 러닝 시작"
+        else -> "파이프라인 시뮬레이션 시작"
     }
 
-    private fun openReport() = startActivity(Intent(this, ReportActivity::class.java))
+    private fun onPrimary() {
+        when {
+            finished -> startActivity(Intent(this, ReportActivity::class.java))
+            running -> finalizeSession()
+            else -> startRun()
+        }
+    }
 
-    private fun startReplay() {
-        startBtn.text = "정지"
+    private fun startRun() {
+        if (mode == MODE_LIVE && !hasLocationPermission()) { requestLocationPermission(); return }
+
         map.overlays.clear()
         line = Polyline().apply { outlinePaint.color = C_ACCENT; outlinePaint.strokeWidth = 8f }
         map.overlays.add(line)
 
-        val sim = RunSimulator(seed = System.nanoTime())
-        val session = sim.generate(durationMin = 30)
         val profile = ProfileStore.load(this)
-        val engine = RunEngine(profile, classifier, RuleCoach()).also { it.coachSource = "rule" }
-        val startedAt = System.currentTimeMillis()
+        val eng = RunEngine(profile, classifier, RuleCoach()).also { it.coachSource = "rule" }
+        engine = eng
+        startedAt = System.currentTimeMillis()
+        frame = 0
 
-        job = lifecycleScope.launch {
-            var i = 0
-            for (s in session.samples) {
-                if (!isActive) return@launch
-                val state = engine.onSample(s)
-                line?.addPoint(GeoPoint(s.lat, s.lon))
-                if (i % 5 == 0) {
-                    render(state)
-                    map.controller.setCenter(GeoPoint(s.lat, s.lon))
-                    map.invalidate()
-                }
-                i++
-                delay(14) // 가속 재생(≈70x)
+        val src: RunSource = if (mode == MODE_LIVE)
+            LiveRunSource(this, WatchHrProvider(this))
+        else
+            SimulatedRunSource(durationMin = 30, seed = System.nanoTime())
+        source = src
+        val renderEvery = if (src.realtime) 1 else 5
+
+        running = true; finished = false
+        startBtn.text = primaryLabel()
+
+        src.start(lifecycleScope, onSample = { s ->
+            val state = eng.onSample(s)
+            line?.addPoint(GeoPoint(s.lat, s.lon))
+            if (frame % renderEvery == 0) {
+                render(state)
+                map.controller.setCenter(GeoPoint(s.lat, s.lon))
+                map.invalidate()
             }
-            val report = engine.report().copy(startedAtEpochMs = startedAt, sourceMode = "sim")
-            ReportHolder.last = SessionStore.save(this@RunActivity, report)
-            render(LiveState(report.durationSec, report.avgHr, null, report.avgPaceMinKm, 0.0, report.distanceM, "세션 종료 · 저장됨", report.uEstEndFrac))
-            finished = true
-            startBtn.text = "리포트 보기"
+            frame++
+        }, onComplete = {
+            finalizeSession()
+        })
+    }
+
+    private fun finalizeSession() {
+        if (!running) return
+        running = false
+        source?.stop()
+        val eng = engine ?: return
+        val report = eng.report().copy(startedAtEpochMs = startedAt, sourceMode = mode)
+        if (report.durationSec < 5) { // 데이터 너무 적으면 저장 생략
+            Toast.makeText(this, "기록이 너무 짧아 저장하지 않았어요", Toast.LENGTH_SHORT).show()
+            finished = false; startBtn.text = primaryLabel(); return
         }
+        ReportHolder.last = SessionStore.save(this, report)
+        render(LiveState(report.durationSec, report.avgHr, null, report.avgPaceMinKm, 0.0, report.distanceM, "세션 종료 · 저장됨", report.uEstEndFrac))
+        finished = true
+        startBtn.text = primaryLabel()
+        Toast.makeText(this, "세션 저장됨", Toast.LENGTH_SHORT).show()
     }
 
     private fun render(s: LiveState) {
@@ -176,6 +221,20 @@ class RunActivity : AppCompatActivity() {
         uEstView.text = "개인 Zone2 상한 추정: ${(s.uEstFrac * 100).toInt()}% HRR (개인화 갱신 중)"
     }
 
+    // ---- 권한 ----
+    private fun hasLocationPermission() =
+        ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+
+    private fun requestLocationPermission() =
+        ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.BODY_SENSORS), 1)
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (hasLocationPermission()) startRun()
+        else Toast.makeText(this, "위치 권한이 필요합니다", Toast.LENGTH_SHORT).show()
+    }
+
+    // ---- helpers ----
     private fun metricVal() = TextView(this).apply {
         text = "--"; textSize = 17f; setTypeface(Typeface.DEFAULT_BOLD); setTextColor(C_TEXT); gravity = Gravity.CENTER
     }
@@ -192,11 +251,15 @@ class RunActivity : AppCompatActivity() {
 
     override fun onResume() { super.onResume(); map.onResume() }
     override fun onPause() { super.onPause(); map.onPause() }
+    override fun onDestroy() { super.onDestroy(); source?.stop() }
 
-    private companion object {
-        val C_BG = Color.parseColor("#0E1116")
-        val C_TEXT = Color.parseColor("#E8EAED")
-        val C_MUTED = Color.parseColor("#9AA0A6")
-        val C_ACCENT = Color.parseColor("#30D158")
+    companion object {
+        const val EXTRA_MODE = "mode"
+        const val MODE_SIM = "sim"
+        const val MODE_LIVE = "live"
+        private val C_BG = Color.parseColor("#0E1116")
+        private val C_TEXT = Color.parseColor("#E8EAED")
+        private val C_MUTED = Color.parseColor("#9AA0A6")
+        private val C_ACCENT = Color.parseColor("#30D158")
     }
 }

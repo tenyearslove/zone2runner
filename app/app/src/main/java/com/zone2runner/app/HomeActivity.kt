@@ -60,8 +60,11 @@ class HomeActivity : AppCompatActivity() {
         col.addView(card("최근 러닝", recentContent))
 
         // 액션 버튼
-        col.addView(bigButton("러닝 시작", Palette.ACCENT) {
-            startActivity(Intent(this, RunActivity::class.java))
+        col.addView(bigButton("러닝 시작 (시뮬레이션)", Palette.ACCENT) {
+            startActivity(Intent(this, RunActivity::class.java).putExtra(RunActivity.EXTRA_MODE, RunActivity.MODE_SIM))
+        })
+        col.addView(bigButton("실센서 러닝 (GPS+워치)", Palette.CARD) {
+            startActivity(Intent(this, RunActivity::class.java).putExtra(RunActivity.EXTRA_MODE, RunActivity.MODE_LIVE))
         })
         col.addView(bigButton("기록 보기", Palette.CARD) {
             startActivity(Intent(this, HistoryActivity::class.java))
