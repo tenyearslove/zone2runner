@@ -111,6 +111,10 @@ class GeminiNanoProbe(
             log("비행기 모드로 전환 후 다시 실행해 오프라인 동작을 확인하세요.")
         } catch (e: Throwable) {
             log("probe 예외: ${e.javaClass.simpleName}: ${e.message}")
+            val msg = e.message ?: ""
+            if (msg.contains("foreground", true) || msg.contains("ErrorCode 30")) {
+                log("→ Gemini Nano는 앱이 포그라운드일 때만 생성 허용. 앱을 화면에 띄운 채 버튼을 다시 누르세요.")
+            }
         } finally {
             model.close()
         }

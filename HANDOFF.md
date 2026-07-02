@@ -57,9 +57,15 @@
 - A vs B 비교: 주 판정기=A, B는 개인화/피트니스 보조. `ml/COMPARISON.md`, `arch/adr-006`(Accepted)
 - 실행: `python3 -m venv .venv && ./.venv/bin/pip install -r ml/requirements.txt`
 
+**온디바이스 LLM 검증 완료 (2026-07-02, adr-007)**: `llm-verify/` Android 앱으로 실기기(Exynos S26) 검증.
+- Gemini Nano(ML Kit Prompt API) **AVAILABLE**, warm 생성 ~2초, 코칭 방향 정확, **TTS까지 end-to-end 동작**.
+- 모델 ~4GB. 제약: 포그라운드 전용(ErrorCode 30) → 러닝 중 화면off 시나리오는 후속 확인.
+- 잔여: 오프라인(비행기모드), Snapdragon Ultra 재확인. → Plan A(Gemini Nano) 채택.
+
 **다음 후보 (서두르지 말 것)**:
-- 임계 추출 개선(개인화 완성) 또는 한계로 문서화하고 보고서(구현·검증/결론)로 마무리.
-- 최종 Architecture 뷰 상세, app/ 스캐폴딩.
+- 오프라인/Ultra 재확인, 포그라운드 제약(화면off) 대응 검토.
+- 임계 추출 개선(개인화 완성) 또는 한계로 문서화.
+- 보고서(구현·검증/결론) 마무리, app/ 스캐폴딩.
 
 ## 6. 작업 방침 (사용자 요청)
 
