@@ -113,8 +113,9 @@ def evaluate_A(u_frac_sigma=0.045, seed=SEED):
 
 def main():
     print("데이터 생성 중 (formula / personalized 동일 세션)...")
-    Xf, yf, gf = generate_dataset(mode="formula", seed=SEED)
-    Xp, yp, gp = generate_dataset(mode="personalized", est_sigma=0.025, seed=SEED)
+    NR, NS = 150, 8  # 러너 150명 x 세션 8회 (약 40만 샘플)
+    Xf, yf, gf = generate_dataset(mode="formula", n_runners=NR, sessions_per_runner=NS, seed=SEED)
+    Xp, yp, gp = generate_dataset(mode="personalized", est_sigma=0.025, n_runners=NR, sessions_per_runner=NS, seed=SEED)
     _, _, te = group_split(gf)
 
     # 1) 규칙 baseline
@@ -122,7 +123,7 @@ def main():
     # 2) MLP (공식 정규화)
     acc_formula, *_ = train_eval(Xf, yf, gf)
     # 3) MLP (개인화 정규화) — 추정오차 민감도 확인
-    Xp0, yp0, gp0 = generate_dataset(mode="personalized", est_sigma=0.0, seed=SEED)
+    Xp0, yp0, gp0 = generate_dataset(mode="personalized", est_sigma=0.0, n_runners=NR, sessions_per_runner=NS, seed=SEED)
     acc_pers0, *_ = train_eval(Xp0, yp0, gp0)
     print(f"[진단] 완벽 개인화(est_sigma=0) MLP 정확도: {acc_pers0:.3f}")
     acc_pers, model, scaler, (tr, va, tep), pred_te = train_eval(Xp, yp, gp)

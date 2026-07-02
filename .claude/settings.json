@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(git commit -q -m ' *)",
-      "Bash(./gradlew :phone:assembleDebug :wear:assembleDebug --no-daemon)"
+      "Bash(./gradlew :phone:assembleDebug :wear:assembleDebug --no-daemon)",
+      "Bash(git commit -q -m 'docs\\(HANDOFF\\): sensor-poc 빌드 완료 상태 반영 *)",
+      "Bash(~/Library/Android/sdk/platform-tools/adb devices *)"
     ]
   }
 }
