@@ -1,6 +1,7 @@
 package com.zone2runner.llmverify
 
 import android.os.SystemClock
+import com.google.mlkit.genai.common.DownloadStatus
 import com.google.mlkit.genai.common.FeatureStatus
 import com.google.mlkit.genai.prompt.Generation
 import kotlinx.coroutines.delay
@@ -9,9 +10,11 @@ import kotlinx.coroutines.withTimeout
 
 /**
  * adr-007 검증: S26에서 Gemini Nano(ML Kit Prompt API) 가용성/지연/오프라인 확인.
- * 이어받기/백그라운드 다운로드 대응: download 후 status를 재확인하고 AVAILABLE 될 때까지 대기.
+ * 다운로드 진행률(받은/전체 MB, %) 표시 + 이어받기/백그라운드(DOWNLOADING) 대응.
  */
 class GeminiNanoProbe(private val log: (String) -> Unit) {
+
+    private var totalBytes = 0L
 
     private fun name(s: Int) = when (s) {
         FeatureStatus.AVAILABLE -> "AVAILABLE"
@@ -21,36 +24,55 @@ class GeminiNanoProbe(private val log: (String) -> Unit) {
         else -> "UNKNOWN($s)"
     }
 
+    private fun mb(b: Long) = "%.1f".format(b / 1_048_576.0)
+
+    private fun logDownload(ds: DownloadStatus) {
+        when (ds) {
+            is DownloadStatus.DownloadStarted -> {
+                totalBytes = ds.bytesToDownload
+                log("다운로드 시작: 총 ${mb(totalBytes)}MB")
+            }
+            is DownloadStatus.DownloadProgress -> {
+                val got = ds.totalBytesDownloaded
+                if (totalBytes > 0) {
+                    val pct = (got * 100.0 / totalBytes).toInt()
+                    log("진행: ${mb(got)}/${mb(totalBytes)}MB (${pct}%)")
+                } else {
+                    log("진행: ${mb(got)}MB 받음")
+                }
+            }
+            is DownloadStatus.DownloadCompleted -> log("다운로드 완료")
+            is DownloadStatus.DownloadFailed -> log("다운로드 실패: ${ds.e.message}")
+            else -> log("download: $ds")
+        }
+    }
+
     suspend fun run() {
         val model = Generation.getClient()
         try {
             var status = model.checkStatus()
             log("FeatureStatus = ${name(status)}")
-
             if (status == FeatureStatus.UNAVAILABLE) {
                 log("→ 이 기기에서 Gemini Nano 사용 불가. 폴백 필요 [adr-007 Plan B/C]")
                 return
             }
 
-            // 준비될 때까지: 다운로드 관찰 + status 재확인 (이어받기/백그라운드 대응)
+            // 준비될 때까지: download()로 진행률 관찰 + status 재확인 (이어받기 대응)
             var waitedSec = 0
             while (status != FeatureStatus.AVAILABLE) {
-                if (status == FeatureStatus.DOWNLOADABLE) {
-                    log("다운로드 시작...")
-                    try {
-                        model.download().collect { ds -> log("download: $ds") }
-                    } catch (e: Throwable) {
-                        log("download flow 종료: ${e.javaClass.simpleName}: ${e.message}")
-                    }
-                } else { // DOWNLOADING (백그라운드 진행 중)
-                    log("다운로드 진행 중(백그라운드)... 대기 ${waitedSec}s")
-                    delay(3000); waitedSec += 3
+                try {
+                    model.download().collect { ds -> logDownload(ds) }
+                } catch (e: Throwable) {
+                    log("download flow 종료: ${e.javaClass.simpleName}: ${e.message}")
                 }
                 status = model.checkStatus()
                 log("재확인 status = ${name(status)}")
-                if (waitedSec >= 300) {
-                    log("5분 경과: 아직 준비 안 됨. Wi-Fi/포그라운드 유지 후 다시 시도하세요.")
-                    return
+                if (status != FeatureStatus.AVAILABLE) {
+                    delay(3000); waitedSec += 3
+                    if (waitedSec >= 300) {
+                        log("5분 경과: 아직 준비 안 됨. Wi-Fi/포그라운드 유지 후 다시 시도하세요.")
+                        return
+                    }
                 }
             }
 
