@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git commit -q -m ' *)"
+      "Bash(git commit -q -m ' *)",
+      "Bash(./gradlew :phone:assembleDebug :wear:assembleDebug --no-daemon)"
     ]
   }
 }
