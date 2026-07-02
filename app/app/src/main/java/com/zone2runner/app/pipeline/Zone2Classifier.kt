@@ -58,8 +58,11 @@ class Zone2Classifier private constructor(
             else -> ZoneJudgment.IN
         }
 
-        fun fromAssets(ctx: Context, name: String = "zone2_mlp.json"): Zone2Classifier {
-            val json = ctx.assets.open(name).bufferedReader().use { it.readText() }
+        fun fromAssets(ctx: Context, name: String = "zone2_mlp.json"): Zone2Classifier =
+            fromJsonString(ctx.assets.open(name).bufferedReader().use { it.readText() })
+
+        /** Context 없이 JSON 문자열에서 로드(단위 테스트/재사용용). */
+        fun fromJsonString(json: String): Zone2Classifier {
             val o = JSONObject(json)
             val feats = o.getJSONArray("features").let { a -> List(a.length()) { a.getString(it) } }
             val mean = o.getJSONArray("scaler_mean").toDoubleArray()
