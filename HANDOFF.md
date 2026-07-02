@@ -44,14 +44,18 @@
 - 완료(커밋됨): spec-001(FR), spec-002(QA+Utility Tree+ASR→DP), adr-001~005, spec-003(HR파이프라인), spec-004(개인화 모델 상세+검증 시뮬레이터), spec-005(LLM 코칭), spec-006(MLP 설계/학습/평가/배포), arch/architecture-overview(진입 문서), report-001(슬라이드1~2).
 - **읽기 진입점**: arch/architecture-overview.md → adr-005(DP4 NN 근거) → spec-006(MLP 상세) → spec-004(개인화).
 
-## 5. 다음 할 일
+## 5. 진행/다음 할 일
 
-1. **PoC 구현 착수** (다음 예정 작업):
-   - 물리 세션 시뮬레이터 (Python) — 참 경계 θ*로 (특징→Zone 라벨) 생성 (spec-004 §8, spec-006 §3)
-   - MLP 학습/평가 (PyTorch) — 정확도 85%/혼동행렬/노이즈 스트레스, 규칙 baseline 대비 향상폭 (spec-006 §4~5)
-   - Bayesian 개인화 추정기 검증 하네스 — 수렴/강건성 그래프 (spec-004 §8)
-2. 남은 산출물: 최종 Architecture 뷰 상세(Module/C&C/Deployment), PoC 계획서, 보고서 확장(설계/구현·검증/결론).
-3. 1단계 앱 스캐폴딩(app/): Mock HR→판정→간단 코칭, Watch/LLM stub.
+**완료 (2026-07-02): Zone2 판정 MLP PoC** — `ml/` (simulator.py, train_mlp.py, README.md, EXPERIMENT_LOG.md)
+- 결과: 규칙 0.486 → +MLP(DP4) 0.726 → +개인화(DP3) 0.743. 방향 정확성 0.995(QA1 초과), 노이즈 강건 0.702.
+- 3분류 85%는 미달(경계 밀집 인접혼동) — 상세/튜닝여정은 `ml/EXPERIMENT_LOG.md`.
+- 실행: `python3 -m venv .venv && ./.venv/bin/pip install -r ml/requirements.txt` 후 `./.venv/bin/python ml/train_mlp.py`
+
+**다음 후보**:
+1. 3분류 정확도 개선(노이즈 현실화/지표 재정의) 또는 지표를 방향정확성/이진으로 확정.
+2. Bayesian 개인화 추정기 수렴 검증 하네스 (spec-004 §8).
+3. 학습 모델 TFLite 변환 → app/ 온디바이스 통합.
+4. 남은 문서: 최종 Architecture 뷰 상세, 보고서 확장(구현·검증/결론).
 
 ## 6. 작업 방침 (사용자 요청)
 
