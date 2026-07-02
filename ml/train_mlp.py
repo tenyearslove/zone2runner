@@ -94,6 +94,23 @@ def train_eval(X, y, g, aug=0.05, seed=SEED):
     return accuracy_score(y[te], pred_te), model, scaler, (tr, va, te), pred_te
 
 
+def evaluate_A(u_frac_sigma=0.045, seed=SEED):
+    """접근 A(분류)를 주어진 개인 임계 변동에서 학습·평가. 비교용 지표 반환."""
+    Xf, yf, gf = generate_dataset(mode="formula", u_frac_sigma=u_frac_sigma, seed=seed)
+    Xp, yp, gp = generate_dataset(mode="personalized", est_sigma=0.025, u_frac_sigma=u_frac_sigma, seed=seed)
+    _, _, te = group_split(gf, seed)
+    rule_acc = accuracy_score(yf[te], rule_baseline(Xf[te]))
+    acc_formula, *_ = train_eval(Xf, yf, gf, seed=seed)
+    acc_pers, model, scaler, (tr, va, tep), pred_te = train_eval(Xp, yp, gp, seed=seed)
+    gross = float(np.mean(np.abs(pred_te - yp[tep]) == 2))
+    return {
+        "rule_acc": round(float(rule_acc), 4),
+        "mlp_formula_acc": round(float(acc_formula), 4),
+        "mlp_personalized_acc": round(float(acc_pers), 4),
+        "coaching_direction_accuracy_A": round(float(1 - gross), 4),
+    }
+
+
 def main():
     print("데이터 생성 중 (formula / personalized 동일 세션)...")
     Xf, yf, gf = generate_dataset(mode="formula", seed=SEED)

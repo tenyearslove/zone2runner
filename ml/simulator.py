@@ -34,14 +34,15 @@ STRIDE = 5        # 특징 추출 간격(초)
 WARMUP_S = 120    # 초반 워밍업(특징 추출 제외 + decoupling baseline 확보)
 
 
-def make_runner(rng):
-    """가상 러너 프로파일 생성. 참 경계는 공식에서 개인차만큼 벗어난다."""
+def make_runner(rng, u_frac_sigma=0.045):
+    """가상 러너 프로파일 생성. 참 경계는 공식에서 개인차만큼 벗어난다.
+    u_frac_sigma: 개인 임계 변동폭(공식 0.70 대비). 클수록 개인화 헤드룸 커짐."""
     age = int(rng.integers(20, 55))
     resting = float(rng.uniform(48, 68))
     max_hr = 208 - 0.7 * age                      # Tanaka
     hrr = max_hr - resting
     # 참 Zone2 상한 비율: 공식은 0.70이라 가정하지만 개인은 다름
-    u_frac = float(np.clip(rng.normal(0.70, 0.045), 0.58, 0.82))
+    u_frac = float(np.clip(rng.normal(0.70, u_frac_sigma), 0.50, 0.90))
     band = float(rng.uniform(0.08, 0.13))         # Zone2 폭
     l_frac = u_frac - band
     return {
@@ -176,7 +177,7 @@ FORMULA_UPPER_FRAC = 0.70  # 공식(HRR) Zone2 상한 비율
 
 
 def generate_dataset(n_runners=60, sessions_per_runner=6, duration_min=30, seed=42,
-                     mode="personalized", est_sigma=0.025):
+                     mode="personalized", est_sigma=0.025, u_frac_sigma=0.045):
     """러너 단위로 세션 생성 → (X, y, groups).
 
     mode:
@@ -188,7 +189,7 @@ def generate_dataset(n_runners=60, sessions_per_runner=6, duration_min=30, seed=
     est_rng = np.random.default_rng(seed + 1000)
     Xs, ys, gs = [], [], []
     for rid in range(n_runners):
-        runner = make_runner(rng)
+        runner = make_runner(rng, u_frac_sigma=u_frac_sigma)
         if mode == "formula":
             u_est, l_est = FORMULA_UPPER_FRAC, FORMULA_UPPER_FRAC - 0.10
         else:

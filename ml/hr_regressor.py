@@ -25,12 +25,12 @@ os.makedirs(ART, exist_ok=True)
 BAND_FRAC = 0.10  # Zone2 폭(HRR 비율) 가정
 
 
-def build_runner_data(n_runners=60, sessions=6, seed=SEED):
+def build_runner_data(n_runners=60, sessions=6, seed=SEED, u_frac_sigma=0.045):
     """러너별 (윈도우 특징 + 실측HR + decoupling + 참라벨 + 참경계)."""
     rng = np.random.default_rng(seed)
     data = []
     for rid in range(n_runners):
-        runner = make_runner(rng)
+        runner = make_runner(rng, u_frac_sigma=u_frac_sigma)
         resting, hrr = runner["resting"], runner["hrr"]
         u_abs = resting + runner["u_frac"] * hrr
         l_abs = resting + runner["l_frac"] * hrr
@@ -61,9 +61,9 @@ def group_split(n, seed=SEED, val=0.15, test=0.15):
 PACE, SLOPE, SPM, AGE, REST, HRR, HR, DEC, LAB = range(9)
 
 
-def main():
-    data = build_runner_data()
-    train_r, _, test_r = group_split(len(data))
+def evaluate_B(u_frac_sigma=0.045, seed=SEED, verbose=True):
+    data = build_runner_data(seed=seed, u_frac_sigma=u_frac_sigma)
+    train_r, _, test_r = group_split(len(data), seed)
 
     # ---- 1) 모집단 HR 회귀 모델 (정답 = 실측 HR) ----
     tr = np.vstack([d["rows"] for d in data if d["rid"] in train_r])
@@ -121,23 +121,24 @@ def main():
         "coaching_direction_accuracy_B_decoupling": round(float(np.mean(dir_acc_all)), 4),
         "coaching_direction_accuracy_B_formula_boundary": round(float(np.mean(dir_acc_formula)), 4),
     }
-    print("=" * 56)
-    print("접근 B: HR 회귀 + 잔차 개인화")
-    print("=" * 56)
-    print(f"HR 예측 오차(MAE): 모집단 {res['hr_mae_population_bpm']} → 개인화 {res['hr_mae_personalized_bpm']} bpm")
-    print("  (개인화가 HR 예측 오차를 줄임 = 잔차 보정 유효. 정답=실측HR로 측정 가능)")
-    print("\nZone2 상한 추정 오차(참값 대비, bpm):")
-    print(f"  (a) 공식(개인화X)        : {res['zone2_upper_err_formula_bpm']}")
-    print(f"  (b) 제안 원안(잔차 오프셋): {res['zone2_upper_err_offset_bpm']}")
-    print(f"  (c) 리서치(decoupling)   : {res['zone2_upper_err_decoupling_bpm']}")
-    print(f"\n코칭 방향 정확성(B): decoupling경계 {res['coaching_direction_accuracy_B_decoupling']}"
-          f" / 공식경계 {res['coaching_direction_accuracy_B_formula_boundary']}")
-    print("  (공식경계가 훨씬 높으면, 문제는 판정이 아니라 임계 추정에 있음)")
-
-    with open(os.path.join(ART, "metrics_B.json"), "w") as f:
-        json.dump(res, f, ensure_ascii=False, indent=2)
-    print("\n저장: artifacts/metrics_B.json")
+    if verbose:
+        print("=" * 56)
+        print("접근 B: HR 회귀 + 잔차 개인화")
+        print("=" * 56)
+        print(f"HR 예측 오차(MAE): 모집단 {res['hr_mae_population_bpm']} → 개인화 {res['hr_mae_personalized_bpm']} bpm")
+        print("  (개인화가 HR 예측 오차를 줄임 = 잔차 보정 유효. 정답=실측HR로 측정 가능)")
+        print("\nZone2 상한 추정 오차(참값 대비, bpm):")
+        print(f"  (a) 공식(개인화X)        : {res['zone2_upper_err_formula_bpm']}")
+        print(f"  (b) 제안 원안(잔차 오프셋): {res['zone2_upper_err_offset_bpm']}")
+        print(f"  (c) 리서치(decoupling)   : {res['zone2_upper_err_decoupling_bpm']}")
+        print(f"\n코칭 방향 정확성(B): decoupling경계 {res['coaching_direction_accuracy_B_decoupling']}"
+              f" / 공식경계 {res['coaching_direction_accuracy_B_formula_boundary']}")
+        print("  (공식경계가 훨씬 높으면, 문제는 판정이 아니라 임계 추정에 있음)")
+        with open(os.path.join(ART, "metrics_B.json"), "w") as f:
+            json.dump(res, f, ensure_ascii=False, indent=2)
+        print("\n저장: artifacts/metrics_B.json")
+    return res
 
 
 if __name__ == "__main__":
-    main()
+    evaluate_B()
