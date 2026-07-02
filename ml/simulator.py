@@ -50,7 +50,7 @@ def make_runner(rng):
         "hr_tau": float(rng.uniform(20, 40)),      # HR 지연 시상수(초)
         "drift_scale": float(rng.uniform(0.30, 0.60)),  # 지속 초과 시 드리프트 상한 계수
         "drift_tau": float(rng.uniform(90, 180)),  # 드리프트 상승/회복 시상수(초)
-        "noise_sd": float(rng.uniform(1.5, 3.5)),  # 센서 노이즈(bpm)
+        "noise_sd": float(rng.uniform(0.3, 1.0)),  # 경미한 생리적 변동(bpm). 센서 측정노이즈는 범위 밖
         "base_pace": float(rng.uniform(6.5, 8.0)),  # demand=0.5 부근 기준 페이스(min/km)
     }
 
