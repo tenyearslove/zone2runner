@@ -44,18 +44,22 @@
 - 완료(커밋됨): spec-001(FR), spec-002(QA+Utility Tree+ASR→DP), adr-001~005, spec-003(HR파이프라인), spec-004(개인화 모델 상세+검증 시뮬레이터), spec-005(LLM 코칭), spec-006(MLP 설계/학습/평가/배포), arch/architecture-overview(진입 문서), report-001(슬라이드1~2).
 - **읽기 진입점**: arch/architecture-overview.md → adr-005(DP4 NN 근거) → spec-006(MLP 상세) → spec-004(개인화).
 
-## 5. 진행/다음 할 일
+## 5. 진행 현황 / 스코프 (2026-07-02)
 
-**완료 (2026-07-02): Zone2 판정 MLP PoC** — `ml/` (simulator.py, train_mlp.py, README.md, EXPERIMENT_LOG.md)
-- 결과: 규칙 0.486 → +MLP(DP4) 0.726 → +개인화(DP3) 0.743. 방향 정확성 0.995(QA1 초과), 노이즈 강건 0.702.
-- 3분류 85%는 미달(경계 밀집 인접혼동) — 상세/튜닝여정은 `ml/EXPERIMENT_LOG.md`.
-- 실행: `python3 -m venv .venv && ./.venv/bin/pip install -r ml/requirements.txt` 후 `./.venv/bin/python ml/train_mlp.py`
+**★ 스코프 확정 — 실제 구현은 2개만 (더 늘리지 말 것)**:
+1. **MLP 판정기** (=NN, 교육요건+QA1) — 완성. `ml/train_mlp.py`
+2. **Bayesian 개인 경계 보정** (개인화, QA3) — 메커니즘 검증 완료. `ml/personalization.py`
+검토한 대안(성시원 HR회귀 B 등)은 ADR/COMPARISON에 **기록만**(구현 X). 대안 비교는 설계 점수 +.
 
-**다음 후보**:
-1. 3분류 정확도 개선(노이즈 현실화/지표 재정의) 또는 지표를 방향정확성/이진으로 확정.
-2. Bayesian 개인화 추정기 수렴 검증 하네스 (spec-004 §8).
-3. 학습 모델 TFLite 변환 → app/ 온디바이스 통합.
-4. 남은 문서: 최종 Architecture 뷰 상세, 보고서 확장(구현·검증/결론).
+**PoC 결과**:
+- 판정(A): 규칙 0.485 → +MLP 0.780 → +개인화 0.826(개발지표). **QA1 코칭방향 0.996, QA2 이상치기각 1.0**(둘 다 목표 달성). 센서노이즈는 범위 밖. `ml/EXPERIMENT_LOG.md`
+- 개인화(Bayesian): 관측 양호 시 세션 누적 수렴(오차 5→2bpm, σ↓ = QA3 메커니즘 실증). 단 실제 관측(decoupling 임계추출)은 편향→발산. **병목=임계추출**(Conconi 편향, 향후과제/한계로 명시).
+- A vs B 비교: 주 판정기=A, B는 개인화/피트니스 보조. `ml/COMPARISON.md`, `arch/adr-006`(Accepted)
+- 실행: `python3 -m venv .venv && ./.venv/bin/pip install -r ml/requirements.txt`
+
+**다음 후보 (서두르지 말 것)**:
+- 임계 추출 개선(개인화 완성) 또는 한계로 문서화하고 보고서(구현·검증/결론)로 마무리.
+- 최종 Architecture 뷰 상세, app/ 스캐폴딩.
 
 ## 6. 작업 방침 (사용자 요청)
 
