@@ -33,6 +33,7 @@ import com.zone2runner.app.sensor.SimulatedRunSource
 import com.zone2runner.app.sensor.WatchHrProvider
 import com.zone2runner.app.ui.ReportHolder
 import com.zone2runner.app.ui.withSystemBarInsets
+import kotlinx.coroutines.launch
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
@@ -178,7 +179,9 @@ class RunActivity : AppCompatActivity() {
         val profile = ProfileStore.load(this)
         val c = LlmCoach(this) // 미가용 기기에선 내부적으로 RuleCoach 폴백
         coach = c
-        val eng = RunEngine(profile, classifier, c)
+        lifecycleScope.launch { c.prewarm() } // checkStatus+warmup을 첫 코칭 전에 미리
+        // coachScope 전달 → 코칭 생성(LLM ~2초)이 샘플 루프/렌더를 멈추지 않음
+        val eng = RunEngine(profile, classifier, c, coachScope = lifecycleScope)
         engine = eng
         startedAt = System.currentTimeMillis()
         frame = 0

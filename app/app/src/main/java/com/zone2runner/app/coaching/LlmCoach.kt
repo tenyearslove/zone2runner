@@ -3,6 +3,8 @@ package com.zone2runner.app.coaching
 import android.content.Context
 import com.google.mlkit.genai.common.FeatureStatus
 import com.google.mlkit.genai.prompt.Generation
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 
 /**
@@ -27,8 +29,12 @@ class LlmCoach(
     /** 이번 세션에서 실제로 LLM 문장을 한 번이라도 냈는지(리포트 coachSource 표기용). */
     fun sessionSource(): String = if (usedLlmOnce) "llm" else "rule"
 
-    private suspend fun ensureReady(): Boolean {
-        if (checked) return available
+    /** 세션 시작 시 미리 호출해 checkStatus+warmup(최대 30초)을 첫 코칭 경로에서 빼낸다. */
+    suspend fun prewarm() { ensureReady() }
+
+    // ML Kit 호출(checkStatus/warmup/generateContent)이 메인 스레드를 물지 않도록 Default로 격리
+    private suspend fun ensureReady(): Boolean = withContext(Dispatchers.Default) {
+        if (checked) return@withContext available
         checked = true
         available = try {
             val status = client.checkStatus()
@@ -39,13 +45,15 @@ class LlmCoach(
         } catch (e: Throwable) {
             false
         }
-        return available
+        available
     }
 
     override suspend fun say(ctx: CoachContext): String {
         if (!ensureReady()) return fallback.say(ctx)
         return try {
-            val res = withTimeout(6_000) { client.generateContent(buildPrompt(ctx)) }
+            val res = withContext(Dispatchers.Default) {
+                withTimeout(6_000) { client.generateContent(buildPrompt(ctx)) }
+            }
             val text = res.candidates.firstOrNull()?.text
             val guarded = guard(text)
             if (guarded != null) { usedLlmOnce = true; guarded } else fallback.say(ctx)
