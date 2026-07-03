@@ -57,6 +57,8 @@ class RunActivity : AppCompatActivity() {
     private lateinit var coachView: TextView
     private lateinit var adviceView: TextView // 동역학 NN: 목표 페이스 제안 + 60초 예측(spec-014)
     private var promptView: TextView? = null // LLM 프롬프트 노출(시뮬/목 모드만, null=라이브)
+    private var simDelayMs = 14L // 시뮬 재생 배속(샘플 간 ms): 14≈×70, 33≈×30, 100=×10, 1000=×1. 재생 중 변경 가능
+    private val speedChips = LinkedHashMap<Long, TextView>()
     private lateinit var talkRow: LinearLayout
     private lateinit var uEstView: TextView
     private lateinit var startBtn: Button
@@ -224,6 +226,19 @@ class RunActivity : AppCompatActivity() {
         uEstView = TextView(this).apply { textSize = 11f; setTextColor(C_MUTED); setPadding(0, dp(4), 0, 0) }
         dash.addView(uEstView)
 
+        // 시뮬 재생 배속(시뮬 모드만): 재생 중에도 즉시 반영
+        if (mode == MODE_SIM) {
+            val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
+            row.addView(TextView(this).apply {
+                text = "재생 배속"; textSize = 12f; setTextColor(C_MUTED)
+            }, LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f))
+            listOf("×70" to 14L, "×30" to 33L, "×10" to 100L, "×1" to 1000L).forEach { (label, ms) ->
+                row.addView(speedChip(label, ms))
+            }
+            dash.addView(row, mt(8))
+            highlightSpeed()
+        }
+
         startBtn = Button(this).apply {
             text = primaryLabel()
             setOnClickListener { onPrimary() }
@@ -271,10 +286,9 @@ class RunActivity : AppCompatActivity() {
         val src: RunSource = when (mode) {
             MODE_LIVE -> LiveRunSource(this, WatchHrProvider(this).also { watchProvider = it })
             MODE_MOCK -> MockRunSource(MockConfigStore.load(this), seed = System.nanoTime())
-            else -> SimulatedRunSource(durationMin = 30, seed = System.nanoTime(), profile = profile)
+            else -> SimulatedRunSource(durationMin = 30, seed = System.nanoTime(), delayMs = simDelayMs, profile = profile)
         }
         source = src
-        val renderEvery = if (src.realtime) 1 else 5
 
         // 필드 로그(spec-012): 원시 입력+파이프라인 출력을 1Hz JSONL로 기록(adb pull로 회수)
         val log = RunLogger(this)
@@ -311,6 +325,8 @@ class RunActivity : AppCompatActivity() {
                 }
             }
             line?.addPoint(GeoPoint(s.lat, s.lon))
+            // 배속이 느리면 매 샘플 렌더(저배속에서 5샘플 스킵 = 수 초간 화면 정지로 보임)
+            val renderEvery = if (src.realtime || simDelayMs >= 100L) 1 else 5
             if (frame % renderEvery == 0) {
                 render(state)
                 map.controller.setCenter(GeoPoint(s.lat, s.lon))
@@ -445,6 +461,32 @@ class RunActivity : AppCompatActivity() {
         }
     }
 
+    /** 시뮬 재생 배속 칩. 재생 중이면 소스에 즉시 반영(@Volatile delayMs). */
+    private fun speedChip(label: String, ms: Long) = TextView(this).apply {
+        text = label; textSize = 12f; setTextColor(C_TEXT); gravity = Gravity.CENTER
+        setPadding(dp(14), dp(6), dp(14), dp(6))
+        val lp = LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT); lp.marginStart = dp(6); layoutParams = lp
+        isClickable = true
+        speedChips[ms] = this
+        setOnClickListener {
+            simDelayMs = ms
+            (source as? SimulatedRunSource)?.delayMs = ms
+            highlightSpeed()
+        }
+    }
+
+    private fun highlightSpeed() {
+        speedChips.forEach { (ms, v) ->
+            val sel = ms == simDelayMs
+            v.setTextColor(if (sel) Color.WHITE else C_TEXT)
+            v.background = GradientDrawable().apply {
+                setColor(if (sel) C_ACCENT_DIM else C_CARD)
+                cornerRadius = dp(14).toFloat()
+                setStroke(dp(1), if (sel) C_ACCENT else C_STROKE)
+            }
+        }
+    }
+
     private fun pill(color: Int) = GradientDrawable().apply { setColor(color); cornerRadius = dp(16).toFloat() }
     private fun mt(v: Int) = LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply { topMargin = dp(v) }
     private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
@@ -467,6 +509,7 @@ class RunActivity : AppCompatActivity() {
         private val C_TEXT = Color.parseColor("#E8EAED")
         private val C_MUTED = Color.parseColor("#9AA0A6")
         private val C_ACCENT = Color.parseColor("#30D158")
+        private val C_ACCENT_DIM = Color.parseColor("#1E7A38") // 배속 선택 칩 배경
         private val C_BLUE = Color.parseColor("#5AC8FA")
         private val C_AMBER = Color.parseColor("#FF9F0A")
         private val C_CARD = Color.parseColor("#171B22")

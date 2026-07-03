@@ -47,16 +47,19 @@ class NoHrProvider : HrProvider {
     override val sourceLabel = "심박 없음"
 }
 
-/** 시뮬레이터 재생 소스. delayMs로 재생 속도 조절(14ms≈70배속, 1000ms=실시간). profile을 주면 시뮬 몸을 프로필에 고정. */
+/** 시뮬레이터 재생 소스. delayMs로 재생 속도 조절(14ms≈70배속, 1000ms=실시간). 재생 중 변경 가능. profile을 주면 시뮬 몸을 프로필에 고정. */
 class SimulatedRunSource(
     private val durationMin: Int = 30,
     private val seed: Long,
-    private val delayMs: Long = 14L,
+    delayMs: Long = 14L,
     private val profile: com.zone2runner.app.domain.Profile? = null,
 ) : RunSource {
     override val label = "시뮬레이션"
     override val realtime = false
     private var job: Job? = null
+
+    /** 샘플 간 지연(ms) — 재생 중에도 배속 칩으로 변경(1000=실시간, 14≈70배속). */
+    @Volatile var delayMs: Long = delayMs
 
     override fun start(scope: CoroutineScope, onSample: suspend (Sample) -> Unit, onComplete: suspend () -> Unit) {
         val session = RunSimulator(seed).generate(durationMin, profile = profile)
