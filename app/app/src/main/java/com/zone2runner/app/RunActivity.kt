@@ -59,6 +59,14 @@ class RunActivity : AppCompatActivity() {
     private lateinit var uEstView: TextView
     private lateinit var startBtn: Button
     private lateinit var subtitle: TextView
+    private lateinit var zoneBand: com.zone2runner.app.ui.ZoneBandView
+    private lateinit var rangeView: TextView
+    private lateinit var slopeView: TextView
+    private lateinit var spmView: TextView
+    private lateinit var driftView: TextView
+    private lateinit var tempView: TextView
+    private var profile: com.zone2runner.app.domain.Profile? = null
+    private var tempFetched = false
 
     private var classifier: Zone2Classifier? = null
     private var source: RunSource? = null
@@ -86,6 +94,23 @@ class RunActivity : AppCompatActivity() {
         }
         setContentView((buildUi()).withSystemBarInsets())
         updateSubtitle()
+        // 시작 전에도 프로필 prior 기반 목표 구간을 보여준다(개인화 갱신 시 밴드가 함께 이동)
+        profile = ProfileStore.load(this)
+        updateZoneUi(-1, com.zone2runner.app.domain.Zone2Prior.of(profile!!).uFrac0)
+    }
+
+    /** Zone2 밴드 게이지 + 범위/이탈 텍스트 갱신. */
+    private fun updateZoneUi(hr: Int, uEstFrac: Double) {
+        val p = profile ?: return
+        val hi = (p.restingHr + uEstFrac * p.hrr).toInt()
+        val lo = (p.restingHr + (uEstFrac - com.zone2runner.app.domain.Zone2Prior.BAND) * p.hrr).toInt()
+        zoneBand.update(lo, hi, p.maxHr, hr)
+        when {
+            hr <= 0 -> { rangeView.text = "Zone 2 목표 $lo ~ $hi bpm"; rangeView.setTextColor(C_MUTED) }
+            hr < lo -> { rangeView.text = "Zone 2 목표 $lo ~ $hi · ${lo - hr} bpm 아래"; rangeView.setTextColor(C_BLUE) }
+            hr > hi -> { rangeView.text = "Zone 2 목표 $lo ~ $hi · ${hr - hi} bpm 초과"; rangeView.setTextColor(C_AMBER) }
+            else -> { rangeView.text = "Zone 2 목표 $lo ~ $hi · 구간 안"; rangeView.setTextColor(C_ACCENT) }
+        }
     }
 
     private fun updateSubtitle() {
@@ -109,11 +134,12 @@ class RunActivity : AppCompatActivity() {
             controller.setZoom(16.0)
             controller.setCenter(GeoPoint(37.5665, 126.9780))
         }
-        root.addView(map, LinearLayout.LayoutParams(MATCH_PARENT, 0, 1.3f))
+        // 지도는 컴팩트하게(0.7) — 아래 판정 요소 대시보드에 공간을 준다
+        root.addView(map, LinearLayout.LayoutParams(MATCH_PARENT, 0, 0.7f))
 
         val dash = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(dp(16), dp(12), dp(16), dp(12))
+            setPadding(dp(16), dp(10), dp(16), dp(10))
         }
 
         subtitle = TextView(this).apply { textSize = 11f; setTextColor(C_MUTED) }
@@ -129,14 +155,29 @@ class RunActivity : AppCompatActivity() {
         }
         hrRow.addView(hrView, LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f))
         hrRow.addView(zoneChip)
-        dash.addView(hrRow, mt(4))
+        dash.addView(hrRow, mt(2))
+
+        // Zone 2 밴드 게이지: 목표 구간(bpm) + 현재 심박 위치/이탈 정도
+        zoneBand = com.zone2runner.app.ui.ZoneBandView(this)
+        dash.addView(zoneBand, mt(2))
+        rangeView = TextView(this).apply { textSize = 12f; setTextColor(C_ACCENT) }
+        dash.addView(rangeView, mt(2))
 
         val metrics = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
         timeView = metricVal(); distView = metricVal(); paceView = metricVal()
         metrics.addView(metricCol(timeView, "시간"))
         metrics.addView(metricCol(distView, "거리"))
         metrics.addView(metricCol(paceView, "페이스"))
-        dash.addView(metrics, mt(10))
+        dash.addView(metrics, mt(8))
+
+        // 실시간 판정 요소(MLP 특징 표시) + 기온(참고)
+        val factors = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        slopeView = metricVal(); spmView = metricVal(); driftView = metricVal(); tempView = metricVal()
+        factors.addView(metricCol(slopeView, "경사"))
+        factors.addView(metricCol(spmView, "케이던스"))
+        factors.addView(metricCol(driftView, "드리프트"))
+        factors.addView(metricCol(tempView, "기온"))
+        dash.addView(factors, mt(6))
 
         coachView = TextView(this).apply {
             text = "코칭 대기…"; textSize = 14f; setTextColor(C_ACCENT); setPadding(0, dp(10), 0, 0)
@@ -179,7 +220,8 @@ class RunActivity : AppCompatActivity() {
         line = Polyline().apply { outlinePaint.color = C_ACCENT; outlinePaint.strokeWidth = 8f }
         map.overlays.add(line)
 
-        val profile = ProfileStore.load(this)
+        val profile = ProfileStore.load(this).also { this.profile = it }
+        tempFetched = false
         val c = LlmCoach(this) // 미가용 기기에선 내부적으로 RuleCoach 폴백
         coach = c
         lifecycleScope.launch { c.prewarm() } // checkStatus+warmup을 첫 코칭 전에 미리
@@ -219,6 +261,14 @@ class RunActivity : AppCompatActivity() {
         src.start(lifecycleScope, onSample = { s ->
             val state = eng.onSample(s)
             log.sample(s, state, watchProvider?.lastAgeMs() ?: -1L)
+            if (!tempFetched) { // 기온 1회 조회(참고 표시 — 판정 특징 아님)
+                tempFetched = true
+                lifecycleScope.launch {
+                    com.zone2runner.app.data.WeatherProbe.currentTempC(s.lat, s.lon)?.let {
+                        tempView.text = "%.0f℃".format(it)
+                    }
+                }
+            }
             line?.addPoint(GeoPoint(s.lat, s.lon))
             if (frame % renderEvery == 0) {
                 render(state)
@@ -267,9 +317,24 @@ class RunActivity : AppCompatActivity() {
         if (j != null) {
             zoneChip.text = j.label; zoneChip.background = pill(j.color); hrView.setTextColor(j.color)
         }
+        updateZoneUi(s.hr, s.uEstFrac)
         timeView.text = "%02d:%02d".format(s.elapsedSec / 60, s.elapsedSec % 60)
         distView.text = if (s.distanceM < 1000) "${s.distanceM.toInt()}m" else "%.2fkm".format(s.distanceM / 1000)
         paceView.text = if (s.paceMinKm in 0.1..30.0) "%d'%02d\"".format(s.paceMinKm.toInt(), ((s.paceMinKm % 1) * 60).toInt()) else "--"
+
+        // 실시간 판정 요소(MLP 입력 특징)
+        when {
+            s.slopePct > 2 -> { slopeView.text = "↑%.1f%%".format(s.slopePct); slopeView.setTextColor(C_AMBER) }
+            s.slopePct < -2 -> { slopeView.text = "↓%.1f%%".format(-s.slopePct); slopeView.setTextColor(C_BLUE) }
+            else -> { slopeView.text = "평지"; slopeView.setTextColor(C_TEXT) }
+        }
+        spmView.text = if (s.spm > 0) "${s.spm}" else "--"
+        val dec = s.decoupling
+        if (dec == null) { driftView.text = "--"; driftView.setTextColor(C_MUTED) }
+        else {
+            driftView.text = "%+.1f%%".format(dec * 100)
+            driftView.setTextColor(if (dec > 0.05) C_AMBER else C_TEXT) // 드리프트 커지면 경고색(피로/더위 신호)
+        }
         if (s.coaching.isNotBlank()) {
             coachView.text = "🗣 ${s.coaching}"
             if (s.coaching != lastSpoken) { lastSpoken = s.coaching; speak(s.coaching) }
@@ -328,5 +393,7 @@ class RunActivity : AppCompatActivity() {
         private val C_TEXT = Color.parseColor("#E8EAED")
         private val C_MUTED = Color.parseColor("#9AA0A6")
         private val C_ACCENT = Color.parseColor("#30D158")
+        private val C_BLUE = Color.parseColor("#5AC8FA")
+        private val C_AMBER = Color.parseColor("#FF9F0A")
     }
 }

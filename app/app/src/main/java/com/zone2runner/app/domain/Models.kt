@@ -65,6 +65,11 @@ data class LiveState(
     val distanceM: Double = 0.0,
     val coaching: String = "",
     val uEstFrac: Double = 0.70,
+    // 실시간 판정 요소(MLP 입력 특징의 표시용 부분집합, spec-011 대시보드)
+    val slopePct: Double = 0.0,       // 경사 % (오르막 +)
+    val spm: Int = 0,                 // 케이던스
+    val decoupling: Double? = null,   // 드리프트(디커플링 비율), 워밍업 전 null
+    val dHrPerSec: Double? = null,    // 심박 추세(bpm/s), 워밍업 전 null
 )
 
 /** 경로 점(존 색으로 폴리라인 채색). */

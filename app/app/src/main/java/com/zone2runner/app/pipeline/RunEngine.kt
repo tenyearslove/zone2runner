@@ -73,6 +73,7 @@ class RunEngine(
         val b = personalization.boundary()
         val feat = extractor.extractAt(s.tSec, profile, b.uFrac, b.lFrac)
         if (feat != null) {
+            lastFeat = feat // 대시보드 표시용(드리프트/심박 추세)
             judgment = classifier?.classify(feat)?.judgment ?: Zone2Classifier.ruleClassify(feat)
             // 개인화 관측 후보: decoupling(=feat[5]) 임계 부근의 지속 HR
             val hrFrac = feat[0] + b.uFrac
@@ -135,6 +136,7 @@ class RunEngine(
 
     private var coachJob: Job? = null
     private var lastCoachText = ""
+    private var lastFeat: DoubleArray? = null
 
     private fun liveState(s: Sample) = LiveState(
         elapsedSec = elapsed,
@@ -145,6 +147,10 @@ class RunEngine(
         distanceM = distanceM,
         coaching = lastCoachText,
         uEstFrac = personalization.boundary().uFrac,
+        slopePct = s.slopePct,
+        spm = s.spm,
+        decoupling = lastFeat?.get(5), // 특징 벡터 규약(spec-006 §1): [.., dHR(2), .., decoupling(5), ..]
+        dHrPerSec = lastFeat?.get(2),
     )
 
     fun report(): RunReport = RunReport(
