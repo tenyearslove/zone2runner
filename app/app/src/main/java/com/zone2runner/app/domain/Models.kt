@@ -2,8 +2,21 @@ package com.zone2runner.app.domain
 
 import android.graphics.Color
 
-/** 사용자 프로필. Zone2 경계 산정의 사전값(공식). spec-009 연동 전 기본값 사용. */
-data class Profile(val age: Int, val restingHr: Int, val maxHr: Int) {
+/**
+ * 사용자 프로필. Zone2 경계 산정의 사전값(공식+factor, adr-012/spec-013).
+ * bodyType/fitnessLevel/weeklyFreq: 1~5 단계(3=중앙). 기존 저장값은 기본값으로 로드(하위 호환).
+ */
+data class Profile(
+    val age: Int,
+    val restingHr: Int,
+    val maxHr: Int,
+    val heightCm: Int = 170,
+    val weightKg: Int = 70,
+    val bodyType: Int = 3,      // 1 매우마른형 ~ 5 비만형
+    val fitnessLevel: Int = 3,  // 1 입문 ~ 5 엘리트
+    val weeklyFreq: Int = 3,    // 1 거의 안 함 ~ 5 거의 매일
+    val rhrEstimated: Boolean = false, // RHR 모름 → factor 기반 추정치 사용 중(spec-013)
+) {
     val hrr: Double get() = (maxHr - restingHr).toDouble()
     companion object {
         fun default(age: Int = 35, restingHr: Int = 58) =

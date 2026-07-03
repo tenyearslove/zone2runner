@@ -95,8 +95,9 @@ class HomeActivity : AppCompatActivity() {
     }
 
     private fun profileCard(p: Profile): View {
-        val lo = (p.restingHr + 0.60 * p.hrr).toInt()
-        val hi = (p.restingHr + 0.70 * p.hrr).toInt()
+        val prior = com.zone2runner.app.domain.Zone2Prior.of(p) // factor 반영 prior(spec-013) — 프로필 화면과 일치
+        val lo = (p.restingHr + (prior.uFrac0 - com.zone2runner.app.domain.Zone2Prior.BAND) * p.hrr).toInt()
+        val hi = (p.restingHr + prior.uFrac0 * p.hrr).toInt()
         val grid = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         grid.addView(LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
@@ -105,7 +106,7 @@ class HomeActivity : AppCompatActivity() {
             addView(statTile("${p.maxHr}", "최대 심박"), cell())
         })
         grid.addView(TextView(this).apply {
-            text = "Zone 2 목표 심박: $lo ~ $hi bpm (HRR 60~70% 공식 기준)"
+            text = "Zone 2 목표 심박: $lo ~ $hi bpm (프로필 기반 초기값, 러닝마다 보정)"
             textSize = 13f; setTextColor(Palette.ACCENT); setPadding(0, dpi(8), 0, 0)
         })
         return grid
