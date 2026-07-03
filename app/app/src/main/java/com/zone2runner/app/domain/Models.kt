@@ -118,9 +118,10 @@ data class RunReport(
             val s = series.filter { it.hr > 0 && it.paceMinKm in 0.1..30.0 }
             if (s.size < 8) return 0.0
             val half = s.size / 2
+            // HR/속도(= hr*pace/60, EF 역수) 기반 — hr/pace는 강도 변화에 지배돼 드리프트 지표로 부적합
             fun ratio(sub: List<SeriesPoint>): Double {
                 var acc = 0.0; var c = 0
-                for (p in sub) { acc += p.hr / p.paceMinKm; c++ }
+                for (p in sub) { acc += p.hr * p.paceMinKm / 60.0; c++ }
                 return if (c > 0) acc / c else 0.0
             }
             val r1 = ratio(s.subList(0, half))

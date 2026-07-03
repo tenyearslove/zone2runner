@@ -149,7 +149,7 @@ class RunEngine(
         uEstFrac = personalization.boundary().uFrac,
         slopePct = s.slopePct,
         spm = s.spm,
-        decoupling = lastFeat?.get(5), // 특징 벡터 규약(spec-006 §1): [.., dHR(2), .., decoupling(5), ..]
+        decoupling = extractor.displayDriftAt(s.tSec), // 표시용(HR/속도 기반) — 특징 feat[5]와 별개
         dHrPerSec = lastFeat?.get(2),
     )
 

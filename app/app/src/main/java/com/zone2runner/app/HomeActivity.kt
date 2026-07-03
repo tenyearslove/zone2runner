@@ -55,6 +55,11 @@ class HomeActivity : AppCompatActivity() {
             setPadding(dpi(18), dpi(24), dpi(18), dpi(28))
         }
 
+        // 인증 과제 타이틀(사용자 요청): 프로그램명 + 앱명
+        col.addView(TextView(this).apply {
+            text = "AI Specialist"; textSize = 12f; setTextColor(Palette.ACCENT)
+            letterSpacing = 0.12f; setTypeface(typeface, android.graphics.Typeface.BOLD)
+        })
         col.addView(title("Zone2 Runner"))
         col.addView(subtitle("개인화 유산소(Zone 2) 러닝 코칭 · 온디바이스 AI"))
 

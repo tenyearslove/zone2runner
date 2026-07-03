@@ -15,6 +15,9 @@ class FeatureExtractor {
         const val STRIDE = 5
         private const val W = 30   // dHR / decoupling 윈도우
         private const val HRW = 60 // 지속 상태 윈도우
+        // 표시용 드리프트 기준선 구간(HR 안정 후) — displayDriftAt 참조
+        const val BASE_FROM = 180
+        const val BASE_TO = 240
     }
 
     private val hr = ArrayList<Double>()   // 이상치 제거된 bpm
@@ -66,4 +69,27 @@ class FeatureExtractor {
         for (i in from until to) { if (i >= 0 && i < a.size) { s += a[i]; c++ } }
         return if (c > 0) s / c else 0.0
     }
+
+    // ---- 표시용 드리프트 (사용자 노출 지표 — 특징 feat[5]와 별개) ----
+    // feat[5]의 hr/pace 비율은 강도 변화에 지배되고 워밍업 중 기준선이라 값이 부풀어
+    // 사용자 지표로 부적합(실기기 관찰: +30~50%). 표시는 생리학 관례(Pw:HR 디커플링)에 맞춰
+    // HR/속도(EF 역수) 기반 + HR 안정 후(3~4분) 기준선으로 계산한다. 통상 0~10%, >5% 피로 신호.
+    private var displayBase = Double.NaN
+
+    /** 표시용 드리프트(비율). 기준선(3~4분) 확보 전엔 null. */
+    fun displayDriftAt(t: Int): Double? {
+        if (t < BASE_TO + 60) return null
+        if (displayBase.isNaN()) {
+            var s = 0.0; var c = 0
+            for (i in BASE_FROM until minOf(BASE_TO, hr.size)) { s += hrPerSpeed(i); c++ }
+            if (c < 30) return null
+            displayBase = s / c
+        }
+        var s = 0.0; var c = 0
+        for (i in maxOf(0, t - 60) until minOf(t, hr.size)) { s += hrPerSpeed(i); c++ }
+        return if (c > 0 && displayBase > 0) (s / c) / displayBase - 1.0 else null
+    }
+
+    /** HR / 속도(km/h) = hr * pace / 60 — 같은 속도 대비 심박 비용(EF 역수). */
+    private fun hrPerSpeed(i: Int): Double = hr[i] * pace[i] / 60.0
 }
