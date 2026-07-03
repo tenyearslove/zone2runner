@@ -26,6 +26,10 @@ class LlmCoach(
     private var available = false
     private var usedLlmOnce = false
 
+    /** 방향 잠금 가드(DirectionGuard)가 LLM 문장을 기각한 횟수(필드 로그 end 이벤트용). */
+    @Volatile var directionRejects = 0
+        private set
+
     /** 이번 세션에서 실제로 LLM 문장을 한 번이라도 냈는지(리포트 coachSource 표기용). */
     fun sessionSource(): String = if (usedLlmOnce) "llm" else "rule"
 
@@ -56,18 +60,29 @@ class LlmCoach(
             }
             val text = res.candidates.firstOrNull()?.text
             val guarded = guard(text)
-            if (guarded != null) { usedLlmOnce = true; guarded } else fallback.say(ctx)
+            when {
+                guarded == null -> fallback.say(ctx)
+                !DirectionGuard.ok(intentOf(ctx.judgment), guarded) -> {
+                    directionRejects++ // 방향 모순/무방향 문장 기각(adr-002 방향 잠금)
+                    fallback.say(ctx)
+                }
+                else -> { usedLlmOnce = true; guarded }
+            }
         } catch (e: Throwable) {
             fallback.say(ctx) // 포그라운드 제약(ErrorCode 30)/타임아웃 등 -> 규칙 폴백
         }
     }
 
-    /** 규칙이 정한 방향을 프롬프트에 명시(방향 잠금) + 지형 맥락. LLM은 표현만 바꾼다. */
+    /** 규칙이 정한 방향을 프롬프트에 명시(방향 잠금) + 지형 맥락. LLM은 표현만 바꾼다.
+     *  방향 표현을 반드시 포함하도록 지시 — DirectionGuard 통과율을 높인다(미포함 시 규칙 폴백). */
     private fun buildPrompt(ctx: CoachContext): String {
-        val direction = when (intentOf(ctx.judgment)) {
-            CoachIntent.SPEED_UP -> "페이스를 살짝 올려 심박을 Zone 2로 높이도록"
-            CoachIntent.SLOW_DOWN -> "페이스를 조금 낮춰 심박을 Zone 2로 내리도록"
-            CoachIntent.MAINTAIN -> "지금 페이스를 그대로 유지하도록"
+        val (direction, must) = when (intentOf(ctx.judgment)) {
+            CoachIntent.SPEED_UP ->
+                "페이스를 살짝 올려 심박을 Zone 2로 높이도록" to "'올려' 또는 '높여' 같은 올리는 표현을 문장에 반드시 포함하세요."
+            CoachIntent.SLOW_DOWN ->
+                "페이스를 조금 낮춰 심박을 Zone 2로 내리도록" to "'낮춰' 또는 '천천히' 같은 낮추는 표현을 문장에 반드시 포함하세요."
+            CoachIntent.MAINTAIN ->
+                "지금 페이스를 그대로 유지하도록" to "속도를 올리거나 낮추라는 말은 하지 마세요."
         }
         val terrain = when {
             ctx.slopePct > 2 -> "지형은 오르막"
@@ -75,7 +90,7 @@ class LlmCoach(
             else -> "지형은 평지"
         }
         return "당신은 러닝 코치입니다. $terrain 입니다. 러너에게 ${direction} " +
-            "격려하는 한국어 한 문장으로 자연스럽게 안내하세요. 25자 내외, 따옴표와 이모지 없이."
+            "격려하는 한국어 한 문장으로 자연스럽게 안내하세요. $must 25자 내외, 따옴표와 이모지 없이."
     }
 
     /** 출력 가드(adr-002): 공백 정리/따옴표 제거/첫 문장/길이 제한. 비면 null(폴백). */

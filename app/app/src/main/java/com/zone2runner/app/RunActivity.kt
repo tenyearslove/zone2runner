@@ -252,6 +252,7 @@ class RunActivity : AppCompatActivity() {
             put("saved", true); put("savedId", ReportHolder.last?.id ?: "")
             put("durationSec", report.durationSec); put("distanceM", report.distanceM.toInt())
             put("zone2Pct", report.zone2Pct); put("coachSource", report.coachSource)
+            put("directionRejects", coach?.directionRejects ?: 0)
         }
         logger?.close(); logger = null
         render(LiveState(report.durationSec, report.avgHr, null, report.avgPaceMinKm, 0.0, report.distanceM, "세션 종료 · 저장됨", report.uEstEndFrac))

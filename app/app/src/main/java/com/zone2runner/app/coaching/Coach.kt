@@ -29,6 +29,29 @@ interface Coach {
     val name: String
 }
 
+/**
+ * adr-002 출력 가드 - 방향 잠금 검사. LLM 문장이 규칙이 정한 방향과 모순(반대 지시)이거나
+ * 방향을 전달하지 않으면 기각 → 호출부(LlmCoach)는 규칙 폴백.
+ * 필드 실측(2026-07-03): "초과" 상황에서 "힘내세요!" 같은 무방향/역방향 문장이 가드를 통과했음.
+ *
+ * 어휘 2단계: 좁은 명령어(upWords/downWords)는 모순 판정용 — 오탐을 피하려고 명령형만
+ * ("올라가요"의 "올라", "내리막"의 "내리"는 안 걸리게 "올려/올리", "늦춰/낮춰"만).
+ * 넓은 단서(upCues/downCues)는 방향 전달 확인용.
+ */
+object DirectionGuard {
+    private val upWords = listOf("올려", "올리", "높여", "높이", "빠르게", "밀어", "박차", "스퍼트")
+    private val downWords = listOf("늦춰", "늦추", "낮춰", "낮추", "줄여", "줄이", "천천히", "느리게")
+    // "속도를 내"는 require용 단서로만(모순 판정 upWords엔 없음 — "속도를 내려"와의 충돌 방지)
+    private val upCues = upWords + listOf("끌어올", "페이스를 올", "속도를 올", "속도를 내")
+    private val downCues = downWords + listOf("내려", "내리", "호흡", "고르", "여유", "진정", "편안", "무리하지", "가라앉")
+
+    fun ok(intent: CoachIntent, text: String): Boolean = when (intent) {
+        CoachIntent.SPEED_UP -> downWords.none(text::contains) && upCues.any(text::contains)
+        CoachIntent.SLOW_DOWN -> upWords.none(text::contains) && downCues.any(text::contains)
+        CoachIntent.MAINTAIN -> upWords.none(text::contains) && downWords.none(text::contains)
+    }
+}
+
 /** 정적 규칙 코치. 의도별 문구를 상황(경사)에 맞게 고른다. */
 class RuleCoach : Coach {
     override val name = "rule"
