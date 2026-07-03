@@ -1,12 +1,17 @@
 package com.zone2runner.wear
 
+import android.content.Context
 import android.graphics.Color
 
 /**
- * 워치 측 존 판정(단순판) — %HRmax 5구간.
+ * 워치 측 존 판정(경량판).
  *
- * 주의: 실제 zone2runner의 "개인화 Zone 2 판정"은 폰에서 다변량 MLP + Bayesian 경계로 수행한다
- * (arch/adr-005, spec-006). 워치는 러닝 중 즉시 피드백용 경량 존 표시만 담당한다.
+ * 기준 동기화: 폰이 프로필 기반 Zone 2 경계(adr-012 prior)를 Data Layer `/zones`로 푸시하면
+ * (ZoneSyncService) 저장해 사용한다 — 같은 심박에 워치/폰 존 표시가 어긋나는 문제 해소.
+ * 미수신(폰 미연동) 시 기존 %HRmax(190) 기본값으로 동작한다.
+ *
+ * 주의: 실제 "개인화 Zone 2 판정"은 폰에서 다변량 MLP + Bayesian 경계로 수행(adr-005, spec-006).
+ * 워치는 러닝 중 즉시 피드백용 존 표시만 담당한다.
  */
 enum class HrZone(val short: String, val desc: String, val color: Int) {
     Z1("Z1", "회복", Color.parseColor("#5AC8FA")),
@@ -17,29 +22,57 @@ enum class HrZone(val short: String, val desc: String, val color: Int) {
 }
 
 object Zones {
-    // TODO(spec-009): 프로필/연령 연동 시 개인 HRmax/RHR로 대체
-    const val HR_MAX = 190
-    const val HR_REST = 60
+    // 폰 미연동 기본값 — 기존 %HRmax 190 동작과 동일(Z2 114~133)
+    private const val DEF_MAX = 190
+    @Volatile private var maxHr = DEF_MAX
+    @Volatile private var z2Lo = (DEF_MAX * 0.60).toInt()
+    @Volatile private var z2Hi = (DEF_MAX * 0.70).toInt()
+    @Volatile var synced = false // 폰에서 경계를 받은 적 있는지(UI 표시용)
+        private set
 
-    /** %HRmax 5구간: <60 Z1, 60-70 Z2, 70-80 Z3, 80-90 Z4, >=90 Z5 */
+    private const val PREF = "zones"
+
+    fun load(ctx: Context) {
+        val p = ctx.getSharedPreferences(PREF, Context.MODE_PRIVATE)
+        if (!p.getBoolean("synced", false)) return
+        maxHr = p.getInt("max_hr", DEF_MAX)
+        z2Lo = p.getInt("z2_lo", z2Lo)
+        z2Hi = p.getInt("z2_hi", z2Hi)
+        synced = true
+    }
+
+    /** 폰이 보낸 개인 경계 저장 + 즉시 적용 (ZoneSyncService). */
+    fun save(ctx: Context, maxHrIn: Int, lo: Int, hi: Int) {
+        if (maxHrIn !in 120..230 || lo !in 60..220 || hi !in lo + 1..229) return // 이상 payload 무시
+        maxHr = maxHrIn; z2Lo = lo; z2Hi = hi; synced = true
+        ctx.getSharedPreferences(PREF, Context.MODE_PRIVATE).edit()
+            .putBoolean("synced", true)
+            .putInt("max_hr", maxHrIn).putInt("z2_lo", lo).putInt("z2_hi", hi)
+            .apply()
+    }
+
+    /**
+     * 5구간: Z2 = 동기화된 개인 경계(폰과 동일 기준). Z1 = 그 아래.
+     * Z3~Z5 = Z2 상한~최대심박을 3등분(개인 상한 기준의 상대 구간).
+     */
     fun zoneOf(bpm: Int): HrZone {
-        val pct = bpm.toDouble() / HR_MAX * 100
+        if (bpm < z2Lo) return HrZone.Z1
+        if (bpm <= z2Hi) return HrZone.Z2
+        val seg = ((maxHr - z2Hi) / 3.0).coerceAtLeast(1.0)
         return when {
-            pct < 60 -> HrZone.Z1
-            pct < 70 -> HrZone.Z2
-            pct < 80 -> HrZone.Z3
-            pct < 90 -> HrZone.Z4
+            bpm <= z2Hi + seg -> HrZone.Z3
+            bpm <= z2Hi + 2 * seg -> HrZone.Z4
             else -> HrZone.Z5
         }
     }
 
-    /** 게이지 마커 위치 0..1 (50%~100% HRmax를 5존에 균등 매핑). */
+    /** 게이지 마커 위치 0..1 — Z1 시작(Z2 하한 - 밴드폭)부터 최대심박까지 선형. */
     fun gaugeFraction(bpm: Int): Float {
-        val pct = bpm.toDouble() / HR_MAX * 100
-        return ((pct - 50) / 50).coerceIn(0.0, 1.0).toFloat()
+        val start = z2Lo - (z2Hi - z2Lo)
+        val range = (maxHr - start).coerceAtLeast(1)
+        return ((bpm - start).toDouble() / range).coerceIn(0.0, 1.0).toFloat()
     }
 
     /** Zone 2 목표 심박 범위(bpm). */
-    val zone2Bpm: IntRange
-        get() = (HR_MAX * 0.60).toInt()..(HR_MAX * 0.70).toInt()
+    val zone2Bpm: IntRange get() = z2Lo..z2Hi
 }

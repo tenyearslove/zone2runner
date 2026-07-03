@@ -32,6 +32,16 @@
             android:name=".RunService"
             android:exported="false"
             android:foregroundServiceType="health|location" />
+
+        <!-- 폰 → 워치 존 경계 동기화 수신(/zones). 앱 미실행 시에도 GMS가 깨워서 전달 -->
+        <service
+            android:name=".ZoneSyncService"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.google.android.gms.wearable.MESSAGE_RECEIVED" />
+                <data android:scheme="wear" android:host="*" android:pathPrefix="/zones" />
+            </intent-filter>
+        </service>
     </application>
 
 </manifest>

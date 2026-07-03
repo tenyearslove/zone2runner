@@ -56,6 +56,7 @@ class WearRunActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        Zones.load(this) // 폰에서 동기화된 개인 존 경계 적용(없으면 기본값)
         setContentView(buildUi())
         render()
     }

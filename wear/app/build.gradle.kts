@@ -8,7 +8,9 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.zone2runner.wear"
+        // Data Layer(/hr, /zones)는 폰-워치 앱의 applicationId가 같아야 메시지를 라우팅한다
+        // (sensor-poc에서 확인된 제약 — 다르면 워치→폰 HR 전송이 조용히 실패). 코드 패키지는 namespace 유지.
+        applicationId = "com.zone2runner.app"
         minSdk = 30 // Wear OS 4/5 (Galaxy Watch 8)
         targetSdk = 34
         versionCode = 1

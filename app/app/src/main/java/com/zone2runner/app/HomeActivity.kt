@@ -42,7 +42,11 @@ class HomeActivity : AppCompatActivity() {
 
     private companion object { var onboardingShown = false }
 
-    override fun onResume() { super.onResume(); setContentView((buildUi()).withSystemBarInsets()) } // 프로필/기록 변경 반영
+    override fun onResume() {
+        super.onResume()
+        setContentView((buildUi()).withSystemBarInsets()) // 프로필/기록 변경 반영
+        com.zone2runner.app.data.ZoneSync.push(this) // 워치 존 기준 동기화(프로필 변경 반영, fire-and-forget)
+    }
 
     private fun buildUi(): View {
         val profile = ProfileStore.load(this)
