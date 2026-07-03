@@ -189,7 +189,7 @@ class RunActivity : AppCompatActivity() {
         val src: RunSource = when (mode) {
             MODE_LIVE -> LiveRunSource(this, WatchHrProvider(this))
             MODE_MOCK -> MockRunSource(MockConfigStore.load(this), seed = System.nanoTime())
-            else -> SimulatedRunSource(durationMin = 30, seed = System.nanoTime())
+            else -> SimulatedRunSource(durationMin = 30, seed = System.nanoTime(), profile = profile)
         }
         source = src
         val renderEvery = if (src.realtime) 1 else 5

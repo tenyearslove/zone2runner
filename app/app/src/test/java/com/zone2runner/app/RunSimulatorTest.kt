@@ -1,5 +1,6 @@
 package com.zone2runner.app
 
+import com.zone2runner.app.domain.Profile
 import com.zone2runner.app.sim.RunSimulator
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -23,6 +24,25 @@ class RunSimulatorTest {
         // GPS가 움직임(시작과 끝이 달라야 함)
         val moved = Math.abs(s.first().lat - s.last().lat) + Math.abs(s.first().lon - s.last().lon)
         assertTrue("경로가 이동해야 함", moved > 1e-4)
+    }
+
+    @Test fun hr_neverExceedsRunnerMaxHr() {
+        // 여러 시드에서 참 HR이 최대심박에 포화하는지(클램프). 관측 노이즈(sd<=1.0)만 소폭 허용.
+        for (seed in longArrayOf(1L, 42L, 99L, 12345L)) {
+            val session = RunSimulator(seed).generate(durationMin = 30)
+            val cap = session.runner.maxHr + 5
+            val over = session.samples.count { it.hr > cap }
+            assertEquals("seed=$seed: HR이 maxHr(${session.runner.maxHr})를 초과", 0, over)
+        }
+    }
+
+    @Test fun profile_anchorsRunnerBody() {
+        val p = Profile(age = 35, restingHr = 58, maxHr = 183)
+        val session = RunSimulator(seed = 3L).generate(durationMin = 5, profile = p)
+        assertEquals(35, session.runner.age)
+        assertEquals(58, session.runner.resting)
+        assertEquals(183, session.runner.maxHr)
+        assertTrue("HR이 프로필 maxHr 근방 이하", session.samples.all { it.hr <= 183 + 5 })
     }
 
     @Test fun sameSeed_isDeterministic() {

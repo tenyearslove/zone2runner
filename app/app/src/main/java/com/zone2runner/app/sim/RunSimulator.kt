@@ -1,5 +1,6 @@
 package com.zone2runner.app.sim
 
+import com.zone2runner.app.domain.Profile
 import com.zone2runner.app.domain.Sample
 import java.util.Random
 import kotlin.math.cos
@@ -24,10 +25,15 @@ class RunSimulator(seed: Long = 42L) {
     private fun u(a: Double, b: Double) = a + rng.nextDouble() * (b - a)
     private fun gauss(m: Double, s: Double) = m + rng.nextGaussian() * s
 
-    fun makeRunner(): SimRunner {
-        val age = 20 + rng.nextInt(35)
-        val resting = u(48.0, 68.0).toInt()
-        val maxHr = (208 - 0.7 * age)
+    /**
+     * profile을 주면 신체 스펙(나이/안정심박/최대심박)을 사용자 프로필에 고정한다 —
+     * 앱 시뮬 모드에서 판정은 프로필 기준인데 시뮬 몸이 랜덤이면 표시 HR과 존 판정이 어긋난다.
+     * 개인 임계(uFrac)는 여전히 랜덤 — 개인화(Bayesian) 데모의 핵심이므로 유지.
+     */
+    fun makeRunner(profile: Profile? = null): SimRunner {
+        val age = profile?.age ?: (20 + rng.nextInt(35))
+        val resting = profile?.restingHr ?: u(48.0, 68.0).toInt()
+        val maxHr = profile?.maxHr?.toDouble() ?: (208 - 0.7 * age)
         val hrr = maxHr - resting
         val uFrac = gauss(0.70, 0.045).coerceIn(0.55, 0.85)
         val band = u(0.08, 0.13)
@@ -77,8 +83,13 @@ class RunSimulator(seed: Long = 42L) {
         return smooth(slope, 20)
     }
 
-    fun generate(durationMin: Int = 30, startLat: Double = 37.5665, startLon: Double = 126.9780): Session {
-        val r = makeRunner()
+    fun generate(
+        durationMin: Int = 30,
+        startLat: Double = 37.5665,
+        startLon: Double = 126.9780,
+        profile: Profile? = null,
+    ): Session {
+        val r = makeRunner(profile)
         val n = durationMin * 60
         val effort = effortProfile(n)
         val slope = terrain(n)
@@ -95,7 +106,9 @@ class RunSimulator(seed: Long = 42L) {
             val excess = maxOf(0.0, effortHr[i] - uAbs)
             val driftTarget = r.driftScale * excess
             drift += (driftTarget - drift) * (1.0 / r.driftTau)
-            hr[i] = hrLag + drift
+            // 생리적 상한: HR은 최대심박을 넘지 못한다(포화). 클램프 없으면
+            // 고강도 지속+드리프트로 maxHr+30bpm(220~230)까지 치솟음(ml/simulator.py도 동일 한계 — 문서화됨).
+            hr[i] = (hrLag + drift).coerceAtMost(r.maxHr.toDouble())
         }
 
         val samples = ArrayList<Sample>(n)
