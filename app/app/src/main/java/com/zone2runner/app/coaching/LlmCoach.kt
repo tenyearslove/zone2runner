@@ -115,12 +115,26 @@ class LlmCoach(
             "격려하는 한국어 한 문장으로 자연스럽게 안내하세요. $must$cadence 35자 내외, 따옴표와 이모지 없이."
     }
 
-    /** 출력 가드(adr-002): 공백 정리/따옴표 제거/최대 2문장(방향+케이던스 폼)/길이 제한. 비면 null(폴백). */
+    /** 출력 가드(adr-002): 이모지 제거(TTS가 읽음)/공백 정리/따옴표 제거/최대 2문장/길이 제한. 비면 null(폴백). */
     private fun guard(raw: String?): String? {
-        val t = raw?.trim()?.replace(Regex("\\s+"), " ")?.trim('"', '\'', '“', '”') ?: return null
+        val t = raw?.let(::stripEmoji)?.trim()?.replace(Regex("\\s+"), " ")?.trim('"', '\'', '“', '”') ?: return null
         if (t.isBlank()) return null
         val sentences = t.split(Regex("(?<=[.!?。])")).map { it.trim() }.filter { it.isNotBlank() }
         val kept = sentences.take(2).joinToString(" ").ifBlank { t }
         return if (kept.length > 90) kept.take(89) + "…" else kept
+    }
+
+    /** 이모지/픽토그램 제거 — 프롬프트로 금지해도 LLM이 종종 붙이고, TTS가 "웃는 얼굴"처럼 읽는다. */
+    private fun stripEmoji(s: String): String {
+        val sb = StringBuilder(s.length)
+        var i = 0
+        while (i < s.length) {
+            val cp = s.codePointAt(i)
+            val emoji = cp in 0x1F000..0x1FAFF || cp in 0x2600..0x27BF || cp in 0x2B00..0x2BFF ||
+                cp in 0xFE00..0xFE0F || cp == 0x200D || cp in 0x1F1E6..0x1F1FF
+            if (!emoji) sb.appendCodePoint(cp)
+            i += Character.charCount(cp)
+        }
+        return sb.toString()
     }
 }

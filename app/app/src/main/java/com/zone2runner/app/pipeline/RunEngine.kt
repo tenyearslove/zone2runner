@@ -147,8 +147,11 @@ class RunEngine(
     private suspend fun maybeCoach(s: Sample) {
         val j = judgment ?: return
         val changed = j != lastJudgmentForCoach
-        if (!changed || s.tSec - lastCoachSec < 20) return
-        lastPreemptiveIntent = null // 실제 판정이 바뀌면 선제 상태 리셋
+        // 존 밖(미달/초과)에 계속 머물면 60초마다 재코칭 — 판정 변화만 기다리면
+        // 초과가 지속될 때 코칭이 영영 침묵한다(실기기 시뮬 관찰)
+        val overdue = j != ZoneJudgment.IN && s.tSec - lastCoachSec >= 60
+        if ((!changed && !overdue) || s.tSec - lastCoachSec < 20) return
+        lastPreemptiveIntent = null // 실제 판정 코칭이 나가면 선제 상태 리셋
         fireCoach(s, j, preemptive = false)
     }
 

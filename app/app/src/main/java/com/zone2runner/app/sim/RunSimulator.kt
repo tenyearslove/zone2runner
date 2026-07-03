@@ -61,12 +61,14 @@ class RunSimulator(seed: Long = 42L) {
         var t = w
         while (t < n) {
             val seg = minOf(60 + rng.nextInt(180), n - t)
-            val target = gauss(0.66, 0.09).coerceIn(0.4, 0.92)
+            // 상한 0.85: 0.92까지 허용하면 고강도 서지+드리프트로 HR이 최대심박 클램프에
+            // 수 분간 붙어(≈200) 비현실적(사용자 관찰). Zone2 데모답게 초과는 만들되 천장은 피한다.
+            val target = gauss(0.64, 0.08).coerceIn(0.4, 0.85)
             for (i in t until t + seg) p[i] = target
             t += seg
         }
         val s = smooth(p, 15)
-        for (i in s.indices) s[i] = s[i].coerceIn(0.35, 0.95)
+        for (i in s.indices) s[i] = s[i].coerceIn(0.35, 0.88)
         return s
     }
 

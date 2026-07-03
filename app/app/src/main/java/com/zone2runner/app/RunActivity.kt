@@ -59,6 +59,11 @@ class RunActivity : AppCompatActivity() {
     private var promptView: TextView? = null // LLM 프롬프트 노출(시뮬/목 모드만, null=라이브)
     private var simDelayMs = 14L // 시뮬 재생 배속(샘플 간 ms): 14≈×70, 33≈×30, 100=×10, 1000=×1. 재생 중 변경 가능
     private val speedChips = LinkedHashMap<Long, TextView>()
+    private var manualMode = false // 시뮬 수동 페이스 모드(페이스 슬라이더 → 심박이 따라옴)
+    private var manualPace = 7.0
+    private var manualChip: TextView? = null
+    private var paceRow: LinearLayout? = null
+    private var paceLabel: TextView? = null
     private lateinit var talkRow: LinearLayout
     private lateinit var uEstView: TextView
     private lateinit var startBtn: Button
@@ -237,6 +242,49 @@ class RunActivity : AppCompatActivity() {
             }
             dash.addView(row, mt(8))
             highlightSpeed()
+
+            // 수동 페이스 모드: 심박을 직접 정하는 대신 페이스를 정하면 심박이 생리 모델로 따라온다
+            val manualRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
+            manualRow.addView(TextView(this).apply {
+                text = "시뮬 입력"; textSize = 12f; setTextColor(C_MUTED)
+            }, LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f))
+            manualChip = TextView(this).apply {
+                textSize = 12f; gravity = Gravity.CENTER
+                setPadding(dp(14), dp(6), dp(14), dp(6))
+                val lp = LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT); lp.marginStart = dp(6); layoutParams = lp
+                isClickable = true
+                setOnClickListener {
+                    if (running) {
+                        Toast.makeText(this@RunActivity, "시작 전에만 전환할 수 있어요", Toast.LENGTH_SHORT).show()
+                    } else {
+                        manualMode = !manualMode
+                        updateManualUi()
+                    }
+                }
+            }
+            manualRow.addView(manualChip)
+            dash.addView(manualRow, mt(6))
+
+            // 페이스 슬라이더(수동 모드만 표시): 3'30"~12'00", 재생 중에도 즉시 반영
+            paceRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
+            paceLabel = TextView(this).apply { textSize = 13f; setTextColor(C_TEXT); setTypeface(typeface, Typeface.BOLD) }
+            val seek = android.widget.SeekBar(this).apply {
+                max = 85 // 3.5 + 0.1*progress → 3.5~12.0 min/km
+                progress = ((manualPace - 3.5) * 10).toInt()
+                setOnSeekBarChangeListener(object : android.widget.SeekBar.OnSeekBarChangeListener {
+                    override fun onProgressChanged(sb: android.widget.SeekBar?, p: Int, fromUser: Boolean) {
+                        manualPace = 3.5 + p * 0.1
+                        (source as? com.zone2runner.app.sim.ManualRunSource)?.targetPace = manualPace
+                        updatePaceLabel()
+                    }
+                    override fun onStartTrackingTouch(sb: android.widget.SeekBar?) {}
+                    override fun onStopTrackingTouch(sb: android.widget.SeekBar?) {}
+                })
+            }
+            paceRow!!.addView(seek, LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f))
+            paceRow!!.addView(paceLabel, LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT).apply { marginStart = dp(10) })
+            dash.addView(paceRow, mt(4))
+            updateManualUi()
         }
 
         startBtn = Button(this).apply {
@@ -286,7 +334,9 @@ class RunActivity : AppCompatActivity() {
         val src: RunSource = when (mode) {
             MODE_LIVE -> LiveRunSource(this, WatchHrProvider(this).also { watchProvider = it })
             MODE_MOCK -> MockRunSource(MockConfigStore.load(this), seed = System.nanoTime())
-            else -> SimulatedRunSource(durationMin = 30, seed = System.nanoTime(), delayMs = simDelayMs, profile = profile)
+            else ->
+                if (manualMode) com.zone2runner.app.sim.ManualRunSource(profile, manualPace, delayMs = simDelayMs, seed = System.nanoTime())
+                else SimulatedRunSource(durationMin = 30, seed = System.nanoTime(), delayMs = simDelayMs, profile = profile)
         }
         source = src
 
@@ -471,8 +521,27 @@ class RunActivity : AppCompatActivity() {
         setOnClickListener {
             simDelayMs = ms
             (source as? SimulatedRunSource)?.delayMs = ms
+            (source as? com.zone2runner.app.sim.ManualRunSource)?.delayMs = ms
             highlightSpeed()
         }
+    }
+
+    private fun updateManualUi() {
+        manualChip?.apply {
+            text = if (manualMode) "수동 페이스" else "자동 시나리오"
+            setTextColor(if (manualMode) Color.WHITE else C_TEXT)
+            background = GradientDrawable().apply {
+                setColor(if (manualMode) C_ACCENT_DIM else C_CARD)
+                cornerRadius = dp(14).toFloat()
+                setStroke(dp(1), if (manualMode) C_ACCENT else C_STROKE)
+            }
+        }
+        paceRow?.visibility = if (manualMode) android.view.View.VISIBLE else android.view.View.GONE
+        updatePaceLabel()
+    }
+
+    private fun updatePaceLabel() {
+        paceLabel?.text = "목표 %d'%02d\"".format(manualPace.toInt(), ((manualPace % 1) * 60).toInt())
     }
 
     private fun highlightSpeed() {
