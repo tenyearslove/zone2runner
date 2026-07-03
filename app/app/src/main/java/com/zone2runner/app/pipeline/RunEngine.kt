@@ -113,16 +113,24 @@ class RunEngine(
         lastJudgmentForCoach = j
         val ctx = CoachContext(j, s.slopePct, s.paceMinKm, s.tSec)
         if (scope == null) {
-            recordCoaching(s.tSec, coach.say(ctx))
+            recordCoaching(s.tSec, coach.say(ctx), 0L)
         } else {
             // coachScope는 메인 디스패처(lifecycleScope) 가정 — recordCoaching이 onSample과 같은 스레드에서 실행됨
-            coachJob = scope.launch { recordCoaching(ctx.elapsedSec, coach.say(ctx)) }
+            coachJob = scope.launch {
+                val t0 = System.currentTimeMillis()
+                val line = coach.say(ctx)
+                recordCoaching(ctx.elapsedSec, line, System.currentTimeMillis() - t0)
+            }
         }
     }
 
-    private fun recordCoaching(tSec: Int, line: String) {
+    /** 코칭 라인 확정 시 호출(비동기 생성 완료 시점). 필드 로그(spec-012)용. */
+    var onCoachingRecorded: ((tSec: Int, line: String, tookMs: Long) -> Unit)? = null
+
+    private fun recordCoaching(tSec: Int, line: String, tookMs: Long) {
         coachingLines += "[%02d:%02d] %s".format(tSec / 60, tSec % 60, line)
         lastCoachText = line
+        onCoachingRecorded?.invoke(tSec, line, tookMs)
     }
 
     private var coachJob: Job? = null

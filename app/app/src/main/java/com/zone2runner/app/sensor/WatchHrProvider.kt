@@ -31,6 +31,9 @@ class WatchHrProvider(context: Context) : HrProvider {
     override fun latestHr(): Int =
         if (hr > 0 && SystemClock.elapsedRealtime() - lastMs <= staleMs) hr else -1
 
+    /** 마지막 /hr 수신 후 경과(ms). 수신 이력 없으면 -1. 필드 로그(spec-012) 끊김 분석용. */
+    fun lastAgeMs(): Long = if (lastMs == 0L) -1L else SystemClock.elapsedRealtime() - lastMs
+
     override fun stop() { runCatching { client.removeListener(listener) } }
 
     override val sourceLabel = "워치HR"

@@ -22,6 +22,7 @@ import androidx.lifecycle.lifecycleScope
 import com.zone2runner.app.coaching.LlmCoach
 import com.zone2runner.app.data.MockConfigStore
 import com.zone2runner.app.data.ProfileStore
+import com.zone2runner.app.data.RunLogger
 import com.zone2runner.app.data.SessionStore
 import com.zone2runner.app.domain.LiveState
 import com.zone2runner.app.pipeline.RunEngine
@@ -63,6 +64,8 @@ class RunActivity : AppCompatActivity() {
     private var source: RunSource? = null
     private var engine: RunEngine? = null
     private var coach: LlmCoach? = null
+    private var logger: RunLogger? = null
+    private var watchProvider: WatchHrProvider? = null
     private var line: Polyline? = null
     private var running = false
     private var finished = false
@@ -187,18 +190,35 @@ class RunActivity : AppCompatActivity() {
         frame = 0
 
         val src: RunSource = when (mode) {
-            MODE_LIVE -> LiveRunSource(this, WatchHrProvider(this))
+            MODE_LIVE -> LiveRunSource(this, WatchHrProvider(this).also { watchProvider = it })
             MODE_MOCK -> MockRunSource(MockConfigStore.load(this), seed = System.nanoTime())
             else -> SimulatedRunSource(durationMin = 30, seed = System.nanoTime(), profile = profile)
         }
         source = src
         val renderEvery = if (src.realtime) 1 else 5
 
+        // 필드 로그(spec-012): 원시 입력+파이프라인 출력을 1Hz JSONL로 기록(adb pull로 회수)
+        val log = RunLogger(this)
+        logger = log
+        log.meta(mode) {
+            put("profile", org.json.JSONObject()
+                .put("age", profile.age).put("rhr", profile.restingHr).put("maxHr", profile.maxHr))
+            put("model", org.json.JSONObject()
+                .put("loaded", classifier != null)
+                .put("mlp_acc", classifier?.metrics?.get("mlp_acc") ?: -1.0))
+        }
+        eng.onCoachingRecorded = { tSec, lineText, tookMs ->
+            log.event("coach") { put("t", tSec); put("text", lineText); put("tookMs", tookMs) }
+        }
+
         running = true; finished = false
+        // 러닝 중 화면 유지: LLM 코칭은 포그라운드 전용(adr-007), GPS/파이프라인도 화면off 스로틀 회피
+        window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         startBtn.text = primaryLabel()
 
         src.start(lifecycleScope, onSample = { s ->
             val state = eng.onSample(s)
+            log.sample(s, state, watchProvider?.lastAgeMs() ?: -1L)
             line?.addPoint(GeoPoint(s.lat, s.lon))
             if (frame % renderEvery == 0) {
                 render(state)
@@ -214,17 +234,26 @@ class RunActivity : AppCompatActivity() {
     private fun finalizeSession() {
         if (!running) return
         running = false
+        window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         source?.stop()
-        val eng = engine ?: return
+        val eng = engine ?: run { logger?.close(); logger = null; return }
         val report = eng.report().copy(
             startedAtEpochMs = startedAt, sourceMode = mode,
             coachSource = coach?.sessionSource() ?: "rule",
         )
         if (report.durationSec < 5) { // 데이터 너무 적으면 저장 생략
+            logger?.event("end") { put("saved", false); put("durationSec", report.durationSec) }
+            logger?.close(); logger = null
             Toast.makeText(this, "기록이 너무 짧아 저장하지 않았어요", Toast.LENGTH_SHORT).show()
             finished = false; startBtn.text = primaryLabel(); return
         }
         ReportHolder.last = SessionStore.save(this, report)
+        logger?.event("end") {
+            put("saved", true); put("savedId", ReportHolder.last?.id ?: "")
+            put("durationSec", report.durationSec); put("distanceM", report.distanceM.toInt())
+            put("zone2Pct", report.zone2Pct); put("coachSource", report.coachSource)
+        }
+        logger?.close(); logger = null
         render(LiveState(report.durationSec, report.avgHr, null, report.avgPaceMinKm, 0.0, report.distanceM, "세션 종료 · 저장됨", report.uEstEndFrac))
         finished = true
         startBtn.text = primaryLabel()
@@ -285,6 +314,7 @@ class RunActivity : AppCompatActivity() {
     override fun onPause() { super.onPause(); map.onPause() }
     override fun onDestroy() {
         super.onDestroy(); source?.stop()
+        logger?.close(); logger = null // 중도 이탈 시에도 로그 파일 마감
         tts?.stop(); tts?.shutdown()
     }
 
