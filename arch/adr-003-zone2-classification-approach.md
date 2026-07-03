@@ -107,6 +107,7 @@ QA2(강건성)는 규칙 가드로, QA3(적응성)는 개인화 레이어로 각
 ---
 
 ## 관련 문서
-- Spec: `spec/spec-001-requirements.md` (FR1, FR3, FR5, C02), `spec/spec-002-quality-attributes.md` (QA2, QA3, QA5)
-- ADR: `arch/adr-001-watch-phone-architecture.md`
-- 후속: `spec/spec-004-zone2-personalization.md` (작성 예정)
+- **생리학 근거(필독)**: `arch/zone2-physiology-and-estimation.md` — 왜 참값이 없는지(C04), %HRR 선택 근거, 왜 AI인지, 토크 테스트/DFA-α1.
+- Spec: `spec/spec-001-requirements.md` (FR1, FR3, FR5, C02, **C04**), `spec/spec-002-quality-attributes.md` (QA2, QA3, QA5)
+- ADR: `arch/adr-001-watch-phone-architecture.md`, `arch/adr-004`(적응), `arch/adr-012`(콜드스타트 prior)
+- 후속: `spec/spec-004-zone2-personalization.md`

@@ -59,6 +59,12 @@ class RunEngine(
 
     val usingModel: Boolean get() = classifier != null
 
+    /** 토크 테스트 자가관측을 개인화 경계에 반영(arch/zone2-physiology §6). 현재 유효 HR이 있을 때만. */
+    fun observeTalkTest(state: com.zone2runner.app.pipeline.TalkState) {
+        val hr = lastValidHr ?: return
+        personalization.observeTalkTest(hr, state)
+    }
+
     /** 1Hz 샘플 처리. 필요 시 coach.say 호출(suspend). LiveState 반환. */
     suspend fun onSample(s: Sample): LiveState {
         elapsed = s.tSec + 1

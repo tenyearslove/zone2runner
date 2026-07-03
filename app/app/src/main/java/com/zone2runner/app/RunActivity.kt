@@ -56,6 +56,7 @@ class RunActivity : AppCompatActivity() {
     private lateinit var distView: TextView
     private lateinit var paceView: TextView
     private lateinit var coachView: TextView
+    private lateinit var talkRow: LinearLayout
     private lateinit var uEstView: TextView
     private lateinit var startBtn: Button
     private lateinit var subtitle: TextView
@@ -185,6 +186,16 @@ class RunActivity : AppCompatActivity() {
             text = "코칭 대기…"; textSize = 14f; setTextColor(C_ACCENT); setPadding(0, dp(10), 0, 0)
         }
         dash.addView(coachView)
+
+        // 토크 테스트 자가관측(arch/zone2-physiology §6): 참값 없는 경계를 무비용으로 보정하는 독립 채널
+        talkRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
+        talkRow.addView(TextView(this).apply {
+            text = "대화 가능?"; textSize = 12f; setTextColor(C_MUTED)
+        }, LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f))
+        talkRow.addView(talkChip("편함", com.zone2runner.app.pipeline.TalkState.COMFORTABLE))
+        talkRow.addView(talkChip("애매", com.zone2runner.app.pipeline.TalkState.BORDERLINE))
+        talkRow.addView(talkChip("벅참", com.zone2runner.app.pipeline.TalkState.HARD))
+        dash.addView(talkRow, mt(8))
 
         uEstView = TextView(this).apply { textSize = 11f; setTextColor(C_MUTED); setPadding(0, dp(4), 0, 0) }
         dash.addView(uEstView)
@@ -377,6 +388,24 @@ class RunActivity : AppCompatActivity() {
         addView(v)
         addView(TextView(this@RunActivity).apply { text = label; textSize = 10f; setTextColor(C_MUTED); gravity = Gravity.CENTER })
     }
+    private fun talkChip(label: String, state: com.zone2runner.app.pipeline.TalkState) = TextView(this).apply {
+        text = label; textSize = 12f; setTextColor(C_TEXT); gravity = Gravity.CENTER
+        setPadding(dp(14), dp(6), dp(14), dp(6))
+        background = GradientDrawable().apply { setColor(C_CARD); cornerRadius = dp(14).toFloat(); setStroke(dp(1), C_STROKE) }
+        val lp = LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT); lp.marginStart = dp(6); layoutParams = lp
+        isClickable = true
+        setOnClickListener {
+            val eng = engine
+            if (!running || eng == null) {
+                Toast.makeText(this@RunActivity, "러닝 중에만 기록됩니다", Toast.LENGTH_SHORT).show()
+            } else {
+                eng.observeTalkTest(state)
+                logger?.event("talktest") { put("t", (System.currentTimeMillis() - startedAt) / 1000); put("state", state.name) }
+                Toast.makeText(this@RunActivity, "기록됨 · 개인 경계에 반영", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
     private fun pill(color: Int) = GradientDrawable().apply { setColor(color); cornerRadius = dp(16).toFloat() }
     private fun mt(v: Int) = LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply { topMargin = dp(v) }
     private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
@@ -401,5 +430,7 @@ class RunActivity : AppCompatActivity() {
         private val C_ACCENT = Color.parseColor("#30D158")
         private val C_BLUE = Color.parseColor("#5AC8FA")
         private val C_AMBER = Color.parseColor("#FF9F0A")
+        private val C_CARD = Color.parseColor("#171B22")
+        private val C_STROKE = Color.parseColor("#2A2F3A")
     }
 }

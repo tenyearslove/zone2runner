@@ -38,4 +38,25 @@ class Personalization(private val profile: Profile) {
     }
 
     val sigma: Double get() = Math.sqrt(variance)
+
+    /**
+     * 토크 테스트 자가관측 → 개인 경계 관측 (arch/zone2-physiology-and-estimation §6).
+     * 근거: "편하게 말할 수 있는 마지막 강도"의 HR ≈ VT1(1차 환기역치) ≈ LT1 부근.
+     * 디커플링 관측의 임계추출 편향을 보완하는 무비용 독립 채널.
+     *   BORDERLINE(말이 끊기기 시작) → 현재 지속 HR을 상한 직접 관측(좁은 σ).
+     *   COMFORTABLE(아직 편함)       → 상한이 현재 HR보다 위라는 약한 단측 증거(현재+마진, 넓은 σ).
+     *   HARD(말 못 함)               → 상한이 현재 HR보다 아래(현재-마진, 넓은 σ).
+     */
+    fun observeTalkTest(currentHr: Int, state: TalkState) {
+        if (currentHr <= 0) return
+        val (z, sd) = when (state) {
+            TalkState.BORDERLINE -> currentHr.toDouble() to 6.0
+            TalkState.COMFORTABLE -> currentHr + 5.0 to 14.0
+            TalkState.HARD -> currentHr - 5.0 to 14.0
+        }
+        update(z, sd)
+    }
 }
+
+/** 토크 테스트 응답: 지금 대화가 편한가. */
+enum class TalkState { COMFORTABLE, BORDERLINE, HARD }

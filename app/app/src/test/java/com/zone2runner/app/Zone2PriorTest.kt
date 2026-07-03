@@ -77,6 +77,29 @@ class Zone2PriorTest {
         assertTrue("세션 내 이동 ±10bpm", p.muUpper <= mu0 + 10 + 1e-9)
     }
 
+    @Test fun talkTest_movesBoundaryTowardObservation() {
+        // BORDERLINE(말 끊기기 시작 ≈ VT1): 현재 HR을 상한 관측으로 → 그 방향으로 이동
+        val p = Personalization(profile())
+        val mu0 = p.muUpper
+        val curHr = (mu0 + 8).toInt() // 현재 HR이 상한 추정보다 위
+        p.observeTalkTest(curHr, com.zone2runner.app.pipeline.TalkState.BORDERLINE)
+        assertTrue("BORDERLINE은 현재 HR쪽으로 상한 상승", p.muUpper > mu0)
+        assertTrue("불확실성 감소", p.sigma < profile().let { Zone2Prior.of(it).sigma0Bpm })
+
+        // BORDERLINE(좁은 σ)은 COMFORTABLE(넓은 σ)보다 더 확신 → 갱신 후 σ가 작다
+        val a = Personalization(profile()); val b = Personalization(profile())
+        val hr = (a.muUpper + 3).toInt()
+        a.observeTalkTest(hr, com.zone2runner.app.pipeline.TalkState.BORDERLINE)
+        b.observeTalkTest(hr, com.zone2runner.app.pipeline.TalkState.COMFORTABLE)
+        assertTrue("BORDERLINE이 더 확신(σ 작음)", a.sigma < b.sigma)
+
+        // HARD(말 못 함): 상한이 현재 HR 아래 → 하향
+        val c = Personalization(profile())
+        val hi = (c.muUpper + 2).toInt()
+        c.observeTalkTest(hi, com.zone2runner.app.pipeline.TalkState.HARD)
+        assertTrue("HARD는 상한을 낮춘다", c.muUpper < (profile().restingHr + Zone2Prior.of(profile()).uFrac0 * profile().hrr) + 2)
+    }
+
     @Test fun ac6_personalizationStartsAtPrior_andStillConverges() {
         // prior 반영: 엘리트 프로필은 상한이 높게 시작
         val elite = Personalization(profile(fit = 5, freq = 5))

@@ -16,7 +16,10 @@
 
 ## 슬라이드 2 — 과제 배경과 문제 정의
 
-**배경**: Zone 2(저강도 유산소) 훈련은 지구력/대사 건강의 핵심 훈련법으로 대중화됐지만,
+**Zone 2의 생리학적 정의**: 단순 "심박 2구간"이 아니라 **1차 젖산역치(LT1/유산소 임계) 바로 아래**
+강도다. 이 지점에서 미토콘드리아 호흡/지방 산화/젖산 제거가 최대(San Millán). 목표 = 개인 LT1에 강도 정렬.
+
+**배경**: Zone 2 훈련은 지구력/대사 건강의 핵심으로 대중화됐지만,
 "내 Zone 2가 몇 bpm인가"에는 **합의된 정답이 없다.**
 
 | 통용 기준 | 35세/RHR58 기준 Zone 2 상한 | 문제 |
@@ -31,6 +34,8 @@
 
 **과제 정의**: 워치+폰만으로, (1) 개인의 경계를 데이터로 추정하고 (2) 다신호로 상태를 판정하며
 (3) 실시간 음성으로 코칭하는 온디바이스 AI 시스템을 설계한다.
+
+> 생리학 배경/추정 방법 리서치 전문은 `arch/zone2-physiology-and-estimation.md`.
 
 ---
 
@@ -172,6 +177,11 @@ OutlierGuard(규칙)  →  FeatureExtractor(7특징)  →  MLP 분류기(3분류
 | 온디바이스/일정 | ★★★ | ★★★ 덧셈 | ★☆☆ |
 | 설명가능성 | ★★★ | ★★★ **오프셋 표가 곧 설명** | ★☆☆ |
 | 오입력 강건성 | - | ★★☆ σ0 확대+Bayesian 회복 | ★☆☆ |
+
+**관측 채널(리서치 반영)**: 디커플링(임계추출 편향 위험)에 더해 **토크 테스트 자가관측**을 도입.
+"편하게 말할 수 있는 마지막 강도 ≈ VT1(1차 환기역치)"라는 검증 연구에 근거한 무비용 독립 채널로,
+러닝 중 편함/애매/벅참 3단계 입력을 개인 경계 관측으로 반영한다. 참값에 더 가까운 **DFA-α1(HRV)**
+(RR 0.75 교차 = 유산소 임계, Rogers 2021)은 온디바이스 향후 관측 채널로 명시. `arch/zone2-physiology-and-estimation.md`.
 
 **B 채택 — 리서치 기반 차별화 지점**: 사용자가 나이/키/몸무게/안정심박에 더해
 **체형 5단계, 러닝 수준 5단계, 주간 빈도 5단계**를 탭 3번으로 입력하면:
@@ -349,3 +359,12 @@ RHR 모름 → 추정 [74,70,66,60,54][수준] - (빈도-3)×2, clamp [45,85].
 | DP2 | adr-004(Bayesian 적응), adr-012(factor prior), spec-004/013 |
 | DP3 | adr-002(LLM 역할 분리), adr-007(온디바이스 LLM 검증), spec-005 |
 | 기타 | adr-006(A/B 비교), adr-008(센서), adr-009(백그라운드), adr-010(지도) |
+
+## Appendix E — 운동생리학 리서치 인용
+
+Zone 2/유산소 임계 추정의 이론 근거(상세: `arch/zone2-physiology-and-estimation.md`).
+
+- Zone 2 대사/LT1: [CTS — LT1 and Zone 2 Training](https://trainright.com/blood-lactate-lt1-zone2-training-for-performance-longevity/), [High North — San Millán Zone 2](https://www.highnorth.co.uk/articles/zone-2-training-inigo-san-millan)
+- DFA-α1 = 유산소 임계 지표: [Rogers et al. 2021, Frontiers Sports Act Living](https://www.frontiersin.org/journals/sports-and-active-living/articles/10.3389/fspor.2021.668812/full), [엘리트 트라이애슬릿 LT1 일치, PMC8875480](https://pmc.ncbi.nlm.nih.gov/articles/PMC8875480/)
+- 토크 테스트 ≈ VT1: [체계적 리뷰, RCM 2022 (PMC11266803)](https://pmc.ncbi.nlm.nih.gov/articles/PMC11266803/), [심장환자 검증 2020](https://pubmed.ncbi.nlm.nih.gov/32604216/)
+- HRR 결합이 역치 추정 정확도↑: [VT 알고리즘 검증, medRxiv 2024](https://www.medrxiv.org/content/10.1101/2024.08.14.24311967v1), [Kubios — HRV 기반 VT](https://www.kubios.com/blog/ventilatory-threshold-estimation-based-on-hrv/)
