@@ -86,14 +86,14 @@ class WearRunActivity : ComponentActivity() {
         }
 
         timeView = TextView(this).apply {
-            text = "00:00"; textSize = 15f; setTextColor(C_MUTED)
+            text = "00:00"; textSize = 13f; setTextColor(C_MUTED)
             typeface = Typeface.MONOSPACE
         }
-        content.addView(timeView)
+        content.addView(timeView, centered())
 
         // HR + BPM
         hrView = TextView(this).apply {
-            text = "--"; textSize = 46f; setTypeface(Typeface.DEFAULT_BOLD); setTextColor(C_MUTED)
+            text = "--"; textSize = 40f; setTypeface(Typeface.DEFAULT_BOLD); setTextColor(C_MUTED)
         }
         bpmLabel = TextView(this).apply {
             text = "BPM"; textSize = 9f; setTextColor(C_MUTED); letterSpacing = 0.15f
@@ -103,9 +103,9 @@ class WearRunActivity : ComponentActivity() {
         content.addView(bpmLabel, centered())
 
         zoneLabel = TextView(this).apply {
-            text = "시작 대기"; textSize = 14f; setTypeface(Typeface.DEFAULT_BOLD); setTextColor(C_MUTED)
+            text = "시작 대기"; textSize = 12f; setTypeface(Typeface.DEFAULT_BOLD); setTextColor(C_MUTED)
             gravity = Gravity.CENTER
-            setPadding(0, dp(1), 0, dp(6))
+            setPadding(0, dp(1), 0, dp(4))
         }
         content.addView(zoneLabel, centered())
 
@@ -124,16 +124,19 @@ class WearRunActivity : ComponentActivity() {
         }
         content.addView(btnRow, centered())
 
+        // BOX_ALL(내접 사각형)은 원형 480px에서 실사용 폭이 ~70%로 줄어 페이스 줄바꿈/버튼 잘림 발생(실기기).
+        // 콘텐츠가 세로 중앙 정렬이라 중앙 행은 원의 전체 폭을 쓸 수 있으므로 고정 패딩으로 대체.
+        content.setPadding(dp(24), dp(6), dp(24), dp(6))
         box.addView(content, BoxInsetLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT).apply {
-            boxedEdges = BoxInsetLayout.LayoutParams.BOX_ALL
             gravity = Gravity.CENTER
         })
         return box
     }
 
     private fun metricValue() = TextView(this).apply {
-        text = "--"; textSize = 15f; setTypeface(Typeface.DEFAULT_BOLD); setTextColor(C_TEXT)
+        text = "--"; textSize = 13f; setTypeface(Typeface.DEFAULT_BOLD); setTextColor(C_TEXT)
         gravity = Gravity.CENTER
+        isSingleLine = true // 원형 화면 폭에서 페이스("5'30\"") 줄바꿈 방지 (실기기 확인)
     }
 
     private fun metricCol(value: TextView, label: String): LinearLayout {
@@ -145,6 +148,7 @@ class WearRunActivity : ComponentActivity() {
             addView(value)
             addView(TextView(this@WearRunActivity).apply {
                 text = label; textSize = 9f; setTextColor(C_MUTED); gravity = Gravity.CENTER
+                isSingleLine = true
             })
         }
     }
@@ -154,9 +158,9 @@ class WearRunActivity : ComponentActivity() {
             this.text = text; textSize = 13f; setTextColor(Color.WHITE)
             setTypeface(typeface, Typeface.BOLD)
             gravity = Gravity.CENTER
-            setPadding(dp(16), dp(9), dp(16), dp(9))
+            setPadding(dp(14), dp(7), dp(14), dp(7))
             background = GradientDrawable().apply {
-                setColor(color); cornerRadius = dp(22).toFloat()
+                setColor(color); cornerRadius = dp(20).toFloat()
             }
             isClickable = true
             setOnClickListener { onClick() }
