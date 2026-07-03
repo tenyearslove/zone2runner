@@ -41,6 +41,43 @@ class FeatureExtractor {
 
     fun warmupDone(): Boolean = !baseRatio.isNaN()
 
+    /**
+     * 최근 60초 평균 심박(bpm) — MLP 판정이 보는 것과 동일한 지속 심박 기준.
+     * 밴드 마커를 이 값으로 그려 판정 칩과 시각적으로 정렬한다(순간 스파이크로 인한 색/판정 괴리 제거).
+     * 버퍼가 비면 null. 초반엔 가용 표본만 평균(점진적으로 60초 창으로 수렴).
+     */
+    fun smoothedHrAt(t: Int): Int? {
+        if (hr.isEmpty() || t < 0) return null
+        val end = minOf(t, hr.size - 1)
+        val m = mean(hr, end - HRW + 1, end + 1)
+        return if (m > 0) Math.round(m).toInt() else null
+    }
+
+    /**
+     * 심박 동역학 모델 입력 8종 (spec-014, ml/train_hr_dynamics.py extract_dynamics와 동일 규약):
+     *   [hr_now_frac(10초), hr_sus_frac(60초), dHR(30초), pace_plan, slope, spm, elapsed_min, decoupling]
+     * pace_plan = 앞으로 유지할 페이스(호출자가 후보/현재 페이스를 공급). 워밍업 전 null.
+     */
+    fun dynFeaturesAt(t: Int, profile: Profile, pacePlan: Double, slopeNow: Double, spmNow: Int): DoubleArray? {
+        if (baseRatio.isNaN() || t < WARMUP_S || t >= hr.size) return null
+        val hrNow = mean(hr, t - 10, t)
+        val hrSus = mean(hr, t - HRW, t)
+        val dHR = (hr[t] - hr[t - W]) / W
+        var rr = 0.0; var c = 0
+        for (i in (t - W) until t) { rr += hr[i] / pace[i]; c++ }
+        val dec = (rr / c) / baseRatio - 1.0
+        return doubleArrayOf(
+            (hrNow - profile.restingHr) / profile.hrr,
+            (hrSus - profile.restingHr) / profile.hrr,
+            dHR,
+            pacePlan,
+            slopeNow,
+            spmNow.toDouble(),
+            t / 60.0,
+            dec,
+        )
+    }
+
     /** t(현재 인덱스, =size-1)가 STRIDE 지점이면 특징 반환, 아니면 null. */
     fun extractAt(t: Int, profile: Profile, uEst: Double, lEst: Double): DoubleArray? {
         if (baseRatio.isNaN() || t < WARMUP_S || t >= hr.size) return null

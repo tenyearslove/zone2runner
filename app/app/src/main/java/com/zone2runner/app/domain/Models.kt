@@ -59,6 +59,7 @@ data class Zone2Boundary(val uFrac: Double, val lFrac: Double) {
 data class LiveState(
     val elapsedSec: Int = 0,
     val hr: Int = -1,
+    val smoothedHr: Int = -1,          // 최근 60초 평균 심박 — 판정/밴드 마커 기준(순간 hr과 구분)
     val judgment: ZoneJudgment? = null,
     val paceMinKm: Double = 0.0,
     val speedKmh: Double = 0.0,
@@ -70,6 +71,9 @@ data class LiveState(
     val spm: Int = 0,                 // 케이던스
     val decoupling: Double? = null,   // 드리프트(디커플링 비율), 워밍업 전 null
     val dHrPerSec: Double? = null,    // 심박 추세(bpm/s), 워밍업 전 null
+    // 심박 동역학 모델 출력(spec-014). 미로드/워밍업 전 = -1/0.0
+    val predictedHr60: Int = -1,          // 현재 페이스 유지 시 60초 뒤 예측 심박(bpm)
+    val recommendedPaceMinKm: Double = 0.0, // Zone2 목표 페이스 제안(min/km), 0=없음
 )
 
 /** 경로 점(존 색으로 폴리라인 채색). */

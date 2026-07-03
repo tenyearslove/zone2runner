@@ -2,8 +2,8 @@ package com.zone2runner.app
 
 import com.zone2runner.app.coaching.RuleCoach
 import com.zone2runner.app.domain.Profile
+import com.zone2runner.app.pipeline.HrDynamics
 import com.zone2runner.app.pipeline.RunEngine
-import com.zone2runner.app.pipeline.Zone2Classifier
 import com.zone2runner.app.sim.RunSimulator
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertTrue
@@ -12,15 +12,15 @@ import java.io.File
 
 /**
  * 전체 파이프라인 통합 검증 — 시뮬레이션 세션을 RunEngine에 통과시켜 리포트 불변식을 확인.
- * 실기기 UI를 못 돌리는 대신, 엔진 레벨에서 [소스→가드→특징→판정→개인화→코칭→누적]이
- * 일관된 세션 결과를 만드는지 실제로 실행해 본다(규칙 코치, MLP 있으면 사용).
+ * 실기기 UI를 못 돌리는 대신, 엔진 레벨에서 [소스→가드→규칙판정→개인화→동역학예측→코칭→누적]이
+ * 일관된 세션 결과를 만드는지 실제로 실행해 본다(규칙 코치, 동역학 모델 있으면 사용 — adr-013).
  */
 class RunEngineIntegrationTest {
 
     @Test fun fullSession_producesConsistentReport() = runBlocking {
         val profile = Profile.default(35, 58)
-        val clf = loadModelOrNull()
-        val engine = RunEngine(profile, clf, RuleCoach())
+        val dyn = loadModelOrNull()
+        val engine = RunEngine(profile, dyn, RuleCoach())
         val session = RunSimulator(seed = 11L).generate(durationMin = 20)
 
         for (s in session.samples) engine.onSample(s)
@@ -55,9 +55,9 @@ class RunEngineIntegrationTest {
         assertTrue(r.zone2Pct in 0..100)
     }
 
-    private fun loadModelOrNull(): Zone2Classifier? {
-        val f = listOf(File("src/main/assets/zone2_mlp.json"), File("app/src/main/assets/zone2_mlp.json"))
+    private fun loadModelOrNull(): HrDynamics? {
+        val f = listOf(File("src/main/assets/hr_dynamics.json"), File("app/src/main/assets/hr_dynamics.json"))
             .firstOrNull { it.exists() } ?: return null
-        return runCatching { Zone2Classifier.fromJsonString(f.readText()) }.getOrNull()
+        return runCatching { HrDynamics.fromJsonString(f.readText()) }.getOrNull()
     }
 }

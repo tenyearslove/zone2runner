@@ -51,6 +51,28 @@ class Zone2ClassifierTest {
         assertTrue(clf.metrics.containsKey("mlp_acc"))
     }
 
+    @Test fun guard_overridesMlpWhenGrosslyOutOfBand() {
+        // 실기기 회귀: 심박이 상한을 42bpm(=+0.30 HRR) 초과했는데 심박이 급강하(dHR<0)하면
+        // MLP가 추세에 지배돼 '미달'을 뱉는 오판을 규칙 가드레일이 '초과'로 교정한다.
+        val f = findAsset("zone2_mlp.json")
+        if (f != null) {
+            val clf = Zone2Classifier.fromJsonString(f.readText())
+            // feat=[hr_norm_u=+0.30, hr_norm_l=+0.40, dHR=-0.6(급강하), pace, spm, decoupling, slope]
+            val feat = doubleArrayOf(0.30, 0.40, -0.6, 5.87, 171.0, 0.49, -5.0)
+            val raw = clf.classify(feat).judgment
+            println("가드 전 MLP=$raw (dHR 지배로 미달 오판 재현)")
+            assertEquals("가드 전엔 오판(미달)이 재현되어야 회귀 테스트로 유효", ZoneJudgment.BELOW, raw)
+            assertEquals("가드 후엔 초과로 교정", ZoneJudgment.ABOVE, Zone2Classifier.guard(raw, feat))
+        }
+        // 모델 없이도 가드 규칙 자체 검증(feat[0]=u, feat[1]=l)
+        // 상한 크게 초과 → MLP가 뭐라 하든 초과
+        assertEquals(ZoneJudgment.ABOVE, Zone2Classifier.guard(ZoneJudgment.BELOW, doubleArrayOf(0.30, 0.40, 0.0, 6.0, 170.0, 0.0, 0.0)))
+        // 하한 크게 미달 → 무조건 미달
+        assertEquals(ZoneJudgment.BELOW, Zone2Classifier.guard(ZoneJudgment.ABOVE, doubleArrayOf(-0.20, -0.15, 0.0, 6.0, 170.0, 0.0, 0.0)))
+        // 경계 부근(±margin 이내) → MLP 존중
+        assertEquals(ZoneJudgment.IN, Zone2Classifier.guard(ZoneJudgment.IN, doubleArrayOf(0.05, 0.08, 0.0, 6.0, 170.0, 0.0, 0.0)))
+    }
+
     @Test fun ruleFallback_matchesThresholds() {
         // feat[0]=hr_norm_u, feat[1]=hr_norm_l
         assertEquals(ZoneJudgment.BELOW, Zone2Classifier.ruleClassify(doubleArrayOf(-0.1, -0.05, 0.0, 6.0, 170.0, 0.0, 0.0)))

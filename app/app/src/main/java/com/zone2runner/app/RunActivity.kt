@@ -26,7 +26,6 @@ import com.zone2runner.app.data.RunLogger
 import com.zone2runner.app.data.SessionStore
 import com.zone2runner.app.domain.LiveState
 import com.zone2runner.app.pipeline.RunEngine
-import com.zone2runner.app.pipeline.Zone2Classifier
 import com.zone2runner.app.sensor.LiveRunSource
 import com.zone2runner.app.sensor.MockRunSource
 import com.zone2runner.app.sensor.RunSource
@@ -56,6 +55,8 @@ class RunActivity : AppCompatActivity() {
     private lateinit var distView: TextView
     private lateinit var paceView: TextView
     private lateinit var coachView: TextView
+    private lateinit var adviceView: TextView // 동역학 NN: 목표 페이스 제안 + 60초 예측(spec-014)
+    private var promptView: TextView? = null // LLM 프롬프트 노출(시뮬/목 모드만, null=라이브)
     private lateinit var talkRow: LinearLayout
     private lateinit var uEstView: TextView
     private lateinit var startBtn: Button
@@ -70,7 +71,7 @@ class RunActivity : AppCompatActivity() {
     private var profile: com.zone2runner.app.domain.Profile? = null
     private var tempFetched = false
 
-    private var classifier: Zone2Classifier? = null
+    private var dynamics: com.zone2runner.app.pipeline.HrDynamics? = null
     private var source: RunSource? = null
     private var engine: RunEngine? = null
     private var coach: LlmCoach? = null
@@ -90,7 +91,7 @@ class RunActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Configuration.getInstance().userAgentValue = packageName
-        classifier = runCatching { Zone2Classifier.fromAssets(this) }.getOrNull()
+        dynamics = runCatching { com.zone2runner.app.pipeline.HrDynamics.fromAssets(this) }.getOrNull()
         tts = TextToSpeech(this) { status ->
             if (status == TextToSpeech.SUCCESS) { tts?.language = java.util.Locale.KOREAN; ttsReady = true }
         }
@@ -101,12 +102,15 @@ class RunActivity : AppCompatActivity() {
         updateZoneUi(-1, com.zone2runner.app.domain.Zone2Prior.of(profile!!).uFrac0)
     }
 
-    /** Zone2 밴드 게이지 + 범위/이탈 텍스트 갱신. */
-    private fun updateZoneUi(hr: Int, uEstFrac: Double) {
+    /**
+     * Zone2 밴드 게이지 + 범위/이탈 텍스트 갱신.
+     * hr = 지속 심박(최근 60초 평균) — 마커/텍스트 기준(판정 칩과 동일 기준). instantHr = 순간 심박(참고 틱).
+     */
+    private fun updateZoneUi(hr: Int, uEstFrac: Double, instantHr: Int = -1) {
         val p = profile ?: return
         val hi = (p.restingHr + uEstFrac * p.hrr).toInt()
         val lo = (p.restingHr + (uEstFrac - com.zone2runner.app.domain.Zone2Prior.BAND) * p.hrr).toInt()
-        zoneBand.update(lo, hi, p.maxHr, hr)
+        zoneBand.update(lo, hi, p.maxHr, hr, instantHr)
         when {
             hr <= 0 -> { rangeView.text = "Zone 2 목표 $lo ~ $hi bpm"; rangeView.setTextColor(C_MUTED) }
             hr < lo -> { rangeView.text = "Zone 2 목표 $lo ~ $hi · ${lo - hr} bpm 아래"; rangeView.setTextColor(C_BLUE) }
@@ -116,10 +120,10 @@ class RunActivity : AppCompatActivity() {
     }
 
     private fun updateSubtitle() {
-        val m = classifier?.metrics
-        val model = if (classifier != null)
-            "MLP 로드됨 (개인화 acc ${fmt(m?.get("mlp_acc"))}, QA1 ${fmt(m?.get("qa1_coaching_direction"))})"
-        else "MLP 미로드 → 규칙 폴백"
+        val m = dynamics?.metrics
+        val model = if (dynamics != null)
+            "동역학 NN 로드됨 (60초 예측 RMSE ${fmt(m?.get("rmse_bpm_60"))}bpm, 규칙판정+페이스제안)"
+        else "동역학 NN 미로드 → 규칙 판정만"
         subtitle.text = when (mode) {
             MODE_LIVE -> "$model · 실센서(GPS+워치HR) — 실기기 필요"
             MODE_MOCK -> "$model · 가짜 라이브(테스트) — 워치 없이 실시간 합성"
@@ -164,6 +168,17 @@ class RunActivity : AppCompatActivity() {
         dash.addView(zoneBand, mt(2))
         rangeView = TextView(this).apply { textSize = 12f; setTextColor(C_ACCENT) }
         dash.addView(rangeView, mt(2))
+        // 밴드/판정 기준 안내: 큰 숫자=순간 심박, 마커·판정=지속 심박(최근 60초). 순간 스파이크로 색이 튀지 않음.
+        dash.addView(TextView(this).apply {
+            text = "● 지속 심박(최근 60초, 판정 기준)  |  큰 숫자·얇은 틱 = 순간 심박"
+            textSize = 10f; setTextColor(C_MUTED)
+        }, mt(2))
+
+        // 동역학 NN 출력(spec-014): Zone2 목표 페이스 제안 + 60초 뒤 예측 심박
+        adviceView = TextView(this).apply {
+            text = ""; textSize = 13f; setTextColor(C_ACCENT); setTypeface(typeface, Typeface.BOLD)
+        }
+        dash.addView(adviceView, mt(4))
 
         val metrics = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
         timeView = metricVal(); distView = metricVal(); paceView = metricVal()
@@ -186,6 +201,15 @@ class RunActivity : AppCompatActivity() {
             text = "코칭 대기…"; textSize = 14f; setTextColor(C_ACCENT); setPadding(0, dp(10), 0, 0)
         }
         dash.addView(coachView)
+
+        // LLM 프롬프트 투명성(시뮬/목 모드만): 코칭 문장이 어떤 프롬프트/경로에서 나왔는지 노출
+        if (mode != MODE_LIVE) {
+            promptView = TextView(this).apply {
+                text = ""; textSize = 10f; setTextColor(C_MUTED)
+                typeface = Typeface.MONOSPACE; setPadding(0, dp(4), 0, 0)
+            }
+            dash.addView(promptView)
+        }
 
         // 토크 테스트 자가관측(arch/zone2-physiology §6): 참값 없는 경계를 무비용으로 보정하는 독립 채널
         talkRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
@@ -239,7 +263,7 @@ class RunActivity : AppCompatActivity() {
         coach = c
         lifecycleScope.launch { c.prewarm() } // checkStatus+warmup을 첫 코칭 전에 미리
         // coachScope 전달 → 코칭 생성(LLM ~2초)이 샘플 루프/렌더를 멈추지 않음
-        val eng = RunEngine(profile, classifier, c, coachScope = lifecycleScope)
+        val eng = RunEngine(profile, dynamics, c, coachScope = lifecycleScope)
         engine = eng
         startedAt = System.currentTimeMillis()
         frame = 0
@@ -259,11 +283,15 @@ class RunActivity : AppCompatActivity() {
             put("profile", org.json.JSONObject()
                 .put("age", profile.age).put("rhr", profile.restingHr).put("maxHr", profile.maxHr))
             put("model", org.json.JSONObject()
-                .put("loaded", classifier != null)
-                .put("mlp_acc", classifier?.metrics?.get("mlp_acc") ?: -1.0))
+                .put("loaded", dynamics != null)
+                .put("rmse_bpm_60", dynamics?.metrics?.get("rmse_bpm_60") ?: -1.0))
         }
         eng.onCoachingRecorded = { tSec, lineText, tookMs ->
             log.event("coach") { put("t", tSec); put("text", lineText); put("tookMs", tookMs) }
+            // 프롬프트 투명성(시뮬/목): 이 문장이 나온 프롬프트와 경로(llm/폴백 사유) 표시
+            promptView?.text = c.lastPrompt?.let { p ->
+                "경로 ${c.lastPath} · ${tookMs}ms\n프롬프트: $p"
+            } ?: ""
         }
 
         running = true; finished = false
@@ -318,7 +346,9 @@ class RunActivity : AppCompatActivity() {
             put("directionRejects", coach?.directionRejects ?: 0)
         }
         logger?.close(); logger = null
-        render(LiveState(report.durationSec, report.avgHr, null, report.avgPaceMinKm, 0.0, report.distanceM, "세션 종료 · 저장됨", report.uEstEndFrac))
+        render(LiveState(elapsedSec = report.durationSec, hr = report.avgHr, smoothedHr = report.avgHr,
+            judgment = null, paceMinKm = report.avgPaceMinKm, distanceM = report.distanceM,
+            coaching = "세션 종료 · 저장됨", uEstFrac = report.uEstEndFrac))
         finished = true
         startBtn.text = primaryLabel()
         Toast.makeText(this, "세션 저장됨", Toast.LENGTH_SHORT).show()
@@ -330,7 +360,7 @@ class RunActivity : AppCompatActivity() {
         if (j != null) {
             zoneChip.text = j.label; zoneChip.background = pill(j.color); hrView.setTextColor(j.color)
         }
-        updateZoneUi(s.hr, s.uEstFrac)
+        updateZoneUi(if (s.smoothedHr > 0) s.smoothedHr else s.hr, s.uEstFrac, s.hr)
         timeView.text = "%02d:%02d".format(s.elapsedSec / 60, s.elapsedSec % 60)
         distView.text = if (s.distanceM < 1000) "${s.distanceM.toInt()}m" else "%.2fkm".format(s.distanceM / 1000)
         paceView.text = if (s.paceMinKm in 0.1..30.0) "%d'%02d\"".format(s.paceMinKm.toInt(), ((s.paceMinKm % 1) * 60).toInt()) else "--"
@@ -357,6 +387,15 @@ class RunActivity : AppCompatActivity() {
             if (s.coaching != lastSpoken) { lastSpoken = s.coaching; speak(s.coaching) }
         }
         uEstView.text = "개인 Zone2 상한 추정: ${(s.uEstFrac * 100).toInt()}% HRR (개인화 갱신 중)"
+
+        // 동역학 NN 출력: 목표 페이스 제안 + 60초 예측(워밍업 완료 후)
+        if (s.recommendedPaceMinKm > 0.0 && s.predictedHr60 > 0) {
+            val rp = s.recommendedPaceMinKm
+            val paceTxt = "%d'%02d\"".format(rp.toInt(), ((rp % 1) * 60).toInt())
+            adviceView.text = "🎯 Zone2 페이스 $paceTxt · 이대로면 60초 뒤 ~${s.predictedHr60} bpm"
+        } else if (running) {
+            adviceView.text = "🎯 페이스 제안 준비 중 (워밍업 2분)"
+        }
     }
 
     /** 코칭 문장을 음성으로(llm-verify에서 검증한 TTS end-to-end). 세션 종료 문구는 제외. */

@@ -14,8 +14,11 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 /**
- * 전체 러닝 파이프라인 오케스트레이터 (arch/architecture-overview 데이터 흐름).
- *   샘플 → 이상치 가드 → 특징추출 → (MLP 판정 | 규칙 폴백) → 개인화 갱신 → 코칭 → 세션 누적
+ * 전체 러닝 파이프라인 오케스트레이터 (arch/architecture-overview, adr-013 역할 재분리).
+ *   샘플 → 이상치 가드 → [판정 = 규칙(지속 심박 vs 개인화 경계 + 히스테리시스)]
+ *        → 특징추출 → 개인화 갱신 → [동역학 NN: 60초 예측 + 목표 페이스 역질의 + 선제 코칭]
+ *        → 코칭 → 세션 누적
+ * 판정과 밴드가 같은 개인화 경계를 참조하므로 모순이 구조적으로 불가능(spec-014 FR1).
  * 시뮬레이터/실기기 공통. onSample을 1Hz로 호출.
  *
  * coachScope를 주면 코칭 생성(LLM ~2초)을 샘플 루프와 분리해 비동기로 돌린다 —
@@ -24,12 +27,13 @@ import kotlinx.coroutines.launch
  */
 class RunEngine(
     private val profile: Profile,
-    private val classifier: Zone2Classifier?, // null이면 규칙 폴백
+    private val dynamics: HrDynamics?, // 심박 동역학 모델(spec-014). null이면 예측/페이스 제안 없음
     private val coach: Coach,
     private val coachScope: CoroutineScope? = null,
 ) {
     private val extractor = FeatureExtractor()
     private val personalization = Personalization(profile)
+    private val judge = ZoneJudge()
     private val uEstStart = personalization.boundary().uFrac
 
     private var lastValidHr: Int? = null
@@ -54,10 +58,15 @@ class RunEngine(
     // 코칭/개인화 타이밍
     private var lastCoachSec = -999
     private var lastJudgmentForCoach: ZoneJudgment? = null
+    private var lastPreemptiveIntent: ZoneJudgment? = null // 선제 코칭 중복 방지(같은 예측이 연속되면 1회만)
     private var lastPersonalizeSec = 0
     private val obsCandidates = ArrayList<Double>() // decoupling 임계 부근 지속HR(bpm)
 
-    val usingModel: Boolean get() = classifier != null
+    // 동역학 모델 출력(표시용)
+    private var predictedHr60 = -1
+    private var recommendedPace = 0.0
+
+    val usingModel: Boolean get() = dynamics != null
 
     /** 토크 테스트 자가관측을 개인화 경계에 반영(arch/zone2-physiology §6). 현재 유효 HR이 있을 때만. */
     fun observeTalkTest(state: com.zone2runner.app.pipeline.TalkState) {
@@ -80,14 +89,36 @@ class RunEngine(
         extractor.add(clean.toDouble(), s.paceMinKm, s.spm, s.slopePct)
 
         val b = personalization.boundary()
+        val loBpm = profile.restingHr + b.lFrac * profile.hrr
+        val hiBpm = profile.restingHr + b.uFrac * profile.hrr
+
+        // 판정 = 규칙(adr-013 FR1): 지속 심박 vs 개인화 경계 + 히스테리시스. 밴드와 같은 경계 → 모순 불가
+        val sus = extractor.smoothedHrAt(s.tSec)
+        if (sus != null) judgment = judge.judge(sus.toDouble(), loBpm, hiBpm)
+
+        // 특징(표시/개인화 관측용) — 판정에는 사용하지 않음
         val feat = extractor.extractAt(s.tSec, profile, b.uFrac, b.lFrac)
         if (feat != null) {
             lastFeat = feat // 대시보드 표시용(드리프트/심박 추세)
-            judgment = classifier?.classify(feat)?.judgment ?: Zone2Classifier.ruleClassify(feat)
             // 개인화 관측 후보: decoupling(=feat[5]) 임계 부근의 지속 HR
             val hrFrac = feat[0] + b.uFrac
             val hrRecent = profile.restingHr + hrFrac * profile.hrr
             if (feat[5] in 0.03..0.10) obsCandidates += hrRecent
+
+            // 동역학 NN(spec-014): 현재 페이스 유지 시 60초 뒤 예측 + Zone2 목표 페이스 역질의
+            val dyn = dynamics
+            if (dyn != null) {
+                val df = extractor.dynFeaturesAt(s.tSec, profile, s.paceMinKm, s.slopePct, s.spm)
+                if (df != null) {
+                    val fr = dyn.predictFrac(df)
+                    predictedHr60 = (profile.restingHr + fr.last() * profile.hrr).toInt()
+                    val rec = dyn.recommendPace(df, b.lFrac, b.uFrac)
+                    // 표시 안정화: 직전 추천과 한 스텝(0.25) 이내면 유지
+                    if (recommendedPace <= 0.0 || Math.abs(rec - recommendedPace) > HrDynamics.PACE_STEP + 1e-9)
+                        recommendedPace = rec
+                    maybePreemptiveCoach(s, loBpm, hiBpm)
+                }
+            }
             // 코칭: 판정이 바뀌고 최소 간격 지난 경우
             maybeCoach(s)
         }
@@ -117,11 +148,32 @@ class RunEngine(
         val j = judgment ?: return
         val changed = j != lastJudgmentForCoach
         if (!changed || s.tSec - lastCoachSec < 20) return
+        lastPreemptiveIntent = null // 실제 판정이 바뀌면 선제 상태 리셋
+        fireCoach(s, j, preemptive = false)
+    }
+
+    /**
+     * 선제 코칭(spec-014 FR4): 판정은 IN인데 현재 페이스 유지 시 60초 뒤 예측이 경계 밖이면
+     * 이탈 전에 미리 방향 코칭. 같은 예측 방향이 이어지면 1회만.
+     */
+    private suspend fun maybePreemptiveCoach(s: Sample, loBpm: Double, hiBpm: Double) {
+        if (judgment != ZoneJudgment.IN || predictedHr60 <= 0) return
+        val intent = when {
+            predictedHr60 > hiBpm + 2 -> ZoneJudgment.ABOVE
+            predictedHr60 < loBpm - 2 -> ZoneJudgment.BELOW
+            else -> { lastPreemptiveIntent = null; return }
+        }
+        if (intent == lastPreemptiveIntent || s.tSec - lastCoachSec < 20) return
+        lastPreemptiveIntent = intent
+        fireCoach(s, intent, preemptive = true)
+    }
+
+    private suspend fun fireCoach(s: Sample, j: ZoneJudgment, preemptive: Boolean) {
         val scope = coachScope
-        if (scope != null && coachJob?.isActive == true) return // 이전 생성이 아직 진행 중이면 이번 트리거는 건너뜀
+        if (scope != null && coachJob?.isActive == true) return // 이전 생성이 아직 진행 중이면 건너뜀
         lastCoachSec = s.tSec
-        lastJudgmentForCoach = j
-        val ctx = CoachContext(j, s.slopePct, s.paceMinKm, s.tSec, spm = s.spm)
+        if (!preemptive) lastJudgmentForCoach = j
+        val ctx = CoachContext(j, s.slopePct, s.paceMinKm, s.tSec, spm = s.spm, preemptive = preemptive)
         if (scope == null) {
             recordCoaching(s.tSec, coach.say(ctx), 0L)
         } else {
@@ -150,6 +202,7 @@ class RunEngine(
     private fun liveState(s: Sample) = LiveState(
         elapsedSec = elapsed,
         hr = lastValidHr ?: -1,
+        smoothedHr = extractor.smoothedHrAt(s.tSec) ?: (lastValidHr ?: -1),
         judgment = judgment,
         paceMinKm = s.paceMinKm,
         speedKmh = if (s.paceMinKm > 0.1) 60.0 / s.paceMinKm else 0.0,
@@ -160,6 +213,8 @@ class RunEngine(
         spm = s.spm,
         decoupling = extractor.displayDriftAt(s.tSec), // 표시용(HR/속도 기반) — 특징 feat[5]와 별개
         dHrPerSec = lastFeat?.get(2),
+        predictedHr60 = predictedHr60,
+        recommendedPaceMinKm = recommendedPace,
     )
 
     fun report(): RunReport = RunReport(

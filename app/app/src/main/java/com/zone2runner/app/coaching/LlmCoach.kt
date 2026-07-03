@@ -30,6 +30,14 @@ class LlmCoach(
     @Volatile var directionRejects = 0
         private set
 
+    /** 마지막 코칭에 사용한 프롬프트(시뮬/목 모드 디버그 노출용). LLM 미가용이어도 채워 보여준다. */
+    @Volatile var lastPrompt: String? = null
+        private set
+
+    /** 마지막 코칭 문장의 경로: llm / rule(미가용) / rule(빈 출력) / rule(방향 기각) / rule(오류·타임아웃). */
+    @Volatile var lastPath: String = ""
+        private set
+
     /** 이번 세션에서 실제로 LLM 문장을 한 번이라도 냈는지(리포트 coachSource 표기용). */
     fun sessionSource(): String = if (usedLlmOnce) "llm" else "rule"
 
@@ -53,22 +61,26 @@ class LlmCoach(
     }
 
     override suspend fun say(ctx: CoachContext): String {
-        if (!ensureReady()) return fallback.say(ctx)
+        val prompt = buildPrompt(ctx)
+        lastPrompt = prompt // 디버그 노출: 실제 LLM 호출 여부와 무관하게 "이 프롬프트를 쓴다"를 보여준다
+        if (!ensureReady()) { lastPath = "rule(LLM 미가용)"; return fallback.say(ctx) }
         return try {
             val res = withContext(Dispatchers.Default) {
-                withTimeout(6_000) { client.generateContent(buildPrompt(ctx)) }
+                withTimeout(6_000) { client.generateContent(prompt) }
             }
             val text = res.candidates.firstOrNull()?.text
             val guarded = guard(text)
             when {
-                guarded == null -> fallback.say(ctx)
+                guarded == null -> { lastPath = "rule(빈 출력)"; fallback.say(ctx) }
                 !DirectionGuard.ok(intentOf(ctx.judgment), guarded) -> {
                     directionRejects++ // 방향 모순/무방향 문장 기각(adr-002 방향 잠금)
+                    lastPath = "rule(방향 기각: \"${guarded.take(24)}…\")"
                     fallback.say(ctx)
                 }
-                else -> { usedLlmOnce = true; guarded }
+                else -> { usedLlmOnce = true; lastPath = "llm"; guarded }
             }
         } catch (e: Throwable) {
+            lastPath = "rule(오류/타임아웃)"
             fallback.say(ctx) // 포그라운드 제약(ErrorCode 30)/타임아웃 등 -> 규칙 폴백
         }
     }
@@ -78,9 +90,13 @@ class LlmCoach(
     private fun buildPrompt(ctx: CoachContext): String {
         val (direction, must) = when (intentOf(ctx.judgment)) {
             CoachIntent.SPEED_UP ->
-                "페이스를 살짝 올려 심박을 Zone 2로 높이도록" to "'올려' 또는 '높여' 같은 올리는 표현을 문장에 반드시 포함하세요."
+                (if (ctx.preemptive) "아직 Zone 2 안이지만 심박이 곧 아래로 내려갈 것으로 예측되니 미리 페이스를 살짝 올리도록"
+                 else "페이스를 살짝 올려 심박을 Zone 2로 높이도록") to
+                    "'올려' 또는 '높여' 같은 올리는 표현을 문장에 반드시 포함하세요."
             CoachIntent.SLOW_DOWN ->
-                "페이스를 조금 낮춰 심박을 Zone 2로 내리도록" to "'낮춰' 또는 '천천히' 같은 낮추는 표현을 문장에 반드시 포함하세요."
+                (if (ctx.preemptive) "아직 Zone 2 안이지만 심박이 곧 상한을 넘을 것으로 예측되니 미리 페이스를 조금 낮추도록"
+                 else "페이스를 조금 낮춰 심박을 Zone 2로 내리도록") to
+                    "'낮춰' 또는 '천천히' 같은 낮추는 표현을 문장에 반드시 포함하세요."
             CoachIntent.MAINTAIN ->
                 "지금 페이스를 그대로 유지하도록" to "속도를 올리거나 낮추라는 말은 하지 마세요."
         }

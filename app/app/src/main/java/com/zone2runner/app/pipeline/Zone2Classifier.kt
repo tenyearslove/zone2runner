@@ -5,11 +5,15 @@ import com.zone2runner.app.domain.ZoneJudgment
 import org.json.JSONObject
 
 /**
- * 온디바이스 Zone2 판정 MLP (7 -> 32 -> 16 -> 3, ReLU).
+ * [LEGACY — adr-013으로 판정 경로에서 해임] 온디바이스 Zone2 판정 MLP (7 -> 32 -> 16 -> 3, ReLU).
+ *
+ * 시뮬레이터 라벨 순환으로 "지속 심박이 상한 크게 초과인데 미달" 오판이 실기기에서 발견되어
+ * 판정은 규칙(ZoneJudge)으로 전환, NN은 심박 동역학 모델(HrDynamics, spec-014)로 재조준됨.
+ * 이 클래스와 assets/zone2_mlp.json은 결함 재현 회귀 테스트(Zone2ClassifierTest)와
+ * 기록 보존용으로 유지한다. 런타임 판정 경로에서는 사용하지 않는다.
  *
  * ml/export_model.py가 뽑은 assets/zone2_mlp.json(가중치+StandardScaler)을 로드해
  * 순수 Kotlin 순전파로 추론한다. TFLite 런타임 불필요(adr-011) — 모델이 작아 충분.
- * 규칙 폴백(콜드스타트/모델 미로드)도 제공.
  */
 class Zone2Classifier private constructor(
     val features: List<String>,
@@ -51,11 +55,29 @@ class Zone2Classifier private constructor(
     }
 
     companion object {
+        /**
+         * 규칙 가드레일 여유(HRR 비율). 상한을 이만큼 초과/하한을 이만큼 미달하면
+         * 규칙이 MLP를 무시(≈0.10 HRR ≈ 14bpm). 경계 부근(±margin)은 MLP가 판단.
+         */
+        const val GUARD_MARGIN = 0.10
+
         /** 규칙 폴백: hr_norm_u>0 초과, hr_norm_l<0 미달, 나머지 유지. (feat[0]=u,[1]=l) */
         fun ruleClassify(feat: DoubleArray): ZoneJudgment = when {
             feat[1] < 0.0 -> ZoneJudgment.BELOW
             feat[0] > 0.0 -> ZoneJudgment.ABOVE
             else -> ZoneJudgment.IN
+        }
+
+        /**
+         * DP1 하이브리드 가드레일: MLP 판정을 규칙으로 감싼다.
+         * MLP의 dHR(심박 추세) 특징이 절대 심박 위치를 압도해 "심박 180인데 미달" 같은
+         * 오판을 내는 것을 방지 — 경계에서 GUARD_MARGIN 이상 벗어나면 규칙이 최종.
+         * (feat[0]=hr_norm_u 상한대비, feat[1]=hr_norm_l 하한대비)
+         */
+        fun guard(mlp: ZoneJudgment, feat: DoubleArray, margin: Double = GUARD_MARGIN): ZoneJudgment = when {
+            feat[0] > margin -> ZoneJudgment.ABOVE   // 상한을 크게 초과 → 무조건 초과
+            feat[1] < -margin -> ZoneJudgment.BELOW  // 하한을 크게 미달 → 무조건 미달
+            else -> mlp
         }
 
         fun fromAssets(ctx: Context, name: String = "zone2_mlp.json"): Zone2Classifier =

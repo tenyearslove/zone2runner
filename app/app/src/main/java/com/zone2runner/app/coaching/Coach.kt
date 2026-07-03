@@ -13,6 +13,8 @@ data class CoachContext(
     val paceMinKm: Double,
     val elapsedSec: Int,
     val spm: Int = 0, // 케이던스(0=미상). 범위 밖이면 코칭에 폼 가이드 추가
+    /** 선제 코칭(spec-014 FR4): 아직 존 안이지만 동역학 모델이 곧 이탈을 예측 — judgment는 예측된 이탈 방향. */
+    val preemptive: Boolean = false,
 ) {
     /**
      * 케이던스 판정. 근거: 걸음 빈도를 5~10% 올리면 무릎/고관절 부하가 유의미하게 감소
@@ -86,6 +88,15 @@ class RuleCoach : Coach {
     override suspend fun say(ctx: CoachContext): String {
         val uphill = ctx.slopePct > 2
         val downhill = ctx.slopePct < -2
+        // 선제 코칭(spec-014 FR4): 아직 존 안 — "곧 이탈" 예측을 미리 알려 존 체류 시간을 지킨다
+        if (ctx.preemptive) {
+            val line = when (intentOf(ctx.judgment)) {
+                CoachIntent.SLOW_DOWN -> "이대로면 심박이 곧 Zone 2를 넘겠어요. 미리 살짝 늦춰요."
+                CoachIntent.SPEED_UP -> "심박이 곧 Zone 2 아래로 내려가겠어요. 페이스를 조금 올려요."
+                CoachIntent.MAINTAIN -> "좋아요, Zone 2 유지 중이에요. 이 리듬 그대로."
+            }
+            return guard(line + cadenceTip(ctx))
+        }
         val lines = when (intentOf(ctx.judgment)) {
             CoachIntent.SPEED_UP -> when {
                 downhill -> listOf("내리막이에요. 조금 더 밀어서 심박을 Zone 2로 올려볼까요.")

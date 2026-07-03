@@ -1,8 +1,12 @@
 # Spec-006: Zone 2 분류 NN 설계 및 학습
 
-- **상태**: Draft
+- **상태**: Superseded by spec-014 (2026-07-03, adr-013)
 - **날짜**: 2026-07-01
-- **관련 ADR**: `arch/adr-005-zone2-classifier-nn.md` (DP4)
+- **관련 ADR**: `arch/adr-005-zone2-classifier-nn.md` (DP4, Superseded)
+
+> **Supersede 경위(2026-07-03)**: 시뮬레이터 라벨 순환으로 실기기 판정 결함 발생(adr-013 맥락 참조).
+> 판정은 규칙 전환, NN은 심박 동역학 모델(`spec/spec-014-hr-dynamics-model.md`)로 재조준.
+> 본 문서의 특징 정의/학습 파이프라인 구조는 spec-014가 계승한다.
 
 ## 목표
 
