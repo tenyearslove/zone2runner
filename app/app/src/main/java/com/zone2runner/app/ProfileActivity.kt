@@ -20,6 +20,7 @@ import com.zone2runner.app.ui.card
 import com.zone2runner.app.ui.dpi
 import com.zone2runner.app.ui.subtitle
 import com.zone2runner.app.ui.title
+import com.zone2runner.app.ui.withSystemBarInsets
 
 /**
  * 프로필 설정 (spec-009). 나이/안정심박/최대심박(0=나이기반 Tanaka 자동)을 입력받아 저장.
@@ -34,7 +35,7 @@ class ProfileActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(buildUi())
+        setContentView((buildUi()).withSystemBarInsets())
         updatePreview()
     }
 

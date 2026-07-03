@@ -20,6 +20,7 @@ import com.zone2runner.app.ui.card
 import com.zone2runner.app.ui.dpi
 import com.zone2runner.app.ui.subtitle
 import com.zone2runner.app.ui.title
+import com.zone2runner.app.ui.withSystemBarInsets
 
 /**
  * 가짜 라이브(테스트) 설정 — 심박/속도 범위를 지정해 워치 없이 실시간 러닝을 흉내낸다.
@@ -35,7 +36,7 @@ class MockConfigActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(buildUi())
+        setContentView((buildUi()).withSystemBarInsets())
         updatePreview()
     }
 

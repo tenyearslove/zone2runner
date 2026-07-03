@@ -19,6 +19,7 @@ import com.zone2runner.app.ui.dpi
 import com.zone2runner.app.ui.statTile
 import com.zone2runner.app.ui.subtitle
 import com.zone2runner.app.ui.title
+import com.zone2runner.app.ui.withSystemBarInsets
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -28,10 +29,10 @@ class HistoryActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(buildUi())
+        setContentView((buildUi()).withSystemBarInsets())
     }
 
-    override fun onResume() { super.onResume(); setContentView(buildUi()) }
+    override fun onResume() { super.onResume(); setContentView((buildUi()).withSystemBarInsets()) }
 
     private fun buildUi(): View {
         val col = LinearLayout(this).apply {
@@ -85,7 +86,7 @@ class HistoryActivity : AppCompatActivity() {
         c.setOnLongClickListener {
             SessionStore.delete(this, s.id)
             Toast.makeText(this, "삭제됨", Toast.LENGTH_SHORT).show()
-            setContentView(buildUi()); true
+            setContentView((buildUi()).withSystemBarInsets()); true
         }
         return c
     }

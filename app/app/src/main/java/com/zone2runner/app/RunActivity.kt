@@ -32,6 +32,7 @@ import com.zone2runner.app.sensor.RunSource
 import com.zone2runner.app.sensor.SimulatedRunSource
 import com.zone2runner.app.sensor.WatchHrProvider
 import com.zone2runner.app.ui.ReportHolder
+import com.zone2runner.app.ui.withSystemBarInsets
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
@@ -79,7 +80,7 @@ class RunActivity : AppCompatActivity() {
         tts = TextToSpeech(this) { status ->
             if (status == TextToSpeech.SUCCESS) { tts?.language = java.util.Locale.KOREAN; ttsReady = true }
         }
-        setContentView(buildUi())
+        setContentView((buildUi()).withSystemBarInsets())
         updateSubtitle()
     }
 

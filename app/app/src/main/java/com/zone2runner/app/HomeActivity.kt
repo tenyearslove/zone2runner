@@ -19,6 +19,7 @@ import com.zone2runner.app.ui.dpi
 import com.zone2runner.app.ui.statTile
 import com.zone2runner.app.ui.subtitle
 import com.zone2runner.app.ui.title
+import com.zone2runner.app.ui.withSystemBarInsets
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -31,7 +32,7 @@ class HomeActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(buildUi())
+        setContentView((buildUi()).withSystemBarInsets())
         // 첫 실행 온보딩: 프로필 미설정이면 프로세스당 1회 프로필 화면 안내
         if (!ProfileStore.isConfigured(this) && !onboardingShown) {
             onboardingShown = true
@@ -41,7 +42,7 @@ class HomeActivity : AppCompatActivity() {
 
     private companion object { var onboardingShown = false }
 
-    override fun onResume() { super.onResume(); setContentView(buildUi()) } // 프로필/기록 변경 반영
+    override fun onResume() { super.onResume(); setContentView((buildUi()).withSystemBarInsets()) } // 프로필/기록 변경 반영
 
     private fun buildUi(): View {
         val profile = ProfileStore.load(this)

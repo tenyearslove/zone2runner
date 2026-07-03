@@ -10,6 +10,8 @@ import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 
 /** 앱 전역 팔레트(다크). 존 색은 domain.ZoneJudgment/HrZone과 일치. */
 object Palette {
@@ -25,6 +27,20 @@ object Palette {
 }
 
 fun Context.dpi(v: Int): Int = (v * resources.displayMetrics.density).toInt()
+
+/**
+ * targetSdk 35(Android 15+)는 edge-to-edge가 강제라 콘텐츠가 상태바/내비게이션바 밑까지 그려진다.
+ * 루트 뷰에 시스템 바 인셋만큼 패딩을 더해 가림을 막는다. setContentView 직전에 루트에 호출.
+ */
+fun <T : View> T.withSystemBarInsets(): T {
+    val l = paddingLeft; val t = paddingTop; val r = paddingRight; val b = paddingBottom
+    ViewCompat.setOnApplyWindowInsetsListener(this) { v, insets ->
+        val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+        v.setPadding(l + bars.left, t + bars.top, r + bars.right, b + bars.bottom)
+        insets
+    }
+    return this
+}
 
 /** 제목 + 내용 카드(둥근 모서리 + 테두리). title=null 이면 제목 생략. */
 fun Context.card(title: String?, content: View, topMarginDp: Int = 10): LinearLayout =

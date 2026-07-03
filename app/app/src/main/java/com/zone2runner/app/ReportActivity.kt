@@ -14,6 +14,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.zone2runner.app.domain.RunReport
 import com.zone2runner.app.domain.ZoneJudgment
 import com.zone2runner.app.ui.ReportHolder
+import com.zone2runner.app.ui.withSystemBarInsets
 import com.zone2runner.app.ui.TimeSeriesChartView
 import com.zone2runner.app.ui.ZoneBarView
 import com.zone2runner.app.ui.ZoneTimelineView
@@ -32,7 +33,7 @@ class ReportActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         Configuration.getInstance().userAgentValue = packageName
         val r = ReportHolder.last
-        setContentView(if (r == null) emptyView() else buildReport(r))
+        setContentView((if (r == null) emptyView() else buildReport(r)).withSystemBarInsets())
     }
 
     private fun emptyView() = TextView(this).apply {
