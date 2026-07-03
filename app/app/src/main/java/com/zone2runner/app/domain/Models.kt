@@ -138,6 +138,7 @@ data class RunReport(
             }
             val r1 = ratio(s.subList(0, half))
             val r2 = ratio(s.subList(half, s.size))
-            return if (r1 > 0) (r2 / r1 - 1.0) * 100.0 else 0.0
+            // 표시 클램프(참고 지표): 실제 드리프트는 통상 0~15%, 헛값(-10~+25%) 방지 — FeatureExtractor와 동일 기준
+            return if (r1 > 0) ((r2 / r1 - 1.0) * 100.0).coerceIn(-10.0, 25.0) else 0.0
         }
 }

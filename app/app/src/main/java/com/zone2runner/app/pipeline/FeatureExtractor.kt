@@ -54,18 +54,16 @@ class FeatureExtractor {
     }
 
     /**
-     * 심박 동역학 모델 입력 8종 (spec-014, ml/train_hr_dynamics.py extract_dynamics와 동일 규약):
-     *   [hr_now_frac(10초), hr_sus_frac(60초), dHR(30초), pace_plan, slope, spm, elapsed_min, decoupling]
+     * 심박 동역학 모델 입력 7종 (spec-014, ml/train_hr_dynamics.py extract_dynamics와 동일 규약):
+     *   [hr_now_frac(10초), hr_sus_frac(60초), dHR(30초), pace_plan, slope, spm, elapsed_min]
      * pace_plan = 앞으로 유지할 페이스(호출자가 후보/현재 페이스를 공급). 워밍업 전 null.
+     * decoupling(드리프트)은 ablation에서 예측에 무익해 제거됨(adr-013 옵션1) — 표시/리포트 전용 지표로만 남김.
      */
     fun dynFeaturesAt(t: Int, profile: Profile, pacePlan: Double, slopeNow: Double, spmNow: Int): DoubleArray? {
         if (baseRatio.isNaN() || t < WARMUP_S || t >= hr.size) return null
         val hrNow = mean(hr, t - 10, t)
         val hrSus = mean(hr, t - HRW, t)
         val dHR = (hr[t] - hr[t - W]) / W
-        var rr = 0.0; var c = 0
-        for (i in (t - W) until t) { rr += hr[i] / pace[i]; c++ }
-        val dec = (rr / c) / baseRatio - 1.0
         return doubleArrayOf(
             (hrNow - profile.restingHr) / profile.hrr,
             (hrSus - profile.restingHr) / profile.hrr,
@@ -74,7 +72,6 @@ class FeatureExtractor {
             slopeNow,
             spmNow.toDouble(),
             t / 60.0,
-            dec,
         )
     }
 
@@ -124,7 +121,10 @@ class FeatureExtractor {
         }
         var s = 0.0; var c = 0
         for (i in maxOf(0, t - 60) until minOf(t, hr.size)) { s += hrPerSpeed(i); c++ }
-        return if (c > 0 && displayBase > 0) (s / c) / displayBase - 1.0 else null
+        if (c == 0 || displayBase <= 0) return null
+        // 표시 클램프: 실제 심혈관 드리프트는 통상 0~15%. 시뮬 심박이 최대치에 붙거나 GPS 속도가
+        // 튀면 비율이 비현실적으로 부풀어(관찰: 38%) 사용자를 오도한다 → -10~+25%로 제한(참고 지표).
+        return ((s / c) / displayBase - 1.0).coerceIn(-0.10, 0.25)
     }
 
     /** HR / 속도(km/h) = hr * pace / 60 — 같은 속도 대비 심박 비용(EF 역수). */

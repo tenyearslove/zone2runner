@@ -32,11 +32,11 @@ class HrDynamicsTest {
             println("실 모델 파일을 찾지 못해 스킵"); return
         }
         val m = HrDynamics.fromJsonString(f.readText())
-        assertEquals("입력 특징 8종(spec-014)", 8, m.features.size)
+        assertEquals("입력 특징 7종(spec-014, decoupling 제거)", 7, m.features.size)
         assertEquals(listOf(30, 60), m.horizonsSec)
 
-        // Zone2 부근 정상 상태: [hr_now, hr_sus, dHR, pace, slope, spm, elapsed, decoupling]
-        val feat = doubleArrayOf(0.65, 0.64, 0.0, 6.5, 0.0, 170.0, 10.0, 0.05)
+        // Zone2 부근 정상 상태: [hr_now, hr_sus, dHR, pace, slope, spm, elapsed]
+        val feat = doubleArrayOf(0.65, 0.64, 0.0, 6.5, 0.0, 170.0, 10.0)
         val y = m.predictFrac(feat)
         assertTrue("30초 예측 생리 범위(HRR 0.2~1.0): ${y[0]}", y[0] in 0.2..1.0)
         assertTrue("60초 예측 생리 범위: ${y[1]}", y[1] in 0.2..1.0)

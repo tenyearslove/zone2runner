@@ -29,7 +29,9 @@ ART = os.path.join(os.path.dirname(__file__), "artifacts")
 ASSETS = os.path.join(os.path.dirname(__file__), "..", "app", "app", "src", "main", "assets")
 os.makedirs(ART, exist_ok=True)
 
-FEATURES = ["hr_now_frac", "hr_sus_frac", "dHR", "pace_plan", "slope", "spm", "elapsed_min", "decoupling"]
+# decoupling(드리프트) 특징은 ablation(ml/ablation_decoupling.py)에서 도움이 없어(30초 예측 오히려
+# 악화) 제거함 — adr-013 옵션1. 드리프트는 표시/리포트 전용 지표로만 남긴다.
+FEATURES = ["hr_now_frac", "hr_sus_frac", "dHR", "pace_plan", "slope", "spm", "elapsed_min"]
 HORIZONS = [30, 60]  # 예측 지평(초)
 STRIDE = 5
 
@@ -46,9 +48,6 @@ def extract_dynamics(session):
     n = len(hr)
     Hmax = max(HORIZONS)
 
-    base_win = slice(WARMUP_S - 60, WARMUP_S)
-    base_ratio = np.mean(hr[base_win] / pace[base_win])
-
     X, Y = [], []
     for t in range(WARMUP_S, n - Hmax - 5, STRIDE):
         hr_now = np.mean(hr[t - 10:t])
@@ -56,8 +55,6 @@ def extract_dynamics(session):
         dHR = (hr[t] - hr[t - 30]) / 30.0
         pace_plan = np.mean(pace[t:t + 60])
         slope_fut = np.mean(slope[t:t + 60])
-        recent_ratio = np.mean(hr[t - 30:t] / pace[t - 30:t])
-        decoupling = recent_ratio / base_ratio - 1.0
         X.append([
             (hr_now - resting) / hrr,
             (hr_sus - resting) / hrr,
@@ -66,7 +63,6 @@ def extract_dynamics(session):
             slope_fut,
             spm[t],
             t / 60.0,
-            decoupling,
         ])
         Y.append([(np.mean(hr[t + H - 5:t + H + 5]) - resting) / hrr for H in HORIZONS])
     return np.array(X), np.array(Y), hrr
@@ -96,7 +92,7 @@ def group_split(g, seed=SEED, val=0.15, test=0.15):
 
 
 class DynMLP(nn.Module):
-    def __init__(self, d_in=8, d_out=2):
+    def __init__(self, d_in=len(FEATURES), d_out=2):
         super().__init__()
         self.net = nn.Sequential(
             nn.Linear(d_in, 32), nn.ReLU(), nn.Dropout(0.1),
@@ -132,12 +128,22 @@ def main():
     lossf = nn.MSELoss()
     best_val, best_state, patience, bad = float("inf"), None, 15, 0
     bs, n = 512, len(Xtr)
-    print("학습(MLP 8->32->16->2, MSE)...")
+    # 페이스 단조성 강제(spec-014 FR3/AC3): 느린 페이스(값↑)는 예측 심박을 낮춰야 역질의가 성립.
+    # 학습 중 pace 열을 +ε(표준화 단위) 흔들어 예측이 오르면 벌점 — decoupling 없이도 단조 보장.
+    pace_col = FEATURES.index("pace_plan")
+    MONO_EPS, MONO_W = 0.5, 6.0
+    print(f"학습(MLP {len(FEATURES)}->32->16->2, MSE + 페이스 단조 페널티)...")
     for epoch in range(300):
         model.train(); perm = torch.randperm(n)
         for i in range(0, n, bs):
             b = perm[i:i + bs]
-            opt.zero_grad(); lossf(model(Xtr[b]), Ytr[b]).backward(); opt.step()
+            opt.zero_grad()
+            xb = Xtr[b]
+            pred_b = model(xb)
+            xb2 = xb.clone(); xb2[:, pace_col] = xb2[:, pace_col] + MONO_EPS
+            pred_slow = model(xb2)
+            mono = torch.relu(pred_slow - pred_b).mean() # 느려졌는데 심박 예측이 오르면 벌점
+            (lossf(pred_b, Ytr[b]) + MONO_W * mono).backward(); opt.step()
         model.eval()
         with torch.no_grad():
             val = lossf(model(Xva), torch.tensor(Y[va], dtype=torch.float32)).item()

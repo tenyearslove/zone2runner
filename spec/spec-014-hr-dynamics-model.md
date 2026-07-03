@@ -30,21 +30,27 @@
 
 ## 모델 설계
 
-### 입력 특징 8종 (추론 시점에 관측 가능한 것만)
+### 입력 특징 7종 (추론 시점에 관측 가능한 것만)
 
 | # | 이름 | 정의 | 추론 시 공급 |
 |---|------|------|------------|
 | 0 | hr_now_frac | 최근 10초 평균 HR의 HRR 비율 (hr-RHR)/HRR | 관측 |
-| 1 | hr_sus_frac | 최근 60초 평균 HR의 HRR 비율(드리프트 상태) | 관측 |
+| 1 | hr_sus_frac | 최근 60초 평균 HR의 HRR 비율(지속 심박) | 관측 |
 | 2 | dHR | (hr[t]-hr[t-30])/30 (bpm/s) | 관측 |
 | 3 | pace_plan | 앞으로 유지할 페이스(min/km). 학습=미래 60초 실제 평균 페이스 | 후보/현재 페이스 |
 | 4 | slope | 경사(%). 학습=미래 60초 평균 | 현재 경사(한계: 전방 지형 미지 - 문서화) |
 | 5 | spm | 케이던스 | 관측 |
-| 6 | elapsed_min | 세션 경과(분) - 피로/드리프트 대리 | 관측 |
-| 7 | decoupling | 세션 baseline 대비 hr/pace 상승률 | 관측 |
+| 6 | elapsed_min | 세션 경과(분) - 피로 대리 | 관측 |
 
 HR을 프로필(RHR/HRR)로 정규화해 러너 간 전이 가능하게 한다. pace_plan을 "미래 구간 실제 평균"
 으로 학습하는 것은 what-if 조건화("이 페이스를 유지하면")의 의미론과 일치시키기 위함이다.
+
+> **decoupling(드리프트) 특징 제거 경위(2026-07-03, adr-013 옵션1)**: 초기 8특징에 decoupling을
+> 포함했으나 ablation(`ml/ablation_decoupling.py`) 결과 예측에 무익(t+30 RMSE 8.30→6.74로 오히려
+> 개선). 다만 제거하니 페이스 단조성이 깨져(위반 1.3%→18%, AC3 실패) — decoupling이 예측이 아니라
+> 페이스 응답의 정칙자(regularizer) 역할을 하고 있었음이 드러남. 그 역할을 **학습 단계 단조성
+> 페널티**(느린 페이스가 예측 심박을 올리면 벌점)로 대체 → decoupling 없이 단조성 0%, RMSE 9.04/15.62.
+> 드리프트는 표시/리포트 전용 지표로만 남긴다(판정 경로엔 애초에 없음).
 
 ### 출력 2종 (회귀)
 
@@ -52,7 +58,7 @@ HR을 프로필(RHR/HRR)로 정규화해 러너 간 전이 가능하게 한다. 
 
 ### 아키텍처/학습
 
-- MLP 8 -> 32 -> 16 -> 2 (ReLU, 회귀 헤드 - softmax 없음). PyTorch 학습(Adam, MSE, early stopping).
+- MLP 7 -> 32 -> 16 -> 2 (ReLU, 회귀 헤드 - softmax 없음). PyTorch 학습(Adam, MSE + 페이스 단조 페널티, early stopping).
 - 데이터: simulator.generate_session (물리 시뮬레이터 - 관측 제공자 역할). 러너 단위 train/val/test 분할.
 - 배포: 가중치+StandardScaler를 JSON export -> 순수 Kotlin 순전파(adr-011 방식 재사용, TFLite 없음).
 
