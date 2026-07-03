@@ -1,12 +1,12 @@
 package com.zone2runner.wear
 
 import android.Manifest
-import android.annotation.SuppressLint
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
-import android.location.Location
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -21,33 +21,16 @@ import android.widget.TextView
 import androidx.activity.ComponentActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.health.services.client.HealthServices
-import androidx.health.services.client.MeasureCallback
-import androidx.health.services.client.data.Availability
-import androidx.health.services.client.data.DataPointContainer
-import androidx.health.services.client.data.DataType
-import androidx.health.services.client.data.DataTypeAvailability
-import androidx.health.services.client.data.DeltaDataType
 import androidx.wear.widget.BoxInsetLayout
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationCallback
-import com.google.android.gms.location.LocationRequest
-import com.google.android.gms.location.LocationResult
-import com.google.android.gms.location.LocationServices
-import com.google.android.gms.location.Priority
 
 /**
  * Zone2 Runner — 워치 러닝 대시보드.
  * 한 화면(스크롤 없음)에 HR, 현재 존, 페이스/거리/속도, 경과시간, 조작 버튼을 배치한다.
- * 베젤 게이지(ZoneGaugeView)로 현재 존을 시각화한다.
+ * 측정/누적은 RunService(포그라운드 서비스, adr-009)가 소유 — 화면이 꺼져도 세션 유지.
+ * 이 액티비티는 RunBus를 구독해 렌더하고, 버튼은 서비스에 액션 인텐트만 보낸다.
  */
 class WearRunActivity : ComponentActivity() {
 
-    private enum class State { IDLE, RUNNING, PAUSED }
-
-    private val measureClient by lazy { HealthServices.getClient(this).measureClient }
-    private lateinit var fused: FusedLocationProviderClient
-    private val hrForwarder by lazy { HrForwarder(this) }
     private val ui = Handler(Looper.getMainLooper())
 
     // 뷰
@@ -61,39 +44,7 @@ class WearRunActivity : ComponentActivity() {
     private lateinit var spdVal: TextView
     private lateinit var btnRow: LinearLayout
 
-    // 상태
-    private var state = State.IDLE
-    private var hr = -1
-    private var accumulatedMs = 0L
-    private var runStart = 0L
-    private var distanceM = 0.0
-    private var speedKmh = 0.0
-    private var lastLoc: Location? = null
-    private var hrRegistered = false
-
-    private val hrCallback = object : MeasureCallback {
-        override fun onAvailabilityChanged(dataType: DeltaDataType<*, *>, availability: Availability) {}
-        override fun onDataReceived(data: DataPointContainer) {
-            val v = data.getData(DataType.HEART_RATE_BPM).lastOrNull()?.value ?: return
-            hr = v.toInt()
-            if (state == State.RUNNING) hrForwarder.send(hr) // 폰으로 실시간 HR 전달(Data Layer)
-            ui.post { render() }
-        }
-    }
-
-    private val locationCallback = object : LocationCallback() {
-        override fun onLocationResult(result: LocationResult) {
-            val loc = result.lastLocation ?: return
-            speedKmh = if (loc.hasSpeed()) loc.speed * 3.6 else speedKmh
-            val prev = lastLoc
-            if (state == State.RUNNING && prev != null) {
-                val d = prev.distanceTo(loc)
-                if (d in 0.5f..40f) distanceM += d // 노이즈/튐 제거
-            }
-            lastLoc = loc
-            ui.post { render() }
-        }
-    }
+    private val state: RunState get() = RunBus.state
 
     private val ticker = object : Runnable {
         override fun run() {
@@ -105,13 +56,21 @@ class WearRunActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        fused = LocationServices.getFusedLocationProviderClient(this)
         setContentView(buildUi())
         render()
     }
 
-    override fun onResume() { super.onResume(); ui.post(ticker) }
-    override fun onPause() { super.onPause(); ui.removeCallbacks(ticker) }
+    override fun onResume() {
+        super.onResume()
+        RunBus.listener = { render() }
+        ui.post(ticker)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        RunBus.listener = null
+        ui.removeCallbacks(ticker)
+    }
 
     // ---- UI ----
 
@@ -207,16 +166,16 @@ class WearRunActivity : ComponentActivity() {
     private fun rebuildButtons() {
         btnRow.removeAllViews()
         when (state) {
-            State.IDLE -> btnRow.addView(pill("시작", C_GREEN) { start() })
-            State.RUNNING -> {
-                btnRow.addView(pill("일시정지", C_AMBER) { pause() })
+            RunState.IDLE -> btnRow.addView(pill("시작", C_GREEN) { start() })
+            RunState.RUNNING -> {
+                btnRow.addView(pill("일시정지", C_AMBER) { sendAction(RunService.ACTION_PAUSE) })
                 btnRow.addView(space())
-                btnRow.addView(pill("종료", C_RED) { stop() })
+                btnRow.addView(pill("종료", C_RED) { sendAction(RunService.ACTION_STOP) })
             }
-            State.PAUSED -> {
-                btnRow.addView(pill("재개", C_GREEN) { resume() })
+            RunState.PAUSED -> {
+                btnRow.addView(pill("재개", C_GREEN) { sendAction(RunService.ACTION_RESUME) })
                 btnRow.addView(space())
-                btnRow.addView(pill("종료", C_RED) { stop() })
+                btnRow.addView(pill("종료", C_RED) { sendAction(RunService.ACTION_STOP) })
             }
         }
     }
@@ -226,17 +185,23 @@ class WearRunActivity : ComponentActivity() {
     // ---- 렌더링 ----
 
     private fun render() {
-        // 경과시간
-        val ms = accumulatedMs + if (state == State.RUNNING) SystemClock.elapsedRealtime() - runStart else 0L
+        // 경과시간(서비스가 누적)
+        val ms = RunBus.accumulatedMs +
+            if (state == RunState.RUNNING) SystemClock.elapsedRealtime() - RunBus.runStart else 0L
         val totalSec = (ms / 1000).toInt()
         timeView.text = "%02d:%02d".format(totalSec / 60, totalSec % 60)
 
         // HR + 존
-        val running = state != State.IDLE
+        val hr = RunBus.hr
+        val running = state != RunState.IDLE
         if (hr < 0) {
             hrView.text = "--"; hrView.setTextColor(C_MUTED); bpmLabel.setTextColor(C_MUTED)
-            zoneLabel.text = if (state == State.IDLE) "시작 대기" else "센서 예열중…"
-            zoneLabel.setTextColor(if (state == State.IDLE) C_MUTED else C_AMBER)
+            zoneLabel.text = when {
+                state == RunState.IDLE -> "시작 대기"
+                RunBus.error != null -> RunBus.error
+                else -> "센서 예열중…"
+            }
+            zoneLabel.setTextColor(if (state == RunState.IDLE) C_MUTED else C_AMBER)
             gauge.update(null, 0f, running)
         } else {
             val zone = Zones.zoneOf(hr)
@@ -248,6 +213,8 @@ class WearRunActivity : ComponentActivity() {
         }
 
         // 페이스/거리/속도
+        val speedKmh = RunBus.speedKmh
+        val distanceM = RunBus.distanceM
         paceVal.text = formatPace(speedKmh)
         distVal.text = if (distanceM < 1000) "${distanceM.toInt()}m" else "%.2fkm".format(distanceM / 1000)
         spdVal.text = if (speedKmh < 0.3) "--" else "%.1f".format(speedKmh)
@@ -255,7 +222,7 @@ class WearRunActivity : ComponentActivity() {
         if (btnRow.childCount == 0 || btnTagMismatch()) rebuildButtons()
     }
 
-    private var lastBtnState: State? = null
+    private var lastBtnState: RunState? = null
     private fun btnTagMismatch(): Boolean {
         val mismatch = lastBtnState != state
         if (mismatch) lastBtnState = state
@@ -270,55 +237,16 @@ class WearRunActivity : ComponentActivity() {
         return "%d'%02d\"".format(m, s)
     }
 
-    // ---- 제어 ----
+    // ---- 제어(서비스 위임) ----
 
     private fun start() {
         if (!hasPerms()) { requestPerms(); return }
-        state = State.RUNNING
-        accumulatedMs = 0L; runStart = SystemClock.elapsedRealtime()
-        distanceM = 0.0; lastLoc = null; hr = -1
-        hrForwarder.start()
-        startSensors()
-        rebuildButtons(); render()
+        val intent = Intent(this, RunService::class.java).setAction(RunService.ACTION_START)
+        ContextCompat.startForegroundService(this, intent)
     }
 
-    private fun pause() {
-        if (state != State.RUNNING) return
-        accumulatedMs += SystemClock.elapsedRealtime() - runStart
-        state = State.PAUSED
-        rebuildButtons(); render()
-    }
-
-    private fun resume() {
-        if (state != State.PAUSED) return
-        runStart = SystemClock.elapsedRealtime()
-        state = State.RUNNING
-        rebuildButtons(); render()
-    }
-
-    private fun stop() {
-        state = State.IDLE
-        stopSensors()
-        hr = -1; speedKmh = 0.0
-        rebuildButtons(); render()
-    }
-
-    @SuppressLint("MissingPermission")
-    private fun startSensors() {
-        if (!hrRegistered) {
-            measureClient.registerMeasureCallback(DataType.HEART_RATE_BPM, hrCallback)
-            hrRegistered = true
-        }
-        val req = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 2000L).build()
-        fused.requestLocationUpdates(req, locationCallback, Looper.getMainLooper())
-    }
-
-    private fun stopSensors() {
-        if (hrRegistered) {
-            runCatching { measureClient.unregisterMeasureCallbackAsync(DataType.HEART_RATE_BPM, hrCallback) }
-            hrRegistered = false
-        }
-        fused.removeLocationUpdates(locationCallback)
+    private fun sendAction(action: String) {
+        startService(Intent(this, RunService::class.java).setAction(action))
     }
 
     // ---- 권한 ----
@@ -330,22 +258,15 @@ class WearRunActivity : ComponentActivity() {
     }
 
     private fun requestPerms() {
-        ActivityCompat.requestPermissions(
-            this,
-            arrayOf(Manifest.permission.BODY_SENSORS, Manifest.permission.ACCESS_FINE_LOCATION),
-            1
-        )
+        val perms = mutableListOf(Manifest.permission.BODY_SENSORS, Manifest.permission.ACCESS_FINE_LOCATION)
+        if (Build.VERSION.SDK_INT >= 33) perms += Manifest.permission.POST_NOTIFICATIONS
+        ActivityCompat.requestPermissions(this, perms.toTypedArray(), 1)
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (hasPerms()) start()
         else { zoneLabel.text = "권한 필요(심박/위치)"; zoneLabel.setTextColor(C_RED) }
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        stopSensors()
     }
 
     // ---- helpers ----
