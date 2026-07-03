@@ -63,6 +63,7 @@ class RunActivity : AppCompatActivity() {
     private lateinit var rangeView: TextView
     private lateinit var slopeView: TextView
     private lateinit var spmView: TextView
+    private lateinit var strideView: TextView
     private lateinit var driftView: TextView
     private lateinit var tempView: TextView
     private var profile: com.zone2runner.app.domain.Profile? = null
@@ -170,11 +171,12 @@ class RunActivity : AppCompatActivity() {
         metrics.addView(metricCol(paceView, "페이스"))
         dash.addView(metrics, mt(8))
 
-        // 실시간 판정 요소(MLP 특징 표시) + 기온(참고)
+        // 실시간 판정 요소(MLP 특징 표시) + 보폭(속도/케이던스 파생) + 기온(참고)
         val factors = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
-        slopeView = metricVal(); spmView = metricVal(); driftView = metricVal(); tempView = metricVal()
+        slopeView = metricVal(); spmView = metricVal(); strideView = metricVal(); driftView = metricVal(); tempView = metricVal()
         factors.addView(metricCol(slopeView, "경사"))
         factors.addView(metricCol(spmView, "케이던스"))
+        factors.addView(metricCol(strideView, "보폭"))
         factors.addView(metricCol(driftView, "드리프트"))
         factors.addView(metricCol(tempView, "기온"))
         dash.addView(factors, mt(6))
@@ -329,6 +331,10 @@ class RunActivity : AppCompatActivity() {
             else -> { slopeView.text = "평지"; slopeView.setTextColor(C_TEXT) }
         }
         spmView.text = if (s.spm > 0) "${s.spm}" else "--"
+        spmView.setTextColor(if (s.spm in 1..161) C_AMBER else C_TEXT) // 저케이던스 경고(부상 예방, spec-005 근거)
+        // 보폭(m) = 속도(m/min) / 케이던스 = 1000/(pace*spm)
+        strideView.text = if (s.spm > 0 && s.paceMinKm in 0.1..30.0)
+            "%.2fm".format(1000.0 / (s.paceMinKm * s.spm)) else "--"
         val dec = s.decoupling
         if (dec == null) { driftView.text = "--"; driftView.setTextColor(C_MUTED) }
         else {

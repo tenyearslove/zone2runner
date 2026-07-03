@@ -92,7 +92,9 @@ class RunService : Service() {
 
     private fun startExercise() {
         val config = ExerciseConfig.builder(ExerciseType.RUNNING)
-            .setDataTypes(setOf(DataType.HEART_RATE_BPM))
+            // 케이던스(STEPS_PER_MINUTE)는 판정 특징(feat[4])의 실측 소스 — 폰은 측정 불가해
+            // 페이스 기반 추정만 가능했음. 워치 실측을 /spm으로 폰에 전달(spec-006 특징 품질).
+            .setDataTypes(setOf(DataType.HEART_RATE_BPM, DataType.STEPS_PER_MINUTE))
             .setIsAutoPauseAndResumeEnabled(false)
             .setIsGpsEnabled(false) // 거리/페이스는 FusedLocation(아래)으로 계산
             .build()
@@ -124,6 +126,10 @@ class RunService : Service() {
         override fun onLapSummaryReceived(lapSummary: ExerciseLapSummary) {}
 
         override fun onExerciseUpdateReceived(update: ExerciseUpdate) {
+            // 케이던스(실측) → 폰으로 전달(판정 특징 feat[4] 실측화)
+            update.latestMetrics.getData(DataType.STEPS_PER_MINUTE).lastOrNull()?.value?.let { spm ->
+                if (RunBus.state == RunState.RUNNING) forwarder.sendSpm(spm.toInt())
+            }
             val v = update.latestMetrics.getData(DataType.HEART_RATE_BPM).lastOrNull()?.value ?: return
             val bpm = v.toInt()
             RunBus.hr = bpm

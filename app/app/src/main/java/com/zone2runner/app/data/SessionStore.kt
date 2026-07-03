@@ -70,6 +70,7 @@ object SessionStore {
         o.put("usedModel", r.usedModel)
         o.put("coachSource", r.coachSource)
         o.put("sourceMode", r.sourceMode)
+        o.put("avgSpm", r.avgSpm)
         o.put("coachingLines", JSONArray(r.coachingLines))
         val tr = JSONArray()
         for (t in r.track) {
@@ -131,6 +132,7 @@ object SessionStore {
             usedModel = o.optBoolean("usedModel", true),
             coachSource = o.optString("coachSource", "rule"),
             sourceMode = o.optString("sourceMode", "sim"),
+            avgSpm = o.optInt("avgSpm", 0),
         )
     }
 }

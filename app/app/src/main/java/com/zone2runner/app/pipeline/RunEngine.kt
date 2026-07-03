@@ -41,6 +41,8 @@ class RunEngine(
     private var hrSum = 0L
     private var hrCount = 0
     private var maxHr = 0
+    private var spmSum = 0L
+    private var spmCount = 0
     private var belowSec = 0
     private var inSec = 0
     private var aboveSec = 0
@@ -66,6 +68,7 @@ class RunEngine(
 
         // 누적 지표
         hrSum += clean; hrCount++; if (clean > maxHr) maxHr = clean
+        if (s.spm > 0) { spmSum += s.spm; spmCount++ }
         val mps = 16.667 / s.paceMinKm.coerceAtLeast(0.1)
         distanceM += mps
         extractor.add(clean.toDouble(), s.paceMinKm, s.spm, s.slopePct)
@@ -112,7 +115,7 @@ class RunEngine(
         if (scope != null && coachJob?.isActive == true) return // 이전 생성이 아직 진행 중이면 이번 트리거는 건너뜀
         lastCoachSec = s.tSec
         lastJudgmentForCoach = j
-        val ctx = CoachContext(j, s.slopePct, s.paceMinKm, s.tSec)
+        val ctx = CoachContext(j, s.slopePct, s.paceMinKm, s.tSec, spm = s.spm)
         if (scope == null) {
             recordCoaching(s.tSec, coach.say(ctx), 0L)
         } else {
@@ -169,6 +172,7 @@ class RunEngine(
         series = series.toList(),
         usedModel = usingModel,
         coachSource = coachSource,
+        avgSpm = if (spmCount > 0) (spmSum / spmCount).toInt() else 0,
     )
 
     private fun median(a: List<Double>): Double {

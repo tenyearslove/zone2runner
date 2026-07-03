@@ -12,7 +12,24 @@ data class CoachContext(
     val slopePct: Double,
     val paceMinKm: Double,
     val elapsedSec: Int,
-)
+    val spm: Int = 0, // 케이던스(0=미상). 범위 밖이면 코칭에 폼 가이드 추가
+) {
+    /**
+     * 케이던스 판정. 근거: 걸음 빈도를 5~10% 올리면 무릎/고관절 부하가 유의미하게 감소
+     * (Heiderscheit et al. 2011, Med Sci Sports Exerc; Schubert et al. 2014 리뷰),
+     * 엘리트 준거 ~180spm(Daniels). → 저케이던스(<162 = 180-10%)는 부상 예방 관점에서
+     * "보폭 줄이고 빈도 올리기"를 권고. 고케이던스는 합의가 약해 >190에서만 부드럽게 안내.
+     */
+    val cadence: CadenceBand
+        get() = when {
+            spm <= 0 -> CadenceBand.UNKNOWN
+            spm < 162 -> CadenceBand.LOW
+            spm > 190 -> CadenceBand.HIGH
+            else -> CadenceBand.OK
+        }
+}
+
+enum class CadenceBand { UNKNOWN, LOW, OK, HIGH }
 
 /** 규칙이 정하는 코칭 방향(의도). LLM은 이 의도를 표현만 바꾼다. */
 enum class CoachIntent { SPEED_UP, MAINTAIN, SLOW_DOWN }
@@ -45,14 +62,22 @@ object DirectionGuard {
     private val upCues = upWords + listOf("끌어올", "페이스를 올", "속도를 올", "속도를 내")
     private val downCues = downWords + listOf("내려", "내리", "호흡", "고르", "여유", "진정", "편안", "무리하지", "가라앉")
 
-    fun ok(intent: CoachIntent, text: String): Boolean = when (intent) {
-        CoachIntent.SPEED_UP -> downWords.none(text::contains) && upCues.any(text::contains)
-        CoachIntent.SLOW_DOWN -> upWords.none(text::contains) && downCues.any(text::contains)
-        CoachIntent.MAINTAIN -> upWords.none(text::contains) && downWords.none(text::contains)
+    // 케이던스/폼 가이드 절은 방향 판정 대상이 아님 — "발걸음 빈도를 낮추고", "보폭은 줄이고" 같은
+    // 폼 문구가 페이스 방향 모순으로 오판되지 않게, 폼 키워드부터 절 경계(구두점)까지 제거 후 검사.
+    // 따라서 방향 문구는 폼 절 밖에 두어야 한다(예: "천천히, 보폭을 줄여 올라가요" — RuleCoach 준수).
+    private val cadenceClause = Regex("(발걸음|케이던스|스텝|걸음|보폭)[^.,!?]*")
+
+    fun ok(intent: CoachIntent, text: String): Boolean {
+        val t = text.replace(cadenceClause, "")
+        return when (intent) {
+            CoachIntent.SPEED_UP -> downWords.none(t::contains) && upCues.any(t::contains)
+            CoachIntent.SLOW_DOWN -> upWords.none(t::contains) && downCues.any(t::contains)
+            CoachIntent.MAINTAIN -> upWords.none(t::contains) && downWords.none(t::contains)
+        }
     }
 }
 
-/** 정적 규칙 코치. 의도별 문구를 상황(경사)에 맞게 고른다. */
+/** 정적 규칙 코치. 의도별 문구를 상황(경사/케이던스)에 맞게 고른다. */
 class RuleCoach : Coach {
     override val name = "rule"
 
@@ -70,7 +95,7 @@ class RuleCoach : Coach {
                 )
             }
             CoachIntent.SLOW_DOWN -> when {
-                uphill -> listOf("오르막이라 심박이 올랐어요. 보폭을 줄여 천천히 올라가요.")
+                uphill -> listOf("오르막이라 심박이 올랐어요. 천천히, 보폭을 줄여 올라가요.")
                 else -> listOf(
                     "심박이 Zone 2를 넘었어요. 페이스를 조금 늦춰요.",
                     "약간 빨라요. 호흡을 고르며 속도를 낮춰볼게요.",
@@ -81,7 +106,14 @@ class RuleCoach : Coach {
                 "완벽해요. 지금 페이스를 계속 지켜주세요.",
             )
         }
-        return guard(lines[counter++ % lines.size])
+        return guard(lines[counter++ % lines.size] + cadenceTip(ctx))
+    }
+
+    /** 케이던스 폼 가이드(범위 밖일 때만 덧붙임). 방향 문구가 아니라 폼 문구 — DirectionGuard는 케이던스 절을 제외하고 판정. */
+    private fun cadenceTip(ctx: CoachContext): String = when (ctx.cadence) {
+        CadenceBand.LOW -> " 부상 예방을 위해 보폭은 줄이고 발걸음은 더 자주 디뎌요."
+        CadenceBand.HIGH -> " 발걸음 빈도는 살짝 낮추고 보폭을 편안하게."
+        else -> ""
     }
 
     /** 출력 가드: 길이 제한/공백 정리(adr-002 출력 가드의 최소판). */

@@ -67,6 +67,9 @@ class ReportActivity : AppCompatActivity() {
         grid.addView(statRow(
             "평균 페이스" to fmtPace(r.avgPaceMinKm),
             "Zone 2 비율" to "${r.zone2Pct}%"))
+        if (r.avgSpm > 0) grid.addView(statRow(
+            "평균 케이던스" to "${r.avgSpm} spm",
+            "평균 보폭" to (r.avgStrideM?.let { "%.2f m".format(it) } ?: "--")))
         col.addView(card("요약", grid))
 
         // 존 분포

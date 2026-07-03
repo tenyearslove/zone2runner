@@ -134,7 +134,10 @@ class LiveRunSource(
 
     private fun buildSample(t: Int): Sample {
         val paceMinKm = if (speedMps > 0.3) (1000.0 / speedMps) / 60.0 else 20.0 // 정지에 가까우면 매우 느린 페이스
-        val spm = (168.0 - 4.0 * (paceMinKm - 6.0)).coerceIn(150.0, 200.0).toInt()
+        // 케이던스: 워치 실측(/spm) 우선, 미수신 시 페이스 기반 추정 폴백 — spm은 판정 특징(feat[4])
+        val watchSpm = (hrProvider as? WatchHrProvider)?.latestSpm() ?: -1
+        val spm = if (watchSpm > 0) watchSpm
+            else (168.0 - 4.0 * (paceMinKm - 6.0)).coerceIn(150.0, 200.0).toInt()
         return Sample(
             tSec = t,
             hr = hrProvider.latestHr(),

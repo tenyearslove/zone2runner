@@ -25,10 +25,23 @@ class HrForwarder(context: Context) {
     /** 최신 HR을 연결된 폰들로 전송(fire-and-forget). 노드 목록이 비면 갱신 시도. */
     fun send(bpm: Int) {
         if (bpm !in 30..240) return
-        if (nodeIds.isEmpty()) { refreshNodes(); return }
-        val data = bpm.toString().toByteArray()
-        for (id in nodeIds) runCatching { messageClient.sendMessage(id, PATH_HR, data) }
+        sendRaw(PATH_HR, bpm.toString())
     }
 
-    private companion object { const val PATH_HR = "/hr" }
+    /** 실측 케이던스(spm) 전송 — 폰 판정 특징 feat[4]의 실측 소스. */
+    fun sendSpm(spm: Int) {
+        if (spm !in 60..260) return
+        sendRaw(PATH_SPM, spm.toString())
+    }
+
+    private fun sendRaw(path: String, payload: String) {
+        if (nodeIds.isEmpty()) { refreshNodes(); return }
+        val data = payload.toByteArray()
+        for (id in nodeIds) runCatching { messageClient.sendMessage(id, path, data) }
+    }
+
+    private companion object {
+        const val PATH_HR = "/hr"
+        const val PATH_SPM = "/spm"
+    }
 }

@@ -89,15 +89,22 @@ class LlmCoach(
             ctx.slopePct < -2 -> "지형은 내리막"
             else -> "지형은 평지"
         }
+        // 케이던스 폼 가이드(범위 밖일 때만): 방향과 별개의 폼 조언 — DirectionGuard는 케이던스 절 제외 판정
+        val cadence = when (ctx.cadence) {
+            CadenceBand.LOW -> " 케이던스가 ${ctx.spm}spm으로 낮아 보폭이 큰 편입니다. 발걸음을 잘게 자주 디디라는 조언을 짧게 덧붙이세요."
+            CadenceBand.HIGH -> " 케이던스가 ${ctx.spm}spm으로 지나치게 높습니다. 발걸음 빈도를 살짝 낮추라는 조언을 짧게 덧붙이세요."
+            else -> ""
+        }
         return "당신은 러닝 코치입니다. $terrain 입니다. 러너에게 ${direction} " +
-            "격려하는 한국어 한 문장으로 자연스럽게 안내하세요. $must 25자 내외, 따옴표와 이모지 없이."
+            "격려하는 한국어 한 문장으로 자연스럽게 안내하세요. $must$cadence 35자 내외, 따옴표와 이모지 없이."
     }
 
-    /** 출력 가드(adr-002): 공백 정리/따옴표 제거/첫 문장/길이 제한. 비면 null(폴백). */
+    /** 출력 가드(adr-002): 공백 정리/따옴표 제거/최대 2문장(방향+케이던스 폼)/길이 제한. 비면 null(폴백). */
     private fun guard(raw: String?): String? {
         val t = raw?.trim()?.replace(Regex("\\s+"), " ")?.trim('"', '\'', '“', '”') ?: return null
         if (t.isBlank()) return null
-        val firstSentence = t.split(Regex("(?<=[.!?。])")).firstOrNull()?.trim()?.ifBlank { t } ?: t
-        return if (firstSentence.length > 80) firstSentence.take(79) + "…" else firstSentence
+        val sentences = t.split(Regex("(?<=[.!?。])")).map { it.trim() }.filter { it.isNotBlank() }
+        val kept = sentences.take(2).joinToString(" ").ifBlank { t }
+        return if (kept.length > 90) kept.take(89) + "…" else kept
     }
 }

@@ -105,7 +105,15 @@ data class RunReport(
     val usedModel: Boolean = true,         // MLP 사용(true) vs 규칙 폴백(false)
     val coachSource: String = "rule",      // 코칭 표현 소스(rule/llm)
     val sourceMode: String = "sim",        // 입력 소스(sim/live)
+    val avgSpm: Int = 0,                   // 평균 케이던스(spm). 0=미상(구버전 세션)
 ) {
+    /** 평균 보폭(m) = 총거리 / 총걸음수(케이던스 적분 근사). 케이던스 미상이면 null. */
+    val avgStrideM: Double?
+        get() {
+            if (avgSpm <= 0 || durationSec <= 0 || distanceM < 1) return null
+            val steps = avgSpm.toDouble() * durationSec / 60.0
+            return if (steps > 0) distanceM / steps else null
+        }
     val zone2Pct: Int
         get() = if (durationSec > 0) (inSec * 100 / durationSec) else 0
 

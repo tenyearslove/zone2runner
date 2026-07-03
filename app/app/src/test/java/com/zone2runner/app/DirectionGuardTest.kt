@@ -2,6 +2,7 @@ package com.zone2runner.app
 
 import com.zone2runner.app.coaching.CoachIntent
 import com.zone2runner.app.coaching.DirectionGuard
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -41,6 +42,39 @@ class DirectionGuardTest {
         assertFalse(DirectionGuard.ok(CoachIntent.MAINTAIN, "조금 늦춰주세요."))
     }
 
+    // ---- 케이던스(폼) 절은 방향 판정에서 제외 ----
+
+    @Test fun cadenceClause_isExcludedFromDirectionCheck() {
+        // "발걸음 빈도를 낮추고"의 '낮추'가 SPEED_UP/MAINTAIN 모순으로 오판되면 안 됨
+        assertTrue(DirectionGuard.ok(CoachIntent.MAINTAIN, "지금 리듬 그대로 가요. 발걸음 빈도는 살짝 낮추고 편하게."))
+        assertTrue(DirectionGuard.ok(CoachIntent.SPEED_UP, "페이스를 살짝 올려볼까요. 보폭은 줄이고 발걸음은 자주."))
+        // 폼 절을 제외해도 페이스 방향 모순은 여전히 잡혀야 함
+        assertFalse(DirectionGuard.ok(CoachIntent.SLOW_DOWN, "속도를 올려요. 발걸음은 자주 디뎌요."))
+    }
+
+    // ---- 케이던스 밴드/규칙 팁 ----
+
+    @Test fun cadenceBand_thresholds() {
+        fun ctx(spm: Int) = com.zone2runner.app.coaching.CoachContext(
+            com.zone2runner.app.domain.ZoneJudgment.IN, 0.0, 6.5, 300, spm = spm)
+        assertEquals(com.zone2runner.app.coaching.CadenceBand.UNKNOWN, ctx(0).cadence)
+        assertEquals(com.zone2runner.app.coaching.CadenceBand.LOW, ctx(155).cadence)   // <162 (180-10%)
+        assertEquals(com.zone2runner.app.coaching.CadenceBand.OK, ctx(175).cadence)
+        assertEquals(com.zone2runner.app.coaching.CadenceBand.HIGH, ctx(195).cadence)  // >190
+    }
+
+    @Test fun ruleCoach_appendsCadenceTip_andStaysDirectionSafe() = kotlinx.coroutines.runBlocking {
+        val coach = com.zone2runner.app.coaching.RuleCoach()
+        val low = coach.say(com.zone2runner.app.coaching.CoachContext(
+            com.zone2runner.app.domain.ZoneJudgment.ABOVE, 0.0, 6.5, 300, spm = 150))
+        assertTrue("저케이던스 팁 포함: $low", low.contains("발걸음"))
+        // 팁이 붙어도 방향 가드는 통과해야 함(케이던스 절 제외 판정)
+        assertTrue(DirectionGuard.ok(CoachIntent.SLOW_DOWN, low))
+        val ok = coach.say(com.zone2runner.app.coaching.CoachContext(
+            com.zone2runner.app.domain.ZoneJudgment.IN, 0.0, 6.5, 300, spm = 175))
+        assertTrue("정상 케이던스면 팁 없음: $ok", !ok.contains("발걸음"))
+    }
+
     // ---- RuleCoach 전 문구는 자기 의도에서 반드시 통과 ----
 
     @Test fun ruleCoachLines_passTheirOwnIntent() {
@@ -50,7 +84,7 @@ class DirectionGuardTest {
             "심박이 낮아요. 조금만 더 속도를 내볼게요.", // "내볼게요"의 '내'가 down으로 오탐되면 안 됨
         )
         val slowDown = listOf(
-            "오르막이라 심박이 올랐어요. 보폭을 줄여 천천히 올라가요.", // "올라가요"가 up으로 오탐되면 안 됨
+            "오르막이라 심박이 올랐어요. 천천히, 보폭을 줄여 올라가요.", // "올라가요" up 오탐 금지 + 방향어는 폼 절 밖
             "심박이 Zone 2를 넘었어요. 페이스를 조금 늦춰요.",
             "약간 빨라요. 호흡을 고르며 속도를 낮춰볼게요.", // "빨라요"가 up으로 오탐되면 안 됨
         )

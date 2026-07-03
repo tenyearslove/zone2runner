@@ -60,3 +60,21 @@ On-device LLM(Gemini Nano)은 최초 1회 모델 다운로드가 필요하다(**
 - [ ] 프롬프트 페르소나/톤 튜닝
 - [ ] TTS 엔진 선택 (LLM warm ~2초 측정됨, adr-007 → TTS는 ~3초 내로 QA4 5초 예산 충족)
 - [ ] 코칭 트리거 주기/쿨다운 값
+
+
+## 부록: 케이던스(폼) 가이드 (2026-07-03 추가)
+
+코칭 컨텍스트에 케이던스(spm)를 추가하고, 범위 밖일 때 방향 문구에 폼 가이드 한 문장을 덧붙인다.
+
+- **근거**: 걸음 빈도를 +5~10% 올리면 무릎/고관절 부하가 유의미하게 감소 — Heiderscheit et al.,
+  "Effects of Step Rate Manipulation on Joint Mechanics during Running", Med Sci Sports Exerc 2011;43(2).
+  체계적 리뷰: Schubert et al., Sports Health 2014. 준거 ~180spm은 Daniels의 엘리트 관찰(Daniels' Running Formula).
+  "보폭을 줄이고 빈도를 올리는" 방향이 부상 예방 관점의 주류 권고(고케이던스 해악은 합의 약함).
+- **기준**: LOW < 162spm(180의 -10%) → "부상 예방을 위해 보폭은 줄이고 발걸음은 더 자주".
+  HIGH > 190spm → "발걸음 빈도는 살짝 낮추고 보폭을 편안하게"(부드럽게, 합의 약한 영역).
+- **방향 잠금과의 관계**: 폼 가이드는 페이스 방향과 별개 축 — DirectionGuard는 폼 절
+  (발걸음/케이던스/보폭/스텝/걸음 ~ 구두점)을 제외하고 방향을 판정한다. 따라서 방향 표현은
+  반드시 폼 절 밖에 위치해야 한다(RuleCoach 문구 규약).
+- **데이터 소스**: spm은 판정 특징(feat[4])이기도 함 — 워치 실측(ExerciseClient STEPS_PER_MINUTE,
+  Data Layer /spm) 우선, 미수신 시 페이스 기반 추정 폴백. 파생 표시: 보폭(m) = 속도/케이던스
+  (라이브 타일 + 리포트 평균 보폭).
