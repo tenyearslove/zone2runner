@@ -43,6 +43,12 @@ class WearRunActivity : ComponentActivity() {
     private lateinit var distVal: TextView
     private lateinit var spdVal: TextView
     private lateinit var btnRow: LinearLayout
+    private lateinit var talkRow: LinearLayout
+
+    // 토크테스트 프롬프트(심박 높을 때 가끔 물어봄 → 폰 개인화에 반영)
+    private var lastTalkAskMs = 0L
+    private var talkShownAt = 0L
+    private var elevatedSec = 0
 
     private val state: RunState get() = RunBus.state
 
@@ -125,6 +131,16 @@ class WearRunActivity : ComponentActivity() {
         }
         content.addView(btnRow, centered())
 
+        // 토크테스트 프롬프트(기본 숨김): 심박 높을 때 가끔 "대화 되나요?" 3지선다
+        talkRow = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER
+            visibility = View.GONE; setPadding(0, dp(6), 0, 0)
+        }
+        talkRow.addView(talkChip("편함", "comfortable"))
+        talkRow.addView(talkChip("애매", "borderline"))
+        talkRow.addView(talkChip("벅참", "hard"))
+        content.addView(talkRow, centered())
+
         // BOX_ALL(내접 사각형)은 원형 480px에서 실사용 폭이 ~70%로 줄어 페이스 줄바꿈/버튼 잘림 발생(실기기).
         // 콘텐츠가 세로 중앙 정렬이라 중앙 행은 원의 전체 폭을 쓸 수 있으므로 고정 패딩으로 대체.
         content.setPadding(dp(14), dp(6), dp(14), dp(6))
@@ -135,12 +151,12 @@ class WearRunActivity : ComponentActivity() {
     }
 
     private fun metricValue() = TextView(this).apply {
-        text = "--"; textSize = 12f; setTypeface(Typeface.DEFAULT_BOLD); setTextColor(C_TEXT)
+        text = "--"; setTypeface(Typeface.DEFAULT_BOLD); setTextColor(C_TEXT)
         gravity = Gravity.CENTER
         isSingleLine = true // 원형 화면 폭에서 페이스("5'30\"") 줄바꿈 방지 (실기기 확인)
-        // 좁은 3열에서 값이 서로 겹치지 않게 열 폭에 맞춰 자동 축소(예: "10.5", "1.23km")
-        setAutoSizeTextTypeUniformWithConfiguration(8, 12, 1, android.util.TypedValue.COMPLEX_UNIT_SP)
-        includeFontPadding = false
+        ellipsize = null
+        // 좁은 3열에서 값이 열 폭에 맞춰 자동 축소(예: "10.5", "1.23km"). 위아래 잘림 방지로 폰트패딩 유지.
+        setAutoSizeTextTypeUniformWithConfiguration(9, 14, 1, android.util.TypedValue.COMPLEX_UNIT_SP)
     }
 
     private fun metricCol(value: TextView, label: String): LinearLayout {
@@ -190,6 +206,38 @@ class WearRunActivity : ComponentActivity() {
 
     private fun space() = View(this).apply { layoutParams = LinearLayout.LayoutParams(dp(8), 1) }
 
+    /** 토크테스트 답변 칩 → 폰으로 전송(/talk/<state>) → 폰 개인화(observeTalkTest)에 반영. */
+    private fun talkChip(label: String, stateName: String) = TextView(this).apply {
+        text = label; textSize = 12f; setTextColor(Color.WHITE); setTypeface(typeface, Typeface.BOLD)
+        gravity = Gravity.CENTER
+        setPadding(dp(11), dp(6), dp(11), dp(6))
+        background = GradientDrawable().apply { setColor(Color.parseColor("#3A3F4A")); cornerRadius = dp(16).toFloat() }
+        val lp = LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT); lp.marginStart = dp(4); lp.marginEnd = dp(4)
+        layoutParams = lp
+        isClickable = true
+        setOnClickListener {
+            RunLink.send(this@WearRunActivity, "/talk/$stateName")
+            lastTalkAskMs = SystemClock.elapsedRealtime()
+            talkRow.visibility = View.GONE
+            android.widget.Toast.makeText(this@WearRunActivity, "기록됨", android.widget.Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    /** 심박이 Z2 상한 위로 지속되면 가끔(5분 간격) 토크테스트를 띄운다. 30초 무응답이면 닫음. */
+    private fun updateTalkPrompt(hr: Int) {
+        val elevated = hr > 0 && hr > Zones.zone2Bpm.last
+        if (state == RunState.RUNNING && elevated) elevatedSec++ else elevatedSec = 0
+        val now = SystemClock.elapsedRealtime()
+        if (talkRow.visibility != View.VISIBLE) {
+            if (elevatedSec >= 20 && now - lastTalkAskMs > 5 * 60 * 1000L) {
+                talkRow.visibility = View.VISIBLE; talkShownAt = now
+            }
+        } else {
+            zoneLabel.text = "대화 되나요?"; zoneLabel.setTextColor(C_TEXT) // 질문 문구로 대체
+            if (now - talkShownAt > 30_000L) { talkRow.visibility = View.GONE; lastTalkAskMs = now }
+        }
+    }
+
     // ---- 렌더링 ----
 
     private fun render() {
@@ -228,6 +276,7 @@ class WearRunActivity : ComponentActivity() {
         spdVal.text = if (speedKmh < 0.3) "--" else "%.1f".format(speedKmh)
 
         if (btnRow.childCount == 0 || btnTagMismatch()) rebuildButtons()
+        updateTalkPrompt(hr)
     }
 
     private var lastBtnState: RunState? = null

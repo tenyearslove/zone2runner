@@ -93,9 +93,10 @@ class LiveRunSource(
         LocationServices.getFusedLocationProviderClient(appCtx)
     private var job: Job? = null
 
-    // 최신 센서 상태
-    @Volatile private var lat = 37.5665
-    @Volatile private var lon = 126.9780
+    // 최신 센서 상태. GPS 확보 전 좌표는 NaN — 첫 유효 fix 전엔 지도에 그리지 않는다
+    // (기본값 서울 좌표에서 현재 위치로 초록선이 그어지던 문제 방지).
+    @Volatile private var lat = Double.NaN
+    @Volatile private var lon = Double.NaN
     @Volatile private var speedMps = 0.0
     @Volatile private var slopePct = 0.0
     private var lastLoc: Location? = null

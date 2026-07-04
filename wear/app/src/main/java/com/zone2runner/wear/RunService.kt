@@ -46,6 +46,9 @@ class RunService : Service() {
     private val forwarder by lazy { HrForwarder(this) }
     private var lastLoc: Location? = null
     private var exerciseStarted = false
+    @Volatile private var lastMoveMs = 0L      // 마지막으로 움직인 시각(자동 일시정지 판단)
+    @Volatile private var autoPaused = false   // 자동 일시정지 상태(수동 일시정지와 구분 — 자동만 자동재개)
+    private val autoPauseAfterMs = 20_000L
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -67,6 +70,8 @@ class RunService : Service() {
         RunBus.runStart = SystemClock.elapsedRealtime()
         RunBus.notifyUi()
         forwarder.start()
+        lastMoveMs = SystemClock.elapsedRealtime()
+        autoPaused = false
         startExercise()
         startLocation()
         // 워치에서 직접 시작한 경우에만 폰에 시작 신호(원격 시작이면 폰이 이미 러닝 중 → 루프 방지)
@@ -155,6 +160,10 @@ class RunService : Service() {
             if (RunBus.state == RunState.RUNNING) {
                 forwarder.send(bpm)
                 RunBus.sentCount++
+                // 자동 일시정지: 일정 시간 움직임 없으면 정지(수동 일시정지와 구분)
+                if (SystemClock.elapsedRealtime() - lastMoveMs > autoPauseAfterMs) {
+                    autoPaused = true; pauseSession(); updateNotification("자동 일시정지")
+                }
             }
             RunBus.notifyUi()
             updateNotification("HR $bpm bpm · ${fmtDist(RunBus.distanceM)}")
@@ -167,7 +176,13 @@ class RunService : Service() {
             // GPS 튐 방지(강건성): 저정확도(>25m) 위치는 버린다 — 실내/음영에서 수백 m 튀는 점이
             // lastLoc을 오염시켜 이후 거리/속도까지 망가뜨리는 걸 원천 차단.
             if (loc.hasAccuracy() && loc.accuracy > 25f) return
-            if (loc.hasSpeed() && loc.speed in 0f..12f) RunBus.speedKmh = loc.speed * 3.6 // 러닝 상한 ~43km/h
+            if (loc.hasSpeed() && loc.speed in 0f..12f) {
+                RunBus.speedKmh = loc.speed * 3.6 // 러닝 상한 ~43km/h
+                if (RunBus.speedKmh > 1.5) { // 다시 움직임 감지
+                    lastMoveMs = SystemClock.elapsedRealtime()
+                    if (autoPaused && RunBus.state == RunState.PAUSED) { autoPaused = false; resumeSession() }
+                }
+            }
             val prev = lastLoc
             if (RunBus.state == RunState.RUNNING && prev != null) {
                 val d = prev.distanceTo(loc)

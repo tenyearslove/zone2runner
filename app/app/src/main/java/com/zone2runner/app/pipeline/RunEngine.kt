@@ -77,6 +77,10 @@ class RunEngine(
     /** 1Hz 샘플 처리. 필요 시 coach.say 호출(suspend). LiveState 반환. */
     suspend fun onSample(s: Sample): LiveState {
         elapsed = s.tSec + 1
+        // 정지 코칭(HR 유무와 무관): 사실상 멈춰 있으면(속도 <~3km/h) 가끔 독려한다.
+        // 실센서에서 아직 안 뛰거나 뛰다가 멈춘 경우 — HR 파이프라인이 멈춰도 피드백을 준다.
+        maybeIdleCoach(s)
+
         val clean = OutlierGuard.clean(s.hr, lastValidHr)
         if (clean == null) return liveState(s) // 아직 유효 HR 없음
         lastValidHr = clean
@@ -129,9 +133,9 @@ class RunEngine(
             ZoneJudgment.IN -> inSec++
             null -> {}
         }
-        // 경로 + 시계열(3초마다 다운샘플)
+        // 경로 + 시계열(3초마다 다운샘플). GPS 미확보(NaN) 좌표는 경로에 넣지 않음
         if (s.tSec % 3 == 0) {
-            track += TrackPoint(s.lat, s.lon, judgment)
+            if (s.lat.isFinite() && s.lon.isFinite()) track += TrackPoint(s.lat, s.lon, judgment)
             series += SeriesPoint(s.tSec, clean, s.paceMinKm, judgment?.index ?: -1)
         }
 
@@ -142,6 +146,25 @@ class RunEngine(
             lastPersonalizeSec = s.tSec
         }
         return liveState(s)
+    }
+
+    private var stationarySec = 0
+    private var wasStationary = false
+
+    /** 정지 감지 + 독려 코칭. 판정/HR과 독립. 정지 진입 시 1회 + 오래 멈추면 가끔 재독려. */
+    private fun maybeIdleCoach(s: Sample) {
+        val stationary = s.paceMinKm >= 19.0 // 사실상 멈춤(LiveRunSource 정지 sentinel = 20min/km)
+        if (!stationary) { stationarySec = 0; wasStationary = false; return }
+        stationarySec++
+        if (stationarySec < 8) return
+        // 정지 진입 직후 1회, 이후엔 40초마다. 다른 코칭과 최소 간격 공유.
+        val due = !wasStationary || s.tSec - lastCoachSec >= 40
+        if (!due || s.tSec - lastCoachSec < 8) return
+        wasStationary = true
+        lastCoachSec = s.tSec
+        lastJudgmentForCoach = null // 다시 움직이면 판정 코칭이 새로 나가게
+        val line = if (distanceM > 30) "잠깐 멈췄네요. 준비되면 다시 뛰어볼까요." else "이제 가볍게 출발해 볼까요."
+        recordCoaching(s.tSec, line, 0L)
     }
 
     private suspend fun maybeCoach(s: Sample) {

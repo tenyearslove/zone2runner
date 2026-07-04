@@ -143,11 +143,11 @@ class RunActivity : AppCompatActivity() {
         map = MapView(this).apply {
             setTileSource(TileSourceFactory.MAPNIK)
             setMultiTouchControls(true)
-            controller.setZoom(16.0)
+            controller.setZoom(18.0) // 러닝 반경이 좁으니 확대 — 경로가 화면을 채우게
             controller.setCenter(GeoPoint(37.5665, 126.9780))
         }
-        // 지도는 컴팩트하게(0.7) — 아래 판정 요소 대시보드에 공간을 준다
-        root.addView(map, LinearLayout.LayoutParams(MATCH_PARENT, 0, 0.7f))
+        // 지도는 컴팩트하게(0.6) — 아래 판정 요소 대시보드에 공간을 준다
+        root.addView(map, LinearLayout.LayoutParams(MATCH_PARENT, 0, 0.6f))
 
         val dash = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -359,7 +359,7 @@ class RunActivity : AppCompatActivity() {
         running = true; finished = false
         isRunning = true; remoteStopRequested = false
         // 실센서 러닝이면 워치에 시작 신호 → 워치 RunService 자동 기동(사용자 요청)
-        if (mode == MODE_LIVE) RunLink.send(this, RunLink.PATH_START)
+        if (mode == MODE_LIVE) { RunLink.send(this, RunLink.PATH_START); registerTalkListener() }
         // 러닝 중 화면 유지: LLM 코칭은 포그라운드 전용(adr-007), GPS/파이프라인도 화면off 스로틀 회피
         window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         startBtn.text = primaryLabel()
@@ -376,12 +376,13 @@ class RunActivity : AppCompatActivity() {
                     }
                 }
             }
-            line?.addPoint(GeoPoint(s.lat, s.lon))
+            val hasCoord = s.lat.isFinite() && s.lon.isFinite()
+            if (hasCoord) line?.addPoint(GeoPoint(s.lat, s.lon)) // GPS 미확보(NaN) 전엔 그리지 않음
             // 배속이 느리면 매 샘플 렌더(저배속에서 5샘플 스킵 = 수 초간 화면 정지로 보임)
             val renderEvery = if (src.realtime || simDelayMs >= 100L) 1 else 5
             if (frame % renderEvery == 0) {
                 render(state)
-                map.controller.setCenter(GeoPoint(s.lat, s.lon))
+                if (hasCoord) map.controller.setCenter(GeoPoint(s.lat, s.lon))
                 map.invalidate()
             }
             frame++
@@ -390,10 +391,37 @@ class RunActivity : AppCompatActivity() {
         })
     }
 
+    /** 워치 토크테스트 답변(/talk/<state>) 수신 → 개인화 경계에 반영(watch=프롬프트, phone=brain). */
+    private var talkListener: com.google.android.gms.wearable.MessageClient.OnMessageReceivedListener? = null
+    private fun registerTalkListener() {
+        if (talkListener != null) return
+        val l = com.google.android.gms.wearable.MessageClient.OnMessageReceivedListener { e ->
+            if (e.path.startsWith("/talk/")) {
+                val st = when (e.path.substringAfterLast('/')) {
+                    "comfortable" -> com.zone2runner.app.pipeline.TalkState.COMFORTABLE
+                    "hard" -> com.zone2runner.app.pipeline.TalkState.HARD
+                    else -> com.zone2runner.app.pipeline.TalkState.BORDERLINE
+                }
+                runOnUiThread {
+                    engine?.observeTalkTest(st)
+                    logger?.event("talktest") { put("t", (System.currentTimeMillis() - startedAt) / 1000); put("state", st.name); put("src", "watch") }
+                    Toast.makeText(this, "워치 응답 반영: ${st.name}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+        runCatching { com.google.android.gms.wearable.Wearable.getMessageClient(this).addListener(l) }
+        talkListener = l
+    }
+    private fun unregisterTalkListener() {
+        talkListener?.let { runCatching { com.google.android.gms.wearable.Wearable.getMessageClient(this).removeListener(it) } }
+        talkListener = null
+    }
+
     private fun finalizeSession() {
         if (!running) return
         running = false
         isRunning = false
+        unregisterTalkListener()
         // 실센서 러닝 종료면 워치도 종료(원격 종료가 아니라 폰에서 눌렀을 때만 되쏨)
         if (mode == MODE_LIVE && !remoteStopRequested) RunLink.send(this, RunLink.PATH_STOP)
         remoteStopRequested = false
@@ -463,7 +491,11 @@ class RunActivity : AppCompatActivity() {
             val paceTxt = "%d'%02d\"".format(rp.toInt(), ((rp % 1) * 60).toInt())
             adviceView.text = "🎯 Zone2 페이스 $paceTxt · 이대로면 60초 뒤 ~${s.predictedHr60} bpm"
         } else if (running) {
-            adviceView.text = "🎯 페이스 제안 준비 중 (워밍업 2분)"
+            adviceView.text = when {
+                s.hr <= 0 -> "심박 신호 대기 중 (워치 연결 확인)"
+                !moving -> "움직이면 페이스를 제안해요"
+                else -> "페이스 제안 준비 중 (워밍업 ~2분)"
+            }
         }
     }
 
@@ -569,6 +601,7 @@ class RunActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy(); source?.stop()
         isRunning = false
+        unregisterTalkListener()
         logger?.close(); logger = null // 중도 이탈 시에도 로그 파일 마감
         tts?.stop(); tts?.shutdown()
     }
