@@ -78,7 +78,6 @@ class RunActivity : AppCompatActivity() {
     private var tempFetched = false
 
     private var dynamics: com.zone2runner.app.pipeline.HrDynamics? = null
-    private var thresholdEstimator: com.zone2runner.app.pipeline.ThresholdEstimator? = null // 역치 추정 NN(spec-015)
     private var source: RunSource? = null
     private var engine: RunEngine? = null
     private var coach: LlmCoach? = null
@@ -99,7 +98,7 @@ class RunActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         Configuration.getInstance().userAgentValue = packageName
         dynamics = runCatching { com.zone2runner.app.pipeline.HrDynamics.fromAssets(this) }.getOrNull()
-        thresholdEstimator = runCatching { com.zone2runner.app.pipeline.ThresholdEstimator.fromAssets(this) }.getOrNull()
+        // 역치 추정 NN(adr-014)은 adr-016으로 강등 — 개인화는 Bayesian+토크테스트 전담. 로드하지 않음.
         tts = TextToSpeech(this) { status ->
             if (status == TextToSpeech.SUCCESS) { tts?.language = java.util.Locale.KOREAN; ttsReady = true }
         }
@@ -530,19 +529,12 @@ class RunActivity : AppCompatActivity() {
         window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         source?.stop()
         val eng = engine ?: run { logger?.close(); logger = null; return }
-        // 세션 종료 시 개인 경계 누적(adr-014 + 토크테스트 지속화):
-        // 1) NN 역치 추정을 관측으로 개인화에 융합, 2) 토크테스트+NN+디커플링이 반영된 '최종 경계'를 저장.
-        // → 실제 뛰며 누른 말하기 테스트 결과가 세션을 넘어 누적된다(사용자 요청).
-        val est = thresholdEstimator
-        val p = profile
-        if (est != null && p != null) {
-            eng.thresholdFeatures()?.let { f ->
-                val uNn = est.estimateUFrac(f)
-                eng.observeThresholdBpm(p.restingHr + uNn * p.hrr) // NN을 관측으로
-            }
-        }
+        // 세션 종료 시 개인 Zone2 경계 누적(adr-016): 개인화는 온라인 Bayesian이 전담한다.
+        // 토크테스트(정답에 가장 가까운 라벨) + 디커플링으로 세션 중 갱신된 '최종 경계'를 저장 →
+        // 다음 세션이 여기서 시작 → 실주행 말하기 테스트가 세션을 넘어 누적/수렴.
+        // (NN은 심박 예측 전담 — 개인화 경계엔 관여하지 않음. 역치 추정 NN은 adr-014→adr-016으로 강등)
         val finalU = eng.currentUFrac()
-        com.zone2runner.app.data.LearnedZone.set(this, finalU) // 토크테스트 포함 최종 경계 저장
+        com.zone2runner.app.data.LearnedZone.set(this, finalU)
         logger?.event("boundary") {
             put("uFrac", finalU); put("talk", eng.talkObserved)
             put("n", com.zone2runner.app.data.LearnedZone.sessionCount(this@RunActivity))

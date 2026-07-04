@@ -64,24 +64,27 @@ def make_runner(rng, u_frac_sigma=0.045):
 
 
 def _effort_profile(n, rng):
-    """세션 강도(effort_frac) 시계열: 워밍업→메인→간헐 서지. 0.4~0.9 범위."""
+    """세션 강도(effort_frac) 시계열: 워밍업→메인→간헐 서지.
+    ★ Zone2 %HRmax 재보정(2026-07-04)으로 참 임계가 낮아짐(≈0.56 HRR). 강도를 그 부근에 맞춰
+    낮춘다(기존 0.66은 항상 임계 초과 → 드리프트 폭주 → 심박 예측 RMSE 악화). Zone2 러닝답게
+    임계 부근에서 오르내리며 가끔 초과하는 프로파일."""
     prof = np.empty(n)
     t = 0
     # 워밍업 램프
     w = min(WARMUP_S, n)
-    prof[:w] = np.linspace(0.45, 0.62, w)
+    prof[:w] = np.linspace(0.40, 0.54, w)
     t = w
     while t < n:
         seg = int(rng.integers(60, 240))
         seg = min(seg, n - t)
-        target = float(np.clip(rng.normal(0.66, 0.09), 0.4, 0.92))
+        target = float(np.clip(rng.normal(0.56, 0.08), 0.38, 0.80))
         prof[t:t + seg] = target
         t += seg
     # 부드럽게(이동평균)
     k = 15
     kernel = np.ones(k) / k
     prof = np.convolve(prof, kernel, mode="same")
-    return np.clip(prof, 0.35, 0.95)
+    return np.clip(prof, 0.33, 0.85)
 
 
 def _terrain_profile(n, rng):
