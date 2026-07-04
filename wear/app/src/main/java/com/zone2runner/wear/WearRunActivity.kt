@@ -127,7 +127,7 @@ class WearRunActivity : ComponentActivity() {
 
         // BOX_ALL(내접 사각형)은 원형 480px에서 실사용 폭이 ~70%로 줄어 페이스 줄바꿈/버튼 잘림 발생(실기기).
         // 콘텐츠가 세로 중앙 정렬이라 중앙 행은 원의 전체 폭을 쓸 수 있으므로 고정 패딩으로 대체.
-        content.setPadding(dp(24), dp(6), dp(24), dp(6))
+        content.setPadding(dp(14), dp(6), dp(14), dp(6))
         box.addView(content, BoxInsetLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT).apply {
             gravity = Gravity.CENTER
         })
@@ -135,9 +135,12 @@ class WearRunActivity : ComponentActivity() {
     }
 
     private fun metricValue() = TextView(this).apply {
-        text = "--"; textSize = 13f; setTypeface(Typeface.DEFAULT_BOLD); setTextColor(C_TEXT)
+        text = "--"; textSize = 12f; setTypeface(Typeface.DEFAULT_BOLD); setTextColor(C_TEXT)
         gravity = Gravity.CENTER
         isSingleLine = true // 원형 화면 폭에서 페이스("5'30\"") 줄바꿈 방지 (실기기 확인)
+        // 좁은 3열에서 값이 서로 겹치지 않게 열 폭에 맞춰 자동 축소(예: "10.5", "1.23km")
+        setAutoSizeTextTypeUniformWithConfiguration(8, 12, 1, android.util.TypedValue.COMPLEX_UNIT_SP)
+        includeFontPadding = false
     }
 
     private fun metricCol(value: TextView, label: String): LinearLayout {
@@ -145,7 +148,7 @@ class WearRunActivity : ComponentActivity() {
             orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER
             val lp = LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f)
             layoutParams = lp
-            setPadding(dp(3), 0, dp(3), 0)
+            setPadding(dp(5), 0, dp(5), 0) // 열 간 여백 확대(겹침 방지)
             addView(value)
             addView(TextView(this@WearRunActivity).apply {
                 text = label; textSize = 9f; setTextColor(C_MUTED); gravity = Gravity.CENTER

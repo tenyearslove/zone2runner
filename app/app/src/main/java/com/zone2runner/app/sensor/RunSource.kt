@@ -104,8 +104,10 @@ class LiveRunSource(
     private val locCallback = object : LocationCallback() {
         override fun onLocationResult(result: LocationResult) {
             val loc = result.lastLocation ?: return
+            // GPS 튐 방지(강건성): 저정확도(>25m) 위치는 무시 — 실내/음영에서 지도가 멀리 튀는 현상 차단
+            if (loc.hasAccuracy() && loc.accuracy > 25f) return
             lat = loc.latitude; lon = loc.longitude
-            if (loc.hasSpeed()) speedMps = loc.speed.toDouble()
+            if (loc.hasSpeed() && loc.speed in 0f..12f) speedMps = loc.speed.toDouble()
             val prev = lastLoc
             if (prev != null && prev.hasAltitude() && loc.hasAltitude()) {
                 val horiz = prev.distanceTo(loc).toDouble()

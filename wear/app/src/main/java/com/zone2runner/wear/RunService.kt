@@ -164,7 +164,10 @@ class RunService : Service() {
     private val locationCallback = object : LocationCallback() {
         override fun onLocationResult(result: LocationResult) {
             val loc = result.lastLocation ?: return
-            if (loc.hasSpeed()) RunBus.speedKmh = loc.speed * 3.6
+            // GPS 튐 방지(강건성): 저정확도(>25m) 위치는 버린다 — 실내/음영에서 수백 m 튀는 점이
+            // lastLoc을 오염시켜 이후 거리/속도까지 망가뜨리는 걸 원천 차단.
+            if (loc.hasAccuracy() && loc.accuracy > 25f) return
+            if (loc.hasSpeed() && loc.speed in 0f..12f) RunBus.speedKmh = loc.speed * 3.6 // 러닝 상한 ~43km/h
             val prev = lastLoc
             if (RunBus.state == RunState.RUNNING && prev != null) {
                 val d = prev.distanceTo(loc)

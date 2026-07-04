@@ -73,7 +73,6 @@ class RunActivity : AppCompatActivity() {
     private lateinit var slopeView: TextView
     private lateinit var spmView: TextView
     private lateinit var strideView: TextView
-    private lateinit var driftView: TextView
     private lateinit var tempView: TextView
     private var profile: com.zone2runner.app.domain.Profile? = null
     private var tempFetched = false
@@ -196,11 +195,10 @@ class RunActivity : AppCompatActivity() {
 
         // 실시간 판정 요소(MLP 특징 표시) + 보폭(속도/케이던스 파생) + 기온(참고)
         val factors = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
-        slopeView = metricVal(); spmView = metricVal(); strideView = metricVal(); driftView = metricVal(); tempView = metricVal()
+        slopeView = metricVal(); spmView = metricVal(); strideView = metricVal(); tempView = metricVal()
         factors.addView(metricCol(slopeView, "경사"))
         factors.addView(metricCol(spmView, "케이던스"))
         factors.addView(metricCol(strideView, "보폭"))
-        factors.addView(metricCol(driftView, "드리프트"))
         factors.addView(metricCol(tempView, "기온"))
         dash.addView(factors, mt(6))
 
@@ -437,7 +435,10 @@ class RunActivity : AppCompatActivity() {
         updateZoneUi(if (s.smoothedHr > 0) s.smoothedHr else s.hr, s.uEstFrac, s.hr)
         timeView.text = "%02d:%02d".format(s.elapsedSec / 60, s.elapsedSec % 60)
         distView.text = if (s.distanceM < 1000) "${s.distanceM.toInt()}m" else "%.2fkm".format(s.distanceM / 1000)
-        paceView.text = if (s.paceMinKm in 0.1..30.0) "%d'%02d\"".format(s.paceMinKm.toInt(), ((s.paceMinKm % 1) * 60).toInt()) else "--"
+        // 움직이기 전(정지/GPS 미확보)엔 페이스/케이던스/보폭을 근거 없이 표시하지 않는다("--").
+        // paceMinKm 20은 LiveRunSource의 정지 sentinel이라 유효 범위에서 제외.
+        val moving = s.speedKmh > 0.8 && s.paceMinKm in 0.1..19.5
+        paceView.text = if (moving) "%d'%02d\"".format(s.paceMinKm.toInt(), ((s.paceMinKm % 1) * 60).toInt()) else "--"
 
         // 실시간 판정 요소(MLP 입력 특징)
         when {
@@ -445,17 +446,11 @@ class RunActivity : AppCompatActivity() {
             s.slopePct < -2 -> { slopeView.text = "↓%.1f%%".format(-s.slopePct); slopeView.setTextColor(C_BLUE) }
             else -> { slopeView.text = "평지"; slopeView.setTextColor(C_TEXT) }
         }
-        spmView.text = if (s.spm > 0) "${s.spm}" else "--"
-        spmView.setTextColor(if (s.spm in 1..161) C_AMBER else C_TEXT) // 저케이던스 경고(부상 예방, spec-005 근거)
+        spmView.text = if (moving && s.spm > 0) "${s.spm}" else "--"
+        spmView.setTextColor(if (moving && s.spm in 1..161) C_AMBER else C_TEXT) // 저케이던스 경고(부상 예방, spec-005 근거)
         // 보폭(m) = 속도(m/min) / 케이던스 = 1000/(pace*spm)
-        strideView.text = if (s.spm > 0 && s.paceMinKm in 0.1..30.0)
+        strideView.text = if (moving && s.spm > 0)
             "%.2fm".format(1000.0 / (s.paceMinKm * s.spm)) else "--"
-        val dec = s.decoupling
-        if (dec == null) { driftView.text = "--"; driftView.setTextColor(C_MUTED) }
-        else {
-            driftView.text = "%+.1f%%".format(dec * 100)
-            driftView.setTextColor(if (dec > 0.05) C_AMBER else C_TEXT) // 드리프트 커지면 경고색(피로/더위 신호)
-        }
         if (s.coaching.isNotBlank()) {
             coachView.text = "🗣 ${s.coaching}"
             if (s.coaching != lastSpoken) { lastSpoken = s.coaching; speak(s.coaching) }

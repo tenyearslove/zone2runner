@@ -32,7 +32,7 @@ class ZoneBandView(context: Context) : View(context) {
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(dp(44f).toInt(), MeasureSpec.EXACTLY))
+        super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(dp(58f).toInt(), MeasureSpec.EXACTLY))
     }
 
     override fun onDraw(canvas: Canvas) {
@@ -67,6 +67,17 @@ class ZoneBandView(context: Context) : View(context) {
         canvas.drawText("$hi", x(hi), barBot + dp(13f), text)
         text.textAlign = Paint.Align.RIGHT
         canvas.drawText("$maxHr", width - paddingRight.toFloat(), barBot + dp(13f), text)
+
+        // 존 이름 라벨(구간별) — 색과 매칭. 좁은 구간 겹침 방지로 미달/Zone2/고강도 3개만.
+        text.textAlign = Paint.Align.CENTER
+        val zy = barBot + dp(26f)
+        fun zoneLabel(from: Int, to: Int, label: String, color: Int) {
+            text.color = color
+            canvas.drawText(label, (x(from) + x(to)) / 2f, zy, text)
+        }
+        zoneLabel(scaleLo, lo, "낮음", Palette.BLUE)
+        zoneLabel(lo, hi, "Zone 2", Palette.ACCENT)
+        zoneLabel(hi, scaleHi, "높음", Palette.AMBER)
 
         val cy = (barTop + barBot) / 2
 

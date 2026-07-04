@@ -38,6 +38,15 @@ class RunControlService : WearableListenerService() {
                     ContextCompat.startForegroundService(this, i)
                 } catch (t: Throwable) {
                     postLaunchNotification() // BG 시작 제한 → 사용자가 화면 켜면 뜨는 알림
+                    return
+                }
+                // 서비스만 뜨면 화면이 안 올라온다 → 러닝 화면도 전면에. BG 액티비티 시작이 막히면 알림 폴백.
+                try {
+                    startActivity(
+                        Intent(this, WearRunActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    )
+                } catch (t: Throwable) {
+                    postLaunchNotification()
                 }
             }
             RunLink.PATH_STOP -> {

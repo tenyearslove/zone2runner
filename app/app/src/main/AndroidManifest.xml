@@ -27,7 +27,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".RunActivity" android:exported="false" />
+        <!-- 세로 고정 + 구성 변경 자체 처리: 회전 시 액티비티 재생성으로 러닝 세션이 초기화되는 것 방지 -->
+        <activity
+            android:name=".RunActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:configChanges="orientation|screenSize|smallestScreenSize|keyboardHidden|uiMode" />
         <activity android:name=".ReportActivity" android:exported="false" />
         <activity android:name=".HistoryActivity" android:exported="false" />
         <activity android:name=".ProfileActivity" android:exported="false" />
