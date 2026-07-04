@@ -44,6 +44,17 @@ class LlmCoach(
     /** 세션 시작 시 미리 호출해 checkStatus+warmup(최대 30초)을 첫 코칭 경로에서 빼낸다. */
     suspend fun prewarm() { ensureReady() }
 
+    /** 자유 설명 생성(코칭 외 용도 — 예: Zone2 계산 설명 팝업). 미가용/실패 시 null. */
+    suspend fun freeform(prompt: String): String? {
+        if (!ensureReady()) return null
+        return try {
+            val res = withContext(Dispatchers.Default) {
+                withTimeout(8_000) { client.generateContent(prompt) }
+            }
+            stripEmoji(res.candidates.firstOrNull()?.text ?: "").trim().ifBlank { null }
+        } catch (e: Throwable) { null }
+    }
+
     // ML Kit 호출(checkStatus/warmup/generateContent)이 메인 스레드를 물지 않도록 Default로 격리
     private suspend fun ensureReady(): Boolean = withContext(Dispatchers.Default) {
         if (checked) return@withContext available

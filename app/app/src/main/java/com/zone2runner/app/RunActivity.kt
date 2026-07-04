@@ -175,11 +175,20 @@ class RunActivity : AppCompatActivity() {
         hrRow.addView(zoneChip)
         dash.addView(hrRow, mt(2))
 
-        // Zone 2 밴드 게이지: 목표 구간(bpm) + 현재 심박 위치/이탈 정도
+        // Zone 2 밴드 게이지: 목표 구간(bpm) + 현재 심박 위치/이탈 정도. 터치 시 계산 근거 팝업.
         zoneBand = com.zone2runner.app.ui.ZoneBandView(this)
+        zoneBand.isClickable = true
+        zoneBand.setOnClickListener { showZoneExplanation() }
         dash.addView(zoneBand, mt(2))
-        rangeView = TextView(this).apply { textSize = 12f; setTextColor(C_ACCENT) }
+        rangeView = TextView(this).apply {
+            textSize = 12f; setTextColor(C_ACCENT); isClickable = true
+            setOnClickListener { showZoneExplanation() }
+        }
         dash.addView(rangeView, mt(2))
+        dash.addView(TextView(this).apply {
+            text = "ⓘ Zone 2 구간을 탭하면 계산 방식을 설명해드려요"
+            textSize = 10f; setTextColor(C_MUTED)
+        }, mt(2))
         // 밴드/판정 기준 안내: 큰 숫자=순간 심박, 마커·판정=지속 심박(최근 60초). 순간 스파이크로 색이 튀지 않음.
         dash.addView(TextView(this).apply {
             text = "● 지속 심박(최근 60초, 판정 기준)  |  큰 숫자·얇은 틱 = 순간 심박"
@@ -314,6 +323,49 @@ class RunActivity : AppCompatActivity() {
             finished -> startActivity(Intent(this, ReportActivity::class.java))
             running -> finalizeSession()
             else -> startRun()
+        }
+    }
+
+    /** Zone 2 계산 근거 팝업 — 규칙 기반 설명(항상) + LLM 자연어 설명(가능 시 비동기 교체). */
+    private fun showZoneExplanation() {
+        val p = profile ?: return
+        val learned = com.zone2runner.app.data.LearnedZone.uFrac(this)
+        val nSess = com.zone2runner.app.data.LearnedZone.sessionCount(this)
+        val uFrac = learned ?: com.zone2runner.app.domain.Zone2Prior.of(p).uFrac0
+        val hrr = p.hrr
+        val hi = (p.restingHr + uFrac * hrr).toInt()
+        val lo = (p.restingHr + (uFrac - com.zone2runner.app.domain.Zone2Prior.BAND) * hrr).toInt()
+        val tanaka = (208 - 0.7 * p.age).toInt()
+        val src = if (learned != null) "${nSess}회 러닝으로 학습(NN 역치 추정)" else "프로필 공식 초기값"
+        val hrMaxHigh = p.maxHr > tanaka + 8
+        val hmaxNote = if (hrMaxHigh)
+            "\n\n⚠ 최대심박이 ${p.maxHr}으로 설정돼 있어요. ${p.age}세 표준 추정은 약 ${tanaka}입니다. 최대심박이 높으면 Zone 2도 함께 높아집니다 — 프로필에서 실제 값으로 낮추면 구간이 내려갑니다."
+        else ""
+        val ruleText = buildString {
+            append("현재 Zone 2 목표: $lo ~ $hi bpm\n\n")
+            append("어떻게 계산됐나\n")
+            append("• 안정심박 ${p.restingHr}, 최대심박 ${p.maxHr} → 여유심박(HRR) ${hrr.toInt()}\n")
+            append("• Zone 2 상단 = ${(uFrac * 100).toInt()}% HRR = ${p.restingHr} + ${"%.2f".format(uFrac)}×${hrr.toInt()} ≈ $hi\n")
+            append("• 이 ${(uFrac * 100).toInt()}%는: $src\n")
+            append("• 방식: Karvonen(%HRR) — 최대심박 대비 %(흔히 120대)보다 조금 높게 나옵니다")
+            append(hmaxNote)
+        }
+        val dialog = android.app.AlertDialog.Builder(this)
+            .setTitle("Zone 2가 왜 이 범위인가요?")
+            .setMessage(ruleText)
+            .setPositiveButton("확인", null)
+            .show()
+        // LLM으로 더 쉬운 설명(가능 시 교체)
+        val c = coach ?: LlmCoach(this)
+        lifecycleScope.launch {
+            val prompt = "러닝 코치입니다. 사용자의 Zone 2 심박 구간이 $lo~$hi bpm으로 계산됐습니다. " +
+                "안정심박 ${p.restingHr}, 최대심박 ${p.maxHr}, 여유심박 ${hrr.toInt()}, Zone2 상단 ${(uFrac * 100).toInt()}% HRR(Karvonen), $src." +
+                (if (hrMaxHigh) " 최대심박 ${p.maxHr}은 ${p.age}세 표준(약 ${tanaka})보다 높습니다." else "") +
+                " 왜 이 범위인지, 그리고 낮게 느껴진다면 무엇을 확인하면 되는지 3~4문장으로 쉽게 설명하세요. 따옴표/이모지 없이."
+            val llm = c.freeform(prompt)
+            if (llm != null && dialog.isShowing) {
+                dialog.setMessage(llm + "\n\n─ 계산 근거 ─\n" + ruleText)
+            }
         }
     }
 

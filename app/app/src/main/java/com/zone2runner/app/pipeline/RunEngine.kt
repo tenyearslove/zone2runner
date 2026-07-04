@@ -104,6 +104,10 @@ class RunEngine(
         val sus = extractor.smoothedHrAt(s.tSec)
         if (sus != null) judgment = judge.judge(sus.toDouble(), loBpm, hiBpm)
 
+        // 코칭: 판정만 있으면 동작(120초 동역학 워밍업과 무관 — HR 들어오면 수십 초부터 코칭 시작).
+        // 이전엔 feat(워밍업 필요) 블록 안에 있어 2분 지나야 코칭이 시작되던 문제(실기기).
+        maybeCoach(s)
+
         // 특징(표시/개인화 관측용) — 판정에는 사용하지 않음
         val feat = extractor.extractAt(s.tSec, profile, b.uFrac, b.lFrac)
         if (feat != null) {
@@ -127,8 +131,6 @@ class RunEngine(
                     maybePreemptiveCoach(s, loBpm, hiBpm)
                 }
             }
-            // 코칭: 판정이 바뀌고 최소 간격 지난 경우
-            maybeCoach(s)
         }
         // 존 체류 시간(초 단위 누적)
         when (judgment) {

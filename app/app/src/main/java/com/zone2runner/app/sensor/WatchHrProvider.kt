@@ -18,7 +18,7 @@ class WatchHrProvider(context: Context) : HrProvider {
     @Volatile private var lastMs = 0L
     @Volatile private var spm = -1
     @Volatile private var spmMs = 0L
-    private val staleMs = 8000L
+    private val staleMs = 15000L // 워치 HR 간헐 끊김(BT/Wi-Fi) 관용 — 이보다 짧으면 파이프라인이 자주 멈춤(실기기)
 
     private val listener = MessageClient.OnMessageReceivedListener { event: MessageEvent ->
         when (event.path) {
