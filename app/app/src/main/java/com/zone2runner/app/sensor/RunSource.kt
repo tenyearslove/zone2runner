@@ -29,6 +29,8 @@ interface RunSource {
     val realtime: Boolean
     fun start(scope: CoroutineScope, onSample: suspend (Sample) -> Unit, onComplete: suspend () -> Unit)
     fun stop()
+    /** 파이프라인 출력(판정 등)을 소스로 되먹임 — 가상러너가 코칭에 반응하는 폐루프용. 기본 무시. */
+    fun onFeedback(state: com.zone2runner.app.domain.LiveState) {}
 }
 
 /** 심박 공급자. 최신 HR(bpm, 없으면 -1)을 제공. 구현: 워치 Data Layer / 폰 센서 / 없음. */

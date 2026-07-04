@@ -223,13 +223,18 @@ class WearRunActivity : ComponentActivity() {
         }
     }
 
-    /** 심박이 Z2 상한 위로 지속되면 가끔(5분 간격) 토크테스트를 띄운다. 30초 무응답이면 닫음. */
+    /**
+     * 토크테스트를 주기적으로 띄운다 — 심박 레벨과 무관하게(높건 낮건). 심박이 낮게 잡혀도 그 사람껜
+     * 벅찰 수 있으므로 항상 물어 수집한다(사용자 요청). 러닝 중 심박 신호가 있으면 약 4분마다.
+     * 30초 무응답이면 닫는다. (러너는 아무 때나 답할 수 있음)
+     */
     private fun updateTalkPrompt(hr: Int) {
-        val elevated = hr > 0 && hr > Zones.zone2Bpm.last
-        if (state == RunState.RUNNING && elevated) elevatedSec++ else elevatedSec = 0
+        val running = state == RunState.RUNNING && hr > 0
+        if (running) elevatedSec++ else elevatedSec = 0
         val now = SystemClock.elapsedRealtime()
         if (talkRow.visibility != View.VISIBLE) {
-            if (elevatedSec >= 20 && now - lastTalkAskMs > 5 * 60 * 1000L) {
+            // 러닝 중 심박 유효 + 마지막 물음 후 4분 경과(첫 물음은 러닝 ~1분 후)
+            if (running && elevatedSec >= 60 && now - lastTalkAskMs > 4 * 60 * 1000L) {
                 talkRow.visibility = View.VISIBLE; talkShownAt = now
             }
         } else {

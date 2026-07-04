@@ -63,6 +63,8 @@ class RunActivity : AppCompatActivity() {
     private var manualPace = 7.0
     private var manualChip: TextView? = null
     private var paceRow: LinearLayout? = null
+    private var virtualRunner = com.zone2runner.app.domain.VirtualRunner.DEFAULT // 가상러너(자동 시나리오)
+    private var runnerChip: TextView? = null
     private var paceLabel: TextView? = null
     private lateinit var talkRow: LinearLayout
     private lateinit var uEstView: TextView
@@ -277,6 +279,32 @@ class RunActivity : AppCompatActivity() {
             manualRow.addView(manualChip)
             dash.addView(manualRow, mt(6))
 
+            // 가상러너 선택(자동 시나리오 모드): 신체/스타일/코칭반응이 다른 프리셋. 폐루프로 개인화 검증.
+            val runnerRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
+            runnerRow.addView(TextView(this).apply {
+                text = "가상러너"; textSize = 12f; setTextColor(C_MUTED)
+            }, LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f))
+            runnerChip = TextView(this).apply {
+                textSize = 12f; gravity = Gravity.CENTER; setTextColor(C_TEXT)
+                setPadding(dp(14), dp(6), dp(14), dp(6))
+                val lp = LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT); lp.marginStart = dp(6); layoutParams = lp
+                isClickable = true
+                background = GradientDrawable().apply { setColor(C_CARD); cornerRadius = dp(14).toFloat(); setStroke(dp(1), C_STROKE) }
+                setOnClickListener {
+                    if (running) { Toast.makeText(this@RunActivity, "시작 전에만 바꿀 수 있어요", Toast.LENGTH_SHORT).show(); return@setOnClickListener }
+                    val presets = com.zone2runner.app.domain.VirtualRunner.PRESETS
+                    android.app.AlertDialog.Builder(this@RunActivity)
+                        .setTitle("가상러너 선택")
+                        .setItems(presets.map { r ->
+                            "${r.name}\n  나이${r.age}·안정${r.restingHr}·최대${r.maxHr}·임계${(r.trueZone2UpperHrmaxFrac * 100).toInt()}%HRmax·코칭반응${(r.coachingResponsiveness * 100).toInt()}%"
+                        }.toTypedArray()) { _, idx -> virtualRunner = presets[idx]; updateRunnerChip() }
+                        .show()
+                }
+            }
+            runnerRow.addView(runnerChip)
+            dash.addView(runnerRow, mt(6))
+            updateRunnerChip()
+
             // 페이스 슬라이더(수동 모드만 표시): 3'30"~12'00", 재생 중에도 즉시 반영
             paceRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
             paceLabel = TextView(this).apply { textSize = 13f; setTextColor(C_TEXT); setTypeface(typeface, Typeface.BOLD) }
@@ -433,7 +461,14 @@ class RunActivity : AppCompatActivity() {
             MODE_MOCK -> MockRunSource(MockConfigStore.load(this), seed = System.nanoTime())
             else ->
                 if (manualMode) com.zone2runner.app.sim.ManualRunSource(profile, manualPace, delayMs = simDelayMs, seed = System.nanoTime())
-                else SimulatedRunSource(durationMin = 30, seed = System.nanoTime(), delayMs = simDelayMs, profile = profile)
+                else com.zone2runner.app.sim.SimRunnerSource(
+                    virtualRunner, delayMs = simDelayMs, seed = System.nanoTime(),
+                    onTalkTest = { st ->
+                        runOnUiThread {
+                            eng.observeTalkTest(st)
+                            logger?.event("talktest") { put("t", (System.currentTimeMillis() - startedAt) / 1000); put("state", st.name); put("src", "virtual") }
+                        }
+                    })
         }
         source = src
 
@@ -466,6 +501,7 @@ class RunActivity : AppCompatActivity() {
         src.start(lifecycleScope, onSample = sample@{ s ->
             if (remoteStopRequested) { finalizeSession(); return@sample } // 워치에서 종료
             val state = eng.onSample(s)
+            src.onFeedback(state) // 폐루프: 판정을 소스로 되먹임(가상러너가 코칭에 반응)
             log.sample(s, state, watchProvider?.lastAgeMs() ?: -1L)
             if (!tempFetched && s.lat.isFinite() && s.lon.isFinite()) { // 기온 1회 조회(유효 좌표 확보 후)
                 tempFetched = true
@@ -595,7 +631,11 @@ class RunActivity : AppCompatActivity() {
             coachView.text = "🗣 ${s.coaching}"
             if (s.coaching != lastSpoken) { lastSpoken = s.coaching; speak(s.coaching) }
         }
-        uEstView.text = "개인 Zone2 상한 추정: ${(s.uEstFrac * 100).toInt()}% HRR (개인화 갱신 중)"
+        // 개인 상단을 실제 심박(bpm)으로 표시 — 내부 비율/설계 용어 노출 안 함
+        profile?.let { pr ->
+            val upBpm = (pr.restingHr + s.uEstFrac * pr.hrr).toInt()
+            uEstView.text = "개인 Zone 2 상단: $upBpm bpm (러닝하며 보정 중)"
+        }
 
         // 동역학 NN 출력: 목표 페이스 제안 + 60초 예측(워밍업 완료 후)
         if (s.recommendedPaceMinKm > 0.0 && s.predictedHr60 > 0) {
@@ -669,8 +709,15 @@ class RunActivity : AppCompatActivity() {
             simDelayMs = ms
             (source as? SimulatedRunSource)?.delayMs = ms
             (source as? com.zone2runner.app.sim.ManualRunSource)?.delayMs = ms
+            (source as? com.zone2runner.app.sim.SimRunnerSource)?.delayMs = ms
             highlightSpeed()
         }
+    }
+
+    private fun updateRunnerChip() {
+        runnerChip?.text = virtualRunner.name
+        // 수동 모드에선 가상러너 무의미 → 흐리게
+        runnerChip?.alpha = if (manualMode) 0.4f else 1f
     }
 
     private fun updateManualUi() {
@@ -685,6 +732,7 @@ class RunActivity : AppCompatActivity() {
         }
         paceRow?.visibility = if (manualMode) android.view.View.VISIBLE else android.view.View.GONE
         updatePaceLabel()
+        updateRunnerChip()
     }
 
     private fun updatePaceLabel() {

@@ -86,10 +86,13 @@ class ReportActivity : AppCompatActivity() {
         // 유산소 분석: HR 추이(목표 밴드) + 존 타임라인 + 드리프트/평가
         addAerobicAnalysis(col, r)
 
-        // 개인화 결과
-        col.addView(card("개인화 (Bayesian 경계 추정)", TextView(this).apply {
-            text = "Zone2 상한 추정: ${(r.uEstStartFrac * 100).toInt()}% → ${(r.uEstEndFrac * 100).toInt()}% HRR\n" +
-                "(공식 70% 사전값에서 세션 관측으로 개인 경계로 이동. adr-004/spec-004)"
+        // 개인화 결과 (내부 uFrac을 실제 심박 bpm으로 환산해 표시 — 설계 용어 노출 안 함)
+        val hrr = (r.maxHrProfile - r.restingHr).toDouble()
+        val startBpm = (r.restingHr + r.uEstStartFrac * hrr).toInt()
+        val endBpm = (r.restingHr + r.uEstEndFrac * hrr).toInt()
+        col.addView(card("개인 Zone 2 상단 학습", TextView(this).apply {
+            text = "이번 세션 개인 상단: $startBpm → $endBpm bpm\n" +
+                "프로필 초기값에서 실주행 관측(말하기 테스트/드리프트)으로 개인 경계로 이동합니다."
             textSize = 13f; setTextColor(C_TEXT)
         }))
 
