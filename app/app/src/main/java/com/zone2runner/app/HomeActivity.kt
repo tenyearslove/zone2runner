@@ -104,14 +104,17 @@ class HomeActivity : AppCompatActivity() {
     }
 
     private fun profileCard(p: Profile): View {
-        val prior = com.zone2runner.app.domain.Zone2Prior.of(p) // factor 반영 prior(spec-013) — 프로필 화면과 일치
-        // 세션 누적 학습값(LearnedZone, 역치 추정 NN)이 있으면 그것을, 없으면 공식 prior
+        val B = com.zone2runner.app.domain.Zone2Prior.BAND
+        val prior = com.zone2runner.app.domain.Zone2Prior.of(p) // 공식(factor) prior, %HRmax 기준(spec-013)
+        // 세션 누적 개인화 학습값(LearnedZone = 온라인 Bayesian 최종 경계). 없으면 공식 prior.
         val learned = com.zone2runner.app.data.LearnedZone.uFrac(this)
         val uFrac = learned ?: prior.uFrac0
         val nSess = com.zone2runner.app.data.LearnedZone.sessionCount(this)
-        val lo = (p.restingHr + (uFrac - com.zone2runner.app.domain.Zone2Prior.BAND) * p.hrr).toInt()
+        val lo = (p.restingHr + (uFrac - B) * p.hrr).toInt()
         val hi = (p.restingHr + uFrac * p.hrr).toInt()
-        val note = if (learned != null) "학습 반영, ${nSess}회 러닝" else "프로필 기반 초기값, 러닝마다 보정"
+        // 공식 고정 기준(학습 전 값)
+        val fLo = (p.restingHr + (prior.uFrac0 - B) * p.hrr).toInt()
+        val fHi = (p.restingHr + prior.uFrac0 * p.hrr).toInt()
         val grid = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         grid.addView(LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
@@ -120,9 +123,25 @@ class HomeActivity : AppCompatActivity() {
             addView(statTile("${p.maxHr}", "최대 심박"), cell())
         })
         grid.addView(TextView(this).apply {
-            text = "Zone 2 목표 심박: $lo ~ $hi bpm ($note)"
+            text = "Zone 2 목표 심박: $lo ~ $hi bpm" + if (learned != null) "  (${nSess}회 러닝 학습 반영)" else ""
             textSize = 13f; setTextColor(Palette.ACCENT); setPadding(0, dpi(8), 0, 0)
         })
+        // 공식 기준 대비 조정폭 + 근거
+        if (learned != null) {
+            val dHi = hi - fHi
+            val dir = when { dHi > 0 -> "상단 +$dHi bpm 상향"; dHi < 0 -> "상단 ${dHi} bpm 하향"; else -> "변동 없음" }
+            grid.addView(TextView(this).apply {
+                text = "프로필 공식 기준: $fLo ~ $fHi bpm  →  학습 후 $dir\n" +
+                    "근거: 실주행 관측 누적(말하기 테스트 + 심박·속도 드리프트)을 Bayesian으로 갱신.\n" +
+                    "편한데 미달로 나오면 러닝 중 '편함'을 누르면 다음 세션부터 내려갑니다."
+                textSize = 11f; setTextColor(Palette.MUTED); setPadding(0, dpi(4), 0, 0)
+            })
+        } else {
+            grid.addView(TextView(this).apply {
+                text = "프로필 기반 초기값(공식) — 러닝하며 관측이 쌓이면 개인에 맞게 보정됩니다."
+                textSize = 11f; setTextColor(Palette.MUTED); setPadding(0, dpi(4), 0, 0)
+            })
+        }
         return grid
     }
 

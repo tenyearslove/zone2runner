@@ -154,9 +154,10 @@ class RunEngine(
             series += SeriesPoint(s.tSec, clean, s.paceMinKm, judgment?.index ?: -1)
         }
 
-        // 개인화 갱신(5분마다)
+        // 개인화 갱신(5분마다) — 디커플링(드리프트) 관측. 편향(Conconi)이 있어 약한 신호로만 반영(obsSd 큼).
+        // 주 라벨은 토크테스트(사용자 입력, adr-016). 디커플링은 사용자 입력 없이도 경계를 미세 조정하는 보조.
         if (s.tSec - lastPersonalizeSec >= 300 && obsCandidates.isNotEmpty()) {
-            personalization.update(median(obsCandidates))
+            personalization.update(median(obsCandidates), obsSd = 20.0) // 약한 관측(토크테스트 sd6~14보다 훨씬 약)
             obsCandidates.clear()
             lastPersonalizeSec = s.tSec
         }
