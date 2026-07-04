@@ -13,9 +13,13 @@ class Zone2PriorTest {
     private fun profile(body: Int = 3, fit: Int = 3, freq: Int = 3, h: Int = 170, w: Int = 70) =
         Profile(35, 58, 183, heightCm = h, weightKg = w, bodyType = body, fitnessLevel = fit, weeklyFreq = freq)
 
-    @Test fun ac1_centerSelection_equalsLegacyFormula() {
+    // %HRmax 기준(2026-07-04): uFrac0 = (hrmaxFrac*maxHr - rhr)/hrr. 기본 프로필 maxHr183/rhr58/hrr125.
+    private fun expectedUFrac0(hrmaxFrac: Double, maxHr: Int = 183, rhr: Int = 58, hrr: Double = 125.0) =
+        ((hrmaxFrac.coerceIn(0.60, 0.78) * maxHr - rhr) / hrr).coerceIn(0.30, 0.75)
+
+    @Test fun ac1_centerSelection_hrmaxBasis() {
         val prior = Zone2Prior.of(profile())
-        assertEquals(0.70, prior.uFrac0, 1e-9)
+        assertEquals(expectedUFrac0(0.70), prior.uFrac0, 1e-6) // %HRmax 0.70 → HRR 비율 환산
         assertEquals(8.0, prior.sigma0Bpm, 1e-9) // 기존 고정 σ와 동일(하위 호환)
         assertEquals(0.0, prior.offset, 1e-9)
     }
@@ -24,19 +28,19 @@ class Zone2PriorTest {
         for (b in 1..5) for (f in 1..5) for (q in 1..5) {
             val prior = Zone2Prior.of(profile(b, f, q))
             assertTrue("offset 범위: $b/$f/$q", prior.offset in -0.08..0.06)
-            assertTrue("uFrac0 범위: $b/$f/$q", prior.uFrac0 in 0.60..0.78)
+            assertTrue("uFrac0 범위(%HRmax 환산 클램프): $b/$f/$q", prior.uFrac0 in 0.30..0.75)
         }
     }
 
     @Test fun ac2_directionality() {
-        // 엘리트+매일 > 중앙 > 입문+비만+거의안함
+        // 엘리트+매일 > 중앙 > 입문+비만+거의안함 (%HRmax 목표 오프셋 방향 보존)
         val high = Zone2Prior.of(profile(body = 2, fit = 5, freq = 5))
         val mid = Zone2Prior.of(profile())
         val low = Zone2Prior.of(profile(body = 5, fit = 1, freq = 1))
         assertTrue(high.uFrac0 > mid.uFrac0)
         assertTrue(low.uFrac0 < mid.uFrac0)
-        assertEquals(0.70 + 0.06, high.uFrac0, 1e-9)          // 0 + 0.05 + 0.02 = 0.07 → clamp +0.06
-        assertEquals(0.70 - 0.08, low.uFrac0, 1e-9)           // -0.04 -0.05 -0.02 → clamp -0.08
+        assertEquals(expectedUFrac0(0.70 + 0.06), high.uFrac0, 1e-6) // clamp +0.06
+        assertEquals(expectedUFrac0(0.70 - 0.08), low.uFrac0, 1e-6)  // clamp -0.08
     }
 
     @Test fun ac3_sigmaGrowsWithExtremity_andBmiMismatch() {
@@ -72,9 +76,9 @@ class Zone2PriorTest {
         // 어떤 관측 폭주에도 상한은 HRR 80% + 세션 내 ±10bpm을 넘지 않는다
         val p = Personalization(profile())
         repeat(50) { p.update(175.0, obsSd = 1.0) } // 극단 관측 폭주
-        assertTrue("uFrac 상한 0.80", p.boundary().uFrac <= 0.80 + 1e-9)
-        val mu0 = 58 + 0.70 * 125
-        assertTrue("세션 내 이동 ±10bpm", p.muUpper <= mu0 + 10 + 1e-9)
+        assertTrue("uFrac 상한 0.75", p.boundary().uFrac <= 0.75 + 1e-9)
+        val mu0 = 58 + expectedUFrac0(0.70) * 125
+        assertTrue("세션 내 이동 ±10bpm", p.muUpper <= mu0 + 10 + 1e-6)
     }
 
     @Test fun talkTest_movesBoundaryTowardObservation() {
@@ -101,14 +105,15 @@ class Zone2PriorTest {
     }
 
     @Test fun ac6_personalizationStartsAtPrior_andStillConverges() {
-        // prior 반영: 엘리트 프로필은 상한이 높게 시작
+        // prior 반영: 엘리트 프로필은 상한이 높게 시작 (fit5+freq5 = 0.05+0.02 = 0.07 → clamp +0.06)
         val elite = Personalization(profile(fit = 5, freq = 5))
-        assertEquals(0.70 + 0.06, elite.boundary().uFrac, 1e-9) // 0.07 → 총합 clamp +0.06
+        assertEquals(expectedUFrac0(0.70 + 0.06), elite.boundary().uFrac, 1e-6)
         // 갱신 동작 회귀: 관측을 반복하면 관측 쪽으로 수렴, σ 감소
         val p = Personalization(profile())
         val sigma0 = p.sigma
-        repeat(5) { p.update(150.0, obsSd = 5.0) }
-        assertTrue("관측(150bpm) 방향으로 이동", p.muUpper > 58 + 0.70 * 125 - 15 && p.muUpper < 152)
+        val mu0 = 58 + expectedUFrac0(0.70) * 125
+        repeat(5) { p.update(mu0 + 5, obsSd = 5.0) } // prior보다 약간 위 관측
+        assertTrue("관측 방향으로 이동", p.muUpper > mu0)
         assertTrue("불확실성 감소", p.sigma < sigma0)
     }
 }

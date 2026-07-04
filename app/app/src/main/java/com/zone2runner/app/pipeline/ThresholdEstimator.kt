@@ -31,7 +31,7 @@ class ThresholdEstimator private constructor(
             if (idx < layers.size - 1) for (o in out.indices) if (out[o] < 0) out[o] = 0.0
             x = out
         }
-        return x[0].coerceIn(0.55, 0.80)
+        return x[0].coerceIn(0.30, 0.75) // %HRmax 재보정으로 하한 완화(2026-07-04)
     }
 
     companion object {

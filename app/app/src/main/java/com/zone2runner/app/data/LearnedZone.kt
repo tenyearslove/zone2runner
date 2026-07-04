@@ -25,7 +25,7 @@ object LearnedZone {
 
     /** NN 세션 추정치로 누적 갱신. 첫 관측은 그대로, 이후 EMA. */
     fun update(ctx: Context, nnUFrac: Double) {
-        val u = nnUFrac.coerceIn(0.55, 0.80)
+        val u = nnUFrac.coerceIn(0.30, 0.75) // %HRmax 재보정으로 하한 완화(2026-07-04)
         val p = ctx.getSharedPreferences(PREF, Context.MODE_PRIVATE)
         val prev = if (p.contains(KEY_U)) p.getFloat(KEY_U, 0.70f).toDouble() else null
         val next = if (prev == null) u else prev + ALPHA * (u - prev)

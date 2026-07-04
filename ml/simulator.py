@@ -35,15 +35,22 @@ WARMUP_S = 120    # 초반 워밍업(특징 추출 제외 + decoupling baseline 
 
 
 def make_runner(rng, u_frac_sigma=0.045):
-    """가상 러너 프로파일 생성. 참 경계는 공식에서 개인차만큼 벗어난다.
-    u_frac_sigma: 개인 임계 변동폭(공식 0.70 대비). 클수록 개인화 헤드룸 커짐."""
+    """가상 러너 프로파일 생성. 참 경계는 %HRmax 기준으로 개인차만큼 벗어난다.
+    u_frac_sigma: 개인 임계 변동폭. 클수록 개인화 헤드룸 커짐.
+
+    ★ Zone2 기준 재보정(2026-07-04): 기존엔 참 Zone2 상단을 %HRR 0.70으로 뒀는데, 실측 maxHr
+    사용자(예: max200/rhr60)에게 이는 %HRmax 79% = 유산소 Zone2가 아니라 Zone3~4가 된다(실기기 피드백).
+    유산소 Zone2(≈LT1)는 통상 %HRmax 68~72%다. 그래서 참 상단을 %HRmax 기준으로 생성하고,
+    이를 HRR 비율(u_frac)로 환산해 파이프라인 규약(resting + u_frac*hrr)을 그대로 유지한다."""
     age = int(rng.integers(20, 55))
     resting = float(rng.uniform(48, 68))
     max_hr = 208 - 0.7 * age                      # Tanaka
     hrr = max_hr - resting
-    # 참 Zone2 상한 비율: 공식은 0.70이라 가정하지만 개인은 다름
-    u_frac = float(np.clip(rng.normal(0.70, u_frac_sigma), 0.50, 0.90))
-    band = float(rng.uniform(0.08, 0.13))         # Zone2 폭
+    # 참 Zone2 상단 = %HRmax 0.70 부근(개인차 ±). LT1(유산소 임계) 근사.
+    hrmax_frac = float(np.clip(rng.normal(0.70, u_frac_sigma), 0.62, 0.78))
+    u_abs_true = hrmax_frac * max_hr              # 참 상단(bpm)
+    u_frac = (u_abs_true - resting) / hrr         # HRR 비율로 환산(파이프라인 규약 유지)
+    band = float(rng.uniform(0.10, 0.14))         # Zone2 폭(HRR 비율)
     l_frac = u_frac - band
     return {
         "age": age, "resting": resting, "max_hr": max_hr, "hrr": hrr,

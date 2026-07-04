@@ -21,10 +21,10 @@ class ThresholdEstimatorTest {
          "layers":[{"w":[[0.1,0.2]],"b":[0.6]}],"hidden_activation":"relu","metrics":{}}
         """.trimIndent()
         val m = ThresholdEstimator.fromJsonString(json)
-        // 0.1*0.5 + 0.2*0.5 + 0.6 = 0.75 → 범위 내
+        // 0.1*0.5 + 0.2*0.5 + 0.6 = 0.75 → 범위 상한(클램프 0.30~0.75)
         assertEquals(0.75, m.estimateUFrac(doubleArrayOf(0.5, 0.5)), 1e-9)
-        // 큰 입력 → 0.80 클램프
-        assertEquals(0.80, m.estimateUFrac(doubleArrayOf(10.0, 10.0)), 1e-9)
+        // 큰 입력 → 0.75 클램프(재보정 2026-07-04)
+        assertEquals(0.75, m.estimateUFrac(doubleArrayOf(10.0, 10.0)), 1e-9)
     }
 
     @Test fun realModel_estimatesInRange() {
@@ -38,7 +38,7 @@ class ThresholdEstimatorTest {
         // 대표 세션 특징: [slow, mid, fast, slope, drift, cadence_n, rhr_frac, age_n]
         val feat = doubleArrayOf(0.55, 0.65, 0.78, 0.05, 0.04, 0.85, 0.32, 0.35)
         val u = m.estimateUFrac(feat)
-        assertTrue("uFrac 생리 범위(0.55~0.80): $u", u in 0.55..0.80)
+        assertTrue("uFrac 생리 범위(0.30~0.75): $u", u in 0.30..0.75)
         assertTrue(m.metrics.containsKey("mae_bpm_nn"))
         println("추정 uFrac=$u, MAE(nn)=${m.metrics["mae_bpm_nn"]} vs 공식=${m.metrics["mae_bpm_formula"]}")
     }

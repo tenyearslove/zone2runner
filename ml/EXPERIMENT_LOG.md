@@ -148,3 +148,21 @@ Etxegarai et al.(2018, RNN, R=0.89) / Zhu et al.(2025, 전이학습 RNN, MAE 4.3
   LearnedZone(EMA 누적) → 다음 세션 prior. NN=관측 산출기, 누적=적응(adr-014).
 - 한계(명시): 랩 참값 부재로 절대 정확도 미검증 → 무랩 서로게이트(토크테스트/DFA-α1) 정합 + 수렴으로 대체.
   실데이터 fine-tune은 향후(필드 로그 spec-012, 공개 데이터 athlete_hr_predict 등 활용 가능).
+
+## 11. Zone2 기준 재보정: %HRR → %HRmax (2026-07-04, 실기기 피드백)
+
+**문제**: 실측 maxHr 사용자(max200/RHR60)에게 기존 %HRR 0.70이 %HRmax 79%(Zone3~4)로 과대평가.
+Zone2가 155~169로 떠서 편한 유산소 러닝이 계속 "미달"로 나옴(실주행 피드백).
+
+**원인**: 여유심박(HRR=140)이 큰 사용자는 %HRR에 안정심박을 더하는 방식이 유독 높게 나옴.
+생리 문서가 %HRR을 택한 근거("나이기반 maxHr 과소평가 보정")는 **실측 maxHr엔 역효과**.
+
+**수정**: 참/공식 Zone2 상단을 **%HRmax 0.70(유산소 임계 LT1 근사)** 기준으로 재정의.
+- simulator: 참 상단 = %HRmax 0.70±(개인차) → HRR 비율로 환산(파이프라인 규약 유지)
+- Zone2Prior: uFrac0 = (0.70×maxHr − RHR)/HRR, 클램프 0.30~0.75, BAND 0.10→0.12
+- 클램프 완화(Personalization/ThresholdEstimator/LearnedZone): 0.55~0.80 → 0.30~0.75
+  (실측 maxHr/저RHR은 HRR 비율이 낮으므로, 토크테스트로 더 내려갈 수 있게)
+- 역치 NN 재학습: 새 라벨 기준 MAE 4.44bpm
+
+**결과**: max200/RHR60 사용자 Zone2 155~169 → **123~140bpm(62~70% HRmax)**. 실사용 체감과 일치.
+동역학 NN은 낮아진 임계로 드리프트가 잦아져 RMSE 악화(18.95/30.44) — 페이스제안 품질 재튜닝은 후속.

@@ -31,14 +31,22 @@ object Zone2Prior {
     private val FITNESS_OFFSET = doubleArrayOf(-0.05, -0.025, 0.0, 0.025, 0.05)
     private val FREQ_OFFSET = doubleArrayOf(-0.02, -0.01, 0.0, 0.01, 0.02)
 
-    const val BAND = 0.10 // Zone2 폭(HRR 비율) — spec-004, factor 연동은 유보
+    const val BAND = 0.12 // Zone2 폭(HRR 비율) ≈ %HRmax 10% 부근
+
+    // ★ Zone2 기준 재보정(2026-07-04): 참 Zone2 상단을 %HRmax 0.70(유산소 임계 LT1 근사)으로 잡는다.
+    // 기존 고정 %HRR 0.70은 실측 maxHr 사용자에게 %HRmax 79%(Zone3~4)로 과대평가됐음(실기기 피드백).
+    // 사람마다 maxHr/RHR 비율이 달라 %HRmax 목표를 개인별로 HRR 비율(uFrac)로 환산한다.
+    const val HRMAX_TARGET = 0.70 // Zone2 상단 = 최대심박의 70% 부근
 
     fun of(p: Profile): Prior {
         val b = p.bodyType.coerceIn(1, 5) - 1
         val f = p.fitnessLevel.coerceIn(1, 5) - 1
         val q = p.weeklyFreq.coerceIn(1, 5) - 1
+        // factor 오프셋은 %HRmax 목표를 미세조정(훈련자 LT1 상향 등). %HRmax 단위.
         val offset = (BODY_OFFSET[b] + FITNESS_OFFSET[f] + FREQ_OFFSET[q]).coerceIn(-0.08, 0.06)
-        val uFrac0 = (0.70 + offset).coerceIn(0.60, 0.78)
+        val hrmaxFrac = (HRMAX_TARGET + offset).coerceIn(0.60, 0.78)
+        val uAbs = hrmaxFrac * p.maxHr                    // 상단(bpm)
+        val uFrac0 = ((uAbs - p.restingHr) / p.hrr).coerceIn(0.30, 0.75) // HRR 비율로 환산
 
         val extremity = abs(p.bodyType.coerceIn(1, 5) - 3) +
             abs(p.fitnessLevel.coerceIn(1, 5) - 3) + abs(p.weeklyFreq.coerceIn(1, 5) - 3)

@@ -33,8 +33,9 @@ class Personalization(private val profile: Profile, priorUFrac: Double? = null) 
     }
 
     fun boundary(): Zone2Boundary {
-        // 생리적 상한 가드: Zone2 상한은 어떤 갱신에도 HRR 80%를 넘지 않는다(LT1 문헌 상단).
-        val uFrac = ((muUpper - profile.restingHr) / profile.hrr).coerceIn(0.55, 0.80)
+        // 생리 가드: %HRmax 기준 재보정(2026-07-04)으로 하한 완화 — 유산소 Zone2는 %HRmax 60~72%이고
+        // 실측 maxHr/저RHR 사용자는 HRR 비율이 낮게 나오므로 0.30까지 허용(토크테스트로 더 내려갈 수 있게).
+        val uFrac = ((muUpper - profile.restingHr) / profile.hrr).coerceIn(0.30, 0.75)
         return Zone2Boundary(uFrac, uFrac - band)
     }
 
