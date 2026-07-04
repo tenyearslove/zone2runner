@@ -10,9 +10,10 @@ import com.zone2runner.app.domain.Zone2Prior
  * factor 미입력이면 공식(HRR 0.70)/σ 8bpm과 동일 — 하위 호환.
  * 세션마다 decoupling에서 뽑은 관측 z(bpm)로 갱신. 신경망 아님(float 산술). 누적될수록 개인 경계로 수렴(QA3).
  */
-class Personalization(private val profile: Profile) {
+class Personalization(private val profile: Profile, priorUFrac: Double? = null) {
     private val prior = Zone2Prior.of(profile)
-    private val mu0 = profile.restingHr + prior.uFrac0 * profile.hrr // 사전 상한(bpm)
+    // priorUFrac이 주어지면(세션 누적 학습값, LearnedZone) 그것을 사전 상한으로 사용, 없으면 공식 prior
+    private val mu0 = profile.restingHr + (priorUFrac ?: prior.uFrac0) * profile.hrr // 사전 상한(bpm)
     var muUpper = mu0            // 상한 추정(bpm)
         private set
     var variance = prior.sigma0Bpm * prior.sigma0Bpm // 불확실성 σ² (극단 프로필일수록 넓게 시작)

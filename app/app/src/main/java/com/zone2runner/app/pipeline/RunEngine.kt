@@ -30,9 +30,10 @@ class RunEngine(
     private val dynamics: HrDynamics?, // 심박 동역학 모델(spec-014). null이면 예측/페이스 제안 없음
     private val coach: Coach,
     private val coachScope: CoroutineScope? = null,
+    priorUFrac: Double? = null,        // 세션 누적 학습값(LearnedZone). 없으면 공식 prior
 ) {
     private val extractor = FeatureExtractor()
-    private val personalization = Personalization(profile)
+    private val personalization = Personalization(profile, priorUFrac)
     private val judge = ZoneJudge()
     private val uEstStart = personalization.boundary().uFrac
 
@@ -67,6 +68,9 @@ class RunEngine(
     private var recommendedPace = 0.0
 
     val usingModel: Boolean get() = dynamics != null
+
+    /** 세션 역치 추정 특징(spec-015). 세션 종료 시 ThresholdEstimator에 넣어 개인 uFrac 추정. */
+    fun thresholdFeatures(): DoubleArray? = extractor.sessionThresholdFeatures(profile)
 
     /** 토크 테스트 자가관측을 개인화 경계에 반영(arch/zone2-physiology §6). 현재 유효 HR이 있을 때만. */
     fun observeTalkTest(state: com.zone2runner.app.pipeline.TalkState) {

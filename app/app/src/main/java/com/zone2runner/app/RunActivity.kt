@@ -78,6 +78,7 @@ class RunActivity : AppCompatActivity() {
     private var tempFetched = false
 
     private var dynamics: com.zone2runner.app.pipeline.HrDynamics? = null
+    private var thresholdEstimator: com.zone2runner.app.pipeline.ThresholdEstimator? = null // 역치 추정 NN(spec-015)
     private var source: RunSource? = null
     private var engine: RunEngine? = null
     private var coach: LlmCoach? = null
@@ -98,14 +99,17 @@ class RunActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         Configuration.getInstance().userAgentValue = packageName
         dynamics = runCatching { com.zone2runner.app.pipeline.HrDynamics.fromAssets(this) }.getOrNull()
+        thresholdEstimator = runCatching { com.zone2runner.app.pipeline.ThresholdEstimator.fromAssets(this) }.getOrNull()
         tts = TextToSpeech(this) { status ->
             if (status == TextToSpeech.SUCCESS) { tts?.language = java.util.Locale.KOREAN; ttsReady = true }
         }
         setContentView((buildUi()).withSystemBarInsets())
         updateSubtitle()
-        // 시작 전에도 프로필 prior 기반 목표 구간을 보여준다(개인화 갱신 시 밴드가 함께 이동)
+        // 시작 전에도 목표 구간을 보여준다. 세션 누적 학습값(LearnedZone)이 있으면 그것을, 없으면 공식 prior.
         profile = ProfileStore.load(this)
-        updateZoneUi(-1, com.zone2runner.app.domain.Zone2Prior.of(profile!!).uFrac0)
+        val startUFrac = com.zone2runner.app.data.LearnedZone.uFrac(this)
+            ?: com.zone2runner.app.domain.Zone2Prior.of(profile!!).uFrac0
+        updateZoneUi(-1, startUFrac)
         // 지도 초기 위치: 서울 고정 좌표 대신 마지막 알려진 위치로 즉시 센터링(GPS 새 fix 전에도 근처 표시)
         centerMapOnLastFix()
     }
@@ -366,7 +370,8 @@ class RunActivity : AppCompatActivity() {
         coach = c
         lifecycleScope.launch { c.prewarm() } // checkStatus+warmup을 첫 코칭 전에 미리
         // coachScope 전달 → 코칭 생성(LLM ~2초)이 샘플 루프/렌더를 멈추지 않음
-        val eng = RunEngine(profile, dynamics, c, coachScope = lifecycleScope)
+        val learnedPrior = com.zone2runner.app.data.LearnedZone.uFrac(this) // 세션 누적 학습값(있으면 prior)
+        val eng = RunEngine(profile, dynamics, c, coachScope = lifecycleScope, priorUFrac = learnedPrior)
         engine = eng
         startedAt = System.currentTimeMillis()
         frame = 0
@@ -473,6 +478,15 @@ class RunActivity : AppCompatActivity() {
         window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         source?.stop()
         val eng = engine ?: run { logger?.close(); logger = null; return }
+        // 역치 추정 NN(spec-015): 세션 특징 → 개인 uFrac → LearnedZone 누적(다음 세션 prior)
+        val est = thresholdEstimator
+        if (est != null) {
+            eng.thresholdFeatures()?.let { f ->
+                val u = est.estimateUFrac(f)
+                com.zone2runner.app.data.LearnedZone.update(this, u)
+                logger?.event("threshold") { put("uFrac", u); put("n", com.zone2runner.app.data.LearnedZone.sessionCount(this@RunActivity)) }
+            }
+        }
         val report = eng.report().copy(
             startedAtEpochMs = startedAt, sourceMode = mode,
             coachSource = coach?.sessionSource() ?: "rule",
