@@ -49,7 +49,19 @@ class RunControlService : WearableListenerService() {
                     postLaunchNotification()
                 }
             }
+            RunLink.PATH_MIRROR -> {
+                // 시뮬 미러: 워치는 자기 센서를 안 쓰고 폰 심박을 받아 표시+토크테스트만. RunService 시작 안 함.
+                try {
+                    startActivity(
+                        Intent(this, WearRunActivity::class.java)
+                            .putExtra(WearRunActivity.EXTRA_MIRROR, true)
+                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    )
+                } catch (t: Throwable) { postLaunchNotification() }
+            }
             RunLink.PATH_STOP -> {
+                // 실센서면 RunService 종료, 미러면 RunBus만 IDLE로(서비스 없음)
+                if (RunBus.state != RunState.IDLE) { RunBus.state = RunState.IDLE; RunBus.notifyUi() }
                 startService(
                     Intent(this, RunService::class.java)
                         .setAction(RunService.ACTION_STOP)

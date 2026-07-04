@@ -492,8 +492,12 @@ class RunActivity : AppCompatActivity() {
 
         running = true; finished = false
         isRunning = true; remoteStopRequested = false
-        // 실센서 러닝이면 워치에 시작 신호 → 워치 RunService 자동 기동(사용자 요청)
-        if (mode == MODE_LIVE) { RunLink.send(this, RunLink.PATH_START); registerTalkListener() }
+        registerTalkListener() // 워치 토크테스트 답변(/talk)은 모든 모드에서 수신(시뮬 미러 포함)
+        // 실센서면 워치가 자기 센서로 러닝, 시뮬/목이면 워치를 미러 모드로(폰 심박 표시+토크테스트)
+        when (mode) {
+            MODE_LIVE -> RunLink.send(this, RunLink.PATH_START)
+            else -> RunLink.send(this, RunLink.PATH_MIRROR)
+        }
         // 러닝 중 화면 유지: LLM 코칭은 포그라운드 전용(adr-007), GPS/파이프라인도 화면off 스로틀 회피
         window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         startBtn.text = primaryLabel()
@@ -503,6 +507,8 @@ class RunActivity : AppCompatActivity() {
             val state = eng.onSample(s)
             src.onFeedback(state) // 폐루프: 판정을 소스로 되먹임(가상러너가 코칭에 반응)
             log.sample(s, state, watchProvider?.lastAgeMs() ?: -1L)
+            // 시뮬/목: 심박을 워치로 스트림(미러) — 워치에서 표시+토크테스트 가능
+            if (mode != MODE_LIVE && state.hr > 0 && frame % 25 == 0) RunLink.sendMirrorHr(this, state.hr)
             if (!tempFetched && s.lat.isFinite() && s.lon.isFinite()) { // 기온 1회 조회(유효 좌표 확보 후)
                 tempFetched = true
                 lifecycleScope.launch {
@@ -560,8 +566,8 @@ class RunActivity : AppCompatActivity() {
         running = false
         isRunning = false
         unregisterTalkListener()
-        // 실센서 러닝 종료면 워치도 종료(원격 종료가 아니라 폰에서 눌렀을 때만 되쏨)
-        if (mode == MODE_LIVE && !remoteStopRequested) RunLink.send(this, RunLink.PATH_STOP)
+        // 러닝 종료면 워치도 종료(실센서 자동기동/시뮬 미러 모두). 원격 종료가 아닐 때만 되쏨.
+        if (!remoteStopRequested) RunLink.send(this, RunLink.PATH_STOP)
         remoteStopRequested = false
         window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         source?.stop()

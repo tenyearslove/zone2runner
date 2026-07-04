@@ -9,14 +9,18 @@ import com.google.android.gms.wearable.Wearable
  * 경로: /run/start, /run/stop (payload 없음).
  */
 object RunLink {
-    const val PATH_START = "/run/start"
+    const val PATH_START = "/run/start"     // 실센서: 워치가 자기 ExerciseClient로 러닝
     const val PATH_STOP = "/run/stop"
+    const val PATH_MIRROR = "/run/mirror"   // 시뮬: 워치를 미러 모드로(폰 심박 표시 + 토크테스트만)
+    const val PATH_MIRROR_HR = "/run/mirrorhr" // 시뮬 심박 스트림(payload=bpm)
 
-    fun send(ctx: Context, path: String) {
+    fun send(ctx: Context, path: String, payload: ByteArray = ByteArray(0)) {
         val app = ctx.applicationContext
         Wearable.getNodeClient(app).connectedNodes.addOnSuccessListener { nodes ->
             val mc = Wearable.getMessageClient(app)
-            for (n in nodes) runCatching { mc.sendMessage(n.id, path, ByteArray(0)) }
+            for (n in nodes) runCatching { mc.sendMessage(n.id, path, payload) }
         }
     }
+
+    fun sendMirrorHr(ctx: Context, bpm: Int) = send(ctx, PATH_MIRROR_HR, bpm.toString().toByteArray())
 }

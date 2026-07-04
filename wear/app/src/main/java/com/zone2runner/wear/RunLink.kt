@@ -11,6 +11,8 @@ import com.google.android.gms.wearable.Wearable
 object RunLink {
     const val PATH_START = "/run/start"
     const val PATH_STOP = "/run/stop"
+    const val PATH_MIRROR = "/run/mirror"      // 폰 시뮬 → 워치 미러 모드
+    const val PATH_MIRROR_HR = "/run/mirrorhr" // 폰 시뮬 심박 스트림(payload=bpm)
 
     fun send(ctx: Context, path: String) {
         val app = ctx.applicationContext

@@ -59,8 +59,12 @@ class WearRunActivity : ComponentActivity() {
         }
     }
 
+    private var mirror = false // 시뮬 미러 모드(폰 심박 수신, 자기 센서/서비스 안 씀)
+    private var mirrorListener: com.google.android.gms.wearable.MessageClient.OnMessageReceivedListener? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        mirror = intent.getBooleanExtra(EXTRA_MIRROR, false)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         Zones.load(this) // 폰에서 동기화된 개인 존 경계 적용(없으면 기본값)
         setContentView(buildUi())
@@ -71,12 +75,29 @@ class WearRunActivity : ComponentActivity() {
         super.onResume()
         RunBus.listener = { render() }
         ui.post(ticker)
+        if (mirror) registerMirror()
+    }
+
+    /** 미러: 폰 시뮬 심박(/run/mirrorhr)을 받아 RunBus에 반영 → 화면 표시 + 토크테스트 동작. */
+    private fun registerMirror() {
+        if (mirrorListener != null) return
+        val l = com.google.android.gms.wearable.MessageClient.OnMessageReceivedListener { e ->
+            if (e.path == RunLink.PATH_MIRROR_HR) {
+                val bpm = runCatching { String(e.data).trim().toInt() }.getOrNull() ?: return@OnMessageReceivedListener
+                RunBus.hr = bpm
+                if (RunBus.state == RunState.IDLE) { RunBus.state = RunState.RUNNING; RunBus.runStart = SystemClock.elapsedRealtime(); RunBus.accumulatedMs = 0 }
+                runOnUiThread { RunBus.notifyUi() }
+            }
+        }
+        runCatching { com.google.android.gms.wearable.Wearable.getMessageClient(this).addListener(l) }
+        mirrorListener = l
     }
 
     override fun onPause() {
         super.onPause()
         RunBus.listener = null
         ui.removeCallbacks(ticker)
+        mirrorListener?.let { runCatching { com.google.android.gms.wearable.Wearable.getMessageClient(this).removeListener(it) }; mirrorListener = null }
     }
 
     // ---- UI ----
@@ -189,6 +210,12 @@ class WearRunActivity : ComponentActivity() {
 
     private fun rebuildButtons() {
         btnRow.removeAllViews()
+        if (mirror) { // 미러 모드: 제어는 폰이 함 → 버튼 대신 안내만
+            btnRow.addView(TextView(this).apply {
+                text = "시뮬 미러 · 대화 테스트만"; textSize = 10f; setTextColor(C_MUTED); gravity = Gravity.CENTER
+            })
+            return
+        }
         when (state) {
             RunState.IDLE -> btnRow.addView(pill("시작", C_GREEN) { start() })
             RunState.RUNNING -> {
@@ -223,20 +250,29 @@ class WearRunActivity : ComponentActivity() {
         }
     }
 
+    private var prevHr = -1
+    private var stableSec = 0
+
     /**
-     * 토크테스트를 주기적으로 띄운다 — 심박 레벨과 무관하게(높건 낮건). 심박이 낮게 잡혀도 그 사람껜
-     * 벅찰 수 있으므로 항상 물어 수집한다(사용자 요청). 러닝 중 심박 신호가 있으면 약 4분마다.
-     * 30초 무응답이면 닫는다. (러너는 아무 때나 답할 수 있음)
+     * 스마트 타이밍 토크테스트 — 정보가 가장 큰 순간에 묻는다(고정 주기 아님).
+     *  (A) 지속 심박이 추정 경계 근처(상한 -6 ~ +15bpm) + 안정(20초 변동 작음)일 때 = "여기가 네 임계 맞아?"
+     *      확인이 개인화에 가장 유용한 순간(active learning). 최소 4분 간격.
+     *  (B) 오래(8분) 안 물었으면 심박 레벨과 무관하게 폴백 — 낮은 심박도 그 사람껜 힘들 수 있으니(사용자 요청).
+     * 30초 무응답이면 닫는다. 러너는 언제든 직접 답할 수 있음.
      */
     private fun updateTalkPrompt(hr: Int) {
         val running = state == RunState.RUNNING && hr > 0
-        if (running) elevatedSec++ else elevatedSec = 0
+        // 심박 안정성(변동 작음)
+        if (running && prevHr > 0 && kotlin.math.abs(hr - prevHr) <= 3) stableSec++ else stableSec = 0
+        prevHr = hr
         val now = SystemClock.elapsedRealtime()
         if (talkRow.visibility != View.VISIBLE) {
-            // 러닝 중 심박 유효 + 마지막 물음 후 4분 경과(첫 물음은 러닝 ~1분 후)
-            if (running && elevatedSec >= 60 && now - lastTalkAskMs > 4 * 60 * 1000L) {
-                talkRow.visibility = View.VISIBLE; talkShownAt = now
-            }
+            val since = now - lastTalkAskMs
+            val upper = Zones.zone2Bpm.last
+            val nearBoundary = hr in (upper - 6)..(upper + 15)
+            val smart = running && nearBoundary && stableSec >= 20 && since > 4 * 60 * 1000L
+            val fallback = running && since > 8 * 60 * 1000L
+            if (smart || fallback) { talkRow.visibility = View.VISIBLE; talkShownAt = now }
         } else {
             zoneLabel.text = "대화 되나요?"; zoneLabel.setTextColor(C_TEXT) // 질문 문구로 대체
             if (now - talkShownAt > 30_000L) { talkRow.visibility = View.GONE; lastTalkAskMs = now }
@@ -341,11 +377,12 @@ class WearRunActivity : ComponentActivity() {
     private fun centered() = LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT).apply { gravity = Gravity.CENTER_HORIZONTAL }
     private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
 
-    private companion object {
-        val C_TEXT = Color.parseColor("#E8EAED")
-        val C_MUTED = Color.parseColor("#9AA0A6")
-        val C_GREEN = Color.parseColor("#30D158")
-        val C_AMBER = Color.parseColor("#FF9F0A")
-        val C_RED = Color.parseColor("#FF3B30")
+    companion object {
+        const val EXTRA_MIRROR = "mirror" // 시뮬 미러 모드로 실행(폰 심박 수신 + 토크테스트만)
+        private val C_TEXT = Color.parseColor("#E8EAED")
+        private val C_MUTED = Color.parseColor("#9AA0A6")
+        private val C_GREEN = Color.parseColor("#30D158")
+        private val C_AMBER = Color.parseColor("#FF9F0A")
+        private val C_RED = Color.parseColor("#FF3B30")
     }
 }
