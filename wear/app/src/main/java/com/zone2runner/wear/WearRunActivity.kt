@@ -257,12 +257,11 @@ class WearRunActivity : ComponentActivity() {
     // ---- 권한 ----
 
     private fun hasPerms(): Boolean {
+        // 필수 = 심박(BODY_SENSORS) + 위치(GPS). 이 둘이면 러닝 시작 가능.
+        // 케이던스(ACTIVITY_RECOGNITION)는 선택 — 없으면 RunService가 심박만으로 시작(하드 크래시 방지).
         val body = ContextCompat.checkSelfPermission(this, Manifest.permission.BODY_SENSORS) == PackageManager.PERMISSION_GRANTED
         val loc = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
-        // ExerciseClient의 케이던스(STEPS_PER_MINUTE)는 ACTIVITY_RECOGNITION 필요 — 없으면 서비스가
-        // SecurityException으로 죽는다(실기기 관찰). 런타임 권한이라 요청 대상에 반드시 포함.
-        val act = ContextCompat.checkSelfPermission(this, Manifest.permission.ACTIVITY_RECOGNITION) == PackageManager.PERMISSION_GRANTED
-        return body && loc && act
+        return body && loc
     }
 
     private fun requestPerms() {

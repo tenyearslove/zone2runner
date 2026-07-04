@@ -5,6 +5,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Intent
+import android.content.pm.PackageManager
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.google.android.gms.wearable.MessageEvent
@@ -21,9 +22,15 @@ import com.google.android.gms.wearable.WearableListenerService
 class RunControlService : WearableListenerService() {
 
     override fun onMessageReceived(event: MessageEvent) {
+        android.util.Log.i("RunControl", "recv ${event.path} state=${RunBus.state}")
         when (event.path) {
             RunLink.PATH_START -> {
                 if (RunBus.state != RunState.IDLE) return // 이미 진행 중이면 무시(루프/중복 방지)
+                // 심박 권한이 없으면 서비스가 측정을 못 함 → 앱을 열어 권한 받도록 알림 유도
+                val hasBody = ContextCompat.checkSelfPermission(
+                    this, android.Manifest.permission.BODY_SENSORS
+                ) == PackageManager.PERMISSION_GRANTED
+                if (!hasBody) { postLaunchNotification(); return }
                 val i = Intent(this, RunService::class.java)
                     .setAction(RunService.ACTION_START)
                     .putExtra(RunService.EXTRA_FROM_REMOTE, true)

@@ -6,6 +6,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.location.Location
 import android.os.IBinder
 import android.os.Looper
@@ -95,22 +96,36 @@ class RunService : Service() {
     }
 
     private fun startExercise() {
+        // 케이던스(STEPS_PER_MINUTE)는 ACTIVITY_RECOGNITION 권한 필요 — 없으면 심박만으로 시작한다
+        // (권한 없다고 서비스를 죽이지 않는다). 케이던스는 폰이 페이스 기반으로 폴백 추정.
+        val hasActivity = ContextCompat.checkSelfPermission(
+            this, android.Manifest.permission.ACTIVITY_RECOGNITION
+        ) == PackageManager.PERMISSION_GRANTED
+        val types = if (hasActivity)
+            setOf(DataType.HEART_RATE_BPM, DataType.STEPS_PER_MINUTE)
+        else setOf(DataType.HEART_RATE_BPM)
+        if (!hasActivity) { RunBus.error = "케이던스 권한 없음 → 심박만"; RunBus.notifyUi() }
+
         val config = ExerciseConfig.builder(ExerciseType.RUNNING)
-            // 케이던스(STEPS_PER_MINUTE)는 판정 특징(feat[4])의 실측 소스 — 폰은 측정 불가해
-            // 페이스 기반 추정만 가능했음. 워치 실측을 /spm으로 폰에 전달(spec-006 특징 품질).
-            .setDataTypes(setOf(DataType.HEART_RATE_BPM, DataType.STEPS_PER_MINUTE))
+            .setDataTypes(types)
             .setIsAutoPauseAndResumeEnabled(false)
             .setIsGpsEnabled(false) // 거리/페이스는 FusedLocation(아래)으로 계산
             .build()
-        val future = exerciseClient.startExerciseAsync(config)
-        future.addListener({
-            runCatching { future.get() }
-                .onSuccess { exerciseStarted = true }
-                .onFailure {
-                    RunBus.error = "운동 시작 실패: ${it.message}"
-                    RunBus.notifyUi()
-                }
-        }, ContextCompat.getMainExecutor(this))
+        // startExerciseAsync가 권한 부족 시 동기적으로 SecurityException을 던질 수 있어 try로 감싼다
+        try {
+            val future = exerciseClient.startExerciseAsync(config)
+            future.addListener({
+                runCatching { future.get() }
+                    .onSuccess { exerciseStarted = true }
+                    .onFailure {
+                        RunBus.error = "운동 시작 실패: ${it.message}"
+                        RunBus.notifyUi()
+                    }
+            }, ContextCompat.getMainExecutor(this))
+        } catch (t: Throwable) {
+            RunBus.error = "운동 시작 예외: ${t.message}"
+            RunBus.notifyUi()
+        }
     }
 
     private val exerciseCallback = object : ExerciseUpdateCallback {
