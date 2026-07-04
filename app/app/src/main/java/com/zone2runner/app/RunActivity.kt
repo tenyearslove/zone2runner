@@ -313,6 +313,29 @@ class RunActivity : AppCompatActivity() {
         }
     }
 
+    /** 현재 위치 마커(파란 점 + 흰 테두리). 경로선과 별개로 "내가 지금 어디"를 표시. */
+    private var posMarker: org.osmdroid.views.overlay.Marker? = null
+    private fun ensurePosMarker(): org.osmdroid.views.overlay.Marker {
+        posMarker?.let { if (map.overlays.contains(it)) return it }
+        val m = org.osmdroid.views.overlay.Marker(map).apply {
+            setAnchor(org.osmdroid.views.overlay.Marker.ANCHOR_CENTER, org.osmdroid.views.overlay.Marker.ANCHOR_CENTER)
+            icon = GradientDrawable().apply {
+                shape = GradientDrawable.OVAL
+                setColor(Color.parseColor("#4C8DF6"))
+                setStroke(dp(3), Color.WHITE)
+                setSize(dp(18), dp(18))
+            }
+            infoWindow = null
+        }
+        map.overlays.add(m)
+        posMarker = m
+        return m
+    }
+
+    private fun updatePosMarker(lat: Double, lon: Double) {
+        ensurePosMarker().position = GeoPoint(lat, lon)
+    }
+
     /** 마지막 알려진 위치(캐시)로 지도 센터링 — cold GPS라도 화면이 즉시 내 근처를 보여준다. */
     @android.annotation.SuppressLint("MissingPermission")
     private fun centerMapOnLastFix() {
@@ -322,6 +345,7 @@ class RunActivity : AppCompatActivity() {
                 .lastLocation.addOnSuccessListener { loc ->
                     if (loc != null && !running) {
                         map.controller.setCenter(GeoPoint(loc.latitude, loc.longitude))
+                        updatePosMarker(loc.latitude, loc.longitude)
                         map.invalidate()
                     }
                 }
@@ -332,6 +356,7 @@ class RunActivity : AppCompatActivity() {
         if (mode == MODE_LIVE && !hasLocationPermission()) { requestLocationPermission(); return }
 
         map.overlays.clear()
+        posMarker = null // clear로 제거됐으니 다음 갱신 때 재생성
         line = Polyline().apply { outlinePaint.color = C_ACCENT; outlinePaint.strokeWidth = 8f }
         map.overlays.add(line)
 
@@ -394,7 +419,10 @@ class RunActivity : AppCompatActivity() {
                 }
             }
             val hasCoord = s.lat.isFinite() && s.lon.isFinite()
-            if (hasCoord) line?.addPoint(GeoPoint(s.lat, s.lon)) // GPS 미확보(NaN) 전엔 그리지 않음
+            if (hasCoord) {
+                line?.addPoint(GeoPoint(s.lat, s.lon)) // GPS 미확보(NaN) 전엔 그리지 않음
+                updatePosMarker(s.lat, s.lon)          // 현재 위치 점
+            }
             // 배속이 느리면 매 샘플 렌더(저배속에서 5샘플 스킵 = 수 초간 화면 정지로 보임)
             val renderEvery = if (src.realtime || simDelayMs >= 100L) 1 else 5
             if (frame % renderEvery == 0) {
