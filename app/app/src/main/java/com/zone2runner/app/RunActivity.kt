@@ -335,18 +335,20 @@ class RunActivity : AppCompatActivity() {
         val hi = (p.restingHr + uFrac * hrr).toInt()
         val lo = (p.restingHr + (uFrac - com.zone2runner.app.domain.Zone2Prior.BAND) * hrr).toInt()
         val tanaka = (208 - 0.7 * p.age).toInt()
-        val src = if (learned != null) "${nSess}회 러닝으로 학습(NN 역치 추정)" else "프로필 공식 초기값"
+        val loPct = lo * 100 / p.maxHr; val hiPct = hi * 100 / p.maxHr // %최대심박(재보정 기준)
+        val src = if (learned != null) "${nSess}회 러닝으로 보정됨 (말하기 테스트/드리프트 → 개인 맞춤)"
+                  else "프로필 기반 초기값 (아직 러닝 보정 전)"
         val hrMaxHigh = p.maxHr > tanaka + 8
         val hmaxNote = if (hrMaxHigh)
-            "\n\n⚠ 최대심박이 ${p.maxHr}으로 설정돼 있어요. ${p.age}세 표준 추정은 약 ${tanaka}입니다. 최대심박이 높으면 Zone 2도 함께 높아집니다 — 프로필에서 실제 값으로 낮추면 구간이 내려갑니다."
+            "\n\n※ 최대심박이 ${p.maxHr}으로 설정돼 있어요(${p.age}세 표준 추정은 약 ${tanaka}). 실제로 전력질주해서 나온 값이면 맞습니다."
         else ""
         val ruleText = buildString {
-            append("현재 Zone 2 목표: $lo ~ $hi bpm\n\n")
+            append("현재 Zone 2 목표: $lo ~ $hi bpm  (최대심박의 ${loPct}~${hiPct}%)\n\n")
             append("어떻게 계산됐나\n")
-            append("• 안정심박 ${p.restingHr}, 최대심박 ${p.maxHr} → 여유심박(HRR) ${hrr.toInt()}\n")
-            append("• Zone 2 상단 = ${(uFrac * 100).toInt()}% HRR = ${p.restingHr} + ${"%.2f".format(uFrac)}×${hrr.toInt()} ≈ $hi\n")
-            append("• 이 ${(uFrac * 100).toInt()}%는: $src\n")
-            append("• 방식: Karvonen(%HRR) — 최대심박 대비 %(흔히 120대)보다 조금 높게 나옵니다")
+            append("• Zone 2 = 유산소 기초 강도 ≈ 최대심박의 60~70% (San Millan/LT1 기준)\n")
+            append("• 최대심박 ${p.maxHr} → 상단 ≈ 70% = $hi, 하단 ≈ ${loPct}% = $lo\n")
+            append("• 지금 값 출처: $src\n")
+            append("• ★ 뛰면서 '편함/애매/벅참'을 누르면 이 범위가 당신 몸에 맞게 이동합니다. 편한데 미달로 나오면 '편함'을 누르세요 — 다음 세션부터 내려갑니다.")
             append(hmaxNote)
         }
         val dialog = android.app.AlertDialog.Builder(this)
@@ -357,10 +359,9 @@ class RunActivity : AppCompatActivity() {
         // LLM으로 더 쉬운 설명(가능 시 교체)
         val c = coach ?: LlmCoach(this)
         lifecycleScope.launch {
-            val prompt = "러닝 코치입니다. 사용자의 Zone 2 심박 구간이 $lo~$hi bpm으로 계산됐습니다. " +
-                "안정심박 ${p.restingHr}, 최대심박 ${p.maxHr}, 여유심박 ${hrr.toInt()}, Zone2 상단 ${(uFrac * 100).toInt()}% HRR(Karvonen), $src." +
-                (if (hrMaxHigh) " 최대심박 ${p.maxHr}은 ${p.age}세 표준(약 ${tanaka})보다 높습니다." else "") +
-                " 왜 이 범위인지, 그리고 낮게 느껴진다면 무엇을 확인하면 되는지 3~4문장으로 쉽게 설명하세요. 따옴표/이모지 없이."
+            val prompt = "러닝 코치입니다. 사용자의 Zone 2 심박 구간이 $lo~$hi bpm(최대심박 ${p.maxHr}의 ${loPct}~${hiPct}%)으로 계산됐습니다. " +
+                "Zone 2는 최대심박 60~70%의 유산소 기초 강도입니다. 지금 값 출처: $src. " +
+                "왜 이 범위인지, 그리고 실제로 뛰며 편함/애매/벅참 버튼을 누르면 개인에 맞게 보정된다는 점을 3~4문장으로 쉽게 설명하세요. 따옴표/이모지 없이."
             val llm = c.freeform(prompt)
             if (llm != null && dialog.isShowing) {
                 dialog.setMessage(llm + "\n\n─ 계산 근거 ─\n" + ruleText)
