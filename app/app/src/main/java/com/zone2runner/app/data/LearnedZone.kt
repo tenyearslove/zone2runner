@@ -23,12 +23,14 @@ object LearnedZone {
     fun sessionCount(ctx: Context): Int =
         ctx.getSharedPreferences(PREF, Context.MODE_PRIVATE).getInt(KEY_N, 0)
 
-    /** NN 세션 추정치로 누적 갱신. 첫 관측은 그대로, 이후 EMA. */
-    fun update(ctx: Context, nnUFrac: Double) {
-        val u = nnUFrac.coerceIn(0.30, 0.75) // %HRmax 재보정으로 하한 완화(2026-07-04)
+    /**
+     * 세션 종료 시 최종 개인화 경계(uFrac)를 저장. 이 값은 이미 Personalization 안에서
+     * prior(직전 저장값) + 토크테스트 + NN 역치 + 디커플링이 융합/스무딩된 결과이므로 직접 저장한다.
+     * 토크테스트 보정이 세션을 넘어 누적되게 하는 핵심(사용자 요청).
+     */
+    fun set(ctx: Context, finalUFrac: Double) {
+        val u = finalUFrac.coerceIn(0.30, 0.75)
         val p = ctx.getSharedPreferences(PREF, Context.MODE_PRIVATE)
-        val prev = if (p.contains(KEY_U)) p.getFloat(KEY_U, 0.70f).toDouble() else null
-        val next = if (prev == null) u else prev + ALPHA * (u - prev)
-        p.edit().putFloat(KEY_U, next.toFloat()).putInt(KEY_N, p.getInt(KEY_N, 0) + 1).apply()
+        p.edit().putFloat(KEY_U, u.toFloat()).putInt(KEY_N, p.getInt(KEY_N, 0) + 1).apply()
     }
 }

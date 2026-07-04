@@ -49,6 +49,9 @@ class Personalization(private val profile: Profile, priorUFrac: Double? = null) 
      *   COMFORTABLE(아직 편함)       → 상한이 현재 HR보다 위라는 약한 단측 증거(현재+마진, 넓은 σ).
      *   HARD(말 못 함)               → 상한이 현재 HR보다 아래(현재-마진, 넓은 σ).
      */
+    var talkCount = 0
+        private set
+
     fun observeTalkTest(currentHr: Int, state: TalkState) {
         if (currentHr <= 0) return
         val (z, sd) = when (state) {
@@ -56,6 +59,7 @@ class Personalization(private val profile: Profile, priorUFrac: Double? = null) 
             TalkState.COMFORTABLE -> currentHr + 5.0 to 14.0
             TalkState.HARD -> currentHr - 5.0 to 14.0
         }
+        talkCount++
         update(z, sd)
     }
 }

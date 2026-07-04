@@ -530,14 +530,22 @@ class RunActivity : AppCompatActivity() {
         window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         source?.stop()
         val eng = engine ?: run { logger?.close(); logger = null; return }
-        // 역치 추정 NN(spec-015): 세션 특징 → 개인 uFrac → LearnedZone 누적(다음 세션 prior)
+        // 세션 종료 시 개인 경계 누적(adr-014 + 토크테스트 지속화):
+        // 1) NN 역치 추정을 관측으로 개인화에 융합, 2) 토크테스트+NN+디커플링이 반영된 '최종 경계'를 저장.
+        // → 실제 뛰며 누른 말하기 테스트 결과가 세션을 넘어 누적된다(사용자 요청).
         val est = thresholdEstimator
-        if (est != null) {
+        val p = profile
+        if (est != null && p != null) {
             eng.thresholdFeatures()?.let { f ->
-                val u = est.estimateUFrac(f)
-                com.zone2runner.app.data.LearnedZone.update(this, u)
-                logger?.event("threshold") { put("uFrac", u); put("n", com.zone2runner.app.data.LearnedZone.sessionCount(this@RunActivity)) }
+                val uNn = est.estimateUFrac(f)
+                eng.observeThresholdBpm(p.restingHr + uNn * p.hrr) // NN을 관측으로
             }
+        }
+        val finalU = eng.currentUFrac()
+        com.zone2runner.app.data.LearnedZone.set(this, finalU) // 토크테스트 포함 최종 경계 저장
+        logger?.event("boundary") {
+            put("uFrac", finalU); put("talk", eng.talkObserved)
+            put("n", com.zone2runner.app.data.LearnedZone.sessionCount(this@RunActivity))
         }
         val report = eng.report().copy(
             startedAtEpochMs = startedAt, sourceMode = mode,

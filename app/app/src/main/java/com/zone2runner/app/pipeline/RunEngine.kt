@@ -78,6 +78,15 @@ class RunEngine(
         personalization.observeTalkTest(hr, state)
     }
 
+    /** NN 역치 추정치(bpm)를 개인화 관측으로 반영(세션 종료 시). 토크테스트/디커플링과 같은 경로로 융합. */
+    fun observeThresholdBpm(bpm: Double) = personalization.update(bpm, obsSd = 8.0)
+
+    /** 현재 개인화 경계 uFrac — 세션 누적 저장(LearnedZone)용. 토크테스트+NN+디커플링이 모두 반영됨. */
+    fun currentUFrac(): Double = personalization.boundary().uFrac
+
+    /** 이번 세션에 토크테스트가 한 번이라도 반영됐는지(저장 판단/표시용). */
+    val talkObserved: Boolean get() = personalization.talkCount > 0
+
     /** 1Hz 샘플 처리. 필요 시 coach.say 호출(suspend). LiveState 반환. */
     suspend fun onSample(s: Sample): LiveState {
         elapsed = s.tSec + 1
