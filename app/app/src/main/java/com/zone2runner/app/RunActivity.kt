@@ -368,7 +368,7 @@ class RunActivity : AppCompatActivity() {
             if (remoteStopRequested) { finalizeSession(); return@sample } // 워치에서 종료
             val state = eng.onSample(s)
             log.sample(s, state, watchProvider?.lastAgeMs() ?: -1L)
-            if (!tempFetched) { // 기온 1회 조회(참고 표시 — 판정 특징 아님)
+            if (!tempFetched && s.lat.isFinite() && s.lon.isFinite()) { // 기온 1회 조회(유효 좌표 확보 후)
                 tempFetched = true
                 lifecycleScope.launch {
                     com.zone2runner.app.data.WeatherProbe.currentTempC(s.lat, s.lon)?.let {

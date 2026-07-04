@@ -35,26 +35,33 @@ class RunLogger(ctx: Context) {
     }.getOrNull()
 
     fun meta(mode: String, fill: JSONObject.() -> Unit) {
-        write(JSONObject().apply {
-            put("type", "meta"); put("wall", System.currentTimeMillis()); put("mode", mode); fill()
-        })
+        runCatching { // JSON 조립 실패도 러닝을 방해하지 않는다(AC4)
+            write(JSONObject().apply {
+                put("type", "meta"); put("wall", System.currentTimeMillis()); put("mode", mode); fill()
+            })
+        }
     }
 
     /** 1Hz 샘플: 입력 원시값(Sample) + 파이프라인 출력(LiveState). watchAgeMs는 라이브 모드 외 -1. */
     fun sample(s: Sample, state: LiveState, watchAgeMs: Long) {
-        write(JSONObject().apply {
-            put("type", "s"); put("t", s.tSec); put("wall", System.currentTimeMillis())
-            put("hrRaw", s.hr); put("hrClean", state.hr); put("watchAgeMs", watchAgeMs)
-            put("pace", round2(s.paceMinKm)); put("spm", s.spm); put("slope", round2(s.slopePct))
-            put("lat", s.lat); put("lon", s.lon)
-            put("judg", state.judgment?.index ?: -1); put("uEst", round4(state.uEstFrac))
-        })
+        runCatching { // NaN 좌표(GPS 미확보) 등 어떤 값도 러닝 루프를 죽이면 안 된다(AC4)
+            write(JSONObject().apply {
+                put("type", "s"); put("t", s.tSec); put("wall", System.currentTimeMillis())
+                put("hrRaw", s.hr); put("hrClean", state.hr); put("watchAgeMs", watchAgeMs)
+                put("pace", round2(s.paceMinKm)); put("spm", s.spm); put("slope", round2(s.slopePct))
+                // GPS 미확보 시 lat/lon = NaN — JSONObject는 NaN을 거부하므로 유효할 때만 기록
+                if (s.lat.isFinite() && s.lon.isFinite()) { put("lat", s.lat); put("lon", s.lon) }
+                put("judg", state.judgment?.index ?: -1); put("uEst", round4(state.uEstFrac))
+            })
+        }
     }
 
     fun event(kind: String, fill: JSONObject.() -> Unit = {}) {
-        write(JSONObject().apply {
-            put("type", "e"); put("wall", System.currentTimeMillis()); put("kind", kind); fill()
-        })
+        runCatching {
+            write(JSONObject().apply {
+                put("type", "e"); put("wall", System.currentTimeMillis()); put("kind", kind); fill()
+            })
+        }
     }
 
     fun close() {
