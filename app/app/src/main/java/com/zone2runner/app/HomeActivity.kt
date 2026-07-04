@@ -105,8 +105,13 @@ class HomeActivity : AppCompatActivity() {
 
     private fun profileCard(p: Profile): View {
         val prior = com.zone2runner.app.domain.Zone2Prior.of(p) // factor 반영 prior(spec-013) — 프로필 화면과 일치
-        val lo = (p.restingHr + (prior.uFrac0 - com.zone2runner.app.domain.Zone2Prior.BAND) * p.hrr).toInt()
-        val hi = (p.restingHr + prior.uFrac0 * p.hrr).toInt()
+        // 세션 누적 학습값(LearnedZone, 역치 추정 NN)이 있으면 그것을, 없으면 공식 prior
+        val learned = com.zone2runner.app.data.LearnedZone.uFrac(this)
+        val uFrac = learned ?: prior.uFrac0
+        val nSess = com.zone2runner.app.data.LearnedZone.sessionCount(this)
+        val lo = (p.restingHr + (uFrac - com.zone2runner.app.domain.Zone2Prior.BAND) * p.hrr).toInt()
+        val hi = (p.restingHr + uFrac * p.hrr).toInt()
+        val note = if (learned != null) "학습 반영, ${nSess}회 러닝" else "프로필 기반 초기값, 러닝마다 보정"
         val grid = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         grid.addView(LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
@@ -115,7 +120,7 @@ class HomeActivity : AppCompatActivity() {
             addView(statTile("${p.maxHr}", "최대 심박"), cell())
         })
         grid.addView(TextView(this).apply {
-            text = "Zone 2 목표 심박: $lo ~ $hi bpm (프로필 기반 초기값, 러닝마다 보정)"
+            text = "Zone 2 목표 심박: $lo ~ $hi bpm ($note)"
             textSize = 13f; setTextColor(Palette.ACCENT); setPadding(0, dpi(8), 0, 0)
         })
         return grid
