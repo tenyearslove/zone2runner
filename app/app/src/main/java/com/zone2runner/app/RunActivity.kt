@@ -106,6 +106,8 @@ class RunActivity : AppCompatActivity() {
         // 시작 전에도 프로필 prior 기반 목표 구간을 보여준다(개인화 갱신 시 밴드가 함께 이동)
         profile = ProfileStore.load(this)
         updateZoneUi(-1, com.zone2runner.app.domain.Zone2Prior.of(profile!!).uFrac0)
+        // 지도 초기 위치: 서울 고정 좌표 대신 마지막 알려진 위치로 즉시 센터링(GPS 새 fix 전에도 근처 표시)
+        centerMapOnLastFix()
     }
 
     /**
@@ -308,6 +310,21 @@ class RunActivity : AppCompatActivity() {
             finished -> startActivity(Intent(this, ReportActivity::class.java))
             running -> finalizeSession()
             else -> startRun()
+        }
+    }
+
+    /** 마지막 알려진 위치(캐시)로 지도 센터링 — cold GPS라도 화면이 즉시 내 근처를 보여준다. */
+    @android.annotation.SuppressLint("MissingPermission")
+    private fun centerMapOnLastFix() {
+        if (!hasLocationPermission()) return
+        runCatching {
+            com.google.android.gms.location.LocationServices.getFusedLocationProviderClient(this)
+                .lastLocation.addOnSuccessListener { loc ->
+                    if (loc != null && !running) {
+                        map.controller.setCenter(GeoPoint(loc.latitude, loc.longitude))
+                        map.invalidate()
+                    }
+                }
         }
     }
 
@@ -514,7 +531,7 @@ class RunActivity : AppCompatActivity() {
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (hasLocationPermission()) startRun()
+        if (hasLocationPermission()) { centerMapOnLastFix(); startRun() }
         else Toast.makeText(this, "위치 권한이 필요합니다", Toast.LENGTH_SHORT).show()
     }
 
