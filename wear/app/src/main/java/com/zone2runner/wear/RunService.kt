@@ -49,16 +49,17 @@ class RunService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        val fromRemote = intent?.getBooleanExtra(EXTRA_FROM_REMOTE, false) ?: false
         when (intent?.action) {
-            ACTION_START -> startSession()
+            ACTION_START -> startSession(fromRemote)
             ACTION_PAUSE -> pauseSession()
             ACTION_RESUME -> resumeSession()
-            ACTION_STOP -> { stopSession(); return START_NOT_STICKY }
+            ACTION_STOP -> { stopSession(fromRemote); return START_NOT_STICKY }
         }
         return START_STICKY
     }
 
-    private fun startSession() {
+    private fun startSession(fromRemote: Boolean = false) {
         startForeground(NOTIF_ID, buildNotification("센서 예열중…"))
         RunBus.reset()
         RunBus.state = RunState.RUNNING
@@ -67,6 +68,8 @@ class RunService : Service() {
         forwarder.start()
         startExercise()
         startLocation()
+        // 워치에서 직접 시작한 경우에만 폰에 시작 신호(원격 시작이면 폰이 이미 러닝 중 → 루프 방지)
+        if (!fromRemote) RunLink.send(this, RunLink.PATH_START)
     }
 
     private fun pauseSession() {
@@ -84,9 +87,10 @@ class RunService : Service() {
         RunBus.notifyUi()
     }
 
-    private fun stopSession() {
+    private fun stopSession(fromRemote: Boolean = false) {
         RunBus.state = RunState.IDLE
         RunBus.notifyUi()
+        if (!fromRemote) RunLink.send(this, RunLink.PATH_STOP) // 워치에서 종료 → 폰도 종료
         stopSelf()
     }
 
@@ -199,6 +203,7 @@ class RunService : Service() {
         const val ACTION_PAUSE = "com.zone2runner.wear.PAUSE"
         const val ACTION_RESUME = "com.zone2runner.wear.RESUME"
         const val ACTION_STOP = "com.zone2runner.wear.STOP"
+        const val EXTRA_FROM_REMOTE = "from_remote" // 폰이 원격 시작/종료한 경우 되쏘지 않음(루프 방지)
         private const val CHANNEL = "run_session"
         private const val NOTIF_ID = 2001
     }

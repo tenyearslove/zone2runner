@@ -45,6 +45,18 @@ class RunSimulatorTest {
         assertTrue("HR이 프로필 maxHr 근방 이하", session.samples.all { it.hr <= 183 + 5 })
     }
 
+    @Test fun selfRegulation_hrDoesNotPinAtCeiling() {
+        // 러너 자기조절(체감 기반)로 심박이 최대치에 눌러붙지 않아야 함(사용자 관찰 "중반부 200 고정" 수정).
+        // 여러 시드에서 maxHr-3 이상에 머무는 시간 비율이 낮아야 한다(오르내리며 회복).
+        for (seed in longArrayOf(1L, 42L, 99L, 2024L)) {
+            val session = RunSimulator(seed).generate(durationMin = 30)
+            val cap = session.runner.maxHr - 3
+            val pinned = session.samples.count { it.hr >= cap }.toDouble() / session.samples.size
+            assertTrue("seed=$seed: 심박이 천장(${cap}+)에 ${(pinned * 100).toInt()}%나 머묾(자기조절 실패)",
+                pinned < 0.08)
+        }
+    }
+
     @Test fun sameSeed_isDeterministic() {
         val a = RunSimulator(seed = 7L).generate(5).samples
         val b = RunSimulator(seed = 7L).generate(5).samples

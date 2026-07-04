@@ -259,11 +259,18 @@ class WearRunActivity : ComponentActivity() {
     private fun hasPerms(): Boolean {
         val body = ContextCompat.checkSelfPermission(this, Manifest.permission.BODY_SENSORS) == PackageManager.PERMISSION_GRANTED
         val loc = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
-        return body && loc
+        // ExerciseClient의 케이던스(STEPS_PER_MINUTE)는 ACTIVITY_RECOGNITION 필요 — 없으면 서비스가
+        // SecurityException으로 죽는다(실기기 관찰). 런타임 권한이라 요청 대상에 반드시 포함.
+        val act = ContextCompat.checkSelfPermission(this, Manifest.permission.ACTIVITY_RECOGNITION) == PackageManager.PERMISSION_GRANTED
+        return body && loc && act
     }
 
     private fun requestPerms() {
-        val perms = mutableListOf(Manifest.permission.BODY_SENSORS, Manifest.permission.ACCESS_FINE_LOCATION)
+        val perms = mutableListOf(
+            Manifest.permission.BODY_SENSORS,
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACTIVITY_RECOGNITION,
+        )
         if (Build.VERSION.SDK_INT >= 33) perms += Manifest.permission.POST_NOTIFICATIONS
         ActivityCompat.requestPermissions(this, perms.toTypedArray(), 1)
     }

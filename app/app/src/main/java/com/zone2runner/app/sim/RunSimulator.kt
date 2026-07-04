@@ -97,19 +97,26 @@ class RunSimulator(seed: Long = 42L) {
         val slope = terrain(n)
         val uAbs = r.resting + r.uFrac * r.hrr
 
-        val effortEff = DoubleArray(n) { (effort[it] + 0.012 * slope[it]).coerceIn(0.3, 1.05) }
-        val effortHr = DoubleArray(n) { r.resting + effortEff[it] * r.hrr }
-
+        // 러너 자기조절(체감 기반): 심박이 자기 상한을 넘으면 힘들어서 서서히 페이스를 늦춘다.
+        // 실제 러너는 코칭이 없어도 이렇게 스스로 조절한다 → 심박이 최대치에 눌러붙지 않고
+        // 존 주변에서 오르내리며 회복한다(사용자 관찰: 중반부 심박 200 고정 = 이 자기조절 부재 탓).
         val hr = DoubleArray(n)
-        hr[0] = effortHr[0]
+        val chosen = DoubleArray(n) // 자기조절 반영된 실제 수행 강도(페이스 계산용)
+        chosen[0] = effort[0]
+        hr[0] = r.resting + (effort[0] + 0.012 * slope[0]).coerceIn(0.3, 1.05) * r.hrr
         var drift = 0.0
+        var ease = 0.0
         for (i in 1 until n) {
-            val hrLag = hr[i - 1] + (effortHr[i] - hr[i - 1]) * (1.0 / r.hrTau)
-            val excess = maxOf(0.0, effortHr[i] - uAbs)
-            val driftTarget = r.driftScale * excess
-            drift += (driftTarget - drift) * (1.0 / r.driftTau)
-            // 생리적 상한: HR은 최대심박을 넘지 못한다(포화). 클램프 없으면
-            // 고강도 지속+드리프트로 maxHr+30bpm(220~230)까지 치솟음(ml/simulator.py도 동일 한계 — 문서화됨).
+            val over = (hr[i - 1] - uAbs) / r.hrr             // 상한 초과분(HRR 비율)
+            val easeTarget = if (over > 0) (0.9 * over).coerceAtMost(0.28) else 0.0
+            ease += (easeTarget - ease) * (1.0 / 40.0)        // 40초 시상수로 반응(즉각 아님)
+            chosen[i] = (effort[i] - ease).coerceIn(0.30, 1.05)
+            val effEff = (chosen[i] + 0.012 * slope[i]).coerceIn(0.3, 1.05)
+            val effHr = r.resting + effEff * r.hrr
+            val hrLag = hr[i - 1] + (effHr - hr[i - 1]) * (1.0 / r.hrTau)
+            val excess = maxOf(0.0, effHr - uAbs)
+            drift += (r.driftScale * excess - drift) * (1.0 / r.driftTau)
+            // 생리적 상한: HR은 최대심박을 넘지 못한다(포화). 자기조절로 여기 닿을 일은 거의 없어짐.
             hr[i] = (hrLag + drift).coerceAtMost(r.maxHr.toDouble())
         }
 
@@ -118,7 +125,7 @@ class RunSimulator(seed: Long = 42L) {
         var heading = 0.0
         for (i in 0 until n) {
             val hrObs = hr[i] + gauss(0.0, r.noiseSd)
-            var pace = r.basePace - 3.2 * (effort[i] - 0.5) + 0.10 * slope[i] + gauss(0.0, 0.08)
+            var pace = r.basePace - 3.2 * (chosen[i] - 0.5) + 0.10 * slope[i] + gauss(0.0, 0.08)
             pace = pace.coerceIn(3.5, 11.0)
             var spm = 168 - 4.0 * (pace - 6.0) + gauss(0.0, 2.5)
             spm = spm.coerceIn(150.0, 200.0)

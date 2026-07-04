@@ -359,11 +359,15 @@ class RunActivity : AppCompatActivity() {
         }
 
         running = true; finished = false
+        isRunning = true; remoteStopRequested = false
+        // 실센서 러닝이면 워치에 시작 신호 → 워치 RunService 자동 기동(사용자 요청)
+        if (mode == MODE_LIVE) RunLink.send(this, RunLink.PATH_START)
         // 러닝 중 화면 유지: LLM 코칭은 포그라운드 전용(adr-007), GPS/파이프라인도 화면off 스로틀 회피
         window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         startBtn.text = primaryLabel()
 
-        src.start(lifecycleScope, onSample = { s ->
+        src.start(lifecycleScope, onSample = sample@{ s ->
+            if (remoteStopRequested) { finalizeSession(); return@sample } // 워치에서 종료
             val state = eng.onSample(s)
             log.sample(s, state, watchProvider?.lastAgeMs() ?: -1L)
             if (!tempFetched) { // 기온 1회 조회(참고 표시 — 판정 특징 아님)
@@ -391,6 +395,10 @@ class RunActivity : AppCompatActivity() {
     private fun finalizeSession() {
         if (!running) return
         running = false
+        isRunning = false
+        // 실센서 러닝 종료면 워치도 종료(원격 종료가 아니라 폰에서 눌렀을 때만 되쏨)
+        if (mode == MODE_LIVE && !remoteStopRequested) RunLink.send(this, RunLink.PATH_STOP)
+        remoteStopRequested = false
         window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         source?.stop()
         val eng = engine ?: run { logger?.close(); logger = null; return }
@@ -565,6 +573,7 @@ class RunActivity : AppCompatActivity() {
     override fun onPause() { super.onPause(); map.onPause() }
     override fun onDestroy() {
         super.onDestroy(); source?.stop()
+        isRunning = false
         logger?.close(); logger = null // 중도 이탈 시에도 로그 파일 마감
         tts?.stop(); tts?.shutdown()
     }
@@ -574,6 +583,9 @@ class RunActivity : AppCompatActivity() {
         const val MODE_SIM = "sim"
         const val MODE_LIVE = "live"
         const val MODE_MOCK = "mock"
+        // 워치 원격 제어 연동(RunControlService)용 프로세스 전역 상태
+        @Volatile var isRunning = false          // 러닝 중이면 워치발 /run/start 중복 실행 방지
+        @Volatile var remoteStopRequested = false // 워치에서 종료 → 폰 러닝 루프가 감지해 종료
         private val C_BG = Color.parseColor("#0E1116")
         private val C_TEXT = Color.parseColor("#E8EAED")
         private val C_MUTED = Color.parseColor("#9AA0A6")
