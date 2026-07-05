@@ -449,7 +449,8 @@ class RunActivity : AppCompatActivity() {
         lifecycleScope.launch { c.prewarm() } // checkStatus+warmup을 첫 코칭 전에 미리
         // coachScope 전달 → 코칭 생성(LLM ~2초)이 샘플 루프/렌더를 멈추지 않음
         val learnedPrior = com.zone2runner.app.data.LearnedZone.uFrac(this) // 세션 누적 학습값(있으면 prior)
-        val eng = RunEngine(profile, dynamics, c, coachScope = lifecycleScope, priorUFrac = learnedPrior)
+        val predWeights = com.zone2runner.app.data.LearnedDynamics.weights(this) // 예측 개인 보정 누적(spec-018)
+        val eng = RunEngine(profile, dynamics, c, coachScope = lifecycleScope, priorUFrac = learnedPrior, priorPredWeights = predWeights)
         engine = eng
         startedAt = System.currentTimeMillis()
         frame = 0
@@ -578,9 +579,14 @@ class RunActivity : AppCompatActivity() {
         // (NN은 심박 예측 전담 — 개인화 경계엔 관여하지 않음. 역치 추정 NN은 adr-014→adr-016으로 강등)
         val finalU = eng.currentUFrac()
         com.zone2runner.app.data.LearnedZone.set(this, finalU)
+        // 예측 개인 보정 누적 저장(spec-018) — 다음 세션이 이어서 학습
+        com.zone2runner.app.data.LearnedDynamics.set(this, eng.predWeights())
+        val pr = eng.predRmse()
         logger?.event("boundary") {
             put("uFrac", finalU); put("talk", eng.talkObserved)
             put("n", com.zone2runner.app.data.LearnedZone.sessionCount(this@RunActivity))
+            put("predUpdates", eng.predUpdates())
+            put("predBase60", pr.base60); put("predCorr60", pr.corr60)
         }
         val report = eng.report().copy(
             startedAtEpochMs = startedAt, sourceMode = mode,

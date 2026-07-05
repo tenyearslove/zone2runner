@@ -32,10 +32,15 @@ class RunEngine(
     private val coach: Coach,
     private val coachScope: CoroutineScope? = null,
     priorUFrac: Double? = null,        // 세션 누적 학습값(LearnedZone). 없으면 공식 prior
+    priorPredWeights: DoubleArray? = null, // 예측 개인 보정 누적 가중치(LearnedDynamics, spec-018)
 ) {
     private val extractor = FeatureExtractor()
     private val personalization = Personalization(profile, priorUFrac)
     private val judge = ZoneJudge()
+    // 예측 온라인 개인 보정(spec-018): 기본 NN 위에 개인 잔차를 실주행에서 학습
+    private val predLearner = HrPredictionLearner(
+        priorPredWeights?.copyOfRange(0, 4), priorPredWeights?.copyOfRange(4, 8)
+    )
     private val uEstStart = personalization.boundary().uFrac
 
     private var lastValidHr: Int? = null
@@ -81,6 +86,13 @@ class RunEngine(
 
     /** 현재 개인화 경계 uFrac — 세션 누적 저장(LearnedZone)용. 토크테스트+디커플링이 반영됨. */
     fun currentUFrac(): Double = personalization.boundary().uFrac
+
+    /** 예측 개인 보정 가중치(8개) — 세션 누적 저장(LearnedDynamics)용. */
+    fun predWeights(): DoubleArray = predLearner.weights()
+
+    /** 예측 온라인 보정 성과(base vs corrected RMSE, bpm) — 표시/검증용. */
+    fun predRmse(): HrPredictionLearner.Rmse = predLearner.rmseBpm(profile.hrr)
+    fun predUpdates(): Int = predLearner.updates
 
     /** 이번 세션에 토크테스트가 한 번이라도 반영됐는지(저장 판단/표시용). */
     val talkObserved: Boolean get() = personalization.talkCount > 0
@@ -129,9 +141,15 @@ class RunEngine(
             if (dyn != null) {
                 val df = extractor.dynFeaturesAt(s.tSec, profile, s.paceMinKm, s.slopePct, s.spm)
                 if (df != null) {
-                    val fr = dyn.predictFrac(df)
-                    predictedHr60 = (profile.restingHr + fr.last() * profile.hrr).toInt()
-                    val rec = dyn.recommendPace(df, b.lFrac, b.uFrac)
+                    // 지금 도착한 실제 심박(df[0]=hr_now_frac)으로 만기된 과거 예측을 온라인 학습(페이스 유지분만)
+                    predLearner.observe(s.tSec, df[0], s.paceMinKm)
+                    val base = dyn.predictFrac(df)
+                    predLearner.record(s.tSec, df, base, s.paceMinKm) // 이번 예측을 60초 뒤 검증용으로 버퍼
+                    val corr = predLearner.correct(df, base)          // 개인 보정 적용
+                    predictedHr60 = (profile.restingHr + corr.last() * profile.hrr).toInt()
+                    // 추천 페이스: 보정량만큼 목표 밴드를 내려 base 스윕(보정 후 밴드 중심을 겨냥)
+                    val c60 = predLearner.correction60(df)
+                    val rec = dyn.recommendPace(df, b.lFrac - c60, b.uFrac - c60)
                     // 표시 안정화: 직전 추천과 한 스텝(0.25) 이내면 유지
                     if (recommendedPace <= 0.0 || Math.abs(rec - recommendedPace) > HrDynamics.PACE_STEP + 1e-9)
                         recommendedPace = rec
