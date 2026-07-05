@@ -12,6 +12,26 @@ enum class TalkLevel(val label: String) {
 data class TalkVerdict(val level: TalkLevel, val difficulty: Double, val detail: String)
 
 /**
+ * ASR 기반 판정(폰). 완성도(어디까지 읽었나)가 주 신호 — 문장을 못 끝내면 곧 역치 위.
+ * 끊김(호흡 삽입)이 보조. 완성도는 절대 지표라 기준선 불필요.
+ */
+object AsrTalkJudge {
+    fun judge(completeness: Double, pauseCount: Int): TalkVerdict {
+        val incomplete = (1.0 - completeness).coerceIn(0.0, 1.0) // 못 읽은 비율
+        val cPause = (pauseCount / 6.0).coerceIn(0.0, 1.0)       // +6 끊김이면 최대
+        val diff = (0.65 * incomplete + 0.35 * cPause).coerceIn(0.0, 1.0)
+        val level = when {
+            diff < 0.15 -> TalkLevel.VERY_COMFORTABLE
+            diff < 0.35 -> TalkLevel.COMFORTABLE
+            diff < 0.60 -> TalkLevel.BORDERLINE
+            diff < 0.80 -> TalkLevel.HARD
+            else -> TalkLevel.VERY_HARD
+        }
+        return TalkVerdict(level, diff, "완성도 %.0f%%, 끊김 %d회".format(completeness * 100, pauseCount))
+    }
+}
+
+/**
  * 발화 지표 → 곤란도(0~1) → 5단계. 기준선(저강도 낭독)이 있으면 그 대비 상대 판정(재현성 높음),
  * 없으면 절대 휴리스틱. 세 신호를 가중합: 완독 지연 / 호흡 끊김 증가 / 발화비율 하락.
  */
