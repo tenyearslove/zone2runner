@@ -199,10 +199,16 @@ UI/가드에 그대로 쓴다. 세션 종료 시 최종 경계를 `LearnedZone`�
 ## 슬라이드 11 — DP2 ③ 관측 채널과 콜드스타트 prior (adr-012)
 
 **관측 채널 — 토크 테스트가 정답에 가장 가까운 주 라벨**: "편하게 말할 수 있는 마지막 강도 ≈ VT1(1차
-환기역치)"라는 검증 연구에 근거해, 러닝 중 편함/애매/벅참 3단계 입력을 **개인 경계의 주 관측**으로 쓴다.
-참값(랩 검사)이 없는 이 문제에서 토크테스트≈VT1은 온디바이스로 얻을 수 있는 **가장 정답에 가까운 라벨**이다.
-디커플링(임계추출)은 편향(Conconi류) 위험이 있어 **약보조 관측**으로만 결합한다. 향후 채널로 DFA-α1(HRV)
-(RR 0.75 교차 = 유산소 임계, Rogers 2021)을 명시. `arch/zone2-physiology-and-estimation.md`.
+환기역치)"라는 검증 연구에 근거해, 러닝 중 대화 체감 **5단계**(아주 편함/편함/애매/벅참/매우 벅참, spec-016)
+입력을 **개인 경계의 주 관측**으로 쓴다. 각 단계를 서로 다른 관측(z, σ)으로 매핑 — 중앙 애매(≈VT1)는
+직접 관측(σ=6), 극단은 방향만 알아 넓은 σ. 참값(랩 검사)이 없는 이 문제에서 토크테스트≈VT1은 온디바이스로
+얻을 수 있는 **가장 정답에 가까운 라벨**이다. 디커플링(임계추출)은 편향(Conconi류) 위험이 있어 **약보조
+관측**으로만 결합한다. 향후 채널로 DFA-α1(HRV)(RR 0.75 교차 = 유산소 임계, Rogers 2021)을 명시.
+
+**객관화는 시도했으나 기각(adr-018)**: 토크테스트가 주관이라, 음향 타이밍/온디바이스 ASR 완성도/YAMNet
+호흡 감지 3가지를 별도 PoC(`voice-poc`)로 실기기 검증했으나 **모두 온디바이스 신뢰 불가**(YAMNet은 폰
+마이크 날숨을 Beatboxing으로 오분류). 폰 마이크 호흡 감지는 현 단계 기술 한계 → 주관 5단계로 확정. 객관화를
+데이터로 검증하고 회귀한 판단 자체가 adr-016 "문제에 맞는 도구" 원칙의 실증이다.
 
 **콜드스타트 prior — 첫 1~5세션 품질은 prior가 결정**한다.
 
@@ -394,8 +400,10 @@ RHR 미입력 시 하단은 %HRmax 폴백으로 산정하고 러닝 수준/빈�
   baseline persistence 17.01/30.23 확실히 하회. 페이스 단조성 위반 0.0%(AC3). 온디바이스 순전파 일치(허용 1e-4).
 - **판정(ZoneJudge, DP3)**: 규칙 + 히스테리시스. "지속 심박이 경계 밖인데 반대 판정" 발생 불가 — 단위 테스트로 고정.
 - **개인화(Bayesian, DP2)**: 켤레 가우시안. prior 전 조합 clamp 단위 테스트, 콜드스타트 -42%(Appendix A).
-- **폐기/강등 기록**: 판정 MLP(adr-005/spec-006) = **Superseded**(라벨 순환 결함). 역치 추정 NN(adr-014/spec-015) =
+- **폐기/강등/기각 기록**: 판정 MLP(adr-005/spec-006) = **Superseded**(라벨 순환 결함). 역치 추정 NN(adr-014/spec-015) =
   **Demoted**(개인화는 Bayesian 전담). 두 경로의 과거 지표(0.828/0.996/1.0)는 시뮬 라벨 자기참조로 성과에서 제외.
+  객관 음성/호흡 측정(adr-018/voice-poc) = **Rejected**(음향/ASR/YAMNet 3종 실기기 검증 → 폰 마이크 온디바이스
+  신뢰 불가, YAMNet은 날숨을 Beatboxing으로 오분류) → 주관 5단계 설문 확정.
 - **LLM 실기기**: ML Kit Prompt API AVAILABLE, warm 생성 1.1~2.7초(n=14, 2세션), 방향 가드 개선 전 2/8 무방향 → 개선 후 0/8.
 
 ## Appendix D — 보고서 DP ↔ repo ADR 매핑
@@ -404,12 +412,13 @@ RHR 미입력 시 하단은 %HRmax 폴백으로 산정하고 러닝 수준/빈�
 |:---:|------|------|------|
 | DP0(기기 하이브리드) | - | adr-001 Watch-Phone Hybrid | Accepted |
 | DP1(심박 예측) | NN | adr-013(역할 재분리), adr-016(도구 선택), spec-014, adr-011(순수 Kotlin 추론) | Accepted |
-| DP2(개인 Zone2 범위) | Bayesian | adr-004(Bayesian 적응), adr-012(factor prior), spec-004/013 | Accepted |
+| DP2(개인 Zone2 범위) | Bayesian | adr-004(Bayesian 적응), adr-012(factor prior), spec-004/013, spec-016(토크 5단계) | Accepted |
 | DP3(Zone2 판정) | 규칙 | adr-013(판정=규칙), adr-016 | Accepted |
 | DP4(코칭) | LLM | adr-002(LLM 역할 분리), adr-007(온디바이스 LLM 검증), spec-005 | Accepted |
 | (폐기) 하이브리드 판정 원칙 | - | adr-003 | **Superseded** (adr-013) |
 | (폐기) 판정 MLP | NN | adr-005, spec-006 | **Superseded** (adr-013) |
 | (강등) 역치 추정 NN | NN | adr-014, spec-015 | **Demoted** (adr-016, 개인화는 Bayesian) |
+| (기각) 객관 음성/호흡 측정 | 음향/ASR/YAMNet | adr-018, voice-poc | **Rejected** (온디바이스 신뢰 불가 → 주관 5단계) |
 | 기타 | - | adr-006(A/B 비교), adr-008(센서), adr-009(백그라운드), adr-010(지도) | Accepted |
 
 ## Appendix E — 리서치 인용
