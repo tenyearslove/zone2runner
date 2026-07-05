@@ -48,12 +48,12 @@ class PhoneActivity : AppCompatActivity() {
         val col = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL; setPadding(dp(20), dp(24), dp(20), dp(24))
         }
-        col.addView(text("호흡 토크테스트 PoC (YAMNet)", 22f, bold = true))
-        col.addView(text("탭한 뒤 5초간 아래 문장을 낭독하세요. 숨이 찰수록 숨소리가 커져 벅참으로 판정합니다.", 13f, color = MUTED)
+        col.addView(text("호흡 측정 PoC (YAMNet)", 22f, bold = true))
+        col.addView(text("탭한 뒤 8초간 말은 하지 말고 마이크 가까이에서 숨만 쉬세요. 숨이 셀수록/빠를수록 벅참으로 판정합니다.", 13f, color = MUTED)
             .also { it.setPadding(0, dp(6), 0, dp(12)) })
-        col.addView(card(SENTENCE, 18f, ACCENT))
+        col.addView(card("입으로 숨쉬기\n(폰을 입 가까이)", 16f, ACCENT))
 
-        btn = button("호흡 측정 (탭 후 5초 낭독)") { measure() }
+        btn = button("호흡 측정 (탭 후 8초, 말 없이 숨만)") { measure() }
         col.addView(btn, mt(14))
 
         status = text("", 13f, color = ACCENT).also { it.setPadding(0, dp(12), 0, 0) }
@@ -74,17 +74,18 @@ class PhoneActivity : AppCompatActivity() {
     private fun measure() {
         if (busy) return
         if (!hasMic()) { ensureMic(); return }
-        busy = true; btn.isEnabled = false; status.text = "듣는 중… 5초간 낭독하세요"
+        busy = true; btn.isEnabled = false; status.text = "듣는 중… 8초간 숨만 쉬세요"
         resultView.text = "…"
         lifecycleScope.launch {
-            val v = withContext(Dispatchers.IO) {
+            val triple = withContext(Dispatchers.IO) {
                 val samples = recorder.record(RECORD_MS)
                 if (breath == null) breath = BreathClassifier(this@PhoneActivity)
                 val s = breath!!.classify(samples)
-                s to BreathJudge.judge(s)
+                val sig = BreathEnvelope.analyze(samples, recorder.sampleRate)
+                Triple(s, sig, BreathJudge.judge(s, sig))
             }
-            val (s, verdict) = v
-            android.util.Log.i("VoicePoC", "[BREATH] diff=${"%.2f".format(verdict.difficulty)} level=${verdict.level} | ${verdict.detail} | top=${s.top.joinToString { "${it.first}:${"%.2f".format(it.second)}" }}")
+            val (s, sig, verdict) = triple
+            android.util.Log.i("VoicePoC", "[BREATH] diff=${"%.2f".format(verdict.difficulty)} level=${verdict.level} breathSum=${"%.3f".format(s.breathSum)} bpm=${"%.1f".format(sig.breathsPerMin)} peaks=${sig.peaks} db=${"%.1f".format(sig.energyDb)} | top=${s.top.joinToString { "${it.first}:${"%.2f".format(it.second)}" }}")
             resultView.text = "${verdict.level.label}   (곤란도 %.2f)".format(verdict.difficulty)
             scoreView.text = verdict.detail
             topView.text = s.top.joinToString("\n") { "${it.first}  %.2f".format(it.second) }
@@ -110,8 +111,7 @@ class PhoneActivity : AppCompatActivity() {
     private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
 
     private companion object {
-        const val SENTENCE = "저는 지금 편안하게 천천히 달리고 있습니다"
-        const val RECORD_MS = 5000
+        const val RECORD_MS = 8000
         val BG = Color.parseColor("#0E1116"); val CARD = Color.parseColor("#171B22")
         val TEXT = Color.parseColor("#E8EAED"); val MUTED = Color.parseColor("#9AA0A6")
         val ACCENT = Color.parseColor("#30D158")

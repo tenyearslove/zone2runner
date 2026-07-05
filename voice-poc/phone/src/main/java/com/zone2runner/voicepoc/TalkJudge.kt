@@ -17,12 +17,15 @@ data class TalkVerdict(val level: TalkLevel, val difficulty: Double, val detail:
  * GAIN은 실기기 점수 분포로 보정(초기값). breathSum/(breathSum+speech).
  */
 object BreathJudge {
-    private const val GAIN = 1.3
+    // 절대 강도 기반(비율 폐기: 말 안 하면 무조건 1.0 되던 문제). 임계는 실측 보정 예정.
+    private const val INTENSITY_MAX = 0.40 // 이 breathSum이면 강도 최대(잠정)
+    private const val RATE_CALM = 15.0     // 분당 호흡수 하한(편함)
+    private const val RATE_HARD = 45.0     // 분당 호흡수 상한(벅참)
 
-    fun judge(s: BreathClassifier.Scores): TalkVerdict {
-        val denom = s.breathSum + s.speech + 1e-4f
-        val ratio = (s.breathSum / denom).toDouble() // 0~1, 숨참일수록 높음
-        val diff = (ratio * GAIN).coerceIn(0.0, 1.0)
+    fun judge(s: BreathClassifier.Scores, sig: BreathSignal): TalkVerdict {
+        val cIntensity = (s.breathSum.toDouble() / INTENSITY_MAX).coerceIn(0.0, 1.0)
+        val cRate = ((sig.breathsPerMin - RATE_CALM) / (RATE_HARD - RATE_CALM)).coerceIn(0.0, 1.0)
+        val diff = (0.6 * cIntensity + 0.4 * cRate).coerceIn(0.0, 1.0)
         val level = when {
             diff < 0.15 -> TalkLevel.VERY_COMFORTABLE
             diff < 0.35 -> TalkLevel.COMFORTABLE
@@ -30,8 +33,8 @@ object BreathJudge {
             diff < 0.80 -> TalkLevel.HARD
             else -> TalkLevel.VERY_HARD
         }
-        val detail = "숨 %.2f (호흡%.2f/헐떡%.2f/가쁨%.2f), 말 %.2f".format(
-            s.breathSum, s.breathing, s.pant, s.gasp, s.speech
+        val detail = "호흡강도 %.2f, %.0f회/분 (호흡%.2f/헐떡%.2f/가쁨%.2f)".format(
+            s.breathSum, sig.breathsPerMin, s.breathing, s.pant, s.gasp
         )
         return TalkVerdict(level, diff, detail)
     }
