@@ -8,7 +8,7 @@
 ## 목표
 
 사용자가 처음 입력하는 프로필만으로 **개인 근사 Zone 2 prior**(μ0, σ0)를 산출한다.
-AI(Bayesian 적응 + MLP 판정)가 데이터로 최적화되기 전에도 의미 있는 초기값을 제공하고,
+AI(Bayesian 적응)가 규칙 판정과 함께 데이터로 최적화되기 전에도 의미 있는 초기값을 제공하고,
 이후 세션 데이터가 쌓일수록 prior에서 개인 실측 경계로 이동한다(C02 해소의 앞단).
 
 ## 입력 항목
@@ -51,11 +51,15 @@ AI(Bayesian 적응 + MLP 판정)가 데이터로 최적화되기 전에도 의�
 ### prior 산출식
 
 ```
-offset = clamp(체형 + 수준 + 빈도, -0.08, +0.06)   # 이중 계상/극단 방지(RHR이 체력 일부 반영)
-uFrac0 = clamp(0.70 + offset, 0.60, 0.78)
-μ0     = RHR + uFrac0 × HRR                        # bpm
+# ★ Zone2 기준 = %HRmax (2026-07-04 재보정). 상단 = 최대심박의 (0.70+offset), 유산소 임계 LT1 근사.
+#   이를 개인별 HRR 비율(uFrac0)로 환산해 파이프라인 규약(RHR + uFrac0×HRR)을 유지한다.
+offset    = clamp(체형 + 수준 + 빈도, -0.08, +0.06)   # %HRmax 목표 미세조정
+hrmaxFrac = clamp(0.70 + offset, 0.60, 0.78)          # Zone2 상단(%최대심박)
+uAbs      = hrmaxFrac × maxHr                          # 상단(bpm)
+uFrac0    = clamp((uAbs − RHR)/HRR, 0.30, 0.75)        # HRR 비율로 환산
+μ0        = RHR + uFrac0 × HRR                         # bpm (= uAbs 근사)
 extremity = Σ |단계 - 중앙(3)|  (각 factor, 0~6)
-σ0     = 8.0 + 0.8 × extremity                     # bpm, 극단 선택일수록 불확실성 확대 (중앙=기존 σ 8과 동일)
+σ0        = 8.0 + 0.8 × extremity                      # bpm, 극단 선택일수록 불확실성 확대 (중앙=기존 σ 8과 동일)
 BMI-체형 불일치(제안값과 2단계 이상 차이) 시 σ0 += 2.0
 ```
 
@@ -82,16 +86,16 @@ BMI-체형 불일치(제안값과 2단계 이상 차이) 시 σ0 += 2.0
 세션 내 개인화 갱신이 상한을 +15bpm까지 올려 "HR 160인데 Zone 2 유지"가 관찰됨(임계 추출
 Conconi 편향과 결합). 가드 강화:
 - 세션 내 μ 이동 제한: mu0 ±15 → **±10bpm**
-- 생리적 절대 상한: boundary uFrac clamp 0.5~0.85 → **0.55~0.80** (LT1 문헌 상단 = HRR 80%)
+- 생리 가드: boundary uFrac clamp 0.30~0.75 (%HRmax 재보정 - 실측 maxHr/저RHR은 HRR 비율이 낮음, 토크테스트로 더 내려갈 수 있게)
 
 ## 하위 호환
 
 - 기존 저장 프로필(나이/RHR/최대심박만)은 신규 필드 기본값(170/70/보통/중급/주2~3회)으로 로드
-  → offset=0, 기존과 동일한 prior(HRR 70%). **기존 사용자 동작 불변.**
+  → offset=0이면 %HRmax 0.70 목표를 HRR로 환산한 값. 기준이 %HRmax로 재보정됨.
 
 ## 수락 기준 (AC)
 
-- AC1: 세 factor 모두 중앙 선택이면 uFrac0=0.70(현행과 동일).
+- AC1: 세 factor 모두 중앙 선택이면 uFrac0=(0.70×maxHr−RHR)/HRR (일반적으로 0.70 아님, %HRmax 환산값).
 - AC2: 오프셋 합/uFrac0가 명세 범위를 절대 벗어나지 않는다(전 조합 자동 검증).
 - AC3: 극단 선택일수록 σ0 증가, BMI-체형 2단계 불일치 시 σ0 추가 확대.
 - AC4: 키/몸무게로 체형 기본값이 대한비만학회 기준으로 제안된다.
@@ -108,5 +112,5 @@ Conconi 편향과 결합). 가드 강화:
 ## 구현 시 확정(유보)
 
 - 성별 factor(HRmax 공식 성별차) — 문헌 근거 정리 후.
-- Zone2 폭(band)의 factor 연동 — 현재 고정 0.10 HRR 유지.
+- Zone2 폭(band) = 0.12 HRR(≈%HRmax 10%). factor 연동은 유보.
 - Samsung Health RHR 자동 확보(spec-009 사다리 1순위)와의 결합.

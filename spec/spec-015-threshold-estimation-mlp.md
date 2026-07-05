@@ -1,6 +1,6 @@
 # Spec-015: 개인 젖산역치(Zone2 상단) 추정 MLP
 
-- **상태**: Draft (adr-014 Accepted에 따른 명세)
+- **상태**: Demoted by adr-016 (2026-07-04) — 개인화 경로에서 제거, 기록 보존
 - **날짜**: 2026-07-04
 - **관련 ADR**: `arch/adr-014-nn-threshold-estimation.md`
 

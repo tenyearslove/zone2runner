@@ -1,7 +1,7 @@
 # ADR-006 (DP3 재검토): 개인화 접근 — 직접 분류 vs HR 회귀 + 잔차 보정
 
 - **날짜**: 2026-07-02
-- **상태**: Accepted (실증 비교 완료, `ml/COMPARISON.md`)
+- **상태**: Accepted (단, "주 판정기 = 다변량 MLP" 결론은 adr-013/016로 Superseded — 판정은 규칙, NN은 심박예측) (실증 비교 완료, `ml/COMPARISON.md`)
 - **결정자**: 성시원
 - **보고서 매핑**: 설계 - Architectural Decision **DP3 재검토**
 

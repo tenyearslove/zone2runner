@@ -2,7 +2,7 @@
 
 - **상태**: Draft
 - **날짜**: 2026-07-01
-- **관련 ADR**: `arch/adr-003-zone2-classification-approach.md` (DP1), `arch/adr-004-personalization-model-approach.md` (DP3)
+- **관련 ADR**: `arch/adr-004-personalization-model-approach.md`, `arch/adr-016-ai-method-selection.md` (DP2 = 개인 Zone2 범위 = Bayesian)
 
 ## 목표
 
@@ -28,23 +28,29 @@
 
 ## 2. 사전분포 (Prior) = 규칙 baseline
 
-콜드스타트에서 공식(HRR)이 prior를 제공한다(규칙 연동의 핵심).
+콜드스타트에서 공식이 prior를 제공한다(규칙 연동의 핵심). ★ Zone2 기준 = **%HRmax**(2026-07-04 재보정,
+상단 = 최대심박 70% = 유산소 임계 LT1 근사). 내부는 HRR 비율(uFrac)로 환산해 규약 유지(spec-013).
 
 ```
-maxHR    = 208 - 0.7 * age          # Tanaka 공식 (220-age 대안)
+maxHR    = 208 - 0.7 * age          # Tanaka 공식 (실측값 있으면 우선)
 HRR      = maxHR - restingHR
-μ0       = restingHR + 0.70 * HRR    # Zone 2 상한 초기 추정
+uAbs0    = 0.70 * maxHR              # Zone 2 상한 초기(최대심박 70%)
+uFrac0   = clamp((uAbs0 - restingHR)/HRR, 0.30, 0.75)
+μ0       = restingHR + uFrac0 * HRR # Zone 2 상한 초기 추정(bpm)
 σ0       = 8                         # 공식 오차 반영 인구 분산 (bpm)
-band0    = 0.10 * HRR                # 초기 밴드폭
+band0    = 0.12 * HRR                # 초기 밴드폭(≈%HRmax 10%)
 ```
 
-restingHR 미확보 시 spec-003/FR1의 폴백(%HRmax)으로 μ0 산정.
+factor(체형/수준/빈도)에 따른 %HRmax 목표 조정과 산출 상세는 spec-013.
 
 ## 3. 관측 모델 (세션 → 증거 추출)
 
-각 세션 종료 시 그 세션이 시사하는 개인 Zone 2 상한 증거 `z`와 관측 신뢰도(노이즈 σ_obs)를 추출한다. 물리 기반이라 라벨이 필요 없다.
+각 세션에서 개인 Zone 2 상한 증거 `z`와 관측 신뢰도(σ_obs)를 추출한다. **두 채널**을 쓴다:
 
-핵심 원리: **유산소 디커플링(Cardiac Drift)**. 동일 페이스에서 HR이 과도히 상승하기 시작하는 지점이 유산소(Zone 2) 상한 부근이다.
+- **토크테스트(주 채널, 정답에 가장 가까운 라벨)**: 편하게 말할 수 있는 마지막 강도 ≈ VT1/유산소 임계.
+  러너가 '편함/애매/벅참'을 누르면 현재 지속 심박을 상한 관측으로(애매=경계 직접 관측, 좁은 σ). 사용자 입력 라벨.
+- **디커플링(약한 보조)**: 동일 페이스에서 HR이 과도히 상승하기 시작하는 지점(Cardiac Drift). 편향(Conconi)이
+  있어 큰 σ로 약하게만 반영(사용자 입력 없이도 미세 조정). 아래는 디커플링 추출.
 
 ```
 관측 추출(session):
@@ -75,7 +81,7 @@ sessionCount += 1
 - **콜드스타트(C02)**: 세션이 적으면 σ가 커 자연히 prior(공식)에 가깝다. "5회" 같은 하드 임계 대신 σ(확신도)로 부드럽게 전환. spec-002 QA3의 5회 기준은 "σ가 임계 이하로 좁아지는 시점"으로 재해석.
 - **관측 이상치(QA2)**: z가 생리 범위(40~220) 밖이거나 세션 품질 미달이면 기각 또는 σ_obs 상향(다운웨이트).
 - **급변 방지**: 단일 세션 갱신량 `|μ'-μ|`에 상한(예 3 bpm) clamp.
-- **안전 가드(규칙 우선)**: μ는 항상 `[μ0 - Δ, μ0 + Δ]`(예 Δ=15 bpm) 내로 clamp. 개인화가 규칙 안전범위를 못 벗어남.
+- **안전 가드(규칙 우선)**: μ는 세션 내 mu0 ±10bpm, 절대 uFrac 0.30~0.75로 clamp. 개인화가 규칙 안전범위를 못 벗어남.
 
 ## 6. 규칙(adr-003)과의 연동
 
