@@ -1,4 +1,4 @@
-# wear — Zone2 Runner 워치 앱 (spec-010)
+# wear — Zone2Runner 워치 앱 (spec-010)
 
 sensor-poc(검증용)와 **분리된 실제 워치 앱**. 러닝 중 워치 한 화면에서 심박/존/페이스/거리/속도/시간을 보고 세션을 조작한다.
 

@@ -1,4 +1,4 @@
-# app/ — Zone2 Runner (폰 앱)
+# app/ — Zone2Runner (폰 앱)
 
 개인화 유산소(Zone 2) 러닝 코칭 폰 앱. 우리가 설계/학습한 AI(MLP 판정 + Bayesian 개인화 + 온디바이스 LLM 코칭)를 온디바이스로 적용한다. 명세는 `spec/spec-011`, 설계 근거는 `arch/adr-001~011`.
 
