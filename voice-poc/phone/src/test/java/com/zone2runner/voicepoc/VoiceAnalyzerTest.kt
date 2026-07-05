@@ -44,14 +44,14 @@ class VoiceAnalyzerTest {
     }
 
     @Test fun judgeIsMonotonicVsBaseline() {
-        val baseline = VoiceMetrics(totalMs = 1400, speechSpanMs = 1300, voicedMs = 1000, pauseCount = 1, voicedRatio = 1000.0 / 1300)
-        val easy = VoiceMetrics(1450, 1350, 1010, 1, 1010.0 / 1350)   // 기준선과 거의 동일
-        val hard = VoiceMetrics(2000, 1900, 1050, 4, 1050.0 / 1900)   // 느려지고 끊김↑ 발화율↓
+        val baseline = VoiceMetrics(totalMs = 4000, speechSpanMs = 3600, voicedMs = 2400, pauseCount = 1, voicedRatio = 2400.0 / 3600)
+        val easy = VoiceMetrics(4000, 3600, 2350, 1, 2350.0 / 3600)   // 기준선과 거의 동일
+        val hard = VoiceMetrics(4000, 3600, 1500, 6, 1500.0 / 3600)   // 발화량↓(덜 읽음/헉헉) + 끊김↑
 
         val vEasy = TalkJudge.judge(easy, baseline)
         val vHard = TalkJudge.judge(hard, baseline)
         assertTrue("힘들수록 곤란도↑", vHard.difficulty > vEasy.difficulty)
-        assertTrue("힘들수록 단계↑", vHard.level.ordinal > vEasy.level.ordinal)
+        assertTrue("발화량 급감 + 끊김 급증이면 벅참 이상", vHard.level.ordinal >= TalkLevel.HARD.ordinal)
         assertTrue("편한 낭독은 낮은 단계", vEasy.level.ordinal <= TalkLevel.COMFORTABLE.ordinal)
     }
 

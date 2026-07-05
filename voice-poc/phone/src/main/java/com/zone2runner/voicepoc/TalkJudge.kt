@@ -21,18 +21,16 @@ object TalkJudge {
 
         val diff: Double
         val detail: String
-        if (baseline != null && baseline.speechSpanMs > 0) {
-            val spanRatio = test.speechSpanMs.toDouble() / baseline.speechSpanMs // >1 느려짐
+        if (baseline != null && baseline.voicedMs > 0) {
+            // 두 독립 신호(고정창에선 완독시간이 무의미해 제외):
+            //  1) 발화량(voicedMs) 감소 = 문장을 덜 읽음/헉헉거림(가쁜 숨은 발화가 아님)
+            //  2) 호흡 끊김(pause) 증가 = 말 사이 숨을 삽입
+            val contentRatio = test.voicedMs.toDouble() / baseline.voicedMs      // <1 덜 말함
             val pauseDelta = (test.pauseCount - baseline.pauseCount).toDouble()   // 증가 = 호흡 삽입
-            val ratioDrop = baseline.voicedRatio - test.voicedRatio               // 발화비율 하락
-
-            val cSpan = ((spanRatio - 1.0) / 0.6).coerceIn(0.0, 1.0)  // 60% 느려지면 최대
-            val cPause = (pauseDelta / 4.0).coerceIn(0.0, 1.0)        // +4 끊김이면 최대
-            val cRatio = (ratioDrop / 0.35).coerceIn(0.0, 1.0)        // 35%p 하락이면 최대
-            diff = (0.40 * cSpan + 0.35 * cPause + 0.25 * cRatio).coerceIn(0.0, 1.0)
-            detail = "완독 x%.2f, 끊김 %+d회, 발화율 %.0f%%→%.0f%%".format(
-                spanRatio, pauseDelta.toInt(), baseline.voicedRatio * 100, test.voicedRatio * 100
-            )
+            val cContent = ((1.0 - contentRatio) / 0.45).coerceIn(0.0, 1.0)       // 45% 감소면 최대
+            val cPause = (pauseDelta / 5.0).coerceIn(0.0, 1.0)                    // +5 끊김이면 최대
+            diff = (0.55 * cContent + 0.45 * cPause).coerceIn(0.0, 1.0)
+            detail = "발화량 기준比 %.0f%%, 끊김 %+d회".format(contentRatio * 100, pauseDelta.toInt())
         } else {
             val cPause = (test.pauseCount / 5.0).coerceIn(0.0, 1.0)
             val cRatio = ((0.85 - test.voicedRatio) / 0.45).coerceIn(0.0, 1.0)
