@@ -31,6 +31,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
     implementation("com.google.android.gms:play-services-wearable:19.0.0")
     // 온디바이스 오디오 분류(YAMNet, AudioSet 521클래스: Breathing/Gasp/Pant 등)
-    implementation("com.google.mediapipe:tasks-audio:0.10.14")
+    // 0.10.26.1+ : Android 16KB 페이지 정렬 지원(신형 갤럭시 필수)
+    implementation("com.google.mediapipe:tasks-audio:0.10.26.1")
     testImplementation("junit:junit:4.13.2")
 }
