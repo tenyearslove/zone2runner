@@ -390,8 +390,8 @@ RHR 미입력 시 하단은 %HRmax 폴백으로 산정하고 러닝 수준/빈�
 ## Appendix C — 검증 상세
 
 - **심박 예측 NN(HrDynamics, DP1)**: MLP 7특징 → 32 → 16 → 2(회귀 헤드, ReLU). PyTorch(Adam, MSE +
-  페이스 단조 페널티). 러너 단위 train/val/test 분할. RMSE t+30 **9.04** / t+60 **15.62** bpm,
-  baseline persistence 15.08/26.69 확실히 하회. 페이스 단조성 위반 0.0%(AC3). 온디바이스 순전파 일치(허용 1e-4).
+  페이스 단조 페널티). 러너 단위 train/val/test 분할. RMSE t+30 **14.01** / t+60 **20.45** bpm,
+  baseline persistence 17.01/30.23 확실히 하회. 페이스 단조성 위반 0.0%(AC3). 온디바이스 순전파 일치(허용 1e-4).
 - **판정(ZoneJudge, DP3)**: 규칙 + 히스테리시스. "지속 심박이 경계 밖인데 반대 판정" 발생 불가 — 단위 테스트로 고정.
 - **개인화(Bayesian, DP2)**: 켤레 가우시안. prior 전 조합 clamp 단위 테스트, 콜드스타트 -42%(Appendix A).
 - **폐기/강등 기록**: 판정 MLP(adr-005/spec-006) = **Superseded**(라벨 순환 결함). 역치 추정 NN(adr-014/spec-015) =
