@@ -152,14 +152,19 @@ class WearRunActivity : ComponentActivity() {
         }
         content.addView(btnRow, centered())
 
-        // 토크테스트 프롬프트(기본 숨김): 심박 높을 때 가끔 "대화 되나요?" 3지선다
+        // 토크테스트 프롬프트(기본 숨김): 심박 높을 때 가끔 "대화 되나요?" 5단계. 화면이 작아 2줄로 배치.
         talkRow = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER
+            orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER
             visibility = View.GONE; setPadding(0, dp(6), 0, 0)
         }
-        talkRow.addView(talkChip("편함", "comfortable"))
-        talkRow.addView(talkChip("애매", "borderline"))
-        talkRow.addView(talkChip("벅참", "hard"))
+        val talkR1 = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER }
+        talkR1.addView(talkChip("아주편함", "very_comfortable"))
+        talkR1.addView(talkChip("편함", "comfortable"))
+        talkR1.addView(talkChip("보통", "borderline"))
+        val talkR2 = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER; setPadding(0, dp(4), 0, 0) }
+        talkR2.addView(talkChip("벅참", "hard"))
+        talkR2.addView(talkChip("매우벅참", "very_hard"))
+        talkRow.addView(talkR1); talkRow.addView(talkR2)
         content.addView(talkRow, centered())
 
         // BOX_ALL(내접 사각형)은 원형 480px에서 실사용 폭이 ~70%로 줄어 페이스 줄바꿈/버튼 잘림 발생(실기기).
@@ -235,11 +240,11 @@ class WearRunActivity : ComponentActivity() {
 
     /** 토크테스트 답변 칩 → 폰으로 전송(/talk/<state>) → 폰 개인화(observeTalkTest)에 반영. */
     private fun talkChip(label: String, stateName: String) = TextView(this).apply {
-        text = label; textSize = 12f; setTextColor(Color.WHITE); setTypeface(typeface, Typeface.BOLD)
+        text = label; textSize = 11f; setTextColor(Color.WHITE); setTypeface(typeface, Typeface.BOLD)
         gravity = Gravity.CENTER
-        setPadding(dp(11), dp(6), dp(11), dp(6))
-        background = GradientDrawable().apply { setColor(Color.parseColor("#3A3F4A")); cornerRadius = dp(16).toFloat() }
-        val lp = LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT); lp.marginStart = dp(4); lp.marginEnd = dp(4)
+        setPadding(dp(7), dp(5), dp(7), dp(5))
+        background = GradientDrawable().apply { setColor(Color.parseColor("#3A3F4A")); cornerRadius = dp(14).toFloat() }
+        val lp = LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT); lp.marginStart = dp(3); lp.marginEnd = dp(3)
         layoutParams = lp
         isClickable = true
         setOnClickListener {
@@ -250,32 +255,36 @@ class WearRunActivity : ComponentActivity() {
         }
     }
 
-    private var prevHr = -1
-    private var stableSec = 0
 
     /**
-     * 스마트 타이밍 토크테스트 — 정보가 가장 큰 순간에 묻는다(고정 주기 아님).
-     *  (A) 지속 심박이 추정 경계 근처(상한 -6 ~ +15bpm) + 안정(20초 변동 작음)일 때 = "여기가 네 임계 맞아?"
-     *      확인이 개인화에 가장 유용한 순간(active learning). 최소 4분 간격.
-     *  (B) 오래(8분) 안 물었으면 심박 레벨과 무관하게 폴백 — 낮은 심박도 그 사람껜 힘들 수 있으니(사용자 요청).
-     * 30초 무응답이면 닫는다. 러너는 언제든 직접 답할 수 있음.
+     * 토크테스트 타이밍 — 심박이 높아져 특정 구간에 '머물' 때만 가끔 묻는다(사용자 요청, 고정 주기 아님).
+     *  (A) 지속 심박이 Zone 2 이상(개인 경계 기준)에 30초 이상 머물렀고, 최근 3분 안에 안 물었을 때.
+     *      = 경계 근처/이상에 안정적으로 있을 때가 "이 강도 편해?" 확인이 가장 유용(active learning).
+     *  (B) 오래(10분) 아예 안 물었으면 폴백 — 낮은 심박도 그 사람껜 힘들 수 있으니.
+     * 프롬프트가 뜨면 짧게 진동. 30초 무응답이면 닫는다. 러너는 언제든 직접 답할 수 있음.
      */
     private fun updateTalkPrompt(hr: Int) {
         val running = state == RunState.RUNNING && hr > 0
-        // 심박 안정성(변동 작음)
-        if (running && prevHr > 0 && kotlin.math.abs(hr - prevHr) <= 3) stableSec++ else stableSec = 0
-        prevHr = hr
+        // Zone 2 이상(개인 경계 기준)에 '머무는' 시간 누적. Z1로 내려가면 리셋.
+        val inZone2Plus = running && Zones.zoneOf(hr) != HrZone.Z1
+        if (inZone2Plus) elevatedSec++ else elevatedSec = 0
         val now = SystemClock.elapsedRealtime()
         if (talkRow.visibility != View.VISIBLE) {
             val since = now - lastTalkAskMs
-            val upper = Zones.zone2Bpm.last
-            val nearBoundary = hr in (upper - 6)..(upper + 15)
-            val smart = running && nearBoundary && stableSec >= 20 && since > 4 * 60 * 1000L
-            val fallback = running && since > 8 * 60 * 1000L
-            if (smart || fallback) { talkRow.visibility = View.VISIBLE; talkShownAt = now }
+            val elevatedAsk = inZone2Plus && elevatedSec >= 30 && since > 3 * 60 * 1000L
+            val fallback = running && since > 10 * 60 * 1000L
+            if (elevatedAsk || fallback) { talkRow.visibility = View.VISIBLE; talkShownAt = now; buzz() }
         } else {
             zoneLabel.text = "대화 되나요?"; zoneLabel.setTextColor(C_TEXT) // 질문 문구로 대체
             if (now - talkShownAt > 30_000L) { talkRow.visibility = View.GONE; lastTalkAskMs = now }
+        }
+    }
+
+    /** 토크 프롬프트 등장 시 짧은 진동(놓치지 않게). */
+    private fun buzz() {
+        runCatching {
+            getSystemService(android.os.Vibrator::class.java)
+                ?.vibrate(android.os.VibrationEffect.createOneShot(120, android.os.VibrationEffect.DEFAULT_AMPLITUDE))
         }
     }
 

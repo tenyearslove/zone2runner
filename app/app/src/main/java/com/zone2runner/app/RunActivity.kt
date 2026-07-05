@@ -241,7 +241,7 @@ class RunActivity : AppCompatActivity() {
         talkRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
         talkRow.addView(talkChip("아주편함", com.zone2runner.app.pipeline.TalkState.VERY_COMFORTABLE))
         talkRow.addView(talkChip("편함", com.zone2runner.app.pipeline.TalkState.COMFORTABLE))
-        talkRow.addView(talkChip("애매", com.zone2runner.app.pipeline.TalkState.BORDERLINE))
+        talkRow.addView(talkChip("보통", com.zone2runner.app.pipeline.TalkState.BORDERLINE))
         talkRow.addView(talkChip("벅참", com.zone2runner.app.pipeline.TalkState.HARD))
         talkRow.addView(talkChip("매우벅참", com.zone2runner.app.pipeline.TalkState.VERY_HARD))
         dash.addView(talkRow, mt(4))
@@ -374,7 +374,7 @@ class RunActivity : AppCompatActivity() {
             append("• Zone 2 = 유산소 기초 강도 ≈ 최대심박의 60~70% (San Millan/LT1 기준)\n")
             append("• 최대심박 ${p.maxHr} → 상단 ≈ 70% = $hi, 하단 ≈ ${loPct}% = $lo\n")
             append("• 지금 값 출처: $src\n")
-            append("• ★ 뛰면서 '편함/애매/벅참'을 누르면 이 범위가 당신 몸에 맞게 이동합니다. 편한데 미달로 나오면 '편함'을 누르세요 — 다음 세션부터 내려갑니다.")
+            append("• ★ 뛰면서 '편함/보통/벅참'을 누르면 이 범위가 당신 몸에 맞게 이동합니다. 편한데 미달로 나오면 '편함'을 누르세요 — 다음 세션부터 내려갑니다.")
             append(hmaxNote)
         }
         val dialog = android.app.AlertDialog.Builder(this)
@@ -387,7 +387,7 @@ class RunActivity : AppCompatActivity() {
         lifecycleScope.launch {
             val prompt = "러닝 코치입니다. 사용자의 Zone 2 심박 구간이 $lo~$hi bpm(최대심박 ${p.maxHr}의 ${loPct}~${hiPct}%)으로 계산됐습니다. " +
                 "Zone 2는 최대심박 60~70%의 유산소 기초 강도입니다. 지금 값 출처: $src. " +
-                "왜 이 범위인지, 그리고 실제로 뛰며 편함/애매/벅참 버튼을 누르면 개인에 맞게 보정된다는 점을 3~4문장으로 쉽게 설명하세요. 따옴표/이모지 없이."
+                "왜 이 범위인지, 그리고 실제로 뛰며 편함/보통/벅참 버튼을 누르면 개인에 맞게 보정된다는 점을 3~4문장으로 쉽게 설명하세요. 따옴표/이모지 없이."
             val llm = c.freeform(prompt)
             if (llm != null && dialog.isShowing) {
                 dialog.setMessage(llm + "\n\n─ 계산 근거 ─\n" + ruleText)
@@ -540,8 +540,10 @@ class RunActivity : AppCompatActivity() {
         val l = com.google.android.gms.wearable.MessageClient.OnMessageReceivedListener { e ->
             if (e.path.startsWith("/talk/")) {
                 val st = when (e.path.substringAfterLast('/')) {
+                    "very_comfortable" -> com.zone2runner.app.pipeline.TalkState.VERY_COMFORTABLE
                     "comfortable" -> com.zone2runner.app.pipeline.TalkState.COMFORTABLE
                     "hard" -> com.zone2runner.app.pipeline.TalkState.HARD
+                    "very_hard" -> com.zone2runner.app.pipeline.TalkState.VERY_HARD
                     else -> com.zone2runner.app.pipeline.TalkState.BORDERLINE
                 }
                 runOnUiThread {
