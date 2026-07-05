@@ -17,13 +17,17 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.Light.NoActionBar">
         <activity
-            android:name=".PhoneActivity"
+            android:name=".PacedTalkActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <!-- 이전 탐색 화면(호흡 YAMNet). 런처에서 내림, 코드/기록 보존. -->
+        <activity
+            android:name=".PhoneActivity"
+            android:exported="false" />
 
         <service
             android:name=".VoiceChannelService"
