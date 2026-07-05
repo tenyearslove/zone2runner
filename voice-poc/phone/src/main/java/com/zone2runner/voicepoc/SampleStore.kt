@@ -14,14 +14,14 @@ object SampleStore {
     fun count(ctx: Context): Int = dir(ctx).listFiles { f -> f.extension == "wav" }?.size ?: 0
 
     /** WAV(16kHz mono PCM16) + 라벨/특징 JSON을 저장하고 파일명(id) 반환. */
-    fun save(ctx: Context, id: String, samples: ShortArray, sampleRate: Int, label: String, m: UtteranceMetrics, beatMs: Int) {
+    fun save(ctx: Context, id: String, samples: ShortArray, sampleRate: Int, label: String, m: UtteranceMetrics, windowMs: Int) {
         val d = dir(ctx)
         Wav.write(File(d, "$id.wav"), samples, sampleRate)
         val json = """
-            {"id":"$id","label":"$label","beatMs":$beatMs,"sampleRate":$sampleRate,
+            {"id":"$id","label":"$label","windowMs":$windowMs,"sampleRate":$sampleRate,
+             "voicedSegments":${m.voicedSegments},"speakingRatio":${"%.3f".format(m.speakingRatio)},
              "breaths":${m.breaths},"breathsPerMin":${"%.2f".format(m.breathsPerMin)},
-             "meanUtteranceSec":${"%.3f".format(m.meanUtteranceSec)},"tokensPerBreath":${"%.2f".format(m.tokensPerBreath)},
-             "speakingRatio":${"%.3f".format(m.speakingRatio)},"spanSec":${"%.2f".format(m.spanSec)}}
+             "meanUtteranceSec":${"%.3f".format(m.meanUtteranceSec)},"windowSec":${"%.2f".format(m.windowSec)}}
         """.trimIndent()
         File(d, "$id.json").writeText(json)
     }

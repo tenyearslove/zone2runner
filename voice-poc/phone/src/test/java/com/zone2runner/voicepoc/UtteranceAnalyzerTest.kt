@@ -8,9 +8,8 @@ import kotlin.math.sin
 
 class UtteranceAnalyzerTest {
     private val sr = 16_000
-    private val beat = 550
+    private val win = 20_000
 
-    /** (발화 여부, ms) 세그먼트로 합성. 발화=220Hz 사인, 비발화=0. */
     private fun sig(vararg segs: Pair<Boolean, Int>): ShortArray {
         val total = segs.sumOf { it.second } * sr / 1000
         val out = ShortArray(total); var idx = 0
@@ -21,29 +20,31 @@ class UtteranceAnalyzerTest {
         return out
     }
 
-    @Test fun countsBreathBreaks() {
-        // 말 2s + 들숨 0.4s + 말 2s + 들숨 0.4s + 말 2s → 호흡 2회, 발화 3덩이
-        val m = UtteranceAnalyzer.analyze(sig(true to 2000, false to 400, true to 2000, false to 400, true to 2000), sr, beat)
-        assertEquals("호흡 끊김 2회", 2, m.breaths)
-        assertTrue("평균 발화 길이 ~2s", m.meanUtteranceSec in 1.6..2.6)
+    /** 편함: 숫자를 빠르게 이어 셈(8덩이, 짧은 어절 간격, 긴 숨 없음). */
+    private fun comfortable() = sig(
+        true to 400, false to 150, true to 400, false to 150, true to 400, false to 150, true to 400, false to 150,
+        true to 400, false to 150, true to 400, false to 150, true to 400, false to 150, true to 400
+    )
+
+    /** 벅참: 몇 개 세고 길게 들이쉼(4덩이, 긴 숨 3회). */
+    private fun breathless() = sig(
+        true to 400, false to 800, true to 400, false to 800, true to 400, false to 800, true to 400
+    )
+
+    @Test fun segmentsCountApproxNumbersSaid() {
+        assertEquals("빠른 이어세기 8덩이", 8, UtteranceAnalyzer.analyze(comfortable(), sr, win).voicedSegments)
+        assertEquals("끊긴 세기 4덩이", 4, UtteranceAnalyzer.analyze(breathless(), sr, win).voicedSegments)
     }
 
-    @Test fun longUtteranceWhenComfortable() {
-        // 한 숨에 길게(6s) = 편함 → 호흡 0, 발화 길이 큼
-        val m = UtteranceAnalyzer.analyze(sig(true to 6000), sr, beat)
-        assertEquals(0, m.breaths)
-        assertTrue(m.meanUtteranceSec > 4.0)
-        assertTrue("숨당 토큰 많음", m.tokensPerBreath > 6.0)
+    @Test fun speakingRatioHigherWhenComfortable() {
+        val c = UtteranceAnalyzer.analyze(comfortable(), sr, win)
+        val b = UtteranceAnalyzer.analyze(breathless(), sr, win)
+        assertTrue("편함이 말한 비율 높음", c.speakingRatio > b.speakingRatio)
+        assertTrue("편함이 더 많이 셈", c.voicedSegments > b.voicedSegments)
     }
 
-    @Test fun shortUtterancesWhenBreathless() {
-        // 자주 끊어 숨쉼(0.8s 말 + 0.35s 들숨 반복) = 벅참 → 발화 길이 짧고 호흡 많음
-        val m = UtteranceAnalyzer.analyze(
-            sig(true to 800, false to 350, true to 800, false to 350, true to 800, false to 350, true to 800), sr, beat
-        )
-        assertTrue("호흡 여러 번", m.breaths >= 3)
-        assertTrue("발화 길이 짧음", m.meanUtteranceSec < 1.2)
-        val comf = UtteranceAnalyzer.analyze(sig(true to 6000), sr, beat)
-        assertTrue("편함이 발화 길이 더 김", comf.meanUtteranceSec > m.meanUtteranceSec)
+    @Test fun longBreathsCountedOnlyWhenBreathless() {
+        assertEquals("짧은 어절 간격은 들숨 아님", 0, UtteranceAnalyzer.analyze(comfortable(), sr, win).breaths)
+        assertTrue("벅참은 긴 들숨 여러 번", UtteranceAnalyzer.analyze(breathless(), sr, win).breaths >= 3)
     }
 }
