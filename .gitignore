@@ -10,12 +10,15 @@ ml/data/
 *.onnx
 *.tflite
 
-# Android / Gradle (llm-verify)
+# Android / Gradle
 .gradle/
 build/
-llm-verify/local.properties
-llm-verify/.idea/
+*/local.properties
+**/.idea/
 *.apk
+
+# IDE
+.vscode/
 
 # OS
 .DS_Store
