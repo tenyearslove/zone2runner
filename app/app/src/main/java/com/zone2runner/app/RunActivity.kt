@@ -292,13 +292,7 @@ class RunActivity : AppCompatActivity() {
                 background = GradientDrawable().apply { setColor(C_CARD); cornerRadius = dp(14).toFloat(); setStroke(dp(1), C_STROKE) }
                 setOnClickListener {
                     if (running) { Toast.makeText(this@RunActivity, "시작 전에만 바꿀 수 있어요", Toast.LENGTH_SHORT).show(); return@setOnClickListener }
-                    val presets = com.zone2runner.app.domain.VirtualRunner.PRESETS
-                    android.app.AlertDialog.Builder(this@RunActivity)
-                        .setTitle("가상러너 선택")
-                        .setItems(presets.map { r ->
-                            "${r.name}\n  나이${r.age}·안정${r.restingHr}·최대${r.maxHr}·임계${(r.trueZone2UpperHrmaxFrac * 100).toInt()}%HRmax·코칭반응${(r.coachingResponsiveness * 100).toInt()}%"
-                        }.toTypedArray()) { _, idx -> virtualRunner = presets[idx]; updateRunnerChip() }
-                        .show()
+                    showRunnerPicker()
                 }
             }
             runnerRow.addView(runnerChip)
@@ -724,6 +718,47 @@ class RunActivity : AppCompatActivity() {
         runnerChip?.text = virtualRunner.name
         // 수동 모드에선 가상러너 무의미 → 흐리게
         runnerChip?.alpha = if (manualMode) 0.4f else 1f
+    }
+
+    /** 가상러너 선택 — 카드형(현재 선택 강조 + 특성 표시). 텍스트 목록보다 선택 화면임이 명확. */
+    private fun showRunnerPicker() {
+        val presets = com.zone2runner.app.domain.VirtualRunner.PRESETS
+        val dialog = android.app.AlertDialog.Builder(this).create()
+        val col = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(16), dp(8), dp(16), dp(12))
+        }
+        col.addView(TextView(this).apply {
+            text = "가상러너 선택 — 탭하면 선택됩니다"; textSize = 12f; setTextColor(C_MUTED); setPadding(0, dp(4), 0, dp(10))
+        })
+        for (r in presets) {
+            val selected = r.name == virtualRunner.name
+            val card = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                setPadding(dp(14), dp(12), dp(14), dp(12))
+                background = GradientDrawable().apply {
+                    setColor(if (selected) C_ACCENT_DIM else C_CARD)
+                    cornerRadius = dp(12).toFloat()
+                    setStroke(dp(if (selected) 2 else 1), if (selected) C_ACCENT else C_STROKE)
+                }
+                layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply { bottomMargin = dp(8) }
+                isClickable = true
+                addView(TextView(this@RunActivity).apply {
+                    text = (if (selected) "✓ " else "") + r.name + (if (selected) "  (현재)" else "")
+                    textSize = 15f; setTypeface(typeface, Typeface.BOLD)
+                    setTextColor(if (selected) Color.WHITE else C_TEXT)
+                })
+                addView(TextView(this@RunActivity).apply {
+                    text = "나이 ${r.age} · 안정 ${r.restingHr} · 최대 ${r.maxHr}bpm · 진짜임계 ${(r.trueZone2UpperHrmaxFrac * 100).toInt()}%\n" +
+                        "페이스 규율 ${(r.pacingDiscipline * 100).toInt()}% · 코칭 반응 ${(r.coachingResponsiveness * 100).toInt()}%"
+                    textSize = 11f; setTextColor(if (selected) Color.WHITE else C_MUTED); setPadding(0, dp(4), 0, 0)
+                })
+                setOnClickListener { virtualRunner = r; updateRunnerChip(); dialog.dismiss() }
+            }
+            col.addView(card)
+        }
+        dialog.setView(android.widget.ScrollView(this).apply { addView(col) })
+        dialog.show()
     }
 
     private fun updateManualUi() {
