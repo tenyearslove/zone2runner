@@ -12,6 +12,32 @@ enum class TalkLevel(val label: String) {
 data class TalkVerdict(val level: TalkLevel, val difficulty: Double, val detail: String)
 
 /**
+ * 호흡(YAMNet) 기반 판정. 숨소리(Breathing/Gasp/Pant)와 말소리(Speech)의 상대 비율로 숨참을 본다.
+ * 편하게 말하면 Speech가 지배, 숨참이면 숨소리가 올라가고 말이 무너진다. 스케일-강건한 비율 사용.
+ * GAIN은 실기기 점수 분포로 보정(초기값). breathSum/(breathSum+speech).
+ */
+object BreathJudge {
+    private const val GAIN = 1.3
+
+    fun judge(s: BreathClassifier.Scores): TalkVerdict {
+        val denom = s.breathSum + s.speech + 1e-4f
+        val ratio = (s.breathSum / denom).toDouble() // 0~1, 숨참일수록 높음
+        val diff = (ratio * GAIN).coerceIn(0.0, 1.0)
+        val level = when {
+            diff < 0.15 -> TalkLevel.VERY_COMFORTABLE
+            diff < 0.35 -> TalkLevel.COMFORTABLE
+            diff < 0.60 -> TalkLevel.BORDERLINE
+            diff < 0.80 -> TalkLevel.HARD
+            else -> TalkLevel.VERY_HARD
+        }
+        val detail = "숨 %.2f (호흡%.2f/헐떡%.2f/가쁨%.2f), 말 %.2f".format(
+            s.breathSum, s.breathing, s.pant, s.gasp, s.speech
+        )
+        return TalkVerdict(level, diff, detail)
+    }
+}
+
+/**
  * ASR 기반 판정(폰). 완성도(어디까지 읽었나)가 주 신호 — 문장을 못 끝내면 곧 역치 위.
  * 끊김(호흡 삽입)이 보조. 완성도는 절대 지표라 기준선 불필요.
  */

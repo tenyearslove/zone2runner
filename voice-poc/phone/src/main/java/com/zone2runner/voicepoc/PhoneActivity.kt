@@ -15,87 +15,82 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
- * 음성 토크테스트 PoC (폰, ASR 방식). 고정 문장을 낭독하면 온디바이스 ASR이 전사해
- * "어디까지 읽었나(완성도)"를 재고, 호흡 끊김을 보조로 5단계 판정. 완성도는 절대 지표라 기준선 불필요.
- * 워치가 보낸 음향 판정(VoiceChannelService)도 함께 표시한다.
+ * 호흡 토크테스트 PoC (폰, YAMNet). 문장을 낭독하는 동안 온디바이스 오디오 분류 NN으로
+ * 숨소리(Breathing/Gasp/Pant)와 말소리(Speech)를 감지해 "숨참" 정도를 5단계로 판정한다.
+ * 내용(무슨 단어를 읽었나)이 아니라 호흡을 직접 본다.
  */
 class PhoneActivity : AppCompatActivity() {
 
-    private val asr by lazy { SpeechTalkTest(this) }
+    private val recorder = AudioRecorder()
+    private var breath: BreathClassifier? = null
     private lateinit var status: TextView
-    private lateinit var transcriptView: TextView
     private lateinit var resultView: TextView
-    private lateinit var watchView: TextView
+    private lateinit var scoreView: TextView
+    private lateinit var topView: TextView
     private lateinit var btn: Button
-    private var listening = false
+    private var busy = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        VoiceStore.onChange = { runOnUiThread { renderWatch() } }
         setContentView(buildUi())
-        renderWatch()
         ensureMic()
     }
 
-    override fun onDestroy() { super.onDestroy(); VoiceStore.onChange = null }
+    override fun onDestroy() { super.onDestroy(); breath?.close() }
 
     private fun buildUi(): ScrollView {
         val col = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL; setPadding(dp(20), dp(24), dp(20), dp(24))
         }
-        col.addView(text("음성 토크테스트 PoC (ASR)", 22f, bold = true))
-        col.addView(text("탭한 뒤 아래 문장을 소리내어 읽어주세요. 끝까지 읽기 힘들수록 벅찬 것으로 판정합니다.", 13f, color = MUTED)
+        col.addView(text("호흡 토크테스트 PoC (YAMNet)", 22f, bold = true))
+        col.addView(text("탭한 뒤 5초간 아래 문장을 낭독하세요. 숨이 찰수록 숨소리가 커져 벅참으로 판정합니다.", 13f, color = MUTED)
             .also { it.setPadding(0, dp(6), 0, dp(12)) })
-
         col.addView(card(SENTENCE, 18f, ACCENT))
 
-        btn = button("측정 시작 (탭 후 낭독)") { toggle() }
+        btn = button("호흡 측정 (탭 후 5초 낭독)") { measure() }
         col.addView(btn, mt(14))
 
         status = text("", 13f, color = ACCENT).also { it.setPadding(0, dp(12), 0, 0) }
         col.addView(status)
 
-        col.addView(text("인식된 낭독", 12f, color = MUTED).also { it.setPadding(0, dp(14), 0, dp(2)) })
-        transcriptView = text("-", 14f); col.addView(transcriptView)
-
         col.addView(text("판정", 12f, color = MUTED).also { it.setPadding(0, dp(14), 0, dp(2)) })
         resultView = text("측정 전", 16f, bold = true); col.addView(resultView)
 
-        col.addView(text("워치에서 온 측정(음향)", 12f, color = MUTED).also { it.setPadding(0, dp(16), 0, dp(2)) })
-        watchView = text("없음", 13f); col.addView(watchView)
+        col.addView(text("점수", 12f, color = MUTED).also { it.setPadding(0, dp(12), 0, dp(2)) })
+        scoreView = text("-", 13f); col.addView(scoreView)
+
+        col.addView(text("YAMNet 상위 감지", 12f, color = MUTED).also { it.setPadding(0, dp(12), 0, dp(2)) })
+        topView = text("-", 12f, color = MUTED); col.addView(topView)
 
         return ScrollView(this).apply { setBackgroundColor(BG); addView(col) }
     }
 
-    private fun toggle() {
+    private fun measure() {
+        if (busy) return
         if (!hasMic()) { ensureMic(); return }
-        if (listening) { asr.stop(); status.text = "판정 중…"; return }
-        listening = true; btn.text = "완료 (멈춤)"; status.text = "듣는 중… 문장을 읽으세요"
-        transcriptView.text = "-"; resultView.text = "…"
-        asr.start { r -> runOnUiThread { onAsrResult(r) } }
-    }
-
-    private fun onAsrResult(r: SpeechTalkTest.Result) {
-        listening = false; btn.text = "측정 시작 (탭 후 낭독)"
-        transcriptView.text = r.transcript.ifBlank { "(인식 없음)" }
-        if (r.error != null && r.transcript.isBlank()) {
-            status.text = r.error; resultView.text = "재시도"
-            return
+        busy = true; btn.isEnabled = false; status.text = "듣는 중… 5초간 낭독하세요"
+        resultView.text = "…"
+        lifecycleScope.launch {
+            val v = withContext(Dispatchers.IO) {
+                val samples = recorder.record(RECORD_MS)
+                if (breath == null) breath = BreathClassifier(this@PhoneActivity)
+                val s = breath!!.classify(samples)
+                s to BreathJudge.judge(s)
+            }
+            val (s, verdict) = v
+            android.util.Log.i("VoicePoC", "[BREATH] diff=${"%.2f".format(verdict.difficulty)} level=${verdict.level} | ${verdict.detail} | top=${s.top.joinToString { "${it.first}:${"%.2f".format(it.second)}" }}")
+            resultView.text = "${verdict.level.label}   (곤란도 %.2f)".format(verdict.difficulty)
+            scoreView.text = verdict.detail
+            topView.text = s.top.joinToString("\n") { "${it.first}  %.2f".format(it.second) }
+            status.text = "측정 완료"
+            busy = false; btn.isEnabled = true
         }
-        val comp = Completeness.ratio(SENTENCE, r.transcript)
-        val (pauses, _) = RmsPauses.analyze(r.rms)
-        val v = AsrTalkJudge.judge(comp, pauses)
-        android.util.Log.i("VoicePoC", "[ASR] transcript='${r.transcript}' comp=${"%.2f".format(comp)} pause=$pauses rms=${r.rms.size} level=${v.level} diff=${"%.2f".format(v.difficulty)}")
-        resultView.text = "${v.level.label}   (곤란도 %.2f)".format(v.difficulty)
-        status.text = v.detail
-    }
-
-    private fun renderWatch() {
-        val v = VoiceStore.lastWatchVerdict
-        watchView.text = if (v == null) "없음 (워치에서 측정하면 표시)"
-        else "${v.level.label}  (곤란도 %.2f)\n%s".format(v.difficulty, v.detail)
     }
 
     private fun hasMic() = ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
@@ -116,6 +111,7 @@ class PhoneActivity : AppCompatActivity() {
 
     private companion object {
         const val SENTENCE = "저는 지금 편안하게 천천히 달리고 있습니다"
+        const val RECORD_MS = 5000
         val BG = Color.parseColor("#0E1116"); val CARD = Color.parseColor("#171B22")
         val TEXT = Color.parseColor("#E8EAED"); val MUTED = Color.parseColor("#9AA0A6")
         val ACCENT = Color.parseColor("#30D158")

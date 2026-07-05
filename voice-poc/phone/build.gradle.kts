@@ -20,6 +20,8 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions { jvmTarget = "17" }
+    // tflite 모델은 압축하면 mmap 불가 → 무압축 유지
+    androidResources { noCompress += "tflite" }
 }
 
 dependencies {
@@ -28,5 +30,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.6")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
     implementation("com.google.android.gms:play-services-wearable:19.0.0")
+    // 온디바이스 오디오 분류(YAMNet, AudioSet 521클래스: Breathing/Gasp/Pant 등)
+    implementation("com.google.mediapipe:tasks-audio:0.10.14")
     testImplementation("junit:junit:4.13.2")
 }
