@@ -233,15 +233,18 @@ class RunActivity : AppCompatActivity() {
             dash.addView(promptView)
         }
 
-        // 토크 테스트 자가관측(arch/zone2-physiology §6): 참값 없는 경계를 무비용으로 보정하는 독립 채널
-        talkRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
-        talkRow.addView(TextView(this).apply {
+        // 토크 테스트 자가관측(arch/zone2-physiology §6, spec-016): 참값 없는 경계를 무비용으로 보정하는 독립 채널
+        dash.addView(TextView(this).apply {
             text = "대화 가능?"; textSize = 12f; setTextColor(C_MUTED)
-        }, LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f))
+        }, mt(8))
+        // 5단계 척도(강도 오름차순): 아주 편함 → 매우 벅참. 폰 가로폭에 맞춰 균등 배분.
+        talkRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
+        talkRow.addView(talkChip("아주편함", com.zone2runner.app.pipeline.TalkState.VERY_COMFORTABLE))
         talkRow.addView(talkChip("편함", com.zone2runner.app.pipeline.TalkState.COMFORTABLE))
         talkRow.addView(talkChip("애매", com.zone2runner.app.pipeline.TalkState.BORDERLINE))
         talkRow.addView(talkChip("벅참", com.zone2runner.app.pipeline.TalkState.HARD))
-        dash.addView(talkRow, mt(8))
+        talkRow.addView(talkChip("매우벅참", com.zone2runner.app.pipeline.TalkState.VERY_HARD))
+        dash.addView(talkRow, mt(4))
 
         uEstView = TextView(this).apply { textSize = 11f; setTextColor(C_MUTED); setPadding(0, dp(4), 0, 0) }
         dash.addView(uEstView)
@@ -682,10 +685,11 @@ class RunActivity : AppCompatActivity() {
         addView(TextView(this@RunActivity).apply { text = label; textSize = 10f; setTextColor(C_MUTED); gravity = Gravity.CENTER })
     }
     private fun talkChip(label: String, state: com.zone2runner.app.pipeline.TalkState) = TextView(this).apply {
-        text = label; textSize = 12f; setTextColor(C_TEXT); gravity = Gravity.CENTER
-        setPadding(dp(14), dp(6), dp(14), dp(6))
+        text = label; textSize = 11f; setTextColor(C_TEXT); gravity = Gravity.CENTER
+        setPadding(dp(4), dp(6), dp(4), dp(6))
         background = GradientDrawable().apply { setColor(C_CARD); cornerRadius = dp(14).toFloat(); setStroke(dp(1), C_STROKE) }
-        val lp = LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT); lp.marginStart = dp(6); layoutParams = lp
+        // 5칩 균등 배분(weight 1): 폰 가로폭에서 라벨이 잘리지 않게 padding/textSize 축소.
+        val lp = LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f); lp.marginStart = dp(4); layoutParams = lp
         isClickable = true
         setOnClickListener {
             val eng = engine

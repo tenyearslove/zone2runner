@@ -3,6 +3,7 @@ package com.zone2runner.app
 import com.zone2runner.app.domain.Profile
 import com.zone2runner.app.domain.Zone2Prior
 import com.zone2runner.app.pipeline.Personalization
+import com.zone2runner.app.pipeline.TalkState
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -102,6 +103,28 @@ class Zone2PriorTest {
         val hi = (c.muUpper + 2).toInt()
         c.observeTalkTest(hi, com.zone2runner.app.pipeline.TalkState.HARD)
         assertTrue("HARD는 상한을 낮춘다", c.muUpper < (profile().restingHr + Zone2Prior.of(profile()).uFrac0 * profile().hrr) + 2)
+    }
+
+    @Test fun talkTest_fiveLevelScale_directionAndConfidence() {
+        // spec-016 AC-2: 강도 오름차순 z 단조 감소(방향) + BORDERLINE 최고 확신(최소 σ), 극단일수록 넓은 σ.
+        fun freshAt(hr: Int, st: TalkState) = Personalization(profile()).apply { observeTalkTest(hr, st) }
+        val base = Personalization(profile())
+        val cur = base.muUpper.toInt() // 현재 HR = 상한 추정과 동일 지점
+
+        // 방향: 편함쪽은 상한을 올리고, 벅참쪽은 내린다.
+        assertTrue("아주편함 상승", freshAt(cur, TalkState.VERY_COMFORTABLE).muUpper > base.muUpper)
+        assertTrue("편함 상승", freshAt(cur, TalkState.COMFORTABLE).muUpper > base.muUpper)
+        assertTrue("벅참 하락", freshAt(cur, TalkState.HARD).muUpper < base.muUpper)
+        assertTrue("매우벅참 하락", freshAt(cur, TalkState.VERY_HARD).muUpper < base.muUpper)
+
+        // 확신(σ): BORDERLINE(6) < COMFORTABLE(14) < VERY_COMFORTABLE(16), 하드측 대칭.
+        val sBorder = freshAt(cur, TalkState.BORDERLINE).sigma
+        val sComf = freshAt(cur, TalkState.COMFORTABLE).sigma
+        val sVComf = freshAt(cur, TalkState.VERY_COMFORTABLE).sigma
+        assertTrue("BORDERLINE이 가장 확신(σ 최소)", sBorder < sComf)
+        assertTrue("극단일수록 σ 확대", sComf < sVComf)
+        assertEquals("comfort/hard σ 대칭", sComf, freshAt(cur, TalkState.HARD).sigma, 1e-9)
+        assertEquals("very comfort/hard σ 대칭", sVComf, freshAt(cur, TalkState.VERY_HARD).sigma, 1e-9)
     }
 
     @Test fun ac6_personalizationStartsAtPrior_andStillConverges() {

@@ -94,10 +94,12 @@ class SimRunnerSource(
                 if (t - lastTalk >= 90 && t > 120) {
                     lastTalk = t
                     val d = hrObs - uAbs + gauss(runner.talkNoise * runner.hrr) // 주관 흔들림
-                    val st = when {
-                        d < -8 -> TalkState.COMFORTABLE
-                        d <= 8 -> TalkState.BORDERLINE
-                        else -> TalkState.HARD
+                    val st = when { // 진짜 임계 대비 심박차 → 5단계 응답(spec-016)
+                        d < -16 -> TalkState.VERY_COMFORTABLE
+                        d < -6 -> TalkState.COMFORTABLE
+                        d <= 6 -> TalkState.BORDERLINE
+                        d <= 16 -> TalkState.HARD
+                        else -> TalkState.VERY_HARD
                     }
                     onTalkTest?.invoke(st)
                 }

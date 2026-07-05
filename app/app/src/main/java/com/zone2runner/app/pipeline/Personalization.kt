@@ -42,12 +42,12 @@ class Personalization(private val profile: Profile, priorUFrac: Double? = null) 
     val sigma: Double get() = Math.sqrt(variance)
 
     /**
-     * 토크 테스트 자가관측 → 개인 경계 관측 (arch/zone2-physiology-and-estimation §6).
+     * 토크 테스트 자가관측 → 개인 경계 관측 (arch/zone2-physiology-and-estimation §6, spec-016 Tier1).
      * 근거: "편하게 말할 수 있는 마지막 강도"의 HR ≈ VT1(1차 환기역치) ≈ LT1 부근.
-     * 디커플링 관측의 임계추출 편향을 보완하는 무비용 독립 채널.
-     *   BORDERLINE(말이 끊기기 시작) → 현재 지속 HR을 상한 직접 관측(좁은 σ).
-     *   COMFORTABLE(아직 편함)       → 상한이 현재 HR보다 위라는 약한 단측 증거(현재+마진, 넓은 σ).
-     *   HARD(말 못 함)               → 상한이 현재 HR보다 아래(현재-마진, 넓은 σ).
+     * 디커플링 관측의 임계추출 편향을 보완하는 무비용 독립 채널. 5단계 척도(강도 오름차순 z 단조 감소):
+     *   BORDERLINE(말이 끊기기 시작 ≈ VT1) → 현재 지속 HR을 상한 직접 관측(가장 좁은 σ, 최고 확신).
+     *   COMFORTABLE/VERY_COMFORTABLE      → 상한이 현재보다 위(단측 증거). 멀수록 σ 확대(거리 불확실).
+     *   HARD/VERY_HARD                     → 상한이 현재보다 아래(단측 증거). 멀수록 σ 확대.
      */
     var talkCount = 0
         private set
@@ -55,14 +55,16 @@ class Personalization(private val profile: Profile, priorUFrac: Double? = null) 
     fun observeTalkTest(currentHr: Int, state: TalkState) {
         if (currentHr <= 0) return
         val (z, sd) = when (state) {
-            TalkState.BORDERLINE -> currentHr.toDouble() to 6.0
+            TalkState.VERY_COMFORTABLE -> currentHr + 10.0 to 16.0
             TalkState.COMFORTABLE -> currentHr + 5.0 to 14.0
+            TalkState.BORDERLINE -> currentHr.toDouble() to 6.0
             TalkState.HARD -> currentHr - 5.0 to 14.0
+            TalkState.VERY_HARD -> currentHr - 10.0 to 16.0
         }
         talkCount++
         update(z, sd)
     }
 }
 
-/** 토크 테스트 응답: 지금 대화가 편한가. */
-enum class TalkState { COMFORTABLE, BORDERLINE, HARD }
+/** 토크 테스트 응답(5단계 척도, spec-016). 강도 오름차순으로 나열. */
+enum class TalkState { VERY_COMFORTABLE, COMFORTABLE, BORDERLINE, HARD, VERY_HARD }
