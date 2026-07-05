@@ -176,7 +176,7 @@ class ProfileActivity : AppCompatActivity() {
         val rhrUnknown = rhrRaw <= 0
         val rhr = if (rhrUnknown) Zone2Prior.estimateRhr(fitness, freq) else rhrRaw.coerceIn(30, 120)
         val override = maxIn.text.toString().toIntOrNull() ?: 0
-        val maxHr = if (override > 0) override.coerceIn(120, 230) else (208 - 0.7 * age).toInt()
+        val maxHr = if (override > 0) override.coerceIn(120, 230) else Profile.tanakaMaxHr(age).toInt()
         return Profile(
             age, rhr, maxHr,
             heightCm = heightIn.text.toString().toIntOrNull()?.coerceIn(100, 230) ?: 170,

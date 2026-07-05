@@ -1,5 +1,6 @@
 package com.zone2runner.app.sim
 
+import com.zone2runner.app.domain.MPS_PER_MIN_KM
 import com.zone2runner.app.domain.Profile
 import com.zone2runner.app.domain.Sample
 import com.zone2runner.app.sensor.RunSource
@@ -58,7 +59,7 @@ class ManualRunSource(
                     .coerceAtMost(runner.maxHr.toDouble())
                 val spm = (168 - 4.0 * (pace - 6.0) + rng.nextGaussian() * 2.5).coerceIn(150.0, 200.0)
 
-                val mps = 16.667 / pace
+                val mps = MPS_PER_MIN_KM / pace
                 heading += rng.nextGaussian() * 0.05 + 0.02
                 lat += (mps * cos(heading)) / 111_320.0
                 lon += (mps * sin(heading)) / (111_320.0 * cos(Math.toRadians(lat)))

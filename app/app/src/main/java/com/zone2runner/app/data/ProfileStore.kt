@@ -30,7 +30,7 @@ object ProfileStore {
         val age = p.getInt(K_AGE, 35)
         val storedRhr = p.getInt(K_RHR, 58)
         val override = p.getInt(K_MAXHR, 0)
-        val maxHr = if (override > 0) override else (208 - 0.7 * age).toInt() // Tanaka
+        val maxHr = if (override > 0) override else Profile.tanakaMaxHr(age).toInt()
         val fitness = p.getInt(K_FITNESS, 3)
         val freq = p.getInt(K_FREQ, 3)
         val rhrUnknown = storedRhr <= 0

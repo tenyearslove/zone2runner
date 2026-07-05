@@ -1,5 +1,6 @@
 package com.zone2runner.app.sim
 
+import com.zone2runner.app.domain.MPS_PER_MIN_KM
 import com.zone2runner.app.domain.Profile
 import com.zone2runner.app.domain.Sample
 import java.util.Random
@@ -33,7 +34,7 @@ class RunSimulator(seed: Long = 42L) {
     fun makeRunner(profile: Profile? = null): SimRunner {
         val age = profile?.age ?: (20 + rng.nextInt(35))
         val resting = profile?.restingHr ?: u(48.0, 68.0).toInt()
-        val maxHr = profile?.maxHr?.toDouble() ?: (208 - 0.7 * age)
+        val maxHr = profile?.maxHr?.toDouble() ?: Profile.tanakaMaxHr(age)
         val hrr = maxHr - resting
         val uFrac = gauss(0.70, 0.045).coerceIn(0.55, 0.85)
         val band = u(0.08, 0.13)
@@ -130,8 +131,8 @@ class RunSimulator(seed: Long = 42L) {
             var spm = 168 - 4.0 * (pace - 6.0) + gauss(0.0, 2.5)
             spm = spm.coerceIn(150.0, 200.0)
 
-            // GPS: 속도(m/s)=16.667/pace, heading 완만한 랜덤워크로 루프 경로
-            val mps = 16.667 / pace
+            // GPS: 속도(m/s)=MPS_PER_MIN_KM/pace, heading 완만한 랜덤워크로 루프 경로
+            val mps = MPS_PER_MIN_KM / pace
             heading += gauss(0.0, 0.05) + 0.02 // 완만히 휘어 루프
             lat += (mps * cos(heading)) / 111_320.0
             lon += (mps * sin(heading)) / (111_320.0 * cos(Math.toRadians(lat)))

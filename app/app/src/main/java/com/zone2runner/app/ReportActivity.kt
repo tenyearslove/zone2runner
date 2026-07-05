@@ -13,6 +13,7 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.zone2runner.app.domain.RunReport
 import com.zone2runner.app.domain.ZoneJudgment
+import com.zone2runner.app.ui.Palette
 import com.zone2runner.app.ui.ReportHolder
 import com.zone2runner.app.ui.withSystemBarInsets
 import com.zone2runner.app.ui.TimeSeriesChartView
@@ -246,11 +247,11 @@ class ReportActivity : AppCompatActivity() {
     override fun onPause() { super.onPause(); map?.onPause() }
 
     private companion object {
-        val C_BG = Color.parseColor("#0E1116")
-        val C_CARD = Color.parseColor("#171B22")
-        val C_STROKE = Color.parseColor("#2A2F3A")
-        val C_TEXT = Color.parseColor("#E8EAED")
-        val C_MUTED = Color.parseColor("#9AA0A6")
-        val C_BLUE = Color.parseColor("#5AC8FA")
+        val C_BG = Palette.BG
+        val C_CARD = Palette.CARD
+        val C_STROKE = Palette.STROKE
+        val C_TEXT = Palette.TEXT
+        val C_MUTED = Palette.MUTED
+        val C_BLUE = Palette.BLUE
     }
 }

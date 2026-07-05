@@ -3,6 +3,7 @@ package com.zone2runner.app.pipeline
 import com.zone2runner.app.coaching.Coach
 import com.zone2runner.app.coaching.CoachContext
 import com.zone2runner.app.domain.LiveState
+import com.zone2runner.app.domain.MPS_PER_MIN_KM
 import com.zone2runner.app.domain.Profile
 import com.zone2runner.app.domain.RunReport
 import com.zone2runner.app.domain.Sample
@@ -78,10 +79,7 @@ class RunEngine(
         personalization.observeTalkTest(hr, state)
     }
 
-    /** NN 역치 추정치(bpm)를 개인화 관측으로 반영(세션 종료 시). 토크테스트/디커플링과 같은 경로로 융합. */
-    fun observeThresholdBpm(bpm: Double) = personalization.update(bpm, obsSd = 8.0)
-
-    /** 현재 개인화 경계 uFrac — 세션 누적 저장(LearnedZone)용. 토크테스트+NN+디커플링이 모두 반영됨. */
+    /** 현재 개인화 경계 uFrac — 세션 누적 저장(LearnedZone)용. 토크테스트+디커플링이 반영됨. */
     fun currentUFrac(): Double = personalization.boundary().uFrac
 
     /** 이번 세션에 토크테스트가 한 번이라도 반영됐는지(저장 판단/표시용). */
@@ -101,7 +99,7 @@ class RunEngine(
         // 누적 지표
         hrSum += clean; hrCount++; if (clean > maxHr) maxHr = clean
         if (s.spm > 0) { spmSum += s.spm; spmCount++ }
-        val mps = 16.667 / s.paceMinKm.coerceAtLeast(0.1)
+        val mps = MPS_PER_MIN_KM / s.paceMinKm.coerceAtLeast(0.1)
         distanceM += mps
         extractor.add(clean.toDouble(), s.paceMinKm, s.spm, s.slopePct)
 

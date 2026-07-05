@@ -7,7 +7,7 @@ import com.zone2runner.app.domain.Zone2Prior
 /**
  * 개인화 Zone2 상한 추정 — 켤레 가우시안(Bayesian) 적응 (adr-004, spec-004, personalization.py 포팅).
  * 사전분포는 프로필 factor 기반 prior(adr-012/spec-013: 체형/러닝수준/빈도 → uFrac0, σ0).
- * factor 미입력이면 공식(HRR 0.70)/σ 8bpm과 동일 — 하위 호환.
+ * factor 미입력이면 공식(%HRmax 0.70)/σ 8bpm과 동일 — 하위 호환.
  * 세션마다 decoupling에서 뽑은 관측 z(bpm)로 갱신. 신경망 아님(float 산술). 누적될수록 개인 경계로 수렴(QA3).
  */
 class Personalization(private val profile: Profile, priorUFrac: Double? = null) {
@@ -35,7 +35,7 @@ class Personalization(private val profile: Profile, priorUFrac: Double? = null) 
     fun boundary(): Zone2Boundary {
         // 생리 가드: %HRmax 기준 재보정(2026-07-04)으로 하한 완화 — 유산소 Zone2는 %HRmax 60~72%이고
         // 실측 maxHr/저RHR 사용자는 HRR 비율이 낮게 나오므로 0.30까지 허용(토크테스트로 더 내려갈 수 있게).
-        val uFrac = ((muUpper - profile.restingHr) / profile.hrr).coerceIn(0.30, 0.75)
+        val uFrac = ((muUpper - profile.restingHr) / profile.hrr).coerceIn(Zone2Prior.U_FRAC_MIN, Zone2Prior.U_FRAC_MAX)
         return Zone2Boundary(uFrac, uFrac - band)
     }
 

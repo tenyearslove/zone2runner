@@ -1,5 +1,6 @@
 package com.zone2runner.app.pipeline
 
+import com.zone2runner.app.domain.MPS_PER_MIN_KM
 import com.zone2runner.app.domain.Profile
 
 /**
@@ -110,7 +111,7 @@ class FeatureExtractor {
         val hf = ArrayList<Double>(n); val sp = ArrayList<Double>(n); val spmv = ArrayList<Double>(n)
         for (i in WARMUP_S until n) {
             hf += (hr[i] - rhr) / hrr
-            sp += 16.667 / pace[i].coerceIn(3.0, 12.0)     // m/s
+            sp += MPS_PER_MIN_KM / pace[i].coerceIn(3.0, 12.0)     // m/s
             spmv += spm[i].toDouble()
         }
         val m = hf.size

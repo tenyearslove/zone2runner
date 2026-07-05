@@ -1,6 +1,7 @@
 package com.zone2runner.app.sim
 
 import com.zone2runner.app.domain.LiveState
+import com.zone2runner.app.domain.MPS_PER_MIN_KM
 import com.zone2runner.app.domain.Sample
 import com.zone2runner.app.domain.VirtualRunner
 import com.zone2runner.app.domain.ZoneJudgment
@@ -82,7 +83,7 @@ class SimRunnerSource(
 
                 val pace = (runner.basePaceMinKm - 3.2 * (effort - 0.5) + gauss(0.05)).coerceIn(3.5, 12.0)
                 val spm = (runner.cadenceBase - 4.0 * (pace - 6.0) + gauss(2.5)).coerceIn(150.0, 200.0)
-                val mps = 16.667 / pace
+                val mps = MPS_PER_MIN_KM / pace
                 heading += gauss(0.05) + 0.02
                 lat += (mps * cos(heading)) / 111_320.0
                 lon += (mps * sin(heading)) / (111_320.0 * cos(Math.toRadians(lat)))

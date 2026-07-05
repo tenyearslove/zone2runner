@@ -31,6 +31,7 @@ import com.zone2runner.app.sensor.MockRunSource
 import com.zone2runner.app.sensor.RunSource
 import com.zone2runner.app.sensor.SimulatedRunSource
 import com.zone2runner.app.sensor.WatchHrProvider
+import com.zone2runner.app.ui.Palette
 import com.zone2runner.app.ui.ReportHolder
 import com.zone2runner.app.ui.withSystemBarInsets
 import kotlinx.coroutines.launch
@@ -356,7 +357,7 @@ class RunActivity : AppCompatActivity() {
         val hrr = p.hrr
         val hi = (p.restingHr + uFrac * hrr).toInt()
         val lo = (p.restingHr + (uFrac - com.zone2runner.app.domain.Zone2Prior.BAND) * hrr).toInt()
-        val tanaka = (208 - 0.7 * p.age).toInt()
+        val tanaka = com.zone2runner.app.domain.Profile.tanakaMaxHr(p.age).toInt()
         val loPct = lo * 100 / p.maxHr; val hiPct = hi * 100 / p.maxHr // %최대심박(재보정 기준)
         val src = if (learned != null) "${nSess}회 러닝으로 보정됨 (말하기 테스트/드리프트 → 개인 맞춤)"
                   else "프로필 기반 초기값 (아직 러닝 보정 전)"
@@ -815,14 +816,15 @@ class RunActivity : AppCompatActivity() {
         // 워치 원격 제어 연동(RunControlService)용 프로세스 전역 상태
         @Volatile var isRunning = false          // 러닝 중이면 워치발 /run/start 중복 실행 방지
         @Volatile var remoteStopRequested = false // 워치에서 종료 → 폰 러닝 루프가 감지해 종료
-        private val C_BG = Color.parseColor("#0E1116")
-        private val C_TEXT = Color.parseColor("#E8EAED")
-        private val C_MUTED = Color.parseColor("#9AA0A6")
-        private val C_ACCENT = Color.parseColor("#30D158")
-        private val C_ACCENT_DIM = Color.parseColor("#1E7A38") // 배속 선택 칩 배경
-        private val C_BLUE = Color.parseColor("#5AC8FA")
-        private val C_AMBER = Color.parseColor("#FF9F0A")
-        private val C_CARD = Color.parseColor("#171B22")
-        private val C_STROKE = Color.parseColor("#2A2F3A")
+        // 전역 팔레트(ui.Palette) 참조 — 단일 소스. 로컬 전용 색만 별도 정의.
+        private val C_BG = Palette.BG
+        private val C_TEXT = Palette.TEXT
+        private val C_MUTED = Palette.MUTED
+        private val C_ACCENT = Palette.ACCENT
+        private val C_ACCENT_DIM = Color.parseColor("#1E7A38") // 배속/선택 칩 배경(팔레트 외 로컬)
+        private val C_BLUE = Palette.BLUE
+        private val C_AMBER = Palette.AMBER
+        private val C_CARD = Palette.CARD
+        private val C_STROKE = Palette.STROKE
     }
 }

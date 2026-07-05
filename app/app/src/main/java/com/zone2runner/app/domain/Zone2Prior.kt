@@ -33,6 +33,10 @@ object Zone2Prior {
 
     const val BAND = 0.12 // Zone2 폭(HRR 비율) ≈ %HRmax 10% 부근
 
+    // uFrac(HRR 비율) 생리적 clamp — prior/개인화/영속화가 공유하는 단일 기준.
+    const val U_FRAC_MIN = 0.30
+    const val U_FRAC_MAX = 0.75
+
     // ★ Zone2 기준 재보정(2026-07-04): 참 Zone2 상단을 %HRmax 0.70(유산소 임계 LT1 근사)으로 잡는다.
     // 기존 고정 %HRR 0.70은 실측 maxHr 사용자에게 %HRmax 79%(Zone3~4)로 과대평가됐음(실기기 피드백).
     // 사람마다 maxHr/RHR 비율이 달라 %HRmax 목표를 개인별로 HRR 비율(uFrac)로 환산한다.
@@ -46,7 +50,7 @@ object Zone2Prior {
         val offset = (BODY_OFFSET[b] + FITNESS_OFFSET[f] + FREQ_OFFSET[q]).coerceIn(-0.08, 0.06)
         val hrmaxFrac = (HRMAX_TARGET + offset).coerceIn(0.60, 0.78)
         val uAbs = hrmaxFrac * p.maxHr                    // 상단(bpm)
-        val uFrac0 = ((uAbs - p.restingHr) / p.hrr).coerceIn(0.30, 0.75) // HRR 비율로 환산
+        val uFrac0 = ((uAbs - p.restingHr) / p.hrr).coerceIn(U_FRAC_MIN, U_FRAC_MAX) // HRR 비율로 환산
 
         val extremity = abs(p.bodyType.coerceIn(1, 5) - 3) +
             abs(p.fitnessLevel.coerceIn(1, 5) - 3) + abs(p.weeklyFreq.coerceIn(1, 5) - 3)

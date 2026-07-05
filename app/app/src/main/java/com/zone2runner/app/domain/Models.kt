@@ -2,6 +2,9 @@ package com.zone2runner.app.domain
 
 import android.graphics.Color
 
+/** 페이스(min/km) → 속도(m/s) 환산 계수(= 1000m / 60s). mps = MPS_PER_MIN_KM / paceMinKm. */
+const val MPS_PER_MIN_KM = 16.667
+
 /**
  * 사용자 프로필. Zone2 경계 산정의 사전값(공식+factor, adr-012/spec-013).
  * bodyType/fitnessLevel/weeklyFreq: 1~5 단계(3=중앙). 기존 저장값은 기본값으로 로드(하위 호환).
@@ -19,8 +22,11 @@ data class Profile(
 ) {
     val hrr: Double get() = (maxHr - restingHr).toDouble()
     companion object {
+        /** Tanaka 최대심박 추정(208 − 0.7×나이). maxHr 미입력/미측정 시 공통 사용. */
+        fun tanakaMaxHr(age: Int): Double = 208 - 0.7 * age
+
         fun default(age: Int = 35, restingHr: Int = 58) =
-            Profile(age, restingHr, (208 - 0.7 * age).toInt()) // Tanaka
+            Profile(age, restingHr, tanakaMaxHr(age).toInt())
     }
 }
 
@@ -51,9 +57,7 @@ enum class ZoneJudgment(val label: String, val color: Int) {
 }
 
 /** 개인 Zone2 경계(HRR 대비 비율). 개인화(Bayesian)가 갱신. */
-data class Zone2Boundary(val uFrac: Double, val lFrac: Double) {
-    companion object { val FORMULA = Zone2Boundary(0.70, 0.60) }
-}
+data class Zone2Boundary(val uFrac: Double, val lFrac: Double)
 
 /** 라이브 대시보드 상태(재생/실기기 공통). */
 data class LiveState(
