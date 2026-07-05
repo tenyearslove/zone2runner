@@ -83,12 +83,14 @@ class PhoneActivity : AppCompatActivity() {
         lifecycleScope.launch {
             val samples = withContext(Dispatchers.IO) { recorder.record(RECORD_MS) }
             val m = VoiceAnalyzer.analyze(samples, recorder.sampleRate)
+            android.util.Log.i("VoicePoC", "[${if (isBaseline) "BASE" else "TEST"}] total=${m.totalMs} span=${m.speechSpanMs} voicedMs=${m.voicedMs} pause=${m.pauseCount} voicedRatio=${"%.3f".format(m.voicedRatio)}")
             if (isBaseline) {
                 VoiceStore.setBaseline(this@PhoneActivity, m)
                 renderBaseline()
                 setBusy(false, "기준선 저장됨")
             } else {
                 val v = TalkJudge.judge(m, VoiceStore.baseline)
+                android.util.Log.i("VoicePoC", "[VERDICT] level=${v.level} diff=${"%.3f".format(v.difficulty)} detail=${v.detail}")
                 resultView.text = "${v.level.label}  (곤란도 %.2f)\n%s\n[완독 %dms, 끊김 %d, 발화율 %.0f%%]".format(
                     v.difficulty, v.detail, m.speechSpanMs, m.pauseCount, m.voicedRatio * 100
                 )
@@ -101,6 +103,9 @@ class PhoneActivity : AppCompatActivity() {
         val b = VoiceStore.baseline
         baselineView.text = if (b == null) "아직 없음 (먼저 ① 기준선 녹음)"
         else "완독 %dms, 끊김 %d회, 발화율 %.0f%%".format(b.speechSpanMs, b.pauseCount, b.voicedRatio * 100)
+        // 기준선이 있어야 상대 판정이 정확 → 없으면 ②측정 비활성
+        btnTest.isEnabled = !busy && b != null
+        btnTest.text = if (b == null) "② 측정 녹음 (먼저 ① 기준선 필요)" else "② 측정 녹음 (힘들 때)"
     }
 
     private fun renderWatch() {
@@ -110,7 +115,8 @@ class PhoneActivity : AppCompatActivity() {
     }
 
     private fun setBusy(b: Boolean, msg: String?) {
-        busy = b; btnBase.isEnabled = !b; btnTest.isEnabled = !b
+        busy = b; btnBase.isEnabled = !b
+        btnTest.isEnabled = !b && VoiceStore.baseline != null // 기준선 없으면 측정 잠금
         if (msg != null) status.text = msg
     }
 

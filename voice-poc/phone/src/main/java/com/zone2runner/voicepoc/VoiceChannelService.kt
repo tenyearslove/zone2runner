@@ -36,7 +36,8 @@ class VoiceChannelService : WearableListenerService() {
     }
 
     private fun sendResult(nodeId: String, v: TalkVerdict) {
-        val payload = "${v.level.label}|%.2f|${v.detail}".format(v.difficulty)
+        // detail은 '%','→'를 포함하므로 포맷 템플릿에 넣지 말고 그대로 이어붙인다(포맷 파싱 크래시 방지).
+        val payload = "${v.level.label}|${"%.2f".format(v.difficulty)}|${v.detail}"
         Wearable.getMessageClient(this).sendMessage(nodeId, PATH_RESULT, payload.toByteArray())
     }
 
