@@ -120,11 +120,11 @@ class RunActivity : AppCompatActivity() {
      * Zone2 밴드 게이지 + 범위/이탈 텍스트 갱신.
      * hr = 지속 심박(최근 60초 평균) — 마커/텍스트 기준(판정 칩과 동일 기준). instantHr = 순간 심박(참고 틱).
      */
-    private fun updateZoneUi(hr: Int, uEstFrac: Double, instantHr: Int = -1) {
+    private fun updateZoneUi(hr: Int, uEstFrac: Double, instantHr: Int = -1, predHr: Int = -1) {
         val p = profile ?: return
         val hi = (p.restingHr + uEstFrac * p.hrr).toInt()
         val lo = (p.restingHr + (uEstFrac - com.zone2runner.app.domain.Zone2Prior.BAND) * p.hrr).toInt()
-        zoneBand.update(lo, hi, p.maxHr, hr, instantHr)
+        zoneBand.update(lo, hi, p.maxHr, hr, instantHr, predHr)
         when {
             hr <= 0 -> { rangeView.text = "Zone 2 목표 $lo ~ $hi bpm"; rangeView.setTextColor(C_MUTED) }
             hr < lo -> { rangeView.text = "Zone 2 목표 $lo ~ $hi · ${lo - hr} bpm 아래"; rangeView.setTextColor(C_BLUE) }
@@ -620,7 +620,7 @@ class RunActivity : AppCompatActivity() {
         if (j != null) {
             zoneChip.text = j.label; zoneChip.background = pill(j.color); hrView.setTextColor(j.color)
         }
-        updateZoneUi(if (s.smoothedHr > 0) s.smoothedHr else s.hr, s.uEstFrac, s.hr)
+        updateZoneUi(if (s.smoothedHr > 0) s.smoothedHr else s.hr, s.uEstFrac, s.hr, s.predictedHr60)
         timeView.text = "%02d:%02d".format(s.elapsedSec / 60, s.elapsedSec % 60)
         distView.text = if (s.distanceM < 1000) "${s.distanceM.toInt()}m" else "%.2fkm".format(s.distanceM / 1000)
         // 움직이기 전(정지/GPS 미확보)엔 페이스/케이던스/보폭을 근거 없이 표시하지 않는다("--").
