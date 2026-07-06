@@ -750,6 +750,28 @@ class RunActivity : AppCompatActivity() {
         col.addView(TextView(this).apply {
             text = "가상러너 선택 — 탭하면 선택됩니다"; textSize = 12f; setTextColor(C_MUTED); setPadding(0, dp(4), 0, dp(10))
         })
+        // 🎲 랜덤 러너: 누를 때마다 모집단에서 새 사람 샘플(spec-019). 매번 다른 신체/스타일/코스/기온.
+        col.addView(LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(14), dp(12), dp(14), dp(12))
+            background = GradientDrawable().apply {
+                setColor(C_CARD); cornerRadius = dp(12).toFloat(); setStroke(dp(1), C_ACCENT)
+            }
+            layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply { bottomMargin = dp(12) }
+            isClickable = true
+            addView(TextView(this@RunActivity).apply {
+                text = "🎲 랜덤 러너"; textSize = 15f; setTypeface(typeface, Typeface.BOLD); setTextColor(C_ACCENT)
+            })
+            addView(TextView(this@RunActivity).apply {
+                text = "누를 때마다 새로운 사람 — 신체/스타일/코스/기온이 매번 다릅니다"
+                textSize = 11f; setTextColor(C_MUTED); setPadding(0, dp(4), 0, 0)
+            })
+            setOnClickListener {
+                virtualRunner = com.zone2runner.app.domain.VirtualRunner.randomHuman(System.nanoTime())
+                updateRunnerChip(); dialog.dismiss()
+                Toast.makeText(this@RunActivity, "새 러너: ${virtualRunner.name} (${virtualRunner.summary})", Toast.LENGTH_SHORT).show()
+            }
+        })
         for (r in presets) {
             val selected = r.name == virtualRunner.name
             val card = LinearLayout(this).apply {
@@ -768,8 +790,9 @@ class RunActivity : AppCompatActivity() {
                     setTextColor(if (selected) Color.WHITE else C_TEXT)
                 })
                 addView(TextView(this@RunActivity).apply {
+                    val terrain = when { r.terrainHilliness > 0.6 -> "언덕많음"; r.terrainHilliness > 0.3 -> "완만"; else -> "평지" }
                     text = "나이 ${r.age} · 안정 ${r.restingHr} · 최대 ${r.maxHr}bpm · 진짜임계 ${(r.trueZone2UpperHrmaxFrac * 100).toInt()}%\n" +
-                        "페이스 규율 ${(r.pacingDiscipline * 100).toInt()}% · 코칭 반응 ${(r.coachingResponsiveness * 100).toInt()}%"
+                        "페이스 규율 ${(r.pacingDiscipline * 100).toInt()}% · 코칭 반응 ${(r.coachingResponsiveness * 100).toInt()}% · 코스 $terrain · ${r.tempC.toInt()}℃"
                     textSize = 11f; setTextColor(if (selected) Color.WHITE else C_MUTED); setPadding(0, dp(4), 0, 0)
                 })
                 setOnClickListener { virtualRunner = r; updateRunnerChip(); dialog.dismiss() }
