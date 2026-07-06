@@ -10,7 +10,7 @@ import android.graphics.Color
  * (ZoneSyncService) 저장해 사용한다 — 같은 심박에 워치/폰 존 표시가 어긋나는 문제 해소.
  * 미수신(폰 미연동) 시 기존 %HRmax(190) 기본값으로 동작한다.
  *
- * 주의: 실제 "개인화 Zone 2 판정"은 폰에서 다변량 MLP + Bayesian 경계로 수행(adr-005, spec-006).
+ * 주의: 실제 "개인화 Zone 2 판정"은 폰에서 규칙(ZoneJudge) + 온라인 Bayesian 경계로 수행(adr-013/016).
  * 워치는 러닝 중 즉시 피드백용 존 표시만 담당한다.
  */
 enum class HrZone(val short: String, val desc: String, val color: Int) {
