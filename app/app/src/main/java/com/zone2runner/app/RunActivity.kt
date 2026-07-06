@@ -94,6 +94,7 @@ class RunActivity : AppCompatActivity() {
     private var tts: TextToSpeech? = null
     private var ttsReady = false
     private var lastSpoken = ""
+    private var settings = com.zone2runner.app.data.AppSettings() // spec-021, start()에서 로드
 
     private val mode: String by lazy { intent.getStringExtra(EXTRA_MODE) ?: MODE_SIM }
 
@@ -102,8 +103,13 @@ class RunActivity : AppCompatActivity() {
         Configuration.getInstance().userAgentValue = packageName
         dynamics = runCatching { com.zone2runner.app.pipeline.HrDynamics.fromAssets(this) }.getOrNull()
         // 역치 추정 NN(adr-014)은 adr-016으로 강등 — 개인화는 Bayesian+토크테스트 전담. 로드하지 않음.
+        settings = com.zone2runner.app.data.SettingsStore.load(this) // spec-021: 코칭 빈도/음성/화면 설정
         tts = TextToSpeech(this) { status ->
-            if (status == TextToSpeech.SUCCESS) { tts?.language = java.util.Locale.KOREAN; ttsReady = true }
+            if (status == TextToSpeech.SUCCESS) {
+                tts?.language = java.util.Locale.KOREAN
+                tts?.setSpeechRate(settings.ttsRate)
+                ttsReady = true
+            }
         }
         setContentView((buildUi()).withSystemBarInsets())
         updateSubtitle()
@@ -456,7 +462,11 @@ class RunActivity : AppCompatActivity() {
         // coachScope 전달 → 코칭 생성(LLM ~2초)이 샘플 루프/렌더를 멈추지 않음
         val learnedPrior = com.zone2runner.app.data.LearnedZone.uFrac(this) // 세션 누적 학습값(있으면 prior)
         val predWeights = com.zone2runner.app.data.LearnedDynamics.weights(this) // 예측 개인 보정 누적(spec-018)
-        val eng = RunEngine(profile, dynamics, c, coachScope = lifecycleScope, priorUFrac = learnedPrior, priorPredWeights = predWeights)
+        val eng = RunEngine(
+            profile, dynamics, c, coachScope = lifecycleScope,
+            priorUFrac = learnedPrior, priorPredWeights = predWeights,
+            cadence = settings.cadence, preemptiveEnabled = settings.preemptiveEnabled, // spec-021
+        )
         engine = eng
         startedAt = System.currentTimeMillis()
         frame = 0
@@ -477,7 +487,10 @@ class RunActivity : AppCompatActivity() {
         }
         source = src
         // 시뮬 자동 시나리오: 가상러너의 기온을 코칭 맥락에 주입(더위 취약형 등 검증 가능). 실측 조회는 좌표 확보 시 덮어씀.
-        if (mode == MODE_SIM && !manualMode) { eng.ambientTempC = virtualRunner.tempC; tempView.text = "%.0f℃".format(virtualRunner.tempC); tempFetched = true }
+        if (mode == MODE_SIM && !manualMode) {
+            if (settings.heatCoachingEnabled) eng.ambientTempC = virtualRunner.tempC
+            tempView.text = "%.0f℃".format(virtualRunner.tempC); tempFetched = true
+        }
 
         // 필드 로그(spec-012): 원시 입력+파이프라인 출력을 1Hz JSONL로 기록(adb pull로 회수)
         val log = RunLogger(this)
@@ -505,8 +518,9 @@ class RunActivity : AppCompatActivity() {
             MODE_LIVE -> RunLink.send(this, RunLink.PATH_START)
             else -> RunLink.send(this, RunLink.PATH_MIRROR)
         }
-        // 러닝 중 화면 유지: LLM 코칭은 포그라운드 전용(adr-007), GPS/파이프라인도 화면off 스로틀 회피
-        window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        // 러닝 중 화면 유지: LLM 코칭은 포그라운드 전용(adr-007), GPS/파이프라인도 화면off 스로틀 회피.
+        // 설정(spec-021)에서 끄면 화면 자동 꺼짐 허용(실센서 모드 배터리 절약).
+        if (settings.keepScreenOn) window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         startBtn.text = primaryLabel()
 
         src.start(lifecycleScope, onSample = sample@{ s ->
@@ -521,7 +535,8 @@ class RunActivity : AppCompatActivity() {
                 lifecycleScope.launch {
                     com.zone2runner.app.data.WeatherProbe.currentTempC(s.lat, s.lon)?.let {
                         tempView.text = "%.0f℃".format(it)
-                        eng.ambientTempC = it // 코칭 맥락(더위)에 반영 — 방향은 규칙, 기온은 표현 재료(adr-002/008)
+                        // 설정(spec-021)에서 더위 코칭 끄면 표시만 하고 코칭 맥락엔 넣지 않음
+                        if (settings.heatCoachingEnabled) eng.ambientTempC = it // 방향은 규칙, 기온은 표현 재료(adr-002/008)
                     }
                 }
             }
@@ -674,6 +689,7 @@ class RunActivity : AppCompatActivity() {
 
     /** 코칭 문장을 음성으로(llm-verify에서 검증한 TTS end-to-end). 세션 종료 문구는 제외. */
     private fun speak(text: String) {
+        if (!settings.voiceEnabled) return // 음성 코칭 off(spec-021) — 화면 문구는 그대로 표시
         if (!ttsReady || !running || text.contains("세션 종료")) return
         tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "coach")
     }

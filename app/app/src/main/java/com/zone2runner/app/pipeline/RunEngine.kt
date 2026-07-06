@@ -33,6 +33,8 @@ class RunEngine(
     private val coachScope: CoroutineScope? = null,
     priorUFrac: Double? = null,        // 세션 누적 학습값(LearnedZone). 없으면 공식 prior
     priorPredWeights: DoubleArray? = null, // 예측 개인 보정 누적 가중치(LearnedDynamics, spec-018)
+    private val cadence: CoachCadence = CoachCadence.DEFAULT, // 코칭 빈도(spec-021)
+    private val preemptiveEnabled: Boolean = true,            // 선제 코칭 on/off(spec-021)
 ) {
     private val extractor = FeatureExtractor()
     private val personalization = Personalization(profile, priorUFrac)
@@ -197,8 +199,8 @@ class RunEngine(
         if (!stationary) { stationarySec = 0; wasStationary = false; return }
         stationarySec++
         if (stationarySec < 8) return
-        // 정지 진입 직후 1회, 이후엔 40초마다. 다른 코칭과 최소 간격 공유.
-        val due = !wasStationary || s.tSec - lastCoachSec >= 40
+        // 정지 진입 직후 1회, 이후엔 idleReSec마다. 다른 코칭과 최소 간격 공유.
+        val due = !wasStationary || s.tSec - lastCoachSec >= cadence.idleReSec
         if (!due || s.tSec - lastCoachSec < 8) return
         wasStationary = true
         lastCoachSec = s.tSec
@@ -212,8 +214,8 @@ class RunEngine(
         val changed = j != lastJudgmentForCoach
         // 존 밖(미달/초과)에 계속 머물면 60초마다 재코칭 — 판정 변화만 기다리면
         // 초과가 지속될 때 코칭이 영영 침묵한다(실기기 시뮬 관찰)
-        val overdue = j != ZoneJudgment.IN && s.tSec - lastCoachSec >= 60
-        if ((!changed && !overdue) || s.tSec - lastCoachSec < 20) return
+        val overdue = j != ZoneJudgment.IN && s.tSec - lastCoachSec >= cadence.overdueSec
+        if ((!changed && !overdue) || s.tSec - lastCoachSec < cadence.minGapSec) return
         lastPreemptiveIntent = null // 실제 판정 코칭이 나가면 선제 상태 리셋
         fireCoach(s, j, preemptive = false)
     }
@@ -223,13 +225,14 @@ class RunEngine(
      * 이탈 전에 미리 방향 코칭. 같은 예측 방향이 이어지면 1회만.
      */
     private suspend fun maybePreemptiveCoach(s: Sample, loBpm: Double, hiBpm: Double) {
+        if (!preemptiveEnabled) return
         if (judgment != ZoneJudgment.IN || predictedHr60 <= 0) return
         val intent = when {
             predictedHr60 > hiBpm + 2 -> ZoneJudgment.ABOVE
             predictedHr60 < loBpm - 2 -> ZoneJudgment.BELOW
             else -> { lastPreemptiveIntent = null; return }
         }
-        if (intent == lastPreemptiveIntent || s.tSec - lastCoachSec < 20) return
+        if (intent == lastPreemptiveIntent || s.tSec - lastCoachSec < cadence.minGapSec) return
         lastPreemptiveIntent = intent
         fireCoach(s, intent, preemptive = true)
     }

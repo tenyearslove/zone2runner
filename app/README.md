@@ -8,7 +8,7 @@
 
 - JDK 17+ 필요(Android Studio JBR 권장). SDK 경로는 `local.properties`의 `sdk.dir`.
 - 빌드: `JAVA_HOME=<JBR> ./gradlew.bat assembleDebug` → `app/build/outputs/apk/debug/app-debug.apk`
-- 단위 테스트: `./gradlew.bat testDebugUnitTest` (판정/개인화/예측/코칭 가드/가상러너/통합 등 63건)
+- 단위 테스트: `./gradlew.bat testDebugUnitTest` (판정/개인화/예측/코칭 가드/가상러너/통합 등 66건)
 - 설치: `adb install -r app/build/outputs/apk/debug/app-debug.apk`
 
 ## 전체 플로우
@@ -62,7 +62,7 @@ app/app/src/main/java/com/zone2runner/app/
 
 ## 검증 현황
 
-- 빌드: `assembleDebug` 성공(ML Kit GenAI/GMS 포함). 단위 테스트 63건 통과.
+- 빌드: `assembleDebug` 성공(ML Kit GenAI/GMS 포함). 단위 테스트 66건 통과.
 - 심박 예측 NN 검증: `hr_dynamics.json` 순전파 이식 정확성 + 폐루프 온라인 보정 60초 RMSE 27→12.5bpm(EXPERIMENT_LOG §12).
 - 규칙 판정: 모순 불가 속성 테스트(ZoneJudgeTest). 개인화: 토크테스트 단측 관측 수렴/무변화 회귀 테스트.
 - **실기기 검증**: 폰 시뮬/프로필 관리/AI 설명(Gemini Nano) 확인. 실센서 GPS/워치 HR end-to-end는 필드 테스트(FIELD_TEST.md).

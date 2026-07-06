@@ -92,6 +92,9 @@ class HomeActivity : AppCompatActivity() {
         col.addView(bigButton("프로필 설정", Palette.CARD) {
             startActivity(Intent(this, ProfileActivity::class.java))
         })
+        col.addView(bigButton("설정", Palette.CARD) {
+            startActivity(Intent(this, SettingsActivity::class.java))
+        })
 
         if (!ProfileStore.isConfigured(this)) {
             col.addView(TextView(this).apply {

@@ -36,6 +36,7 @@
         <activity android:name=".ReportActivity" android:exported="false" />
         <activity android:name=".HistoryActivity" android:exported="false" />
         <activity android:name=".ProfileActivity" android:exported="false" />
+        <activity android:name=".SettingsActivity" android:exported="false" />
         <activity android:name=".MockConfigActivity" android:exported="false" />
 
         <!-- 워치 → 폰 러닝 원격 제어(/run/start, /run/stop). 워치에서 시작하면 폰에 풀스크린 알림 -->
