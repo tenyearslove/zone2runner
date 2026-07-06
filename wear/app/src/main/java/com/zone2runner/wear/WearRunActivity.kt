@@ -138,7 +138,11 @@ class WearRunActivity : ComponentActivity() {
         content.addView(zoneLabel, centered())
 
         // 페이스 / 거리 / 속도
-        val metrics = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER }
+        val metrics = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER
+            // 그룹 좌우 여백 — 바깥 숫자(페이스/속도)가 테두리에 붙지 않게 넉넉히, 열이 좁아져 숫자 간 간격도 줄어든다.
+            setPadding(dp(24), 0, dp(24), 0)
+        }
         paceVal = metricValue(); distVal = metricValue(); spdVal = metricValue()
         metrics.addView(metricCol(paceVal, "페이스"))
         metrics.addView(metricCol(distVal, "거리"))
@@ -169,8 +173,8 @@ class WearRunActivity : ComponentActivity() {
         isSingleLine = true // 원형 화면 폭에서 페이스("5'30\"") 줄바꿈 방지 (실기기 확인)
         ellipsize = null
         includeFontPadding = false // 세로 여백 제거로 폭 대비 글자 크게
-        // 전체 폭 3열에서 값이 열 폭에 맞춰 자동 조절(예: "5'30\"", "1.23km"). 넓어진 열에 맞춰 상한 16sp까지 키움.
-        setAutoSizeTextTypeUniformWithConfiguration(8, 16, 1, android.util.TypedValue.COMPLEX_UNIT_SP)
+        // 값이 열 폭에 맞춰 자동 조절(예: "5'30\"", "1.23km"). 과대 방지로 상한 15sp.
+        setAutoSizeTextTypeUniformWithConfiguration(8, 15, 1, android.util.TypedValue.COMPLEX_UNIT_SP)
     }
 
     private fun metricCol(value: TextView, label: String): LinearLayout {
@@ -278,11 +282,18 @@ class WearRunActivity : ComponentActivity() {
             zoneLabel.text = "${zone.short} ${zone.desc} · $tag"
             zoneLabel.setTextColor(zone.color)
             gauge.update(zone, Zones.gaugeFraction(RunBus.susHr, RunBus.boundLo, RunBus.boundHi, RunBus.boundMax), true)
+        } else if (hr > 0) {
+            // 폰 판정 미수신(폰 러닝 화면 미실행 등). 폰이 피드하면 위 미러로 자동 전환되므로 불일치 걱정 없음.
+            // 그 전까진 워치 자체 존(동기화된 경계/기본값)으로 표시 — 빈 화면보다 유용(사용자 요청).
+            val localZone = Zones.zoneOf(hr)
+            hrView.text = hr.toString(); hrView.setTextColor(localZone.color); bpmLabel.setTextColor(localZone.color)
+            val tag = when { localZone == HrZone.Z2 -> "목표 유지"; hr < Zones.zone2Bpm.first -> "존 낮음"; else -> "존 높음" }
+            zoneLabel.text = "${localZone.short} ${localZone.desc} · $tag"
+            zoneLabel.setTextColor(localZone.color)
+            gauge.update(localZone, Zones.gaugeFraction(hr), true)
         } else {
-            // 폰 판정 대기(연결/워밍업). 워치 단독 판정은 하지 않는다(항상 폰 연결 전제).
-            hrView.text = if (hr > 0) hr.toString() else "--"
-            hrView.setTextColor(C_MUTED); bpmLabel.setTextColor(C_MUTED)
-            zoneLabel.text = "폰 동기화 중…"; zoneLabel.setTextColor(C_AMBER)
+            hrView.text = "--"; hrView.setTextColor(C_MUTED); bpmLabel.setTextColor(C_MUTED)
+            zoneLabel.text = "센서 예열중…"; zoneLabel.setTextColor(C_AMBER)
             gauge.update(null, 0f, true)
         }
 
