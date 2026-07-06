@@ -43,11 +43,10 @@ class WearRunActivity : ComponentActivity() {
     private lateinit var distVal: TextView
     private lateinit var spdVal: TextView
     private lateinit var btnRow: LinearLayout
-    private lateinit var talkRow: LinearLayout
 
-    // 토크테스트 프롬프트(심박 높을 때 가끔 물어봄 → 폰 개인화에 반영)
+    // 토크테스트 프롬프트(심박 높을 때 가끔 물어봄 → 폰 개인화에 반영). 설문은 별도 전체화면 TalkTestActivity.
     private var lastTalkAskMs = 0L
-    private var talkShownAt = 0L
+    private var talkActive = false // 설문 화면이 떠 있는 동안 중복 실행 방지
     private var elevatedSec = 0
 
     private val state: RunState get() = RunBus.state
@@ -73,6 +72,7 @@ class WearRunActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+        talkActive = false // 설문 화면에서 돌아옴 → 다시 프롬프트 가능
         RunBus.listener = { render() }
         ui.post(ticker)
         if (mirror) registerMirror()
@@ -143,7 +143,8 @@ class WearRunActivity : ComponentActivity() {
         metrics.addView(metricCol(paceVal, "페이스"))
         metrics.addView(metricCol(distVal, "거리"))
         metrics.addView(metricCol(spdVal, "속도"))
-        content.addView(metrics, centered())
+        // 행을 전체 폭으로 — WRAP_CONTENT면 weight=1f 열이 펼쳐지지 못해 값이 좁게 쪼그라들고 양옆이 빈다(실기기).
+        content.addView(metrics, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
 
         // 버튼
         btnRow = LinearLayout(this).apply {
@@ -152,27 +153,13 @@ class WearRunActivity : ComponentActivity() {
         }
         content.addView(btnRow, centered())
 
-        // 토크테스트 프롬프트(기본 숨김): 심박 높을 때 가끔 "대화 되나요?" 5단계. 화면이 작아 2줄로 배치.
-        talkRow = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER
-            visibility = View.GONE; setPadding(0, dp(6), 0, 0)
-        }
-        val talkR1 = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER }
-        talkR1.addView(talkChip("아주편함", "very_comfortable"))
-        talkR1.addView(talkChip("편함", "comfortable"))
-        talkR1.addView(talkChip("보통", "borderline"))
-        val talkR2 = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER; setPadding(0, dp(4), 0, 0) }
-        talkR2.addView(talkChip("벅참", "hard"))
-        talkR2.addView(talkChip("매우벅참", "very_hard"))
-        talkRow.addView(talkR1); talkRow.addView(talkR2)
-        content.addView(talkRow, centered())
-
         // BOX_ALL(내접 사각형)은 원형 480px에서 실사용 폭이 ~70%로 줄어 페이스 줄바꿈/버튼 잘림 발생(실기기).
         // 콘텐츠가 세로 중앙 정렬이라 중앙 행은 원의 전체 폭을 쓸 수 있으므로 고정 패딩으로 대체.
-        content.setPadding(dp(14), dp(6), dp(14), dp(6))
+        content.setPadding(dp(6), dp(6), dp(6), dp(6)) // 좌우 여백 축소 — 3열 숫자 폭 최대 확보(실기기 잘림 대응)
         box.addView(content, BoxInsetLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT).apply {
             gravity = Gravity.CENTER
         })
+
         return box
     }
 
@@ -181,8 +168,9 @@ class WearRunActivity : ComponentActivity() {
         gravity = Gravity.CENTER
         isSingleLine = true // 원형 화면 폭에서 페이스("5'30\"") 줄바꿈 방지 (실기기 확인)
         ellipsize = null
-        // 좁은 3열에서 값이 열 폭에 맞춰 자동 축소(예: "10.5", "1.23km"). 위아래 잘림 방지로 폰트패딩 유지.
-        setAutoSizeTextTypeUniformWithConfiguration(9, 14, 1, android.util.TypedValue.COMPLEX_UNIT_SP)
+        includeFontPadding = false // 세로 여백 제거로 폭 대비 글자 크게
+        // 전체 폭 3열에서 값이 열 폭에 맞춰 자동 조절(예: "5'30\"", "1.23km"). 넓어진 열에 맞춰 상한 16sp까지 키움.
+        setAutoSizeTextTypeUniformWithConfiguration(8, 16, 1, android.util.TypedValue.COMPLEX_UNIT_SP)
     }
 
     private fun metricCol(value: TextView, label: String): LinearLayout {
@@ -190,12 +178,13 @@ class WearRunActivity : ComponentActivity() {
             orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER
             val lp = LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f)
             layoutParams = lp
-            setPadding(dp(5), 0, dp(5), 0) // 열 간 여백 확대(겹침 방지)
-            addView(value)
+            setPadding(dp(1), 0, dp(1), 0) // 열 간 최소 여백 — 값 폭을 최대한 확보(잘림 방지)
+            // 값은 열 전체 폭을 채워야 자동축소가 그 폭 기준으로 동작(WRAP이면 폭 제한이 없어 안 줄고 잘림).
+            addView(value, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
             addView(TextView(this@WearRunActivity).apply {
                 text = label; textSize = 9f; setTextColor(C_MUTED); gravity = Gravity.CENTER
                 isSingleLine = true
-            })
+            }, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
         }
     }
 
@@ -238,53 +227,27 @@ class WearRunActivity : ComponentActivity() {
 
     private fun space() = View(this).apply { layoutParams = LinearLayout.LayoutParams(dp(8), 1) }
 
-    /** 토크테스트 답변 칩 → 폰으로 전송(/talk/<state>) → 폰 개인화(observeTalkTest)에 반영. */
-    private fun talkChip(label: String, stateName: String) = TextView(this).apply {
-        text = label; textSize = 11f; setTextColor(Color.WHITE); setTypeface(typeface, Typeface.BOLD)
-        gravity = Gravity.CENTER
-        setPadding(dp(7), dp(5), dp(7), dp(5))
-        background = GradientDrawable().apply { setColor(Color.parseColor("#3A3F4A")); cornerRadius = dp(14).toFloat() }
-        val lp = LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT); lp.marginStart = dp(3); lp.marginEnd = dp(3)
-        layoutParams = lp
-        isClickable = true
-        setOnClickListener {
-            RunLink.send(this@WearRunActivity, "/talk/$stateName")
-            lastTalkAskMs = SystemClock.elapsedRealtime()
-            talkRow.visibility = View.GONE
-            android.widget.Toast.makeText(this@WearRunActivity, "기록됨", android.widget.Toast.LENGTH_SHORT).show()
-        }
-    }
-
-
     /**
      * 토크테스트 타이밍 — 심박이 높아져 특정 구간에 '머물' 때만 가끔 묻는다(사용자 요청, 고정 주기 아님).
-     *  (A) 지속 심박이 Zone 2 이상(개인 경계 기준)에 30초 이상 머물렀고, 최근 3분 안에 안 물었을 때.
+     *  (A) 지속 심박(폰 존)이 Zone 2 이상에 30초 이상 머물렀고, 최근 3분 안에 안 물었을 때.
      *      = 경계 근처/이상에 안정적으로 있을 때가 "이 강도 편해?" 확인이 가장 유용(active learning).
      *  (B) 오래(10분) 아예 안 물었으면 폴백 — 낮은 심박도 그 사람껜 힘들 수 있으니.
-     * 프롬프트가 뜨면 짧게 진동. 30초 무응답이면 닫는다. 러너는 언제든 직접 답할 수 있음.
+     * 조건 충족 시 전체화면 설문(TalkTestActivity)을 띄운다 — 좁은 대시보드에 끼워넣지 않는다.
      */
-    private fun updateTalkPrompt(hr: Int) {
-        val running = state == RunState.RUNNING && hr > 0
-        // Zone 2 이상(개인 경계 기준)에 '머무는' 시간 누적. Z1로 내려가면 리셋.
-        val inZone2Plus = running && Zones.zoneOf(hr) != HrZone.Z1
+    private fun updateTalkPrompt() {
+        val zone = phoneZone() // 폰 판정 존(지속 심박 기준). 폰 상태가 없으면 프롬프트 억제.
+        val running = state == RunState.RUNNING && zone != null
+        val inZone2Plus = running && zone != HrZone.Z1
         if (inZone2Plus) elevatedSec++ else elevatedSec = 0
+        if (talkActive) return // 설문 화면이 떠 있는 동안엔 재실행 안 함(onResume에서 해제)
         val now = SystemClock.elapsedRealtime()
-        if (talkRow.visibility != View.VISIBLE) {
-            val since = now - lastTalkAskMs
-            val elevatedAsk = inZone2Plus && elevatedSec >= 30 && since > 3 * 60 * 1000L
-            val fallback = running && since > 10 * 60 * 1000L
-            if (elevatedAsk || fallback) { talkRow.visibility = View.VISIBLE; talkShownAt = now; buzz() }
-        } else {
-            zoneLabel.text = "대화 되나요?"; zoneLabel.setTextColor(C_TEXT) // 질문 문구로 대체
-            if (now - talkShownAt > 30_000L) { talkRow.visibility = View.GONE; lastTalkAskMs = now }
-        }
-    }
-
-    /** 토크 프롬프트 등장 시 짧은 진동(놓치지 않게). */
-    private fun buzz() {
-        runCatching {
-            getSystemService(android.os.Vibrator::class.java)
-                ?.vibrate(android.os.VibrationEffect.createOneShot(120, android.os.VibrationEffect.DEFAULT_AMPLITUDE))
+        val since = now - lastTalkAskMs
+        val elevatedAsk = inZone2Plus && elevatedSec >= 30 && since > 3 * 60 * 1000L
+        val fallback = running && since > 10 * 60 * 1000L
+        if (elevatedAsk || fallback) {
+            lastTalkAskMs = now
+            talkActive = true
+            runCatching { startActivity(android.content.Intent(this, TalkTestActivity::class.java)) }
         }
     }
 
@@ -297,25 +260,30 @@ class WearRunActivity : ComponentActivity() {
         val totalSec = (ms / 1000).toInt()
         timeView.text = "%02d:%02d".format(totalSec / 60, totalSec % 60)
 
-        // HR + 존
+        // HR + 존 (adr-022: 존은 폰 판정을 미러. 큰 숫자 = 워치 순간 심박(폰 대시보드와 동일 구성)).
         val hr = RunBus.hr
         val running = state != RunState.IDLE
-        if (hr < 0) {
+        val zone = phoneZone() // 폰이 보낸 지속 심박+개인 경계로 계산(없으면 null)
+        if (!running) {
             hrView.text = "--"; hrView.setTextColor(C_MUTED); bpmLabel.setTextColor(C_MUTED)
-            zoneLabel.text = when {
-                state == RunState.IDLE -> "시작 대기"
-                RunBus.error != null -> RunBus.error
-                else -> "센서 예열중…"
-            }
-            zoneLabel.setTextColor(if (state == RunState.IDLE) C_MUTED else C_AMBER)
-            gauge.update(null, 0f, running)
-        } else {
-            val zone = Zones.zoneOf(hr)
-            hrView.text = hr.toString(); hrView.setTextColor(zone.color); bpmLabel.setTextColor(zone.color)
-            val tag = if (zone == HrZone.Z2) "목표 유지" else if (hr < Zones.zone2Bpm.first) "존 낮음" else "존 높음"
+            zoneLabel.text = RunBus.error ?: "시작 대기"
+            zoneLabel.setTextColor(if (RunBus.error != null) C_AMBER else C_MUTED)
+            gauge.update(null, 0f, false)
+        } else if (zone != null) {
+            // 큰 숫자 = 폰이 표시하는 순간 심박(정제됨) → 폰과 동일 값. 존 = 폰 지속 심박 기준.
+            val shownHr = if (RunBus.instHr > 0) RunBus.instHr else RunBus.susHr
+            hrView.text = shownHr.toString()
+            hrView.setTextColor(zone.color); bpmLabel.setTextColor(zone.color)
+            val tag = when { zone == HrZone.Z2 -> "목표 유지"; RunBus.susHr < RunBus.boundLo -> "존 낮음"; else -> "존 높음" }
             zoneLabel.text = "${zone.short} ${zone.desc} · $tag"
             zoneLabel.setTextColor(zone.color)
-            gauge.update(zone, Zones.gaugeFraction(hr), running)
+            gauge.update(zone, Zones.gaugeFraction(RunBus.susHr, RunBus.boundLo, RunBus.boundHi, RunBus.boundMax), true)
+        } else {
+            // 폰 판정 대기(연결/워밍업). 워치 단독 판정은 하지 않는다(항상 폰 연결 전제).
+            hrView.text = if (hr > 0) hr.toString() else "--"
+            hrView.setTextColor(C_MUTED); bpmLabel.setTextColor(C_MUTED)
+            zoneLabel.text = "폰 동기화 중…"; zoneLabel.setTextColor(C_AMBER)
+            gauge.update(null, 0f, true)
         }
 
         // 페이스/거리/속도
@@ -326,7 +294,15 @@ class WearRunActivity : ComponentActivity() {
         spdVal.text = if (speedKmh < 0.3) "--" else "%.1f".format(speedKmh)
 
         if (btnRow.childCount == 0 || btnTagMismatch()) rebuildButtons()
-        updateTalkPrompt(hr)
+        updateTalkPrompt()
+    }
+
+    /** 폰이 보낸 판정 상태가 신선하면 그 지속 심박+개인 경계로 존을 계산. 없으면 null(폰 판정 대기). */
+    private fun phoneZone(): HrZone? {
+        val fresh = RunBus.liveMs > 0 &&
+            SystemClock.elapsedRealtime() - RunBus.liveMs < LIVE_STALE_MS &&
+            RunBus.susHr > 0 && RunBus.boundHi > RunBus.boundLo
+        return if (fresh) Zones.zoneOf(RunBus.susHr, RunBus.boundLo, RunBus.boundHi, RunBus.boundMax) else null
     }
 
     private var lastBtnState: RunState? = null
@@ -388,6 +364,7 @@ class WearRunActivity : ComponentActivity() {
 
     companion object {
         const val EXTRA_MIRROR = "mirror" // 시뮬 미러 모드로 실행(폰 심박 수신 + 토크테스트만)
+        private const val LIVE_STALE_MS = 8000L // 폰 판정 상태 신선도 한계(1Hz 수신, BT 끊김 관용)
         private val C_TEXT = Color.parseColor("#E8EAED")
         private val C_MUTED = Color.parseColor("#9AA0A6")
         private val C_GREEN = Color.parseColor("#30D158")

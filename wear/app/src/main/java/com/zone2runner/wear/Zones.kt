@@ -52,24 +52,29 @@ object Zones {
     }
 
     /**
-     * 5구간: Z2 = 동기화된 개인 경계(폰과 동일 기준). Z1 = 그 아래.
+     * 5구간: Z2 = 개인 경계(폰과 동일 기준). Z1 = 그 아래.
      * Z3~Z5 = Z2 상한~최대심박을 3등분(개인 상한 기준의 상대 구간).
      */
-    fun zoneOf(bpm: Int): HrZone {
-        if (bpm < z2Lo) return HrZone.Z1
-        if (bpm <= z2Hi) return HrZone.Z2
-        val seg = ((maxHr - z2Hi) / 3.0).coerceAtLeast(1.0)
+    fun zoneOf(bpm: Int): HrZone = zoneOf(bpm, z2Lo, z2Hi, maxHr)
+
+    /** 경계를 명시로 받는 판정(adr-022: 폰이 매초 보낸 지속심박+개인 경계로 존 표시). */
+    fun zoneOf(bpm: Int, lo: Int, hi: Int, max: Int): HrZone {
+        if (bpm < lo) return HrZone.Z1
+        if (bpm <= hi) return HrZone.Z2
+        val seg = ((max - hi) / 3.0).coerceAtLeast(1.0)
         return when {
-            bpm <= z2Hi + seg -> HrZone.Z3
-            bpm <= z2Hi + 2 * seg -> HrZone.Z4
+            bpm <= hi + seg -> HrZone.Z3
+            bpm <= hi + 2 * seg -> HrZone.Z4
             else -> HrZone.Z5
         }
     }
 
     /** 게이지 마커 위치 0..1 — Z1 시작(Z2 하한 - 밴드폭)부터 최대심박까지 선형. */
-    fun gaugeFraction(bpm: Int): Float {
-        val start = z2Lo - (z2Hi - z2Lo)
-        val range = (maxHr - start).coerceAtLeast(1)
+    fun gaugeFraction(bpm: Int): Float = gaugeFraction(bpm, z2Lo, z2Hi, maxHr)
+
+    fun gaugeFraction(bpm: Int, lo: Int, hi: Int, max: Int): Float {
+        val start = lo - (hi - lo)
+        val range = (max - start).coerceAtLeast(1)
         return ((bpm - start).toDouble() / range).coerceIn(0.0, 1.0).toFloat()
     }
 

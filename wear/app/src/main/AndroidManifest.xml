@@ -31,6 +31,13 @@
             </intent-filter>
         </activity>
 
+        <!-- 토크테스트 전체화면 설문(별도 화면). 러닝 중 폰 존 기준으로 WearRunActivity가 띄움 -->
+        <activity
+            android:name=".TalkTestActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:theme="@android:style/Theme.DeviceDefault" />
+
         <service
             android:name=".RunService"
             android:exported="false"

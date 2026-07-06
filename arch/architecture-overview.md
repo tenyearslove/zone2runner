@@ -75,7 +75,7 @@ HR 1~2초 수집   ──Wearable──▶       │
 ```
 zone2runner/
 ├── wear/      Galaxy Watch 앱 — RunService(포그라운드, 화면off 지속) + 대시보드     (spec-010, adr-009)
-│              HR 송신(HrForwarder /hr) + 존 경계 수신(ZoneSyncService /zones)
+│              HR 송신(HrForwarder /hr) + 폰 판정 상태 수신(/run/live → 존 미러, adr-022)
 │              ※ Data Layer 라우팅 제약으로 applicationId는 폰과 동일(com.zone2runner.app)
 ├── app/       Galaxy S26 Ultra 앱 — 판정/개인화/코칭/UI                          (spec-011)
 │   ├─ sensor/    RunSource 추상화 (Simulated / Live GPS+WatchHr / Mock)          (spec-003 HrSource 사상, QA5)
@@ -115,7 +115,7 @@ zone2runner/
 
 1. **1단계 (PoC, 얇게)** — **완료**: `app/` Mock/시뮬 HR → Zone 2 판정 → 코칭. 전체 파이프라인 흐름과 QA 검증 골격 확보(단위 테스트 66건).
 2. **2단계 (실기기 연동)** — **대부분 검증 완료(2026-07-03)**: 폰 — Gemini Nano 코칭 실동작+TTS, 시뮬 세션 e2e, 프로필 factor UI.
-   워치 — 세션 시작/권한/포그라운드 서비스 화면off 지속(adr-009), 존 동기화(/zones) 수신.
+   워치 — 세션 시작/권한/포그라운드 서비스 화면off 지속(adr-009), 폰 판정 상태(/run/live) 미러 수신(adr-022).
    **잔여: 착용 상태 HR 스트림(워치→폰) + 야외 GPS — 필드 테스트(FIELD_TEST.md)**. Samsung Health Sensor SDK 대신 Wear OS Health Services 채택(adr-008).
 
 ---

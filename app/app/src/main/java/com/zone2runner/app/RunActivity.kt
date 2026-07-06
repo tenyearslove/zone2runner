@@ -525,6 +525,9 @@ class RunActivity : AppCompatActivity() {
             log.sample(s, state, watchProvider?.lastAgeMs() ?: -1L)
             // 시뮬/목: 심박을 워치로 스트림(미러) — 워치에서 표시+토크테스트 가능
             if (mode != MODE_LIVE && state.hr > 0 && frame % 25 == 0) RunLink.sendMirrorHr(this, state.hr)
+            // B(adr-022): 폰 판정 상태(지속 심박+개인 경계)를 워치로 푸시 → 워치가 같은 존 표시(불일치 해소).
+            // 폰이 유일한 판정 주체(항상 폰 연결 전제). MODE_LIVE=매초, 시뮬=미러와 같은 캐던스.
+            if (state.hr > 0 && (mode == MODE_LIVE || frame % 25 == 0)) pushWatchZone(state)
             if (!tempFetched && s.lat.isFinite() && s.lon.isFinite()) { // 기온 1회 조회(유효 좌표 확보 후)
                 tempFetched = true
                 lifecycleScope.launch {
@@ -632,6 +635,21 @@ class RunActivity : AppCompatActivity() {
         finished = true
         startBtn.text = primaryLabel()
         Toast.makeText(this, "세션 저장됨", Toast.LENGTH_SHORT).show()
+    }
+
+    /**
+     * B(adr-022): 워치가 폰과 같은 존을 표시하도록 판정 상태를 전송.
+     * 지속 심박(smoothedHr, 판정 기준)과 개인 경계(lo/hi/max)를 updateZoneUi/판정과 동일 산식으로 계산 →
+     * 워치는 자체 판정 없이 이 값으로만 존을 그린다(항상 폰 연결 전제, 워치 단독 없음).
+     */
+    private fun pushWatchZone(s: LiveState) {
+        val p = profile ?: return
+        val sus = if (s.smoothedHr > 0) s.smoothedHr else s.hr
+        if (sus <= 0) return
+        val inst = if (s.hr > 0) s.hr else sus // 폰이 표시하는 순간 심박(정제됨) — 워치가 같은 숫자로 표시
+        val hi = (p.restingHr + s.uEstFrac * p.hrr).toInt()
+        val lo = (p.restingHr + (s.uEstFrac - com.zone2runner.app.domain.Zone2Prior.BAND) * p.hrr).toInt()
+        RunLink.sendLive(this, inst, sus, lo, hi, p.maxHr)
     }
 
     private fun render(s: LiveState) {

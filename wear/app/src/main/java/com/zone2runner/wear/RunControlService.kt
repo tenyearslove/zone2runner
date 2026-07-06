@@ -22,6 +22,12 @@ import com.google.android.gms.wearable.WearableListenerService
 class RunControlService : WearableListenerService() {
 
     override fun onMessageReceived(event: MessageEvent) {
+        // 판정 상태(/run/live)는 1Hz라 로그 제외. 나머지 제어 메시지만 로깅.
+        if (event.path == RunLink.PATH_LIVE) {
+            val p = String(event.data).split(",").mapNotNull { it.trim().toIntOrNull() }
+            if (p.size == 5) { RunBus.setLive(p[0], p[1], p[2], p[3], p[4]); RunBus.notifyUi() }
+            return
+        }
         android.util.Log.i("RunControl", "recv ${event.path} state=${RunBus.state}")
         when (event.path) {
             RunLink.PATH_START -> {
