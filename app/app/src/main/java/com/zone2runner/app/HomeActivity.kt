@@ -116,6 +116,8 @@ class HomeActivity : AppCompatActivity() {
         val fLo = (p.restingHr + (prior.uFrac0 - B) * p.hrr).toInt()
         val fHi = (p.restingHr + prior.uFrac0 * p.hrr).toInt()
         val grid = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        // 프로필 선택기(러닝 시작 전 어떤 프로필로 뛸지 고름, spec-020). 여러 개면 탭해서 전환.
+        grid.addView(profileSelectorRow())
         grid.addView(LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             addView(statTile("${p.age}세", "나이"), cell())
@@ -143,6 +145,46 @@ class HomeActivity : AppCompatActivity() {
             })
         }
         return grid
+    }
+
+    /** 러닝 프로필 선택기 — 활성 프로필명 표시 + 탭하면 전환(여러 개일 때) 또는 관리 화면. */
+    private fun profileSelectorRow(): View {
+        val profiles = com.zone2runner.app.data.Profiles.list(this)
+        val activeName = com.zone2runner.app.data.Profiles.activeName(this)
+        return LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL; gravity = android.view.Gravity.CENTER_VERTICAL
+            setPadding(0, 0, 0, dpi(8))
+            addView(TextView(this@HomeActivity).apply {
+                text = "러닝 프로필"; textSize = 12f; setTextColor(Palette.MUTED)
+            }, LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f))
+            addView(TextView(this@HomeActivity).apply {
+                text = "$activeName ▾"; textSize = 13f; setTextColor(Palette.ACCENT)
+                setTypeface(typeface, android.graphics.Typeface.BOLD)
+                setPadding(dpi(12), dpi(6), dpi(12), dpi(6))
+                background = android.graphics.drawable.GradientDrawable().apply {
+                    setColor(Palette.BG); cornerRadius = dpi(14).toFloat()
+                    setStroke(dpi(1), Palette.STROKE)
+                }
+                isClickable = true
+                setOnClickListener {
+                    if (profiles.size <= 1) startActivity(Intent(this@HomeActivity, ProfileActivity::class.java))
+                    else showProfilePicker(profiles)
+                }
+            })
+        }
+    }
+
+    private fun showProfilePicker(profiles: List<com.zone2runner.app.data.Profiles.Entry>) {
+        val activeId = com.zone2runner.app.data.Profiles.activeId(this)
+        val names = profiles.map { (if (it.id == activeId) "● " else "○ ") + it.name }.toTypedArray()
+        android.app.AlertDialog.Builder(this)
+            .setTitle("이 프로필로 러닝")
+            .setItems(names) { _, which ->
+                com.zone2runner.app.data.Profiles.setActive(this, profiles[which].id)
+                recreate() // 홈 갱신(목표 심박/개인화 반영) + onResume에서 ZoneSync 재푸시
+            }
+            .setNeutralButton("프로필 관리") { _, _ -> startActivity(Intent(this, ProfileActivity::class.java)) }
+            .setNegativeButton("닫기", null).show()
     }
 
     private fun recentCard(s: SessionStore.Summary): View {
