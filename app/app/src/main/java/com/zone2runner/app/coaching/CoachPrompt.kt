@@ -33,6 +33,9 @@ class CoachPrompt private constructor(private val t: JSONObject) {
             CadenceBand.HIGH -> t.g("cadence").optString("high").replace("{spm}", ctx.spm.toString())
             else -> ""
         }
+        // 기온 맥락(더울 때만): 방향 아님 — LLM이 무리 말고 수분 챙기라는 조언을 덧붙이게(옵션 절)
+        val heat = if (ctx.heat == HeatBand.HOT)
+            t.optString("heat_hot").replace("{temp}", ctx.tempC?.toInt()?.toString() ?: "") else ""
         val context = buildContext(ctx)
         return t.optString("base")
             .replace("{terrain}", terrain)
@@ -40,6 +43,7 @@ class CoachPrompt private constructor(private val t: JSONObject) {
             .replace("{direction}", t.g("direction").optString(dirKey))
             .replace("{must}", t.g("must").optString(mustKey))
             .replace("{cadence}", cadence)
+            .replace("{heat}", heat)
             .replace("{limits}", t.optString("limits"))
             .replace(Regex("\\s+"), " ").trim()
     }
@@ -70,10 +74,11 @@ class CoachPrompt private constructor(private val t: JSONObject) {
 
         // 에셋과 동일 내용(폴백). 에셋을 지워도 기존 동작 보존.
         private const val DEFAULT = """{
-          "base": "당신은 러닝 코치입니다. {terrain} 입니다. {context}러너에게 {direction} 격려하는 한국어 한 문장으로 자연스럽게 안내하세요. {must}{cadence} {limits}",
+          "base": "당신은 러닝 코치입니다. {terrain} 입니다. {context}러너에게 {direction} 격려하는 한국어 한 문장으로 자연스럽게 안내하세요. {must}{cadence}{heat} {limits}",
           "limits": "35자 내외, 따옴표와 이모지 없이.",
           "context": "현재 심박 {cur}bpm, 목표 {lo}~{hi}bpm{pred}. ",
           "context_pred": ", 이대로면 60초 뒤 {pred}bpm 예상",
+          "heat_hot": " 기온이 {temp}도로 덥습니다. 무리하지 말고 수분을 챙기라는 조언을 짧게 덧붙이세요.",
           "terrain": {"uphill":"지형은 오르막","flat":"지형은 평지","downhill":"지형은 내리막"},
           "direction": {
             "speed_up":"페이스를 살짝 올려 심박을 Zone 2로 높이도록",

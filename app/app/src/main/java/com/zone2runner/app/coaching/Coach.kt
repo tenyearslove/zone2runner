@@ -20,7 +20,15 @@ data class CoachContext(
     val loBpm: Int = 0,       // 개인 Zone2 하한
     val hiBpm: Int = 0,       // 개인 Zone2 상한
     val predictedHr60: Int = -1, // 60초 뒤 예측 심박
+    val tempC: Double? = null,   // 기온(℃). 더위는 드리프트↑ → 표현 맥락(방향 아님). null=미상
 ) {
+    /** 기온 밴드. 더위만 코칭 맥락에 반영(생리적으로 Zone2 드리프트에 영향). 방향은 아님. */
+    val heat: HeatBand
+        get() = when {
+            tempC == null -> HeatBand.UNKNOWN
+            tempC >= 28 -> HeatBand.HOT
+            else -> HeatBand.OK
+        }
     /**
      * 케이던스 판정. 근거: 걸음 빈도를 5~10% 올리면 무릎/고관절 부하가 유의미하게 감소
      * (Heiderscheit et al. 2011, Med Sci Sports Exerc; Schubert et al. 2014 리뷰),
@@ -37,6 +45,7 @@ data class CoachContext(
 }
 
 enum class CadenceBand { UNKNOWN, LOW, OK, HIGH }
+enum class HeatBand { UNKNOWN, OK, HOT }
 
 /** 규칙이 정하는 코칭 방향(의도). LLM은 이 의도를 표현만 바꾼다. */
 enum class CoachIntent { SPEED_UP, MAINTAIN, SLOW_DOWN }
@@ -69,13 +78,13 @@ object DirectionGuard {
     private val upCues = upWords + listOf("끌어올", "페이스를 올", "속도를 올", "속도를 내")
     private val downCues = downWords + listOf("내려", "내리", "호흡", "고르", "여유", "진정", "편안", "무리하지", "가라앉")
 
-    // 케이던스/폼 가이드 절은 방향 판정 대상이 아님 — "발걸음 빈도를 낮추고", "보폭은 줄이고" 같은
-    // 폼 문구가 페이스 방향 모순으로 오판되지 않게, 폼 키워드부터 절 경계(구두점)까지 제거 후 검사.
-    // 따라서 방향 문구는 폼 절 밖에 두어야 한다(예: "천천히, 보폭을 줄여 올라가요" — RuleCoach 준수).
-    private val cadenceClause = Regex("(발걸음|케이던스|스텝|걸음|보폭)[^.,!?]*")
+    // 케이던스/폼/기온 가이드 절은 방향 판정 대상이 아님 — "발걸음 빈도를 낮추고", "더우니 무리하지 말고"
+    // 같은 맥락 문구가 페이스 방향 모순으로 오판되지 않게, 키워드부터 절 경계(구두점)까지 제거 후 검사.
+    // 따라서 방향 문구는 이 절 밖에 두어야 한다(예: "천천히, 보폭을 줄여 올라가요" — RuleCoach 준수).
+    private val nonDirectionClause = Regex("(발걸음|케이던스|스텝|걸음|보폭|더우|더위|기온|수분|탈수|무리하지)[^.,!?]*")
 
     fun ok(intent: CoachIntent, text: String): Boolean {
-        val t = text.replace(cadenceClause, "")
+        val t = text.replace(nonDirectionClause, "")
         return when (intent) {
             CoachIntent.SPEED_UP -> downWords.none(t::contains) && upCues.any(t::contains)
             CoachIntent.SLOW_DOWN -> upWords.none(t::contains) && downCues.any(t::contains)
@@ -100,7 +109,7 @@ class RuleCoach : Coach {
                 CoachIntent.SPEED_UP -> "심박이 곧 Zone 2 아래로 내려가겠어요. 페이스를 조금 올려요."
                 CoachIntent.MAINTAIN -> "좋아요, Zone 2 유지 중이에요. 이 리듬 그대로."
             }
-            return guard(line + cadenceTip(ctx))
+            return guard(line + cadenceTip(ctx) + heatTip(ctx))
         }
         val lines = when (intentOf(ctx.judgment)) {
             CoachIntent.SPEED_UP -> when {
@@ -122,7 +131,7 @@ class RuleCoach : Coach {
                 "완벽해요. 지금 페이스를 계속 지켜주세요.",
             )
         }
-        return guard(lines[counter++ % lines.size] + cadenceTip(ctx))
+        return guard(lines[counter++ % lines.size] + cadenceTip(ctx) + heatTip(ctx))
     }
 
     /** 케이던스 폼 가이드(범위 밖일 때만 덧붙임). 방향 문구가 아니라 폼 문구 — DirectionGuard는 케이던스 절을 제외하고 판정. */
@@ -131,6 +140,10 @@ class RuleCoach : Coach {
         CadenceBand.HIGH -> " 발걸음 빈도는 살짝 낮추고 보폭을 편안하게."
         else -> ""
     }
+
+    /** 더위 맥락(28℃+). 더울수록 심박·드리프트↑ → 무리 말고 수분. 방향 아님(DirectionGuard 제외 절). */
+    private fun heatTip(ctx: CoachContext): String =
+        if (ctx.heat == HeatBand.HOT) " 더우니 무리하지 말고 수분 챙겨요." else ""
 
     /** 출력 가드: 길이 제한/공백 정리(adr-002 출력 가드의 최소판). */
     private fun guard(s: String): String {

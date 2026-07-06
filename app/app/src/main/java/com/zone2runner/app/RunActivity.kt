@@ -476,6 +476,8 @@ class RunActivity : AppCompatActivity() {
                     })
         }
         source = src
+        // 시뮬 자동 시나리오: 가상러너의 기온을 코칭 맥락에 주입(더위 취약형 등 검증 가능). 실측 조회는 좌표 확보 시 덮어씀.
+        if (mode == MODE_SIM && !manualMode) { eng.ambientTempC = virtualRunner.tempC; tempView.text = "%.0f℃".format(virtualRunner.tempC); tempFetched = true }
 
         // 필드 로그(spec-012): 원시 입력+파이프라인 출력을 1Hz JSONL로 기록(adb pull로 회수)
         val log = RunLogger(this)
@@ -519,6 +521,7 @@ class RunActivity : AppCompatActivity() {
                 lifecycleScope.launch {
                     com.zone2runner.app.data.WeatherProbe.currentTempC(s.lat, s.lon)?.let {
                         tempView.text = "%.0f℃".format(it)
+                        eng.ambientTempC = it // 코칭 맥락(더위)에 반영 — 방향은 규칙, 기온은 표현 재료(adr-002/008)
                     }
                 }
             }

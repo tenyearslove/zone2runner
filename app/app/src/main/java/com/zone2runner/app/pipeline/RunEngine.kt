@@ -95,6 +95,9 @@ class RunEngine(
     fun predUpdates(): Int = predLearner.updates
 
     /** 이번 세션에 토크테스트가 한 번이라도 반영됐는지(저장 판단/표시용). */
+    /** 현재 기온(℃) — 코칭 맥락(더위)용. RunActivity가 날씨 조회/가상러너로 세팅. 방향엔 무관. */
+    @Volatile var ambientTempC: Double? = null
+
     val talkObserved: Boolean get() = personalization.talkCount > 0
     /** 이번 세션 말하기 테스트 응답 횟수(개인화 관측 누적 저장용). */
     fun talkObservations(): Int = personalization.talkCount
@@ -239,6 +242,7 @@ class RunEngine(
         val ctx = CoachContext(
             j, s.slopePct, s.paceMinKm, s.tSec, spm = s.spm, preemptive = preemptive,
             currentHr = sustainedHr, loBpm = coachLoBpm, hiBpm = coachHiBpm, predictedHr60 = predictedHr60,
+            tempC = ambientTempC,
         )
         if (scope == null) {
             recordCoaching(s.tSec, coach.say(ctx), 0L)

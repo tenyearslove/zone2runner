@@ -1,6 +1,7 @@
 package com.zone2runner.app
 
 import com.zone2runner.app.coaching.CoachContext
+import com.zone2runner.app.coaching.CoachIntent
 import com.zone2runner.app.coaching.CoachPrompt
 import com.zone2runner.app.domain.ZoneJudgment
 import org.junit.Assert.assertFalse
@@ -41,6 +42,25 @@ class CoachPromptTest {
         assertTrue(rich.contains("현재 심박 150bpm"))
         assertTrue(rich.contains("목표 122~138bpm"))
         assertTrue(rich.contains("60초 뒤 155bpm"))
+    }
+
+    @Test fun heatClause_onlyWhenHot_andNotADirection() {
+        val hot = p.render(CoachContext(ZoneJudgment.IN, 0.0, 6.0, 300, tempC = 31.0))
+        assertTrue("더울 때 기온/수분 맥락", hot.contains("31") && hot.contains("수분"))
+        val mild = p.render(CoachContext(ZoneJudgment.IN, 0.0, 6.0, 300, tempC = 18.0))
+        assertFalse("선선하면 기온 맥락 없음", mild.contains("덥"))
+        // 더위 절('무리하지 말고')이 방향 판정을 뒤집지 않아야 함
+        val up = p.render(CoachContext(ZoneJudgment.BELOW, 0.0, 6.0, 300, tempC = 31.0))
+        assertTrue("더워도 미달이면 올리는 방향 유지", up.contains("올려") || up.contains("높여"))
+    }
+
+    @Test fun heatGuidance_excludedFromDirectionGuard() {
+        // "더우니 무리하지 말고 수분" + 올리는 방향 → SPEED_UP 통과해야(더위 절 제외 판정)
+        assertTrue(com.zone2runner.app.coaching.DirectionGuard.ok(
+            CoachIntent.SPEED_UP, "페이스를 살짝 올려요. 더우니 무리하지 말고 수분 챙겨요."))
+        // MAINTAIN인데 더위 절만 있으면 통과(증감 명령 없음)
+        assertTrue(com.zone2runner.app.coaching.DirectionGuard.ok(
+            CoachIntent.MAINTAIN, "이 리듬 그대로. 더우니 수분 챙겨요."))
     }
 
     @Test fun cadenceClauseInjected_whenOutOfRange() {
