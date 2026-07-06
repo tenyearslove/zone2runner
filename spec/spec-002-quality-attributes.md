@@ -32,13 +32,15 @@
 │   └─ QA3 누적 데이터로 개인 Zone 2 경계 보정         (H, H)
 ├─ 수행 효율성(AI)
 │   └─ QA4 이탈 감지→음성 코칭 5초 이내               (H, M)
-└─ 테스트 가능성
-    └─ QA5 Watch 없이 HR 소스 교체로 전체 검증         (M, M)
+├─ 테스트 가능성
+│   └─ QA5 Watch 없이 HR 소스 교체로 전체 검증         (M, M)
+└─ 설명용이성(AI)
+    └─ QA6 개인화 보정 이유를 데이터 근거로 설명        (M, L)
 ```
 
 ## ASR 선정
 
-ASR(Architecturally Significant Requirement)은 아키텍처를 좌우하는 핵심 요구로, **중요도 중(7) 이상**을 기준으로 선정한다. QA1~QA6 모두 중요도 7 이상이므로 전부 ASR이며, 우선순위(중요도·난이도 종합)는 QA3 > QA1 = QA4 > QA2 > QA5 순이다.
+ASR(Architecturally Significant Requirement)은 아키텍처를 좌우하는 핵심 요구로, **중요도 중(7) 이상**을 기준으로 선정한다. QA1~QA6 모두 중요도 7 이상이므로 전부 ASR이며, 우선순위(중요도·난이도 종합)는 QA3 > QA1 = QA4 > QA2 > QA5 = QA6 순이다.
 
 ## ASR → 설계결정(DP) 매핑
 
@@ -54,6 +56,7 @@ ASR(Architecturally Significant Requirement)은 아키텍처를 좌우하는 핵
 | QA3 | 개인 Zone 2 경계 적응 | **DP2** 온라인 Bayesian + 토크테스트 (adr-004/016, spec-004) |
 | QA4 | 5초 이내 응답 | **DP4** 프롬프트 최소화 (adr-002) + 규칙 판정 즉시(무 추론) + 심박예측 NN 순전파 |
 | QA5 | 소스 교체 검증성 | RunSource 추상화 + VirtualRunner 폐루프 시뮬 (spec-003, adr-016) |
+| QA6 | 개인화 설명용이성 | 규칙이 사실 확정 + LLM 표현(무결성) — PersonalizationExplainer + 시각화 (spec-020) |
 
 ### 평가 관점 (중요)
 - **Zone 2 판정은 실측 정답(ground truth)이 없다** (개인별 진짜 경계는 랩 검사 없이는 모름). 따라서 판정 자체의 정확도로 QA를 평가할 수 없다.
@@ -82,3 +85,4 @@ ASR(Architecturally Significant Requirement)은 아키텍처를 좌우하는 핵
 | QA3 | **메커니즘 실증** | 관측 양호 시 세션 누적 수렴(오차 5→2bpm, 불확실성 감소). 실측 임계추출(Conconi 편향)은 한계로 명시(`ml/personalization.py`, HANDOFF) |
 | QA4 | **부분(실기기 측정 대기)** | Gemini Nano warm 생성 약 2초 실기기 확인(adr-007). 이탈감지→TTS end-to-end 5초는 실기기 러닝에서 측정 필요 |
 | QA5 | **달성** | `RunSource` 추상화로 Watch 없이 전체 파이프라인 실행: 시뮬 재생 + **Mock 모드(심박/속도 범위 지정 실시간 합성)**. 독립 실행 가능 비율 100%, 단위 테스트 13건(spec-011 AC-9) |
+| QA6 | **달성(2026-07-06)** | 개인화 진행 시각화(초기→현재 밴드 이동) + AI 설명(Gemini Nano). 사실은 규칙이 확정하고 LLM은 표현만(무결성) — 실기기에서 규칙 팩트를 지어낸 수치 없이 자연어로 설명 확인. 단위 테스트로 설명-사실 정합 검증(spec-020) |
