@@ -154,8 +154,9 @@ class RunActivity : AppCompatActivity() {
             controller.setZoom(18.0) // 러닝 반경이 좁으니 확대 — 경로가 화면을 채우게
             controller.setCenter(GeoPoint(37.5665, 126.9780))
         }
-        // 지도는 컴팩트하게(0.6) — 아래 판정 요소 대시보드에 공간을 준다
-        root.addView(map, LinearLayout.LayoutParams(MATCH_PARENT, 0, 0.6f))
+        // 지도는 컴팩트하게 — 아래 대시보드에 공간을 준다. 지도/대시보드 둘 다 weight로 화면을 나눠
+        // 대시보드가 길어도(시뮬 컨트롤 多) 아래 ScrollView 안에서 스크롤된다.
+        root.addView(map, LinearLayout.LayoutParams(MATCH_PARENT, 0, 0.55f))
 
         val dash = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -331,7 +332,12 @@ class RunActivity : AppCompatActivity() {
         }
         dash.addView(startBtn, mt(8))
 
-        root.addView(dash, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
+        // 대시보드를 ScrollView로 감싸 화면을 넘는 데이터/컨트롤을 스크롤 가능하게(사용자 요청).
+        val dashScroll = android.widget.ScrollView(this).apply {
+            isFillViewport = true
+            addView(dash)
+        }
+        root.addView(dashScroll, LinearLayout.LayoutParams(MATCH_PARENT, 0, 1f))
         return root
     }
 
