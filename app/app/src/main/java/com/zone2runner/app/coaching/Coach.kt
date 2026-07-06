@@ -15,6 +15,11 @@ data class CoachContext(
     val spm: Int = 0, // 케이던스(0=미상). 범위 밖이면 코칭에 폼 가이드 추가
     /** 선제 코칭(spec-014 FR4): 아직 존 안이지만 동역학 모델이 곧 이탈을 예측 — judgment는 예측된 이탈 방향. */
     val preemptive: Boolean = false,
+    // LLM 표현 풍부화용 실측 수치(방향은 규칙이 결정 — 이 값들은 표현 재료일 뿐, adr-002). 0/-1=미상.
+    val currentHr: Int = 0,   // 지속 심박(판정 기준 bpm)
+    val loBpm: Int = 0,       // 개인 Zone2 하한
+    val hiBpm: Int = 0,       // 개인 Zone2 상한
+    val predictedHr60: Int = -1, // 60초 뒤 예측 심박
 ) {
     /**
      * 케이던스 판정. 근거: 걸음 빈도를 5~10% 올리면 무릎/고관절 부하가 유의미하게 감소

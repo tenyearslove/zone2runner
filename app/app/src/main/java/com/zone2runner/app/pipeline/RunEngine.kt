@@ -72,6 +72,9 @@ class RunEngine(
     // 동역학 모델 출력(표시용)
     private var predictedHr60 = -1
     private var recommendedPace = 0.0
+    private var sustainedHr = -1       // 최근 지속 심박(코칭 컨텍스트용)
+    private var coachLoBpm = 0
+    private var coachHiBpm = 0
 
     val usingModel: Boolean get() = dynamics != null
 
@@ -121,7 +124,8 @@ class RunEngine(
 
         // 판정 = 규칙(adr-013 FR1): 지속 심박 vs 개인화 경계 + 히스테리시스. 밴드와 같은 경계 → 모순 불가
         val sus = extractor.smoothedHrAt(s.tSec)
-        if (sus != null) judgment = judge.judge(sus.toDouble(), loBpm, hiBpm)
+        if (sus != null) { judgment = judge.judge(sus.toDouble(), loBpm, hiBpm); sustainedHr = sus }
+        coachLoBpm = loBpm.toInt(); coachHiBpm = hiBpm.toInt()
 
         // 코칭: 판정만 있으면 동작(120초 동역학 워밍업과 무관 — HR 들어오면 수십 초부터 코칭 시작).
         // 이전엔 feat(워밍업 필요) 블록 안에 있어 2분 지나야 코칭이 시작되던 문제(실기기).
@@ -231,7 +235,10 @@ class RunEngine(
         if (scope != null && coachJob?.isActive == true) return // 이전 생성이 아직 진행 중이면 건너뜀
         lastCoachSec = s.tSec
         if (!preemptive) lastJudgmentForCoach = j
-        val ctx = CoachContext(j, s.slopePct, s.paceMinKm, s.tSec, spm = s.spm, preemptive = preemptive)
+        val ctx = CoachContext(
+            j, s.slopePct, s.paceMinKm, s.tSec, spm = s.spm, preemptive = preemptive,
+            currentHr = sustainedHr, loBpm = coachLoBpm, hiBpm = coachHiBpm, predictedHr60 = predictedHr60,
+        )
         if (scope == null) {
             recordCoaching(s.tSec, coach.say(ctx), 0L)
         } else {
