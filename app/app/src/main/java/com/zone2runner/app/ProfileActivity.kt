@@ -13,16 +13,25 @@ import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
+import com.zone2runner.app.coaching.LlmCoach
+import com.zone2runner.app.coaching.PersonalizationExplainer
+import com.zone2runner.app.data.LearnedDynamics
+import com.zone2runner.app.data.LearnedZone
 import com.zone2runner.app.data.ProfileStore
+import com.zone2runner.app.data.Profiles
+import com.zone2runner.app.domain.PersonalizationStatus
 import com.zone2runner.app.domain.Profile
 import com.zone2runner.app.domain.Zone2Prior
 import com.zone2runner.app.ui.Palette
+import com.zone2runner.app.ui.PersonalizationView
 import com.zone2runner.app.ui.bigButton
 import com.zone2runner.app.ui.card
 import com.zone2runner.app.ui.dpi
 import com.zone2runner.app.ui.subtitle
 import com.zone2runner.app.ui.title
 import com.zone2runner.app.ui.withSystemBarInsets
+import kotlinx.coroutines.launch
 
 /**
  * 프로필 설정 (spec-009 + spec-013).
@@ -59,8 +68,14 @@ class ProfileActivity : AppCompatActivity() {
             orientation = LinearLayout.VERTICAL; setBackgroundColor(Palette.BG)
             setPadding(dpi(18), dpi(24), dpi(18), dpi(28))
         }
-        col.addView(title("프로필 설정"))
-        col.addView(subtitle("입력할수록 첫 러닝부터 Zone 2 판정이 내 몸에 가까워집니다"))
+        col.addView(title("프로필 관리"))
+        col.addView(subtitle("입력할수록, 그리고 러닝할수록 Zone 2가 내 몸에 맞춰집니다"))
+
+        // ---- 프로필 전환/관리 (spec-020 FR1/FR4) ----
+        col.addView(card("내 프로필", buildProfileSwitcher()))
+
+        // ---- 개인화 진행 현황 (spec-020 FR3) ----
+        col.addView(card("개인화 진행", buildPersonalizationCard()))
 
         ageIn = numField(p.age.toString())
         rhrIn = numField(p.restingHr.toString())
@@ -147,6 +162,137 @@ class ProfileActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    // ---- 프로필 전환/관리 (spec-020) ----
+
+    private fun buildProfileSwitcher(): View = LinearLayout(this).apply {
+        orientation = LinearLayout.VERTICAL
+        val list = Profiles.list(this@ProfileActivity)
+        val activeId = Profiles.activeId(this@ProfileActivity)
+        // 프로필 칩들(가로 래핑 대신 세로 나열 — 개수 적음)
+        for (e in list) {
+            val on = e.id == activeId
+            addView(TextView(this@ProfileActivity).apply {
+                text = (if (on) "● " else "○ ") + e.name + (if (on) "  (사용 중)" else "")
+                textSize = 14f; setTextColor(if (on) Palette.ACCENT else Palette.TEXT)
+                setPadding(dpi(12), dpi(10), dpi(12), dpi(10))
+                background = GradientDrawable().apply {
+                    setColor(if (on) Palette.CARD else Palette.BG); cornerRadius = dpi(10).toFloat()
+                    setStroke(dpi(1), if (on) Palette.ACCENT else Palette.STROKE)
+                }
+                layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply { bottomMargin = dpi(6) }
+                isClickable = true
+                setOnClickListener {
+                    if (!on) { Profiles.setActive(this@ProfileActivity, e.id); reload() }
+                    else showProfileManager(e)
+                }
+            })
+        }
+        addView(TextView(this@ProfileActivity).apply {
+            text = "+ 새 프로필"; textSize = 13f; setTextColor(Palette.BLUE)
+            setPadding(dpi(12), dpi(8), dpi(12), dpi(8)); isClickable = true
+            setOnClickListener { showCreateProfile() }
+        })
+        addView(TextView(this@ProfileActivity).apply {
+            text = "사용 중인 프로필을 탭하면 이름 변경/삭제/개인화 초기화"; textSize = 10f
+            setTextColor(Palette.MUTED); setPadding(dpi(12), dpi(2), 0, 0)
+        })
+    }
+
+    private fun showCreateProfile() {
+        val input = EditText(this).apply {
+            hint = "프로필 이름 (예: 아침 러닝, 회복주)"; setTextColor(Palette.TEXT); setHintTextColor(Palette.MUTED)
+        }
+        android.app.AlertDialog.Builder(this)
+            .setTitle("새 프로필")
+            .setView(input)
+            .setPositiveButton("만들기") { _, _ ->
+                val id = Profiles.create(this, input.text.toString())
+                Profiles.setActive(this, id)
+                Toast.makeText(this, "새 프로필로 전환됨 — 신체 정보를 입력하세요", Toast.LENGTH_SHORT).show()
+                reload()
+            }
+            .setNegativeButton("취소", null).show()
+    }
+
+    private fun showProfileManager(e: Profiles.Entry) {
+        val opts = arrayOf("이름 변경", "개인화 초기화(학습만 삭제)", "프로필 삭제")
+        android.app.AlertDialog.Builder(this).setTitle(e.name).setItems(opts) { _, which ->
+            when (which) {
+                0 -> {
+                    val input = EditText(this).apply { setText(e.name); setTextColor(Palette.TEXT) }
+                    android.app.AlertDialog.Builder(this).setTitle("이름 변경").setView(input)
+                        .setPositiveButton("저장") { _, _ -> Profiles.rename(this, e.id, input.text.toString()); reload() }
+                        .setNegativeButton("취소", null).show()
+                }
+                1 -> android.app.AlertDialog.Builder(this).setTitle("개인화 초기화")
+                    .setMessage("이 프로필의 학습 데이터(경계 이력/예측 보정)를 지웁니다. 신체 정보는 유지돼요. 계속할까요?")
+                    .setPositiveButton("초기화") { _, _ ->
+                        LearnedZone.reset(this); LearnedDynamics.reset(this)
+                        Toast.makeText(this, "개인화를 초기화했어요", Toast.LENGTH_SHORT).show(); reload()
+                    }.setNegativeButton("취소", null).show()
+                2 -> {
+                    if (Profiles.list(this).size <= 1) {
+                        Toast.makeText(this, "마지막 프로필은 삭제할 수 없어요. 개인화 초기화를 쓰세요", Toast.LENGTH_SHORT).show()
+                    } else android.app.AlertDialog.Builder(this).setTitle("프로필 삭제")
+                        .setMessage("'${e.name}' 프로필과 학습 데이터를 완전히 지웁니다. 되돌릴 수 없어요.")
+                        .setPositiveButton("삭제") { _, _ -> Profiles.delete(this, e.id); reload() }
+                        .setNegativeButton("취소", null).show()
+                }
+            }
+        }.show()
+    }
+
+    private fun reload() { recreate() }
+
+    // ---- 개인화 진행 현황 + AI 설명 (spec-020 FR3, 설명용이성) ----
+
+    private fun buildStatus(): PersonalizationStatus {
+        val p = ProfileStore.load(this)
+        val prior = Zone2Prior.of(p)
+        return PersonalizationStatus(
+            restingHr = p.restingHr, hrr = p.hrr,
+            priorUFrac = prior.uFrac0,
+            learnedUFrac = LearnedZone.uFrac(this),
+            band = Zone2Prior.BAND,
+            sessions = LearnedZone.sessionCount(this),
+            talkObs = LearnedZone.talkObs(this),
+            predUpdates = LearnedDynamics.updates(this),
+            sigmaBpm = LearnedZone.sigmaBpm(this),
+            uFracHistory = LearnedZone.history(this),
+        )
+    }
+
+    private fun buildPersonalizationCard(): View = LinearLayout(this).apply {
+        orientation = LinearLayout.VERTICAL
+        val s = buildStatus()
+        addView(TextView(this@ProfileActivity).apply {
+            text = "${s.stageLabel} · 러닝 ${s.sessions}회 · 말하기 테스트 ${s.talkObs}회 · 예측 학습 ${s.predUpdates}회"
+            textSize = 12f; setTextColor(Palette.TEXT)
+        })
+        addView(PersonalizationView(this@ProfileActivity).apply { set(s) },
+            LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply { topMargin = dpi(6) })
+        // AI 설명(설명용이성): 사실은 규칙, 표현은 LLM. 기본은 규칙 문장, 버튼 누르면 LLM 풀이.
+        val explain = TextView(this@ProfileActivity).apply {
+            text = PersonalizationExplainer.facts(s); textSize = 12f; setTextColor(Palette.MUTED)
+            setPadding(0, dpi(8), 0, 0)
+        }
+        addView(explain)
+        addView(TextView(this@ProfileActivity).apply {
+            text = "🤖 AI 설명 듣기"; textSize = 12f; setTextColor(Palette.BLUE)
+            setPadding(0, dpi(8), 0, dpi(2)); isClickable = true
+            setOnClickListener {
+                text = "🤖 생각 중…"
+                val btn = this
+                lifecycleScope.launch {
+                    val llm = LlmCoach(this@ProfileActivity)
+                    val out = llm.freeform(PersonalizationExplainer.prompt(s))
+                    if (out != null) { explain.text = out; explain.setTextColor(Palette.TEXT); btn.text = "🤖 다시 설명" }
+                    else { btn.text = "🤖 AI 미가용 (규칙 설명 표시 중)"; }
+                }
+            }
+        })
     }
 
     // ---- 입력/미리보기 ----

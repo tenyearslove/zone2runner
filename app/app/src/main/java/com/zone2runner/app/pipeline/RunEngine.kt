@@ -96,6 +96,10 @@ class RunEngine(
 
     /** 이번 세션에 토크테스트가 한 번이라도 반영됐는지(저장 판단/표시용). */
     val talkObserved: Boolean get() = personalization.talkCount > 0
+    /** 이번 세션 말하기 테스트 응답 횟수(개인화 관측 누적 저장용). */
+    fun talkObservations(): Int = personalization.talkCount
+    /** 현재 개인화 경계 불확실성 σ(bpm) — 작을수록 확신. 시각화 신뢰도용. */
+    fun currentSigmaBpm(): Double = personalization.sigma
 
     /** 1Hz 샘플 처리. 필요 시 coach.say 호출(suspend). LiveState 반환. */
     suspend fun onSample(s: Sample): LiveState {

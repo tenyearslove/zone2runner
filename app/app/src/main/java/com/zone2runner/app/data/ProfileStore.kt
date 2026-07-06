@@ -22,7 +22,13 @@ object ProfileStore {
     private const val K_FITNESS = "fitness_level"
     private const val K_FREQ = "weekly_freq"
 
-    private fun prefs(ctx: Context) = ctx.getSharedPreferences(PREF, Context.MODE_PRIVATE)
+    // 활성 프로필별 네임스페이스(spec-020). 기본 프로필은 접미사 없어 기존 데이터 그대로.
+    private fun prefs(ctx: Context) = ctx.getSharedPreferences(Profiles.prefName(ctx, PREF), Context.MODE_PRIVATE)
+
+    /** 프로필 삭제 시 그 신체정보 제거. */
+    fun clear(ctx: Context, profileId: String) {
+        ctx.getSharedPreferences(Profiles.prefNameFor(PREF, profileId), Context.MODE_PRIVATE).edit().clear().apply()
+    }
 
     /** 저장된 프로필(없으면 기본값). RHR=0(모름)이면 factor 기반 추정으로 해소(spec-013) — 하류는 항상 유효 RHR을 받는다. */
     fun load(ctx: Context): Profile {

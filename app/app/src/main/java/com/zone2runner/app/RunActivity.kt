@@ -584,9 +584,9 @@ class RunActivity : AppCompatActivity() {
         // 다음 세션이 여기서 시작 → 실주행 말하기 테스트가 세션을 넘어 누적/수렴.
         // (NN은 심박 예측 전담 — 개인화 경계엔 관여하지 않음. 역치 추정 NN은 adr-014→adr-016으로 강등)
         val finalU = eng.currentUFrac()
-        com.zone2runner.app.data.LearnedZone.set(this, finalU)
+        com.zone2runner.app.data.LearnedZone.set(this, finalU, eng.talkObservations(), eng.currentSigmaBpm()) // uFrac 이력 + 관측 + σ(spec-020)
         // 예측 개인 보정 누적 저장(spec-018) — 다음 세션이 이어서 학습
-        com.zone2runner.app.data.LearnedDynamics.set(this, eng.predWeights())
+        com.zone2runner.app.data.LearnedDynamics.set(this, eng.predWeights(), eng.predUpdates())
         val pr = eng.predRmse()
         logger?.event("boundary") {
             put("uFrac", finalU); put("talk", eng.talkObserved)
