@@ -44,7 +44,12 @@
 > **다음 우선순위**: (1) voice-poc talk test 실측 보정 + 라벨 데이터 수집 → 모델 학습, (2) ✅예측 보정 효과 검증 완료(EXPERIMENT_LOG §12: 60초 RMSE 평균 29.1→13.8bpm, 4/4 러너 개선), (3) 실주행 필드 테스트.
 >
 > **★ 2026-07-06 세션**: 게이지 3마커(평균/실측/예측)+범례, 코칭 프롬프트 외부화(coach_prompt.json)+맥락 수치 확장, 예측 온라인 보정 검증(§12: 60초 27→12.5bpm, 7/7), 러닝화면 스크롤, **VirtualRunner 대폭 강화(spec-019: 지형/피로/기온/서지/센서아티팩트/랜덤샘플러)**, **경사 거리창 회귀(GPS 고도 노이즈 강건, SlopeEstimator)**, WHITEPAPER 최신화(online≠인터넷 명확화).
-> **★ ML 정비(2026-07-06)**: 죽은 NN 2개를 앱에서 제거 — **Zone2Classifier(판정 MLP, adr-013로 규칙 대체)** + **ThresholdEstimator(역치 NN, adr-016로 Bayesian 대체)** + 딸린 에셋(zone2_mlp/threshold_mlp.json)/테스트/죽은 메서드. **앱 로드 모델 = hr_dynamics 하나로 단일화**. 근거는 adr-013/016·EXPERIMENT_LOG·git 이력 보존. 실기기 정상 동작 확인. 아래 213~247행 등 과거 세션 기록의 Zone2Classifier 언급은 그 시점 스냅샷(현행 아님). 테스트 61→54건.
+> **★ ML 정비(2026-07-06)**: 죽은 NN 2개를 앱에서 제거 — **Zone2Classifier(판정 MLP, adr-013로 규칙 대체)** + **ThresholdEstimator(역치 NN, adr-016로 Bayesian 대체)** + 딸린 에셋(zone2_mlp/threshold_mlp.json)/테스트/죽은 메서드. **앱 로드 모델 = hr_dynamics 하나로 단일화**. 근거는 adr-013/016·EXPERIMENT_LOG·git 이력 보존. 실기기 정상 동작 확인. 아래 213~247행 등 과거 세션 기록의 Zone2Classifier 언급은 그 시점 스냅샷(현행 아님).
+> **★ 프로필 관리 + 개인화 시각화 + 설명용이성(2026-07-06, spec-020/QA6)**: 사용자 요청 —
+> (1) **다중 프로필**(Profiles 레지스트리, 프로필별 네임스페이스, 무손실 하위호환=기본프로필은 기존 pref 키, 생성/전환/이름변경/삭제/개인화초기화),
+> (2) **개인화 진행 시각화**(PersonalizationView: 초기 공식 vs 현재 학습 Zone2 밴드 겹쳐 그려 상단 이동량±bpm + 세션별 스파크라인. LearnedZone에 uFrac 이력/말하기관측수/σ 저장),
+> (3) **AI 설명(설명용이성 QA6)**: PersonalizationExplainer — 사실은 규칙이 확정(무결성), Gemini Nano가 표현만(코칭 DirectionGuard 철학), 미가용 시 규칙 폴백. spec-002에 QA6 신설(Utility Tree/우선순위/DP매핑/검증현황 일관).
+> 실기기 확인: 프로필관리 카드 렌더 + Gemini Nano가 규칙 팩트를 지어낸 수치 없이 자연어 설명. 테스트 앱 60건. 폰 설치됨.
 
 ---
 
