@@ -19,16 +19,16 @@ Galaxy Watch가 심박을 실시간 수집해 폰에 보내면, 폰이 규칙으
 | DP | 결정 | 문서 |
 |:---:|------|------|
 | DP0 | Watch-Phone Hybrid 구조 (Watch=수집, Phone=판정/코칭) | `arch/adr-001-watch-phone-architecture.md` |
-| **DP1** | 심박 예측 = 개인 심박 동역학 NN (HrDynamics — 선제 코칭/페이스 제안) | `arch/adr-013`, `adr-016`, `spec/spec-014` |
+| **DP1** | 심박 예측 = 생리 ODE + 개인 파라미터 온라인 추정 (HrOdeModel — 선제 코칭/페이스 제안) | `arch/adr-020`, `adr-016`, `spec/spec-014` |
 | **DP2** | 개인 Zone 2 범위 = 온라인 Bayesian 적응 (토크테스트/디커플링 라벨) | `arch/adr-004`, `adr-016`, `spec/spec-004` |
 | **DP3** | Zone 2 판정 = 규칙 (ZoneJudge — 지속 심박 vs 개인 경계 + 히스테리시스) | `arch/adr-013`, `adr-016` |
 | **DP4** | LLM 코칭 = 규칙이 방향 결정 + LLM이 표현 + 출력 가드 | `arch/adr-002-ondevice-llm-coaching.md` |
 
-AI 역량: (1) **심박 동역학 예측 NN**(HrDynamics, 학습 산출물 — 선제 코칭/목표 페이스 제안), (2) **Bayesian 개인 Zone 2 경계 추정**, (3) **규칙 기반 실시간 판정**(ZoneJudge — 결정론/즉시), (4) **LLM 상황 코칭**. 판정과 표현을 분리해, 판정은 규칙으로 결정론/저지연을 보장하고 NN/LLM은 그 위에서 예측과 표현을 담당한다.
+AI 역량: (1) **심박 예측 생리 ODE**(HrOdeModel — 모집단 prior + 개인 τ/드리프트 온라인 추정, 선제 코칭/페이스 제안), (2) **Bayesian 개인 Zone 2 경계 추정**, (3) **규칙 기반 실시간 판정**(ZoneJudge — 결정론/즉시), (4) **LLM 상황 코칭**. 판정과 표현을 분리해, 판정은 규칙으로 결정론/저지연을 보장하고 NN/LLM은 그 위에서 예측과 표현을 담당한다.
 
 - **DP3 판정**은 규칙(ZoneJudge). 지속 심박을 개인 경계와 비교하고 히스테리시스로 상태 떨림을 억제한다. 결정론이라 QA1(방향)/QA4(저지연)에 유리. **과거 다변량 MLP 판정기(adr-005/spec-006)는 시뮬레이터 라벨 순환 결함으로 Superseded**.
 - **DP2 개인화**는 신경망이 아니라 경량 Bayesian 적응추정(소수/온라인 라벨, float 산술). 역치 추정 NN(adr-014)은 개인화 경로에서 제거(Demoted). 상세 `spec/spec-004`.
-- **DP1 심박 예측 NN**은 개인 심박 동역학 모델(HrDynamics). 순수 Kotlin 순전파(adr-011)로 온디바이스 추론하며, 판정이 아니라 선제 코칭/목표 페이스 제안에 쓰인다. 상세 `spec/spec-014`.
+- **DP1 심박 예측**은 생리 ODE(HrOdeModel, adr-020) — mono-exponential 지연 + 드리프트. 시뮬-학습 MLP는 시뮬 ODE를 흉내내는 순환이라 폐기. 개인 파라미터(τ/드리프트/수요맵)만 실주행 온라인 추정. 상세 `spec/spec-014`, `adr-020`.
 - **Zone 2 기준**은 %HRmax (상단 70% = LT1, 하단 ~60%)이다. %HRR 아님.
 
 ---
@@ -48,7 +48,7 @@ HR 1~2초 수집   ──Wearable──▶       │
              판정: ZoneJudge (규칙)          특징 추출 (FeatureExtractor)
              지속 심박 vs 개인 경계                  │
              + 히스테리시스 (%HRmax)                 ▼
-             → Zone2 상태 (결정론)          심박 예측 NN (HrDynamics)     ← DP1
+             → Zone2 상태 (결정론)          심박 예측 ODE (HrOdeModel)    ← DP1
                         │                   선제 코칭 / 목표 페이스 제안
                         │                            │
                         └───────────┬────────────────┘
@@ -65,7 +65,7 @@ HR 1~2초 수집   ──Wearable──▶       │
                         출력 가드 → TTS 음성            ← QA1/QA4
 ```
 
-- 판정(ZoneJudge 규칙)과 예측(HrDynamics NN)은 별개 경로다. 판정은 규칙으로 즉시 결정하고, NN은 그 옆에서 선제 코칭/페이스 제안을 만든다.
+- 판정(ZoneJudge 규칙)과 예측(HrOdeModel 생리 ODE)은 별개 경로다. 판정은 규칙으로 즉시 결정하고, ODE는 그 옆에서 선제 코칭/페이스 제안을 만든다.
 - 개인 경계는 온라인 Bayesian이 토크테스트/디커플링 신호로 적응시켜 ZoneJudge에 공급한다.
 
 ---
@@ -80,7 +80,7 @@ zone2runner/
 ├── app/       Galaxy S26 Ultra 앱 — 판정/개인화/코칭/UI                          (spec-011)
 │   ├─ sensor/    RunSource 추상화 (Simulated / Live GPS+WatchHr / Mock)          (spec-003 HrSource 사상, QA5)
 │   ├─ pipeline/  OutlierGuard + FeatureExtractor + ZoneJudge(규칙 판정)          (adr-013/016, spec-014)
-│   │             + HrDynamics(심박 예측 NN) + Personalization(Bayesian) + RunEngine (adr-004/011, spec-004)
+│   │             + HrOdeModel(심박 예측 생리 ODE) + Personalization(Bayesian) + RunEngine (adr-004/020, spec-004)
 │   │             ※ Zone2Classifier = LEGACY(미사용, adr-005 판정 MLP의 잔재)
 │   ├─ coaching/  의도 결정(규칙) + LLM 표현(Gemini Nano) + 방향 잠금 가드 + TTS    (adr-002/007, spec-005)
 │   ├─ data/      세션 JSON 영속화 + 프로필 저장 + 필드 로그(RunLogger) + 존 동기화  (spec-007/009/012/013)

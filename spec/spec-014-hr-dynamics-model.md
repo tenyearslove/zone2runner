@@ -1,6 +1,13 @@
-# Spec-014: 개인 심박 동역학 모델 — 예측 NN과 목표 페이스 제안
+# Spec-014: 개인 심박 동역학 모델 — 예측과 목표 페이스 제안
 
-- **상태**: Draft (adr-013 Accepted에 따른 명세)
+> **★ 방법 교체 (2026-07-06, adr-020)**: 이 문서가 기술한 "시뮬 데이터로 지도학습한 MLP(HrDynamics)"는
+> **폐기**되고 **생리 ODE + 개인 파라미터 온라인 추정(HrOdeModel)**으로 대체됐다. 이유: 시뮬레이터의 심박
+> 생성 자체가 손으로 쓴 ODE라, 그걸 흉내내는 MLP는 순환/공허였다(문헌 Apple/Nature npj 2023, MDPI 2024의
+> 생리 ODE+NN 하이브리드를 따름). 아래 MLP 아키텍처/학습 서술은 **역사적 기록**이며, 현행은 `adr-020` + 백서 5-1.
+> 유지되는 것: 예측의 목적(선제 코칭/페이스 역질의), 입력 신호(현재/추세 심박, 페이스, 경사), "이 페이스 유지 시" 조건부.
+
+- **상태**: Superseded by adr-020 (예측을 생리 ODE로 교체) — 기록 보존
+- **원 상태**: Draft (adr-013 Accepted에 따른 명세)
 - **날짜**: 2026-07-03
 - **관련 ADR**: `arch/adr-013-zone2-judgment-role-separation.md` (판정 역할 재분리)
 - **대체**: `spec/spec-006-zone2-classifier-nn.md` (판정 MLP - Superseded)
