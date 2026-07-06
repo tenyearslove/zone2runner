@@ -1,13 +1,13 @@
 package com.zone2runner.app.pipeline
 
-import com.zone2runner.app.domain.MPS_PER_MIN_KM
 import com.zone2runner.app.domain.Profile
 
 /**
- * 1Hz 시계열 → MLP 입력 특징 7종. simulator.extract_features와 동일 규약(spec-006 §1).
- * 특징: [hr_norm_u, hr_norm_l, dHR, pace, spm, decoupling, slope]
- *   - hr_norm_u/l : 개인 경계(uEst/lEst) 대비 HR 위치
- *   - decoupling  : 세션 baseline(hr/pace) 대비 최근 상승률 (Cardiac Drift)
+ * 1Hz 시계열 특징 추출. 현재 소비처(adr-016):
+ *   - smoothedHrAt: 지속 심박(60초 평균) → 규칙 판정(ZoneJudge)의 입력.
+ *   - dynFeaturesAt: 심박 예측 NN(HrDynamics) 입력 7특징.
+ *   - extractAt: 개인화 관측(디커플링)/표시용 지표(dHR 추세). [decoupling 임계 부근 지속HR을 관측 후보로]
+ *   - displayDriftAt: 사용자 표시용 드리프트(생리 지표).
  * 이상치 제거된 HR을 넣는다(OutlierGuard).
  */
 class FeatureExtractor {

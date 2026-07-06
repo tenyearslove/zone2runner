@@ -64,7 +64,8 @@ class HistoryActivity : AppCompatActivity() {
                 text = df.format(Date(s.startedAtEpochMs)); textSize = 12f; setTextColor(Palette.MUTED)
             }, LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f))
             addView(TextView(this@HistoryActivity).apply {
-                text = if (s.usedModel) "MLP" else "규칙"; textSize = 10f
+                // 판정은 항상 규칙(ZoneJudge). usedModel=심박예측 NN(동역학) 로드 여부(adr-013/016)
+                text = if (s.usedModel) "AI 예측" else "규칙"; textSize = 10f
                 setTextColor(if (s.usedModel) Palette.ACCENT else Palette.MUTED)
             })
         })

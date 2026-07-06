@@ -45,7 +45,7 @@ import org.osmdroid.views.overlay.Polyline
  * 러닝(라이브) — 입력 소스(RunSource)를 갈아끼워 전체 파이프라인을 구동한다.
  *   sim  = 물리 시뮬레이터 가속 재생(실기기 없이 데모).
  *   live = 실 GPS(FusedLocation) + 워치 심박(Data Layer). 위치 권한 필요.
- * [소스 → 이상치가드 → 특징 → MLP판정 → 개인화 → 코칭 → 세션]. 종료 시 SessionStore 저장 후 리포트.
+ * [소스 → 이상치가드 → 규칙판정(ZoneJudge) → 개인화(Bayesian) → 심박예측 → 코칭 → 세션]. 종료 시 저장 후 리포트.
  */
 class RunActivity : AppCompatActivity() {
 
@@ -211,7 +211,7 @@ class RunActivity : AppCompatActivity() {
         metrics.addView(metricCol(paceView, "페이스"))
         dash.addView(metrics, mt(8))
 
-        // 실시간 판정 요소(MLP 특징 표시) + 보폭(속도/케이던스 파생) + 기온(참고)
+        // 실시간 러닝 지표(경사/케이던스/보폭/드리프트/기온) — 표시용(판정은 규칙, 예측 NN 입력 일부)
         val factors = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
         slopeView = metricVal(); spmView = metricVal(); strideView = metricVal(); tempView = metricVal()
         factors.addView(metricCol(slopeView, "경사"))
@@ -637,7 +637,7 @@ class RunActivity : AppCompatActivity() {
         val moving = s.speedKmh > 0.8 && s.paceMinKm in 0.1..19.5
         paceView.text = if (moving) "%d'%02d\"".format(s.paceMinKm.toInt(), ((s.paceMinKm % 1) * 60).toInt()) else "--"
 
-        // 실시간 판정 요소(MLP 입력 특징)
+        // 실시간 러닝 지표(표시용)
         when {
             s.slopePct > 2 -> { slopeView.text = "↑%.1f%%".format(s.slopePct); slopeView.setTextColor(C_AMBER) }
             s.slopePct < -2 -> { slopeView.text = "↓%.1f%%".format(-s.slopePct); slopeView.setTextColor(C_BLUE) }

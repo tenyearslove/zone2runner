@@ -127,10 +127,10 @@ class ReportActivity : AppCompatActivity() {
         val hrPoints = r.series.filter { it.hr > 0 }
         if (hrPoints.size < 4) return
 
-        // Zone2 목표 밴드(bpm): HRR 대비 (uEstEnd-0.10) ~ uEstEnd
+        // Zone2 목표 밴드(bpm): HRR 대비 (uEstEnd-밴드폭) ~ uEstEnd. 밴드폭은 Zone2Prior.BAND로 통일.
         val hrr = (r.maxHrProfile - r.restingHr).coerceAtLeast(1)
         val hi = (r.restingHr + r.uEstEndFrac * hrr).toFloat()
-        val lo = (r.restingHr + (r.uEstEndFrac - 0.10) * hrr).toFloat()
+        val lo = (r.restingHr + (r.uEstEndFrac - com.zone2runner.app.domain.Zone2Prior.BAND) * hrr).toFloat()
 
         // HR 추이
         val hrChart = TimeSeriesChartView(this).also {

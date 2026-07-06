@@ -4,14 +4,15 @@ import android.content.Context
 import org.json.JSONObject
 
 /**
- * 개인 심박 동역학 모델 (spec-014, adr-013) — 온디바이스 회귀 MLP (8 -> 32 -> 16 -> 2, ReLU).
+ * 개인 심박 동역학 모델 (spec-014, adr-013) — 온디바이스 회귀 MLP (7 -> 32 -> 16 -> 2, ReLU).
  *
  * "현재 상태 + 앞으로 유지할 페이스" -> [30초 뒤, 60초 뒤] 심박(HRR 비율)을 예측한다.
  * ml/train_hr_dynamics.py가 뽑은 assets/hr_dynamics.json(가중치+StandardScaler) 로드,
  * 순수 Kotlin 순전파(adr-011 방식). 분류가 아니라 회귀 — softmax 없음.
+ * (특징 순서/개수는 JSON의 features를 따르며 dynFeaturesAt와 일치해야 함.)
  *
- * 입력 특징 순서(spec-014):
- *   [hr_now_frac, hr_sus_frac, dHR, pace_plan, slope, spm, elapsed_min, decoupling]
+ * 입력 특징 순서(현재 7종, assets/hr_dynamics.json):
+ *   [hr_now_frac, hr_sus_frac, dHR, pace_plan, slope, spm, elapsed_min]
  */
 class HrDynamics private constructor(
     val features: List<String>,
