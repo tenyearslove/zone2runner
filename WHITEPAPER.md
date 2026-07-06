@@ -587,6 +587,7 @@ PoC(`voice-poc`)에서 세 가지를 실기기 검증했고, **모두 온디바�
 - (심박 예측 NN 근거) athlete_hr_predict(LSTM, MIT), Zhu et al. (2025) — 웨어러블 러닝 심박/역치 예측(RNN).
 - (대조군) Etxegarai et al. (2018) — 젖산역치를 RNN으로 추정. 우리는 소수/온라인 라벨이라 Bayesian을 택함.
 
-> 폐기/강등 이력: 판정 MLP(`train_mlp.py`/`Zone2Classifier.kt`)는 라벨 순환 결함으로 Superseded,
-> 역치 추정 NN(`ThresholdEstimator`)은 Bayesian 중복으로 Demoted. 코드/문서는 기록 보존(LEGACY)이며
-> 현재 동작 경로에는 없다.
+> 폐기/강등 이력: 판정 MLP(`Zone2Classifier`)는 라벨 순환 결함으로 Superseded(→규칙 판정 ZoneJudge),
+> 역치 추정 NN(`ThresholdEstimator`)은 Bayesian(Personalization)과 역할 중복이라 Demoted.
+> **둘 다 앱 코드/에셋에서 제거(2026-07-06)** — 결정 근거와 실험은 `arch/adr-013`/`adr-016`/
+> `ml/EXPERIMENT_LOG.md` §8·§10과 git 이력에 보존. 학습 스크립트(`ml/train_mlp.py` 등)만 실험 기록으로 남긴다.

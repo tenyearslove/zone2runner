@@ -43,7 +43,7 @@ class FeatureExtractor {
     fun warmupDone(): Boolean = !baseRatio.isNaN()
 
     /**
-     * 최근 60초 평균 심박(bpm) — MLP 판정이 보는 것과 동일한 지속 심박 기준.
+     * 최근 60초 평균 심박(bpm) — 규칙 판정(ZoneJudge)이 보는 것과 동일한 지속 심박 기준.
      * 밴드 마커를 이 값으로 그려 판정 칩과 시각적으로 정렬한다(순간 스파이크로 인한 색/판정 괴리 제거).
      * 버퍼가 비면 null. 초반엔 가용 표본만 평균(점진적으로 60초 창으로 수렴).
      */
@@ -97,48 +97,6 @@ class FeatureExtractor {
             decoupling,
             slope[t],
         )
-    }
-
-    /**
-     * 세션 역치 추정 특징 8종 (spec-015, train_threshold.py session_features와 동일 규약):
-     *   [hr_frac_slow, hr_frac_mid, hr_frac_fast, hr_speed_slope, drift, cadence_n, rhr_frac, age_n]
-     * 워밍업 이후 샘플로 계산. 표본이 너무 적으면 null.
-     */
-    fun sessionThresholdFeatures(profile: Profile): DoubleArray? {
-        val n = hr.size
-        if (n < WARMUP_S + 60) return null
-        val rhr = profile.restingHr.toDouble(); val hrr = profile.hrr; val maxHr = profile.maxHr.toDouble()
-        val hf = ArrayList<Double>(n); val sp = ArrayList<Double>(n); val spmv = ArrayList<Double>(n)
-        for (i in WARMUP_S until n) {
-            hf += (hr[i] - rhr) / hrr
-            sp += MPS_PER_MIN_KM / pace[i].coerceIn(3.0, 12.0)     // m/s
-            spmv += spm[i].toDouble()
-        }
-        val m = hf.size
-        // 속도 삼분위로 느림/중간/빠름 구간 HR 비율 평균
-        val sorted = sp.sorted()
-        val q1 = sorted[m / 3]; val q2 = sorted[2 * m / 3]
-        fun avgWhere(cond: (Int) -> Boolean): Double {
-            var s = 0.0; var c = 0
-            for (i in 0 until m) if (cond(i)) { s += hf[i]; c++ }
-            return if (c > 0) s / c else hf.average()
-        }
-        val fSlow = avgWhere { sp[it] <= q1 }
-        val fMid = avgWhere { sp[it] > q1 && sp[it] <= q2 }
-        val fFast = avgWhere { sp[it] > q2 }
-        // HR(비율) vs 속도 선형 기울기(최소자승)
-        val mx = sp.average(); val my = hf.average()
-        var num = 0.0; var den = 0.0
-        for (i in 0 until m) { num += (sp[i] - mx) * (hf[i] - my); den += (sp[i] - mx) * (sp[i] - mx) }
-        val slope = if (den > 1e-6) num / den else 0.0
-        // 드리프트: 후반/전반 HR/속도 비율 상승률
-        val half = m / 2
-        var r1 = 0.0; var r2 = 0.0
-        for (i in 0 until half) r1 += hr[WARMUP_S + i] / sp[i].coerceAtLeast(0.5)
-        for (i in half until m) r2 += hr[WARMUP_S + i] / sp[i].coerceAtLeast(0.5)
-        r1 /= half.coerceAtLeast(1); r2 /= (m - half).coerceAtLeast(1)
-        val drift = if (r1 > 0) r2 / r1 - 1.0 else 0.0
-        return doubleArrayOf(fSlow, fMid, fFast, slope, drift, spmv.average() / 200.0, rhr / maxHr, profile.age / 100.0)
     }
 
     private fun mean(a: List<Double>, from: Int, to: Int): Double {

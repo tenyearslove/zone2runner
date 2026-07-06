@@ -51,9 +51,10 @@ class ReportActivity : AppCompatActivity() {
         })
         col.addView(TextView(this).apply {
             val src = if (r.sourceMode == "live") "실센서(GPS+워치HR)" else "시뮬레이션"
-            val judge = if (r.usedModel) "MLP 판정" else "규칙 판정"
+            // 판정은 항상 규칙(ZoneJudge, adr-013). NN은 심박 예측(usedModel=동역학 모델 로드).
+            val pred = if (r.usedModel) " + 심박예측" else ""
             val coach = if (r.coachSource == "llm") "Gemini Nano 코칭" else "규칙 코칭"
-            text = "$src · $judge + 개인화 + $coach"
+            text = "$src · 규칙 판정 + 개인화$pred + $coach"
             textSize = 11f; setTextColor(C_MUTED); setPadding(0, dp(2), 0, dp(12))
         })
 

@@ -55,28 +55,9 @@ class RunEngineIntegrationTest {
         assertTrue(r.zone2Pct in 0..100)
     }
 
-    @Test fun thresholdEstimator_producesSaneUFrac_fromSession() = runBlocking {
-        // 역치 추정 경로(spec-015) e2e: 시뮬 세션 → 특징 집계 → ThresholdEstimator → uFrac
-        val est = loadThresholdOrNull() ?: run { println("threshold 모델 없음 → 스킵"); return@runBlocking }
-        val profile = Profile.default(35, 58)
-        val engine = RunEngine(profile, null, RuleCoach())
-        for (s in RunSimulator(seed = 21L).generate(durationMin = 25).samples) engine.onSample(s)
-        val feat = engine.thresholdFeatures()
-        assertTrue("세션 특징 8종이 나와야 함", feat != null && feat.size == 8)
-        val u = est.estimateUFrac(feat!!)
-        assertTrue("추정 uFrac 생리 범위(0.30~0.75): $u", u in 0.30..0.75)
-        println("역치 추정 e2e: uFrac=$u (임계 심박≈${(profile.restingHr + u * profile.hrr).toInt()}bpm)")
-    }
-
     private fun loadModelOrNull(): HrDynamics? {
         val f = listOf(File("src/main/assets/hr_dynamics.json"), File("app/src/main/assets/hr_dynamics.json"))
             .firstOrNull { it.exists() } ?: return null
         return runCatching { HrDynamics.fromJsonString(f.readText()) }.getOrNull()
-    }
-
-    private fun loadThresholdOrNull(): com.zone2runner.app.pipeline.ThresholdEstimator? {
-        val f = listOf(File("src/main/assets/threshold_mlp.json"), File("app/src/main/assets/threshold_mlp.json"))
-            .firstOrNull { it.exists() } ?: return null
-        return runCatching { com.zone2runner.app.pipeline.ThresholdEstimator.fromJsonString(f.readText()) }.getOrNull()
     }
 }

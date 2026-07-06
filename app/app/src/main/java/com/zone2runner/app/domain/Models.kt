@@ -41,7 +41,7 @@ data class Sample(
     val lon: Double,
 )
 
-/** MLP 판정 결과: Zone2 대비 상태. */
+/** 판정 결과(규칙 ZoneJudge, adr-013): Zone2 대비 상태. */
 enum class ZoneJudgment(val label: String, val color: Int) {
     BELOW("미달", Color.parseColor("#5AC8FA")),
     IN("Zone 2 유지", Color.parseColor("#30D158")),
@@ -70,7 +70,7 @@ data class LiveState(
     val distanceM: Double = 0.0,
     val coaching: String = "",
     val uEstFrac: Double = 0.70,
-    // 실시간 판정 요소(MLP 입력 특징의 표시용 부분집합, spec-011 대시보드)
+    // 실시간 판정 요소(경사/케이던스/드리프트 등 표시용, spec-011 대시보드)
     val slopePct: Double = 0.0,       // 경사 % (오르막 +)
     val spm: Int = 0,                 // 케이던스
     val decoupling: Double? = null,   // 드리프트(디커플링 비율), 워밍업 전 null
@@ -110,7 +110,7 @@ data class RunReport(
     val series: List<SeriesPoint> = emptyList(),
     val id: String = "",                   // 저장 식별자(에폭ms 기반), SessionStore가 채움
     val startedAtEpochMs: Long = 0L,       // 세션 시작 시각
-    val usedModel: Boolean = true,         // MLP 사용(true) vs 규칙 폴백(false)
+    val usedModel: Boolean = true,         // 심박 예측 NN(동역학) 로드 여부. 판정은 항상 규칙(adr-013)
     val coachSource: String = "rule",      // 코칭 표현 소스(rule/llm)
     val sourceMode: String = "sim",        // 입력 소스(sim/live)
     val avgSpm: Int = 0,                   // 평균 케이던스(spm). 0=미상(구버전 세션)

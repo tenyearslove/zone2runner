@@ -43,7 +43,8 @@
 >
 > **다음 우선순위**: (1) voice-poc talk test 실측 보정 + 라벨 데이터 수집 → 모델 학습, (2) ✅예측 보정 효과 검증 완료(EXPERIMENT_LOG §12: 60초 RMSE 평균 29.1→13.8bpm, 4/4 러너 개선), (3) 실주행 필드 테스트.
 >
-> **★ 2026-07-06 세션**: 게이지 3마커(평균/실측/예측)+범례, 코칭 프롬프트 외부화(coach_prompt.json)+맥락 수치 확장, 예측 온라인 보정 검증(§12: 60초 27→12.5bpm, 7/7), 러닝화면 스크롤, **VirtualRunner 대폭 강화(spec-019: 지형/피로/기온/서지/센서아티팩트/랜덤샘플러)**, **경사 거리창 회귀(GPS 고도 노이즈 강건, SlopeEstimator)**, WHITEPAPER 최신화(online≠인터넷 명확화). 폰 설치됨. 테스트 앱 61건.
+> **★ 2026-07-06 세션**: 게이지 3마커(평균/실측/예측)+범례, 코칭 프롬프트 외부화(coach_prompt.json)+맥락 수치 확장, 예측 온라인 보정 검증(§12: 60초 27→12.5bpm, 7/7), 러닝화면 스크롤, **VirtualRunner 대폭 강화(spec-019: 지형/피로/기온/서지/센서아티팩트/랜덤샘플러)**, **경사 거리창 회귀(GPS 고도 노이즈 강건, SlopeEstimator)**, WHITEPAPER 최신화(online≠인터넷 명확화).
+> **★ ML 정비(2026-07-06)**: 죽은 NN 2개를 앱에서 제거 — **Zone2Classifier(판정 MLP, adr-013로 규칙 대체)** + **ThresholdEstimator(역치 NN, adr-016로 Bayesian 대체)** + 딸린 에셋(zone2_mlp/threshold_mlp.json)/테스트/죽은 메서드. **앱 로드 모델 = hr_dynamics 하나로 단일화**. 근거는 adr-013/016·EXPERIMENT_LOG·git 이력 보존. 실기기 정상 동작 확인. 아래 213~247행 등 과거 세션 기록의 Zone2Classifier 언급은 그 시점 스냅샷(현행 아님). 테스트 61→54건.
 
 ---
 

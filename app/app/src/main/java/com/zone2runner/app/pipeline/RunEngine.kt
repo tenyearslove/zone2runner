@@ -78,9 +78,6 @@ class RunEngine(
 
     val usingModel: Boolean get() = dynamics != null
 
-    /** 세션 역치 추정 특징(spec-015). 세션 종료 시 ThresholdEstimator에 넣어 개인 uFrac 추정. */
-    fun thresholdFeatures(): DoubleArray? = extractor.sessionThresholdFeatures(profile)
-
     /** 토크 테스트 자가관측을 개인화 경계에 반영(arch/zone2-physiology §6). 현재 유효 HR이 있을 때만. */
     fun observeTalkTest(state: com.zone2runner.app.pipeline.TalkState) {
         val hr = lastValidHr ?: return
