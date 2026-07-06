@@ -102,7 +102,8 @@ class LiveRunSource(
     @Volatile private var speedMps = 0.0
     @Volatile private var slopePct = 0.0
     private var lastLoc: Location? = null
-    private var smoothedSlope = 0.0
+    // 경사는 거리창 회귀로 산출(GPS 고도 노이즈 강건, SlopeEstimator). 순간 미분 금지.
+    private val slopeEst = SlopeEstimator()
 
     private val locCallback = object : LocationCallback() {
         override fun onLocationResult(result: LocationResult) {
@@ -112,13 +113,10 @@ class LiveRunSource(
             lat = loc.latitude; lon = loc.longitude
             if (loc.hasSpeed() && loc.speed in 0f..12f) speedMps = loc.speed.toDouble()
             val prev = lastLoc
-            if (prev != null && prev.hasAltitude() && loc.hasAltitude()) {
-                val horiz = prev.distanceTo(loc).toDouble()
-                if (horiz > 1.0) {
-                    val raw = (loc.altitude - prev.altitude) / horiz * 100.0
-                    smoothedSlope += (raw.coerceIn(-25.0, 25.0) - smoothedSlope) * 0.3
-                    slopePct = smoothedSlope
-                }
+            // 고도 정확도가 나쁘면(고도 수직오차 큰 fix) 경사 갱신 스킵 — 노이즈 주입 방지
+            val altOk = loc.hasAltitude() && (!loc.hasVerticalAccuracy() || loc.verticalAccuracyMeters <= 8f)
+            if (prev != null && prev.hasAltitude() && altOk) {
+                slopePct = slopeEst.update(prev.distanceTo(loc).toDouble(), loc.altitude)
             }
             lastLoc = loc
         }
