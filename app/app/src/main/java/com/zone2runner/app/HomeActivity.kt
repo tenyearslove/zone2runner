@@ -135,7 +135,7 @@ class HomeActivity : AppCompatActivity() {
             grid.addView(TextView(this).apply {
                 text = "프로필 공식 기준: $fLo ~ $fHi bpm  →  학습 후 $dir\n" +
                     "근거: 실주행 관측 누적(말하기 테스트 + 심박·속도 드리프트)을 Bayesian으로 갱신.\n" +
-                    "편한데 미달로 나오면 러닝 중 '편함'을 누르면 다음 세션부터 내려갑니다."
+                    "느낌과 판정이 다르면 러닝 중 솔직히 답하세요 — 벅찬데 아직 Zone 2로 나오면 '벅참'이 상한을 낮추고, 편한데 초과로 나오면 '편함'이 상한을 올립니다."
                 textSize = 11f; setTextColor(Palette.MUTED); setPadding(0, dpi(4), 0, 0)
             })
         } else {

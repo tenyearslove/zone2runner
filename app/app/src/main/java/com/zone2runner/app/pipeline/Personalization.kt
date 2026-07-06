@@ -54,14 +54,22 @@ class Personalization(private val profile: Profile, priorUFrac: Double? = null) 
 
     fun observeTalkTest(currentHr: Int, state: TalkState) {
         if (currentHr <= 0) return
-        val (z, sd) = when (state) {
-            TalkState.VERY_COMFORTABLE -> currentHr + 10.0 to 16.0
-            TalkState.COMFORTABLE -> currentHr + 5.0 to 14.0
-            TalkState.BORDERLINE -> currentHr.toDouble() to 6.0
-            TalkState.HARD -> currentHr - 5.0 to 14.0
-            TalkState.VERY_HARD -> currentHr - 10.0 to 16.0
+        // 단측(one-sided) 관측: 토크테스트는 "현재 심박 대비 임계 위치"의 부등식 정보다.
+        //   편함  = 이 심박에도 대화 편함 → 임계 ≥ 현재 → 경계를 '올리는 방향'만 반영(하한).
+        //   벅참  = 대화 벅참        → 임계 ≤ 현재 → 경계를 '내리는 방향'만 반영(상한).
+        //   보통  = 말이 끊기기 시작 ≈ 임계 → 현재 심박을 직접 관측(양방향, 점).
+        // 이렇게 안 하면 '편한데 미달'(현재 < 경계)에서 편함이 경계를 끌어내리는 오류가 난다(사용자 지적).
+        val (z, sd, side) = when (state) {
+            TalkState.VERY_COMFORTABLE -> Triple(currentHr + 10.0, 16.0, +1)
+            TalkState.COMFORTABLE -> Triple(currentHr + 5.0, 14.0, +1)
+            TalkState.BORDERLINE -> Triple(currentHr.toDouble(), 6.0, 0)
+            TalkState.HARD -> Triple(currentHr - 5.0, 14.0, -1)
+            TalkState.VERY_HARD -> Triple(currentHr - 10.0, 16.0, -1)
         }
         talkCount++
+        // 올려야 하는데 이미 경계가 위 / 내려야 하는데 이미 아래 → 새 정보 없음, 무변화
+        if (side > 0 && z <= muUpper) return
+        if (side < 0 && z >= muUpper) return
         update(z, sd)
     }
 }

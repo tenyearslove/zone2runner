@@ -105,6 +105,27 @@ class Zone2PriorTest {
         assertTrue("HARD는 상한을 낮춘다", c.muUpper < (profile().restingHr + Zone2Prior.of(profile()).uFrac0 * profile().hrr) + 2)
     }
 
+    @Test fun talkTest_oneSided_comfortableBelowBoundary_doesNotLower() {
+        // 사용자 지적(2026-07-06): '편한데 미달'(현재 심박 << 경계)에서 '편함'을 눌러도 경계가
+        // 내려가면 안 된다. 편함 = "임계는 현재보다 위"라는 하한 정보일 뿐.
+        val p = Personalization(profile())
+        val mu0 = p.muUpper
+        p.observeTalkTest((mu0 - 20).toInt(), TalkState.COMFORTABLE) // 경계보다 한참 아래에서 편함
+        assertEquals("편함 below-boundary는 경계 무변화", mu0, p.muUpper, 1e-9)
+        // 경계보다 위에서 편하면(임계가 더 위라는 증거) 경계를 올린다
+        val q = Personalization(profile())
+        q.observeTalkTest((q.muUpper + 8).toInt(), TalkState.COMFORTABLE)
+        assertTrue("편함 above-boundary는 경계 상향", q.muUpper > mu0)
+    }
+
+    @Test fun talkTest_oneSided_hardAboveBoundary_doesNotRaise() {
+        // 대칭: '벅찬데 초과'(현재 심박 >> 경계)에서 '벅참'을 눌러도 경계가 올라가면 안 된다.
+        val p = Personalization(profile())
+        val mu0 = p.muUpper
+        p.observeTalkTest((mu0 + 20).toInt(), TalkState.HARD)
+        assertEquals("벅참 above-boundary는 경계 무변화", mu0, p.muUpper, 1e-9)
+    }
+
     @Test fun talkTest_fiveLevelScale_directionAndConfidence() {
         // spec-016 AC-2: 강도 오름차순 z 단조 감소(방향) + BORDERLINE 최고 확신(최소 σ), 극단일수록 넓은 σ.
         fun freshAt(hr: Int, st: TalkState) = Personalization(profile()).apply { observeTalkTest(hr, st) }
