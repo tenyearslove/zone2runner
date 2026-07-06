@@ -1,12 +1,14 @@
 # app/ — Zone2Runner (폰 앱)
 
-개인화 유산소(Zone 2) 러닝 코칭 폰 앱. 우리가 설계/학습한 AI(MLP 판정 + Bayesian 개인화 + 온디바이스 LLM 코칭)를 온디바이스로 적용한다. 명세는 `spec/spec-011`, 설계 근거는 `arch/adr-001~011`.
+개인화 유산소(Zone 2) 러닝 코칭 폰 앱. 문제별로 알맞은 AI 도구를 온디바이스로 적용한다(adr-016):
+**규칙 판정(ZoneJudge) + 온라인 Bayesian 개인화 + 심박 예측 NN(HrDynamics) + LLM 코칭(Gemini Nano)**.
+명세는 `spec/spec-011`, 설계 결정 종합은 `report/report-004`, 설계 근거는 `arch/adr-*`.
 
 ## 빌드/실행
 
 - JDK 17+ 필요(Android Studio JBR 권장). SDK 경로는 `local.properties`의 `sdk.dir`.
 - 빌드: `JAVA_HOME=<JBR> ./gradlew.bat assembleDebug` → `app/build/outputs/apk/debug/app-debug.apk`
-- 단위 테스트: `./gradlew.bat testDebugUnitTest` (파이프라인/실모델/통합/직렬화/mock 13건)
+- 단위 테스트: `./gradlew.bat testDebugUnitTest` (판정/개인화/예측/코칭 가드/가상러너/통합 등 63건)
 - 설치: `adb install -r app/build/outputs/apk/debug/app-debug.apk`
 
 ## 전체 플로우
@@ -18,17 +20,24 @@ HomeActivity ──러닝 시작(sim/live)──> RunActivity ──종료 저�
      └── 프로필 ──> ProfileActivity
 ```
 
-## AI 파이프라인 (RunEngine, 1Hz)
+## AI 파이프라인 (RunEngine, 1Hz) — adr-016 "문제별 도구"
 
 ```
-Sample ─ OutlierGuard ─ FeatureExtractor(7특징) ─ Zone2Classifier(MLP) | 규칙폴백
-       ─ Personalization(Bayesian) ─ Coach(규칙 방향 + LLM 표현) ─ 세션 누적
+Sample ─ OutlierGuard ─ ZoneJudge(규칙 판정: 지속심박 vs 개인 경계 + 히스테리시스)
+       ─ Personalization(온라인 Bayesian: 토크테스트로 개인 경계 학습)
+       ─ HrDynamics(심박 예측 NN) + HrPredictionLearner(온라인 개인 보정) ─ 선제 코칭/페이스 제안
+       ─ Coach(규칙 방향 + LLM 표현 + DirectionGuard) ─ 세션 누적
 ```
 
-- `assets/zone2_mlp.json`: `ml/export_model.py`가 뽑은 MLP(7→32→16→3) 가중치 + StandardScaler.
-- `Zone2Classifier`: TFLite 없이 순수 Kotlin 순전파(adr-011). 미로드 시 규칙 폴백.
-- `Personalization`: 공식 사전 + decoupling 관측으로 개인 경계 갱신(adr-004).
-- `LlmCoach`: Gemini Nano(ML Kit Prompt API, adr-007). AVAILABLE일 때만 사용, 아니면 `RuleCoach`.
+- `ZoneJudge`: 판정=규칙(결정론, 모순 불가). 개인 경계(Personalization)와 지속 심박 비교(adr-013).
+- `Personalization`: 공식 prior(factor, adr-012) + **토크 테스트(주 라벨)** + 디커플링(약보조)로
+  개인 Zone2 경계를 온라인 Bayesian 갱신(adr-004/016). 세션 누적 = `LearnedZone`.
+- `assets/hr_dynamics.json`: `ml/train_hr_dynamics.py`가 뽑은 심박 예측 NN(7특징→…→[t+30,t+60]).
+  `HrDynamics`가 순수 Kotlin 순전파, `HrPredictionLearner`가 개인 잔차를 LMS로 온라인 보정(spec-018).
+- `LlmCoach`: Gemini Nano(ML Kit Prompt API, adr-007). 방향은 규칙, LLM은 표현만, `DirectionGuard`가
+  역/무방향 기각. 미가용 시 `RuleCoach` 폴백. 프롬프트는 `assets/coach_prompt.json`(외부화).
+
+> 폐기: 판정 MLP(Zone2Classifier)/역치추정 NN(ThresholdEstimator)은 제거됨(adr-013/016, git 이력).
 
 ## 입력 소스 (교체 가능, `sensor/`)
 
@@ -43,7 +52,7 @@ Sample ─ OutlierGuard ─ FeatureExtractor(7특징) ─ Zone2Classifier(MLP) |
 app/app/src/main/java/com/zone2runner/app/
 ├── HomeActivity / RunActivity / ReportActivity / HistoryActivity / ProfileActivity / MockConfigActivity
 ├── domain/Models.kt          # Profile, Sample, ZoneJudgment, LiveState, RunReport, SeriesPoint
-├── pipeline/                 # OutlierGuard, FeatureExtractor, Zone2Classifier, Personalization, RunEngine
+├── pipeline/                 # OutlierGuard, FeatureExtractor, ZoneJudge(규칙 판정), Personalization(Bayesian), HrDynamics+HrPredictionLearner(예측), RunEngine
 ├── coaching/                 # Coach(Rule), LlmCoach
 ├── sensor/                   # RunSource, SimulatedRunSource, LiveRunSource, MockRunSource, HrProvider, WatchHrProvider
 ├── sim/RunSimulator.kt       # 물리 기반 러닝 시뮬레이터(ml/simulator.py 포팅)
@@ -53,9 +62,10 @@ app/app/src/main/java/com/zone2runner/app/
 
 ## 검증 현황
 
-- 빌드: `assembleDebug` 성공(app-debug ≈ 8.4MB, ML Kit GenAI/GMS 포함). 단위 테스트 13건 통과.
-- 실 모델 추론 검증: export된 `zone2_mlp.json` 로드 → high→ABOVE, low→BELOW, mlp_acc=0.826/QA1=0.996/QA2=1.0 재현.
-- **실기기 미검증**: 실센서 모드 GPS/워치 HR end-to-end, Gemini Nano 실기기 코칭, 화면 레이아웃 시각 튜닝.
+- 빌드: `assembleDebug` 성공(ML Kit GenAI/GMS 포함). 단위 테스트 63건 통과.
+- 심박 예측 NN 검증: `hr_dynamics.json` 순전파 이식 정확성 + 폐루프 온라인 보정 60초 RMSE 27→12.5bpm(EXPERIMENT_LOG §12).
+- 규칙 판정: 모순 불가 속성 테스트(ZoneJudgeTest). 개인화: 토크테스트 단측 관측 수렴/무변화 회귀 테스트.
+- **실기기 검증**: 폰 시뮬/프로필 관리/AI 설명(Gemini Nano) 확인. 실센서 GPS/워치 HR end-to-end는 필드 테스트(FIELD_TEST.md).
 
 ## 기술 선택
 

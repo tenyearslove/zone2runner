@@ -113,7 +113,7 @@ zone2runner/
 
 ## 개발 단계 (Deployment / 구현 순서)
 
-1. **1단계 (PoC, 얇게)** — **완료**: `app/` Mock/시뮬 HR → Zone 2 판정 → 코칭. 전체 파이프라인 흐름과 QA 검증 골격 확보(단위 테스트 28건).
+1. **1단계 (PoC, 얇게)** — **완료**: `app/` Mock/시뮬 HR → Zone 2 판정 → 코칭. 전체 파이프라인 흐름과 QA 검증 골격 확보(단위 테스트 63건).
 2. **2단계 (실기기 연동)** — **대부분 검증 완료(2026-07-03)**: 폰 — Gemini Nano 코칭 실동작+TTS, 시뮬 세션 e2e, 프로필 factor UI.
    워치 — 세션 시작/권한/포그라운드 서비스 화면off 지속(adr-009), 존 동기화(/zones) 수신.
    **잔여: 착용 상태 HR 스트림(워치→폰) + 야외 GPS — 필드 테스트(FIELD_TEST.md)**. Samsung Health Sensor SDK 대신 Wear OS Health Services 채택(adr-008).
