@@ -80,7 +80,6 @@ class RunActivity : AppCompatActivity() {
     private var profile: com.zone2runner.app.domain.Profile? = null
     private var tempFetched = false
 
-    private var dynamics: com.zone2runner.app.pipeline.HrDynamics? = null
     private var source: RunSource? = null
     private var engine: RunEngine? = null
     private var coach: LlmCoach? = null
@@ -101,8 +100,7 @@ class RunActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Configuration.getInstance().userAgentValue = packageName
-        dynamics = runCatching { com.zone2runner.app.pipeline.HrDynamics.fromAssets(this) }.getOrNull()
-        // 역치 추정 NN(adr-014)은 adr-016으로 강등 — 개인화는 Bayesian+토크테스트 전담. 로드하지 않음.
+        // 심박 예측 = 생리 ODE(HrOdeModel, adr-020) — 에셋 의존 없음. RunEngine이 내부 생성.
         settings = com.zone2runner.app.data.SettingsStore.load(this) // spec-021: 코칭 빈도/음성/화면 설정
         tts = TextToSpeech(this) { status ->
             if (status == TextToSpeech.SUCCESS) {
@@ -140,10 +138,7 @@ class RunActivity : AppCompatActivity() {
     }
 
     private fun updateSubtitle() {
-        val m = dynamics?.metrics
-        val model = if (dynamics != null)
-            "동역학 NN 로드됨 (60초 예측 RMSE ${fmt(m?.get("rmse_bpm_60"))}bpm, 규칙판정+페이스제안)"
-        else "동역학 NN 미로드 → 규칙 판정만"
+        val model = "규칙 판정 + 심박 예측 ODE(개인화) + 페이스 제안"
         subtitle.text = when (mode) {
             MODE_LIVE -> "$model · 실센서(GPS+워치HR) — 실기기 필요"
             MODE_MOCK -> "$model · 가짜 라이브(테스트) — 워치 없이 실시간 합성"
@@ -461,10 +456,10 @@ class RunActivity : AppCompatActivity() {
         lifecycleScope.launch { c.prewarm() } // checkStatus+warmup을 첫 코칭 전에 미리
         // coachScope 전달 → 코칭 생성(LLM ~2초)이 샘플 루프/렌더를 멈추지 않음
         val learnedPrior = com.zone2runner.app.data.LearnedZone.uFrac(this) // 세션 누적 학습값(있으면 prior)
-        val predWeights = com.zone2runner.app.data.LearnedDynamics.weights(this) // 예측 개인 보정 누적(spec-018)
+        val odeParams = com.zone2runner.app.data.LearnedDynamics.params(this) // 예측 ODE 개인 파라미터 누적(adr-020)
         val eng = RunEngine(
-            profile, dynamics, c, coachScope = lifecycleScope,
-            priorUFrac = learnedPrior, priorPredWeights = predWeights,
+            profile, c, coachScope = lifecycleScope,
+            priorUFrac = learnedPrior, priorOdeParams = odeParams,
             cadence = settings.cadence, preemptiveEnabled = settings.preemptiveEnabled, // spec-021
         )
         engine = eng
@@ -499,8 +494,8 @@ class RunActivity : AppCompatActivity() {
             put("profile", org.json.JSONObject()
                 .put("age", profile.age).put("rhr", profile.restingHr).put("maxHr", profile.maxHr))
             put("model", org.json.JSONObject()
-                .put("loaded", dynamics != null)
-                .put("rmse_bpm_60", dynamics?.metrics?.get("rmse_bpm_60") ?: -1.0))
+                .put("type", "hr_ode")
+                .put("tau_init", com.zone2runner.app.pipeline.HrOdeModel.TAU0))
         }
         eng.onCoachingRecorded = { tSec, lineText, tookMs ->
             log.event("coach") { put("t", tSec); put("text", lineText); put("tookMs", tookMs) }
@@ -603,14 +598,15 @@ class RunActivity : AppCompatActivity() {
         // (NN은 심박 예측 전담 — 개인화 경계엔 관여하지 않음. 역치 추정 NN은 adr-014→adr-016으로 강등)
         val finalU = eng.currentUFrac()
         com.zone2runner.app.data.LearnedZone.set(this, finalU, eng.talkObservations(), eng.currentSigmaBpm()) // uFrac 이력 + 관측 + σ(spec-020)
-        // 예측 개인 보정 누적 저장(spec-018) — 다음 세션이 이어서 학습
-        com.zone2runner.app.data.LearnedDynamics.set(this, eng.predWeights(), eng.predUpdates())
+        // 예측 ODE 개인 파라미터 누적 저장(adr-020) — 다음 세션이 이어서 학습
+        com.zone2runner.app.data.LearnedDynamics.set(this, eng.odeParams(), eng.predUpdates())
         val pr = eng.predRmse()
         logger?.event("boundary") {
             put("uFrac", finalU); put("talk", eng.talkObserved)
             put("n", com.zone2runner.app.data.LearnedZone.sessionCount(this@RunActivity))
             put("predUpdates", eng.predUpdates())
-            put("predBase60", pr.base60); put("predCorr60", pr.corr60)
+            put("predTau", eng.odeTau())
+            put("predBase60", pr.base); put("predModel60", pr.model)
         }
         val report = eng.report().copy(
             startedAtEpochMs = startedAt, sourceMode = mode,

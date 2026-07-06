@@ -28,21 +28,18 @@ import kotlinx.coroutines.launch
  */
 class RunEngine(
     private val profile: Profile,
-    private val dynamics: HrDynamics?, // 심박 동역학 모델(spec-014). null이면 예측/페이스 제안 없음
     private val coach: Coach,
     private val coachScope: CoroutineScope? = null,
     priorUFrac: Double? = null,        // 세션 누적 학습값(LearnedZone). 없으면 공식 prior
-    priorPredWeights: DoubleArray? = null, // 예측 개인 보정 누적 가중치(LearnedDynamics, spec-018)
+    priorOdeParams: DoubleArray? = null, // 심박 예측 ODE 개인 파라미터 누적(LearnedDynamics, adr-020)
     private val cadence: CoachCadence = CoachCadence.DEFAULT, // 코칭 빈도(spec-021)
     private val preemptiveEnabled: Boolean = true,            // 선제 코칭 on/off(spec-021)
 ) {
     private val extractor = FeatureExtractor()
     private val personalization = Personalization(profile, priorUFrac)
     private val judge = ZoneJudge()
-    // 예측 온라인 개인 보정(spec-018): 기본 NN 위에 개인 잔차를 실주행에서 학습
-    private val predLearner = HrPredictionLearner(
-        priorPredWeights?.copyOfRange(0, 4), priorPredWeights?.copyOfRange(4, 8)
-    )
+    // 심박 예측: 생리 ODE + 개인 파라미터 온라인 추정(adr-020). 시뮬-학습 NN 폐기.
+    private val ode = HrOdeModel(priorOdeParams)
     private val uEstStart = personalization.boundary().uFrac
 
     private var lastValidHr: Int? = null
@@ -78,7 +75,7 @@ class RunEngine(
     private var coachLoBpm = 0
     private var coachHiBpm = 0
 
-    val usingModel: Boolean get() = dynamics != null
+    val usingModel: Boolean get() = true // 심박 예측 ODE는 에셋 의존이 없어 항상 가용
 
     /** 토크 테스트 자가관측을 개인화 경계에 반영(arch/zone2-physiology §6). 현재 유효 HR이 있을 때만. */
     fun observeTalkTest(state: com.zone2runner.app.pipeline.TalkState) {
@@ -89,12 +86,13 @@ class RunEngine(
     /** 현재 개인화 경계 uFrac — 세션 누적 저장(LearnedZone)용. 토크테스트+디커플링이 반영됨. */
     fun currentUFrac(): Double = personalization.boundary().uFrac
 
-    /** 예측 개인 보정 가중치(8개) — 세션 누적 저장(LearnedDynamics)용. */
-    fun predWeights(): DoubleArray = predLearner.weights()
+    /** 예측 ODE 개인 파라미터 [τ, drift, a, b, c] — 세션 누적 저장(LearnedDynamics)용. */
+    fun odeParams(): DoubleArray = ode.params()
 
-    /** 예측 온라인 보정 성과(base vs corrected RMSE, bpm) — 표시/검증용. */
-    fun predRmse(): HrPredictionLearner.Rmse = predLearner.rmseBpm(profile.hrr)
-    fun predUpdates(): Int = predLearner.updates
+    /** 예측 성과(모집단 τ 기준선 vs 개인화 RMSE, bpm) — 표시/검증용. */
+    fun predRmse(): HrOdeModel.Rmse = ode.rmseBpm(profile.hrr)
+    fun predUpdates(): Int = ode.updates
+    fun odeTau(): Double = ode.tau
 
     /** 이번 세션에 토크테스트가 한 번이라도 반영됐는지(저장 판단/표시용). */
     /** 현재 기온(℃) — 코칭 맥락(더위)용. RunActivity가 날씨 조회/가상러너로 세팅. 방향엔 무관. */
@@ -146,22 +144,19 @@ class RunEngine(
             val hrRecent = profile.restingHr + hrFrac * profile.hrr
             if (feat[5] in 0.03..0.10) obsCandidates += hrRecent
 
-            // 동역학 NN(spec-014): 현재 페이스 유지 시 60초 뒤 예측 + Zone2 목표 페이스 역질의
-            val dyn = dynamics
-            if (dyn != null) {
+            // 심박 예측 ODE(adr-020): 현재 페이스 유지 시 30/60초 뒤 예측 + Zone2 목표 페이스 역질의
+            run {
                 val df = extractor.dynFeaturesAt(s.tSec, profile, s.paceMinKm, s.slopePct, s.spm)
                 if (df != null) {
                     // 지금 도착한 실제 심박(df[0]=hr_now_frac)으로 만기된 과거 예측을 온라인 학습(페이스 유지분만)
-                    predLearner.observe(s.tSec, df[0], s.paceMinKm)
-                    val base = dyn.predictFrac(df)
-                    predLearner.record(s.tSec, df, base, s.paceMinKm) // 이번 예측을 60초 뒤 검증용으로 버퍼
-                    val corr = predLearner.correct(df, base)          // 개인 보정 적용
-                    predictedHr60 = (profile.restingHr + corr.last() * profile.hrr).toInt()
-                    // 추천 페이스: 보정량만큼 목표 밴드를 내려 base 스윕(보정 후 밴드 중심을 겨냥)
-                    val c60 = predLearner.correction60(df)
-                    val rec = dyn.recommendPace(df, b.lFrac - c60, b.uFrac - c60)
+                    ode.observe(s.tSec, df[0], s.paceMinKm)
+                    val pred = ode.predict(df, profile.hrr)            // 개인 파라미터 반영된 예측
+                    ode.record(s.tSec, df, pred, profile.hrr, s.paceMinKm) // 60초 뒤 검증용 버퍼
+                    predictedHr60 = (profile.restingHr + pred.last() * profile.hrr).toInt()
+                    // 추천 페이스: 개인 수요맵을 밴드 중심으로 해석적 역산
+                    val rec = ode.recommendPace(df, b.lFrac, b.uFrac)
                     // 표시 안정화: 직전 추천과 한 스텝(0.25) 이내면 유지
-                    if (recommendedPace <= 0.0 || Math.abs(rec - recommendedPace) > HrDynamics.PACE_STEP + 1e-9)
+                    if (recommendedPace <= 0.0 || Math.abs(rec - recommendedPace) > 0.25 + 1e-9)
                         recommendedPace = rec
                     maybePreemptiveCoach(s, loBpm, hiBpm)
                 }

@@ -13,7 +13,7 @@ import android.view.View
  * 세 가지 심박 마커를 함께 그린다(하단 범례와 매칭):
  *   ● 평균  = 지속 심박(최근 60초 평균) — 판정 기준(존 색 채운 원)
  *   | 실측  = 지금 이 순간 심박(얇은 흰 틱)
- *   ◇ 예측  = 60초 뒤 예측 심박(HrDynamics NN, 속 빈 마름모)
+ *   ◇ 예측  = 60초 뒤 예측 심박(HrOdeModel, 속 빈 마름모)
  * 개인화 갱신 시 밴드가 함께 움직인다.
  */
 class ZoneBandView(context: Context) : View(context) {
@@ -23,7 +23,7 @@ class ZoneBandView(context: Context) : View(context) {
     private var maxHr = 190
     private var hr = -1        // 지속 심박(최근 60초 평균) — 솔리드 마커/판정 기준
     private var instantHr = -1 // 순간 심박 — 얇은 흰 틱(참고)
-    private var predHr = -1    // 60초 뒤 예측 심박 — 속 빈 마름모(HrDynamics)
+    private var predHr = -1    // 60초 뒤 예측 심박 — 속 빈 마름모(HrOdeModel)
 
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val stroke = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE }
