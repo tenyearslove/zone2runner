@@ -50,6 +50,7 @@
 > (2) **개인화 진행 시각화**(PersonalizationView: 초기 공식 vs 현재 학습 Zone2 밴드 겹쳐 그려 상단 이동량±bpm + 세션별 스파크라인. LearnedZone에 uFrac 이력/말하기관측수/σ 저장),
 > (3) **AI 설명(설명용이성 QA6)**: PersonalizationExplainer — 사실은 규칙이 확정(무결성), Gemini Nano가 표현만(코칭 DirectionGuard 철학), 미가용 시 규칙 폴백. spec-002에 QA6 신설(Utility Tree/우선순위/DP매핑/검증현황 일관).
 > 실기기 확인: 프로필관리 카드 렌더 + Gemini Nano가 규칙 팩트를 지어낸 수치 없이 자연어 설명. 테스트 앱 60건. 폰 설치됨.
+> **★ +(2026-07-06 이어서)**: 홈에 러닝 프로필 선택기(시작 전 프로필 고름). ML 정비(죽은 NN 2개 Zone2Classifier/ThresholdEstimator 제거 → 앱 모델=hr_dynamics 단일). **기온을 코칭 맥락에 반영**(더위 28℃+, 방향은 규칙·기온은 표현 재료, adr-002/008 유지, DirectionGuard 제외절). 테스트 62건.
 
 ---
 
