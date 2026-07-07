@@ -39,6 +39,8 @@ class ManualRunSource(
     private var job: Job? = null
     private val runner = RunSimulator(seed).makeRunner(profile)
     private val rng = java.util.Random(seed)
+    @Volatile private var paused = false
+    override fun setPaused(paused: Boolean) { this.paused = paused }
 
     override fun start(scope: CoroutineScope, onSample: suspend (Sample) -> Unit, onComplete: suspend () -> Unit) {
         job = scope.launch {
@@ -48,6 +50,7 @@ class ManualRunSource(
             val uAbs = runner.resting + runner.uFrac * runner.hrr
             var t = 0
             while (isActive && t < maxDurationSec) {
+                while (paused && isActive) delay(100L) // 토크테스트 팝업 동안 시간 정지(spec-022)
                 val pace = targetPace.coerceIn(3.5, 12.0)
                 // 페이스→강도 역산(RunSimulator 페이스 식의 역): pace = basePace - 3.2*(effort-0.5)
                 val effort = (0.5 + (runner.basePace - pace) / 3.2).coerceIn(0.30, 1.0)

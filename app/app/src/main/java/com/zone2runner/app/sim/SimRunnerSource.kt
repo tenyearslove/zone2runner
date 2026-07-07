@@ -43,6 +43,8 @@ class SimRunnerSource(
     private var job: Job? = null
     private val rng = Random(seed)
     @Volatile private var lastJudgment: ZoneJudgment? = null
+    @Volatile private var paused = false
+    override fun setPaused(paused: Boolean) { this.paused = paused }
 
     override fun onFeedback(state: LiveState) { lastJudgment = state.judgment }
 
@@ -86,6 +88,7 @@ class SimRunnerSource(
 
             for (t in 0 until maxDurationSec) {
                 if (!isActive) return@launch
+                while (paused && isActive) delay(100L) // 토크테스트 팝업 동안 시간 정지(spec-022)
 
                 // ---- 목표 강도 결정 ----
                 var target = targetEffortBase + gauss(0.02)

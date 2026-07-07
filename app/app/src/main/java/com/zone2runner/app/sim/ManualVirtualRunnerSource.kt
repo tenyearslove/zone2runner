@@ -45,6 +45,8 @@ class ManualVirtualRunnerSource(
 
     private var job: Job? = null
     private val rng = java.util.Random(seed)
+    @Volatile private var paused = false
+    override fun setPaused(paused: Boolean) { this.paused = paused }
 
     override fun start(scope: CoroutineScope, onSample: suspend (Sample) -> Unit, onComplete: suspend () -> Unit) {
         job = scope.launch {
@@ -54,6 +56,7 @@ class ManualVirtualRunnerSource(
             val uAbs = 0.70 * body.maxHr // 진짜 임계 근사(%HRmax 70%) — 드리프트 발동 기준으로만 사용
             var t = 0
             while (isActive && t < maxDurationSec) {
+                while (paused && isActive) delay(100L) // 토크테스트 팝업 동안 시간 정지(spec-022)
                 val spm = targetSpm.coerceIn(0, 200)
                 val stride = targetStrideM.coerceIn(0.60, 1.50)
                 val speed = spm * stride                 // m/min (0 = 정지)

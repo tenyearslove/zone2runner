@@ -31,6 +31,12 @@ interface RunSource {
     fun stop()
     /** 파이프라인 출력(판정 등)을 소스로 되먹임 — 가상러너가 코칭에 반응하는 폐루프용. 기본 무시. */
     fun onFeedback(state: com.zone2runner.app.domain.LiveState) {}
+
+    /**
+     * 시뮬 시간 일시정지(spec-022) — 토크테스트 팝업이 떠 있는 동안 시간을 멈춰
+     * 가속 재생 중에도 "지금 이 강도"에 대해 답하게 한다. 실센서 소스는 무시(현실은 안 멈춤).
+     */
+    fun setPaused(paused: Boolean) {}
 }
 
 /** 심박 공급자. 최신 HR(bpm, 없으면 -1)을 제공. 구현: 워치 Data Layer / 폰 센서 / 없음. */
@@ -62,12 +68,15 @@ class SimulatedRunSource(
 
     /** 샘플 간 지연(ms) — 재생 중에도 배속 칩으로 변경(1000=실시간, 14≈70배속). */
     @Volatile var delayMs: Long = delayMs
+    @Volatile private var paused = false
+    override fun setPaused(paused: Boolean) { this.paused = paused }
 
     override fun start(scope: CoroutineScope, onSample: suspend (Sample) -> Unit, onComplete: suspend () -> Unit) {
         val session = RunSimulator(seed).generate(durationMin, profile = profile)
         job = scope.launch {
             for (s in session.samples) {
                 if (!isActive) return@launch
+                while (paused && isActive) delay(100L) // 토크테스트 팝업 동안 시간 정지(spec-022)
                 onSample(s)
                 delay(delayMs)
             }

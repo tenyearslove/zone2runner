@@ -82,7 +82,6 @@ class RunActivity : AppCompatActivity() {
     private var virtualRunner = com.zone2runner.app.domain.VirtualRunner.DEFAULT // 가상러너(자동 시나리오)
     private var runnerChip: TextView? = null
     private var paceLabel: TextView? = null
-    private lateinit var talkRow: LinearLayout
     private lateinit var uEstView: TextView
     private lateinit var startBtn: Button
     private lateinit var subtitle: TextView
@@ -111,10 +110,11 @@ class RunActivity : AppCompatActivity() {
     // 표시 존(adr-023): 순간심박+히스테리시스 — 화면 색과 워치 존의 유일 기준(코칭/통계는 60초 평균 유지)
     private val displayJudge = com.zone2runner.app.domain.DisplayZoneJudge()
     private var displayZone: com.zone2runner.app.domain.DisplayZone? = null
-    // 토크테스트 설문 타이밍(adr-023: 워치→폰 이관). 벽시계 1초 단위 평가.
-    private var talkElevatedSec = 0
-    private var lastTalkAskMs = 0L
-    private var lastTalkTickMs = 0L
+    // 토크테스트 설문 타이밍(adr-023: 워치→폰 이관). 조건은 세션 시간(시뮬 가속 반영), 표시 빈도는 벽시계로 제한.
+    private var talkElevatedSec = 0      // Zone2 하한 이상 누적(세션 초)
+    private var lastTalkAskSimSec = -1   // 마지막 질문 시점(세션 초, -1=아직 없음)
+    private var lastTalkTickSimSec = -1  // 마지막 평가 시점(세션 초)
+    private var lastTalkPromptWallMs = 0L // 마지막 표시 시각(벽시계) — 가속 재생 팝업 스팸 방지
     private var settings = com.zone2runner.app.data.AppSettings() // spec-021, start()에서 로드
 
     private val mode: String by lazy { intent.getStringExtra(EXTRA_MODE) ?: MODE_SIM }
@@ -262,18 +262,8 @@ class RunActivity : AppCompatActivity() {
         }
         dash.addView(coachView)
 
-        // 토크 테스트 자가관측(arch/zone2-physiology §6, spec-016): 참값 없는 경계를 무비용으로 보정하는 독립 채널
-        dash.addView(TextView(this).apply {
-            text = "대화 가능?"; textSize = 12f; setTextColor(C_MUTED)
-        }, mt(8))
-        // 5단계 척도(강도 오름차순): 아주 편함 → 매우 벅참. 폰 가로폭에 맞춰 균등 배분.
-        talkRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
-        talkRow.addView(talkChip("아주편함", com.zone2runner.app.pipeline.TalkState.VERY_COMFORTABLE))
-        talkRow.addView(talkChip("편함", com.zone2runner.app.pipeline.TalkState.COMFORTABLE))
-        talkRow.addView(talkChip("보통", com.zone2runner.app.pipeline.TalkState.BORDERLINE))
-        talkRow.addView(talkChip("벅참", com.zone2runner.app.pipeline.TalkState.HARD))
-        talkRow.addView(talkChip("매우벅참", com.zone2runner.app.pipeline.TalkState.VERY_HARD))
-        dash.addView(talkRow, mt(4))
+        // 토크테스트(spec-016)는 고정 UI 대신 팝업으로 통일(사용자 피드백) — 타이밍 조건 충족 시
+        // 폰 다이얼로그 + 워치 전체화면 설문이 뜬다(updateTalkPrompt → showPhoneTalkDialog / /run/talk).
 
         uEstView = TextView(this).apply { textSize = 11f; setTextColor(C_MUTED); setPadding(0, dp(4), 0, 0) }
         dash.addView(uEstView)
@@ -530,8 +520,7 @@ class RunActivity : AppCompatActivity() {
         frame = 0
         // 표시 존/토크테스트 타이밍 초기화(adr-023). 폴백 10분은 세션 시작부터 계산.
         displayJudge.reset(); displayZone = null
-        talkElevatedSec = 0; lastTalkTickMs = 0L
-        lastTalkAskMs = android.os.SystemClock.elapsedRealtime()
+        talkElevatedSec = 0; lastTalkAskSimSec = -1; lastTalkTickSimSec = -1; lastTalkPromptWallMs = 0L
 
         val src: RunSource = when (mode) {
             MODE_LIVE -> LiveRunSource(this, WatchHrProvider(this).also { watchProvider = it })
@@ -743,30 +732,39 @@ class RunActivity : AppCompatActivity() {
 
     /**
      * 토크테스트 설문 타이밍(adr-023: 워치에서 폰으로 이관 — 워치는 /run/talk 수신 시 표시만).
-     *  (A) 지속 심박이 Zone2 하한 이상에 30초+ 머묾 + 최근 3분 미질문(경계 근처가 관측 가치 최대, active learning).
+     *  (A) 지속 심박이 Zone2 하한 이상에 30초+ 머묾(첫 질문은 즉시, 이후 3분 간격 — active learning).
      *  (B) 10분 무질문 폴백 — 낮은 심박도 그 사람에겐 힘들 수 있으니.
-     * 시뮬 가속에서도 실제 시간 기준이 되도록 벽시계 1초 단위로만 평가(기존 워치 동작과 동일).
+     * 조건은 세션 시간 기준(시뮬 가속에서도 생리적 타이밍 유지). 라이브(1Hz)에선 벽시계와 동일.
+     * 실제 표시(팝업/워치 전송)는 벽시계 30초 간격으로 제한 — ×70 가속에서 스팸 방지.
      */
     private fun updateTalkPrompt(s: LiveState) {
-        val now = android.os.SystemClock.elapsedRealtime()
-        if (now - lastTalkTickMs < 1000) return
-        lastTalkTickMs = now
+        val simSec = s.elapsedSec
+        if (simSec <= lastTalkTickSimSec) return // 같은 세션 초는 1회만 평가
+        val dt = if (lastTalkTickSimSec < 0) 1 else simSec - lastTalkTickSimSec
+        lastTalkTickSimSec = simSec
         val (lo, _) = zoneBounds(s.uEstFrac) ?: return
         val sus = if (s.smoothedHr > 0) s.smoothedHr else s.hr
         val elevated = sus > 0 && sus >= lo // Zone2 이상(지속 심박 기준 — 개인화 관측과 같은 채널)
-        if (elevated) talkElevatedSec++ else talkElevatedSec = 0
-        val since = now - lastTalkAskMs
-        val elevatedAsk = elevated && talkElevatedSec >= 30 && since > 3 * 60 * 1000L
-        val fallback = sus > 0 && since > 10 * 60 * 1000L
-        if (elevatedAsk || fallback) {
-            lastTalkAskMs = now
+        if (elevated) talkElevatedSec += dt else talkElevatedSec = 0
+        val sinceAsk = simSec - lastTalkAskSimSec
+        val elevatedAsk = elevated && talkElevatedSec >= 30 && (lastTalkAskSimSec < 0 || sinceAsk > 3 * 60)
+        val fallback = sus > 0 && (simSec - maxOf(lastTalkAskSimSec, 0)) > 10 * 60
+        val now = android.os.SystemClock.elapsedRealtime()
+        val wallOk = now - lastTalkPromptWallMs > 30_000L || lastTalkPromptWallMs == 0L
+        if ((elevatedAsk || fallback) && wallOk) {
+            lastTalkAskSimSec = simSec
+            lastTalkPromptWallMs = now
             if (watchLink) RunLink.send(this, RunLink.PATH_TALK)
-            // 수동 러너 모드(spec-022 FR4): 폰에도 5지선다 팝업 — 사람이 직접 답하며 전체 루프 테스트
-            if (mode == MODE_SIM && simInput == SimInput.RUNNER) showPhoneTalkDialog()
+            // 폰에도 5지선다 팝업(사용자 확정: 폰/워치 모두 팝업) — 고정 칩 UI는 제거됨.
+            // 시뮬 소스는 팝업 동안 시간 정지, 실센서는 무시(현실은 안 멈춤).
+            showPhoneTalkDialog()
         }
     }
 
-    /** 폰 토크테스트 팝업(spec-022) — 30초 무응답 자동 닫힘, 중복 표시 방지. */
+    /**
+     * 폰 토크테스트 팝업(spec-022) — 30초 무응답 자동 닫힘, 중복 표시 방지.
+     * 떠 있는 동안 시뮬 시간 정지(사용자 요청) — 가속 재생 중에도 "지금 이 강도"에 대해 답하게.
+     */
     private fun showPhoneTalkDialog() {
         if (talkDialog?.isShowing == true) return
         val states = listOf(
@@ -785,9 +783,13 @@ class RunActivity : AppCompatActivity() {
             }
             .setNegativeButton("건너뛰기", null)
             .create()
-        d.setOnDismissListener { if (talkDialog === d) talkDialog = null }
+        d.setOnDismissListener {
+            if (talkDialog === d) talkDialog = null
+            source?.setPaused(false) // 팝업 닫힘 → 시뮬 시간 재개
+        }
         d.show()
         talkDialog = d
+        source?.setPaused(true) // 팝업 표시 중 시뮬 시간 정지(실센서 소스는 무시)
         hrView.postDelayed({ if (talkDialog === d) runCatching { d.dismiss() } }, 30_000L)
     }
 
@@ -877,24 +879,6 @@ class RunActivity : AppCompatActivity() {
         layoutParams = LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f)
         addView(v)
         addView(TextView(this@RunActivity).apply { text = label; textSize = 10f; setTextColor(C_MUTED); gravity = Gravity.CENTER })
-    }
-    private fun talkChip(label: String, state: com.zone2runner.app.pipeline.TalkState) = TextView(this).apply {
-        text = label; textSize = 11f; setTextColor(C_TEXT); gravity = Gravity.CENTER
-        setPadding(dp(4), dp(6), dp(4), dp(6))
-        background = GradientDrawable().apply { setColor(C_CARD); cornerRadius = dp(14).toFloat(); setStroke(dp(1), C_STROKE) }
-        // 5칩 균등 배분(weight 1): 폰 가로폭에서 라벨이 잘리지 않게 padding/textSize 축소.
-        val lp = LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f); lp.marginStart = dp(4); layoutParams = lp
-        isClickable = true
-        setOnClickListener {
-            val eng = engine
-            if (!running || eng == null) {
-                Toast.makeText(this@RunActivity, "러닝 중에만 기록됩니다", Toast.LENGTH_SHORT).show()
-            } else {
-                eng.observeTalkTest(state)
-                logger?.event("talktest") { put("t", (System.currentTimeMillis() - startedAt) / 1000); put("state", state.name) }
-                Toast.makeText(this@RunActivity, "기록됨 · 개인 경계에 반영", Toast.LENGTH_SHORT).show()
-            }
-        }
     }
 
     /** 시뮬 재생 배속 칩. 재생 중이면 소스에 즉시 반영(@Volatile delayMs). */
