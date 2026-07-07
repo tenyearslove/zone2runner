@@ -45,7 +45,8 @@ class RunService : Service() {
     }
     private val forwarder by lazy { HrForwarder(this) }
     private var lastLoc: Location? = null
-    private var exerciseStarted = false
+    @Volatile private var exerciseStarted = false
+    @Volatile private var stopRequested = false // 시작(async) 완료 전에 종료됨 → 고아 운동 방지
     @Volatile private var lastMoveMs = 0L      // 마지막으로 움직인 시각(자동 일시정지 판단)
     @Volatile private var autoPaused = false   // 자동 일시정지 상태(수동 일시정지와 구분 — 자동만 자동재개)
     private val autoPauseAfterMs = 20_000L
@@ -94,6 +95,7 @@ class RunService : Service() {
     }
 
     private fun stopSession(fromRemote: Boolean = false) {
+        stopRequested = true
         RunBus.state = RunState.IDLE
         RunBus.notifyUi()
         if (!fromRemote) RunLink.send(this, RunLink.PATH_STOP) // 워치에서 종료 → 폰도 종료
@@ -121,7 +123,12 @@ class RunService : Service() {
             val future = exerciseClient.startExerciseAsync(config)
             future.addListener({
                 runCatching { future.get() }
-                    .onSuccess { exerciseStarted = true }
+                    .onSuccess {
+                        exerciseStarted = true
+                        // 시작이 끝나기 전에 이미 종료를 눌렀다면(레이스) 곧바로 종료 — Health Services에
+                        // 고아 운동이 남아 죽은 프로세스로 HR을 흘리며 BODY_SENSORS SecurityException을 찍는 것을 막는다.
+                        if (stopRequested) runCatching { exerciseClient.endExerciseAsync() }
+                    }
                     .onFailure {
                         RunBus.error = "운동 시작 실패: ${it.message}"
                         RunBus.notifyUi()
@@ -202,7 +209,10 @@ class RunService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
-        if (exerciseStarted) runCatching { exerciseClient.endExerciseAsync() }
+        stopRequested = true
+        // 무조건 종료 시도(guarded). 시작이 진행 중이면 위 future.onSuccess가 stopRequested를 보고 종료하고,
+        // 이미 시작됐으면 여기서 종료된다. 활성 운동이 없을 때의 end 호출은 runCatching으로 무해.
+        runCatching { exerciseClient.endExerciseAsync() }
         runCatching { exerciseClient.clearUpdateCallbackAsync(exerciseCallback) }
         runCatching { fused.removeLocationUpdates(locationCallback) }
         if (RunBus.state != RunState.IDLE) { RunBus.state = RunState.IDLE; RunBus.notifyUi() }
