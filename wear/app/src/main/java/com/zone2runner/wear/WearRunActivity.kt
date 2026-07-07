@@ -137,18 +137,17 @@ class WearRunActivity : ComponentActivity() {
         }
         content.addView(zoneLabel, centered())
 
-        // 페이스 / 거리 / 속도
+        // 페이스 / 거리 / 속도 — 각 값은 WRAP_CONTENT(글자 길이만큼만 차지)라 잘리지 않는다.
+        // 그룹을 가운데 정렬(거리가 중앙) + 좌우(페이스/속도)를 거리 기준 고정 여백 GAP만큼 떨어뜨린다.
         val metrics = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER
-            // 그룹 좌우 여백 — 바깥 숫자(페이스/속도)가 테두리에 붙지 않게 넉넉히, 열이 좁아져 숫자 간 간격도 줄어든다.
-            setPadding(dp(24), 0, dp(24), 0)
         }
         paceVal = metricValue(); distVal = metricValue(); spdVal = metricValue()
+        val gap = 12 // 숫자 사이 여백(기존 3등분 대비 절반 수준). 취향 따라 조절.
         metrics.addView(metricCol(paceVal, "페이스"))
-        metrics.addView(metricCol(distVal, "거리"))
-        metrics.addView(metricCol(spdVal, "속도"))
-        // 행을 전체 폭으로 — WRAP_CONTENT면 weight=1f 열이 펼쳐지지 못해 값이 좁게 쪼그라들고 양옆이 빈다(실기기).
-        content.addView(metrics, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
+        metrics.addView(metricCol(distVal, "거리", gap))
+        metrics.addView(metricCol(spdVal, "속도", gap))
+        content.addView(metrics, centered())
 
         // 버튼
         btnRow = LinearLayout(this).apply {
@@ -173,22 +172,21 @@ class WearRunActivity : ComponentActivity() {
         isSingleLine = true // 원형 화면 폭에서 페이스("5'30\"") 줄바꿈 방지 (실기기 확인)
         ellipsize = null
         includeFontPadding = false // 세로 여백 제거로 폭 대비 글자 크게
-        // 값이 열 폭에 맞춰 자동 조절(예: "5'30\"", "1.23km"). 과대 방지로 상한 15sp.
-        setAutoSizeTextTypeUniformWithConfiguration(8, 15, 1, android.util.TypedValue.COMPLEX_UNIT_SP)
+        textSize = 16f // 고정 크기 — 영역(WRAP)이 글자 길이에 맞춰 늘어난다(자동축소 대신, 짧은 숫자라 안전)
     }
 
-    private fun metricCol(value: TextView, label: String): LinearLayout {
+    /** 값+라벨 세로 컬럼. WRAP_CONTENT라 글자 길이만큼만 차지. marginStartDp = 왼쪽 이웃과의 여백. */
+    private fun metricCol(value: TextView, label: String, marginStartDp: Int = 0): LinearLayout {
         return LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER
-            val lp = LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f)
-            layoutParams = lp
-            setPadding(dp(1), 0, dp(1), 0) // 열 간 최소 여백 — 값 폭을 최대한 확보(잘림 방지)
-            // 값은 열 전체 폭을 채워야 자동축소가 그 폭 기준으로 동작(WRAP이면 폭 제한이 없어 안 줄고 잘림).
-            addView(value, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
+            layoutParams = LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT).apply {
+                marginStart = dp(marginStartDp)
+            }
+            addView(value, LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT))
             addView(TextView(this@WearRunActivity).apply {
                 text = label; textSize = 9f; setTextColor(C_MUTED); gravity = Gravity.CENTER
                 isSingleLine = true
-            }, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
+            }, LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT))
         }
     }
 
