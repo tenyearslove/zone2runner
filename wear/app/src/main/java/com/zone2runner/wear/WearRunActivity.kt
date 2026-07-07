@@ -17,6 +17,7 @@ import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.view.WindowManager
 import android.widget.LinearLayout
+import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.activity.ComponentActivity
 import androidx.core.app.ActivityCompat
@@ -137,17 +138,26 @@ class WearRunActivity : ComponentActivity() {
         }
         content.addView(zoneLabel, centered())
 
-        // 페이스 / 거리 / 속도 — 각 값은 WRAP_CONTENT(글자 길이만큼만 차지)라 잘리지 않는다.
-        // 그룹을 가운데 정렬(거리가 중앙) + 좌우(페이스/속도)를 거리 기준 고정 여백 GAP만큼 떨어뜨린다.
-        val metrics = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER
-        }
+        // 페이스 / 거리 / 속도 — 거리를 화면 정중앙에 '고정'하고, 페이스/속도를 거리 기준 좌우 고정 간격으로.
+        // (그룹 가운데정렬은 텍스트 길이가 바뀌면 중심이 흔들려서 RelativeLayout으로 중앙만 못박음.)
+        // 각 값은 WRAP_CONTENT라 길이만큼만 차지 → 거리는 중앙에서 대칭으로 커지고 좌우는 바깥으로만 늘어난다.
         paceVal = metricValue(); distVal = metricValue(); spdVal = metricValue()
-        val gap = 12 // 숫자 사이 여백(기존 3등분 대비 절반 수준). 취향 따라 조절.
-        metrics.addView(metricCol(paceVal, "페이스"))
-        metrics.addView(metricCol(distVal, "거리", gap))
-        metrics.addView(metricCol(spdVal, "속도", gap))
-        content.addView(metrics, centered())
+        val gap = dp(12) // 거리(중앙) 기준 좌우 간격. 취향 따라 조절.
+        val distCol = metricCol(distVal, "거리").apply { id = View.generateViewId() }
+        val paceCol = metricCol(paceVal, "페이스")
+        val spdCol = metricCol(spdVal, "속도")
+        val metrics = RelativeLayout(this)
+        metrics.addView(distCol, RelativeLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT).apply {
+            addRule(RelativeLayout.CENTER_HORIZONTAL) // 거리 = 화면 정중앙 고정
+        })
+        metrics.addView(paceCol, RelativeLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT).apply {
+            addRule(RelativeLayout.LEFT_OF, distCol.id); rightMargin = gap // 페이스 = 거리 왼쪽 gap
+        })
+        metrics.addView(spdCol, RelativeLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT).apply {
+            addRule(RelativeLayout.RIGHT_OF, distCol.id); leftMargin = gap // 속도 = 거리 오른쪽 gap
+        })
+        // 폭 전체(MATCH_PARENT)여야 CENTER_HORIZONTAL이 화면 중앙이 된다.
+        content.addView(metrics, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
 
         // 버튼
         btnRow = LinearLayout(this).apply {
@@ -175,13 +185,10 @@ class WearRunActivity : ComponentActivity() {
         textSize = 16f // 고정 크기 — 영역(WRAP)이 글자 길이에 맞춰 늘어난다(자동축소 대신, 짧은 숫자라 안전)
     }
 
-    /** 값+라벨 세로 컬럼. WRAP_CONTENT라 글자 길이만큼만 차지. marginStartDp = 왼쪽 이웃과의 여백. */
-    private fun metricCol(value: TextView, label: String, marginStartDp: Int = 0): LinearLayout {
+    /** 값+라벨 세로 컬럼. WRAP_CONTENT라 글자 길이만큼만 차지(배치는 호출부 RelativeLayout이 결정). */
+    private fun metricCol(value: TextView, label: String): LinearLayout {
         return LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER
-            layoutParams = LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT).apply {
-                marginStart = dp(marginStartDp)
-            }
             addView(value, LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT))
             addView(TextView(this@WearRunActivity).apply {
                 text = label; textSize = 9f; setTextColor(C_MUTED); gravity = Gravity.CENTER
