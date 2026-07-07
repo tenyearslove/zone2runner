@@ -38,9 +38,10 @@ class ManualVirtualRunnerSource(
     @Volatile var delayMs: Long = delayMs
 
     // 조종 슬라이더(spec-022 FR2) — 재생 중 실시간 반영
-    @Volatile var targetSpm: Int = 168          // 케이던스 140~200
+    @Volatile var targetSpm: Int = 0            // 케이던스 0~200 (0 = 정지에서 시작, 사용자 피드백)
     @Volatile var targetStrideM: Double = 1.00  // 보폭 0.60~1.50m
     @Volatile var hrOffsetBpm: Int = 0          // 심박 보정 -20~+20
+    @Volatile var slopePct: Double = 0.0        // 경사 -10~+10% — 파이프라인 경사 입력(특징/예측/코칭) 테스트용
 
     private var job: Job? = null
     private val rng = java.util.Random(seed)
@@ -53,11 +54,17 @@ class ManualVirtualRunnerSource(
             val uAbs = 0.70 * body.maxHr // 진짜 임계 근사(%HRmax 70%) — 드리프트 발동 기준으로만 사용
             var t = 0
             while (isActive && t < maxDurationSec) {
-                val spm = targetSpm.coerceIn(140, 200)
+                val spm = targetSpm.coerceIn(0, 200)
                 val stride = targetStrideM.coerceIn(0.60, 1.50)
-                val pace = (1000.0 / (spm * stride)).coerceIn(3.0, 13.0) // min/km = 1000m / (spm x 보폭 m/min)
-                // 페이스→강도 역산(RunSimulator 계열 공통식): pace = basePace - 3.2*(effort-0.5)
-                val effort = (0.5 + (body.basePaceMinKm - pace) / 3.2).coerceIn(0.30, 1.05)
+                val speed = spm * stride                 // m/min (0 = 정지)
+                val moving = speed >= 30.0               // 아주 느린 제자리걸음 미만은 정지 취급
+                val pace = if (moving) (1000.0 / speed).coerceIn(3.0, 20.0) else STOP_PACE
+                val slope = slopePct.coerceIn(-10.0, 10.0)
+                // 페이스→강도 역산(RunSimulator 계열 공통식): pace = basePace - 3.2*(effort-0.5).
+                // 정지면 강도 최소 → 심박이 안정 심박 쪽으로 회복(τ 지연).
+                // 오르막은 같은 속도 유지 시 심박 비용↑(SimRunnerSource와 동일 계수: 등급 1% = effort +0.012).
+                val effort = if (!moving) 0.05
+                             else (0.5 + (body.basePaceMinKm - pace) / 3.2 + slope * 0.012).coerceIn(0.15, 1.05)
                 val effortHr = body.restingHr + effort * body.hrr
                 hr += (effortHr - hr) * (1.0 / HR_TAU)
                 val excess = maxOf(0.0, effortHr - uAbs)
@@ -65,12 +72,15 @@ class ManualVirtualRunnerSource(
                 val hrObs = (hr + drift + rng.nextGaussian() * NOISE_SD + hrOffsetBpm)
                     .coerceIn(35.0, body.maxHr.toDouble())
 
-                val mps = MPS_PER_MIN_KM / pace
-                heading += rng.nextGaussian() * 0.05 + 0.02
-                lat += (mps * cos(heading)) / 111_320.0
-                lon += (mps * sin(heading)) / (111_320.0 * cos(Math.toRadians(lat)))
+                if (moving) {
+                    val mps = MPS_PER_MIN_KM / pace
+                    heading += rng.nextGaussian() * 0.05 + 0.02
+                    lat += (mps * cos(heading)) / 111_320.0
+                    lon += (mps * sin(heading)) / (111_320.0 * cos(Math.toRadians(lat)))
+                }
 
-                onSample(Sample(t, hrObs.toInt(), pace, (spm + rng.nextGaussian() * 1.5).toInt(), 0.0, lat, lon))
+                val spmOut = if (spm <= 0) 0 else (spm + rng.nextGaussian() * 1.5).toInt().coerceAtLeast(0)
+                onSample(Sample(t, hrObs.toInt(), pace, spmOut, if (moving) slope else 0.0, lat, lon))
                 t++
                 delay(delayMs)
             }
@@ -85,5 +95,6 @@ class ManualVirtualRunnerSource(
         const val DRIFT_SCALE = 0.45  // 임계 초과분 대비 드리프트 크기
         const val DRIFT_TAU = 140.0   // 드리프트 누적 시상수(초)
         const val NOISE_SD = 0.8      // 관측 노이즈(bpm)
+        const val STOP_PACE = 20.0    // 정지 sentinel(min/km) — LiveRunSource와 동일 규약(화면은 "--")
     }
 }

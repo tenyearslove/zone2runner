@@ -69,9 +69,11 @@ class RunActivity : AppCompatActivity() {
     private var paceRow: LinearLayout? = null
     // 수동 가상러너(spec-022): 신체 스펙 + 조종 슬라이더 + 시계연동
     private var manualBody: com.zone2runner.app.sim.ManualVirtualRunnerSource.Body? = null
-    private var manualSpm = 168
+    private var manualSpm = 0 // 케이던스 0 = 정지에서 시작(사용자 피드백) — 올리면 달리기 시작
     private var manualStride = 1.00
     private var manualHrOffset = 0
+    private var manualSlope = 0.0 // 경사 % — 파이프라인 경사 입력(특징/예측/코칭) 테스트
+    private var manualTempC = 20.0 // 기온 ℃ — 더위 코칭 테스트(실측 조회 대신 입력값 주입)
     private var vrRows: LinearLayout? = null
     private var vrSummary: TextView? = null
     private var watchLinkCheck: android.widget.CheckBox? = null
@@ -191,6 +193,13 @@ class RunActivity : AppCompatActivity() {
             setPadding(dp(16), dp(10), dp(16), dp(10))
         }
 
+        // 시작/정지 버튼 — 지도 바로 아래(스크롤 없이 즉시 조작, 사용자 요청)
+        startBtn = Button(this).apply {
+            text = primaryLabel()
+            setOnClickListener { onPrimary() }
+        }
+        dash.addView(startBtn)
+
         subtitle = TextView(this).apply { textSize = 11f; setTextColor(C_MUTED) }
         dash.addView(subtitle)
 
@@ -253,15 +262,6 @@ class RunActivity : AppCompatActivity() {
         }
         dash.addView(coachView)
 
-        // LLM 프롬프트 투명성(시뮬/목 모드만): 코칭 문장이 어떤 프롬프트/경로에서 나왔는지 노출
-        if (mode != MODE_LIVE) {
-            promptView = TextView(this).apply {
-                text = ""; textSize = 10f; setTextColor(C_MUTED)
-                typeface = Typeface.MONOSPACE; setPadding(0, dp(4), 0, 0)
-            }
-            dash.addView(promptView)
-        }
-
         // 토크 테스트 자가관측(arch/zone2-physiology §6, spec-016): 참값 없는 경계를 무비용으로 보정하는 독립 채널
         dash.addView(TextView(this).apply {
             text = "대화 가능?"; textSize = 12f; setTextColor(C_MUTED)
@@ -321,18 +321,22 @@ class RunActivity : AppCompatActivity() {
             vrRows = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
             vrSummary = TextView(this).apply { textSize = 12f; setTextColor(C_TEXT); setTypeface(typeface, Typeface.BOLD) }
             vrRows!!.addView(vrSummary, mt(4))
-            vrRows!!.addView(vrSeek("케이던스", 60, manualSpm - 140, { p -> // 140~200 spm
-                manualSpm = 140 + p
+            vrRows!!.addView(vrSeek("케이던스", "0~200 spm", 200, manualSpm, { "$manualSpm spm" }) { p -> // 0 = 정지에서 시작
+                manualSpm = p
                 (source as? com.zone2runner.app.sim.ManualVirtualRunnerSource)?.targetSpm = manualSpm
-            }), mt(2))
-            vrRows!!.addView(vrSeek("보폭", 90, ((manualStride - 0.60) * 100).toInt(), { p -> // 0.60~1.50m
+            }, mt(2))
+            vrRows!!.addView(vrSeek("보폭", "0.60~1.50m", 90, ((manualStride - 0.60) * 100).toInt(), { "%.2fm".format(manualStride) }) { p ->
                 manualStride = 0.60 + p * 0.01
                 (source as? com.zone2runner.app.sim.ManualVirtualRunnerSource)?.targetStrideM = manualStride
-            }), mt(2))
-            vrRows!!.addView(vrSeek("심박 보정", 40, manualHrOffset + 20, { p -> // -20~+20 bpm
+            }, mt(2))
+            vrRows!!.addView(vrSeek("심박 보정", "-20~+20", 40, manualHrOffset + 20, { "%+d bpm".format(manualHrOffset) }) { p ->
                 manualHrOffset = p - 20
                 (source as? com.zone2runner.app.sim.ManualVirtualRunnerSource)?.hrOffsetBpm = manualHrOffset
-            }), mt(2))
+            }, mt(2))
+            vrRows!!.addView(vrSeek("경사", "-10~+10%", 40, ((manualSlope + 10) * 2).toInt(), { "%+.1f%%".format(manualSlope) }) { p ->
+                manualSlope = p / 2.0 - 10.0 // 0.5% 단위
+                (source as? com.zone2runner.app.sim.ManualVirtualRunnerSource)?.slopePct = manualSlope
+            }, mt(2))
             watchLinkCheck = android.widget.CheckBox(this).apply {
                 text = "시계연동 (워치에 심박/존 표시 + 설문 팝업)"; textSize = 12f; setTextColor(C_TEXT)
                 isChecked = false
@@ -383,11 +387,14 @@ class RunActivity : AppCompatActivity() {
             updateManualUi()
         }
 
-        startBtn = Button(this).apply {
-            text = primaryLabel()
-            setOnClickListener { onPrimary() }
+        // LLM 프롬프트 투명성(시뮬/목 모드만) — 디버그 정보라 대시보드 맨 아래(사용자 요청)
+        if (mode != MODE_LIVE) {
+            promptView = TextView(this).apply {
+                text = ""; textSize = 10f; setTextColor(C_MUTED)
+                typeface = Typeface.MONOSPACE; setPadding(0, dp(8), 0, 0)
+            }
+            dash.addView(promptView)
         }
-        dash.addView(startBtn, mt(8))
 
         // 대시보드를 ScrollView로 감싸 화면을 넘는 데이터/컨트롤을 스크롤 가능하게(사용자 요청).
         val dashScroll = android.widget.ScrollView(this).apply {
@@ -534,7 +541,10 @@ class RunActivity : AppCompatActivity() {
                 SimInput.RUNNER -> com.zone2runner.app.sim.ManualVirtualRunnerSource(
                     manualBody ?: com.zone2runner.app.sim.ManualVirtualRunnerSource.Body(profile.age, profile.restingHr, profile.maxHr, 7.0),
                     delayMs = simDelayMs, seed = System.nanoTime(),
-                ).also { it.targetSpm = manualSpm; it.targetStrideM = manualStride; it.hrOffsetBpm = manualHrOffset }
+                ).also {
+                    it.targetSpm = manualSpm; it.targetStrideM = manualStride
+                    it.hrOffsetBpm = manualHrOffset; it.slopePct = manualSlope
+                }
                 SimInput.AUTO -> com.zone2runner.app.sim.SimRunnerSource(
                     virtualRunner, delayMs = simDelayMs, seed = System.nanoTime(),
                     onTalkTest = { st ->
@@ -552,6 +562,11 @@ class RunActivity : AppCompatActivity() {
         if (mode == MODE_SIM && simInput == SimInput.AUTO) {
             if (settings.heatCoachingEnabled) eng.ambientTempC = virtualRunner.tempC
             tempView.text = "%.0f℃".format(virtualRunner.tempC); tempFetched = true
+        }
+        // 수동 러너: 기온을 신체 스펙 입력값으로 고정(더위 코칭을 손으로 테스트, 실측 조회 안 함)
+        if (mode == MODE_SIM && simInput == SimInput.RUNNER) {
+            if (settings.heatCoachingEnabled) eng.ambientTempC = manualTempC
+            tempView.text = "%.0f℃".format(manualTempC); tempFetched = true
         }
 
         // 필드 로그(spec-012): 원시 입력+파이프라인 출력을 1Hz JSONL로 기록(adb pull로 회수)
@@ -991,50 +1006,73 @@ class RunActivity : AppCompatActivity() {
         updateRunnerChip()
     }
 
-    /** 수동 러너 조종 슬라이더 한 줄(라벨 + SeekBar). 값 표시는 updateVrSummary가 통합 갱신. */
-    private fun vrSeek(title: String, max: Int, initial: Int, onChange: (Int) -> Unit): LinearLayout {
+    /**
+     * 수동 러너 조종 슬라이더 한 줄 — 라벨(범위 범례 포함) + SeekBar + 현재 값(사용자 피드백: 범례 표시).
+     * value()가 현재 값 문자열을 만들고, onChange 후 값 라벨과 요약이 함께 갱신된다.
+     */
+    private fun vrSeek(title: String, legend: String, max: Int, initial: Int, value: () -> String, onChange: (Int) -> Unit): LinearLayout {
         val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
-        row.addView(TextView(this).apply { text = title; textSize = 11f; setTextColor(C_MUTED) },
-            LinearLayout.LayoutParams(dp(58), WRAP_CONTENT))
+        row.addView(LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            addView(TextView(this@RunActivity).apply { text = title; textSize = 11f; setTextColor(C_TEXT) })
+            addView(TextView(this@RunActivity).apply { text = legend; textSize = 9f; setTextColor(C_MUTED) })
+        }, LinearLayout.LayoutParams(dp(64), WRAP_CONTENT))
+        val valueView = TextView(this).apply {
+            text = value(); textSize = 12f; setTextColor(C_ACCENT); setTypeface(typeface, Typeface.BOLD)
+            gravity = Gravity.END
+        }
         row.addView(android.widget.SeekBar(this).apply {
             this.max = max; progress = initial.coerceIn(0, max)
             setOnSeekBarChangeListener(object : android.widget.SeekBar.OnSeekBarChangeListener {
                 override fun onProgressChanged(sb: android.widget.SeekBar?, p: Int, fromUser: Boolean) {
-                    onChange(p); updateVrSummary()
+                    onChange(p); valueView.text = value(); updateVrSummary()
                 }
                 override fun onStartTrackingTouch(sb: android.widget.SeekBar?) {}
                 override fun onStopTrackingTouch(sb: android.widget.SeekBar?) {}
             })
         }, LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f))
+        row.addView(valueView, LinearLayout.LayoutParams(dp(76), WRAP_CONTENT))
         return row
     }
 
-    /** 조종 값 요약: 케이던스 x 보폭 → 페이스 환산 + 심박 보정. */
+    /** 조종 값 요약: 케이던스 x 보폭 → 페이스 환산 + 심박 보정. 케이던스 0 = 정지. */
     private fun updateVrSummary() {
-        val pace = 1000.0 / (manualSpm * manualStride)
-        vrSummary?.text = "%d spm x %.2fm → %d'%02d\"  ·  심박 보정 %+d bpm"
-            .format(manualSpm, manualStride, pace.toInt(), ((pace % 1) * 60).toInt(), manualHrOffset)
+        val paceTxt = if (manualSpm <= 0) "정지" else {
+            val pace = 1000.0 / (manualSpm * manualStride)
+            if (pace > 20.0) "걷기 미만" else "%d'%02d\"".format(pace.toInt(), ((pace % 1) * 60).toInt())
+        }
+        vrSummary?.text = "%d spm x %.2fm → %s  ·  심박 보정 %+d bpm"
+            .format(manualSpm, manualStride, paceTxt, manualHrOffset)
     }
 
     /** 신체 스펙 입력(spec-022 FR1) — 기본값은 활성 프로필. 수동 러너 모드 선택 시 표시. */
     private fun showBodySpecDialog() {
         val p = profile ?: ProfileStore.load(this).also { profile = it }
         val cur = manualBody ?: com.zone2runner.app.sim.ManualVirtualRunnerSource.Body(p.age, p.restingHr, p.maxHr, 7.0)
-        fun field(hint: String, value: String) = android.widget.EditText(this).apply {
-            this.hint = hint; setText(value)
-            inputType = android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL
-        }
-        val age = field("나이", cur.age.toString())
-        val rhr = field("안정 심박(bpm)", cur.restingHr.toString())
-        val mhr = field("최대 심박(bpm)", cur.maxHr.toString())
-        val bp = field("기준 페이스(min/km, 편한 속도)", cur.basePaceMinKm.toString())
         val col = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL; setPadding(dp(20), dp(8), dp(20), 0)
-            listOf(age, rhr, mhr, bp).forEach { addView(it) }
         }
+        // 값이 미리 채워지면 hint가 안 보이므로 각 항목 위에 라벨을 명시(사용자 피드백)
+        fun field(label: String, value: String): android.widget.EditText {
+            col.addView(TextView(this).apply {
+                text = label; textSize = 12f; setTextColor(C_MUTED); setPadding(0, dp(8), 0, dp(2))
+            })
+            return android.widget.EditText(this).apply {
+                setText(value)
+                inputType = android.text.InputType.TYPE_CLASS_NUMBER or
+                    android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL or
+                    android.text.InputType.TYPE_NUMBER_FLAG_SIGNED // 기온 영하 입력
+                col.addView(this)
+            }
+        }
+        val age = field("나이(세)", cur.age.toString())
+        val rhr = field("안정 심박(bpm)", cur.restingHr.toString())
+        val mhr = field("최대 심박(bpm)", cur.maxHr.toString())
+        val bp = field("기준 페이스(min/km) - 편하게 달릴 때", cur.basePaceMinKm.toString())
+        val tmp = field("기온(℃) - 더위 코칭 테스트용", manualTempC.toString())
         android.app.AlertDialog.Builder(this)
             .setTitle("수동 러너 신체 스펙")
-            .setView(col)
+            .setView(android.widget.ScrollView(this).apply { addView(col) })
             .setPositiveButton("확인") { _, _ ->
                 manualBody = com.zone2runner.app.sim.ManualVirtualRunnerSource.Body(
                     age.text.toString().toIntOrNull()?.coerceIn(10, 90) ?: cur.age,
@@ -1042,6 +1080,7 @@ class RunActivity : AppCompatActivity() {
                     mhr.text.toString().toIntOrNull()?.coerceIn(120, 230) ?: cur.maxHr,
                     bp.text.toString().toDoubleOrNull()?.coerceIn(3.5, 12.0) ?: cur.basePaceMinKm,
                 )
+                manualTempC = tmp.text.toString().toDoubleOrNull()?.coerceIn(-15.0, 45.0) ?: manualTempC
             }
             .setNegativeButton("취소", null)
             .show()
