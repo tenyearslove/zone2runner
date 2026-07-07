@@ -56,6 +56,17 @@ class HrOdeModelTest {
         assertTrue(lowBand in HrOdeModel.PACE_MIN..HrOdeModel.PACE_MAX)
     }
 
+    @Test fun explain_decomposition_sums_to_prediction() {
+        val m = HrOdeModel()
+        val pred = m.predict(df(0.5, 0.3), hrr) // 상승 중
+        val e = m.last
+        // pred60 = 현재 + 추세 + 드리프트 + 잔차 (설명 항목 합이 예측과 일치 — 설명용이성 정직성)
+        val sum = e.hNow + e.trendFrac + e.driftFrac + e.residFrac
+        assertEquals("분해 합 = 예측", pred[1], sum, 1e-9)
+        assertEquals("predFrac 저장", pred[1], e.predFrac, 1e-9)
+        assertTrue("상승 중이면 추세 항 양수", e.trendFrac > 0)
+    }
+
     @Test fun online_tau_converges_toward_true() {
         // 참 τ=20초인 1차 지연 계열을 연속으로(불연속 리셋 없이) 만들어 관측시키면
         // 추정 τ가 30(초기)→20 쪽으로 이동해야 한다. 목표를 180초마다 바꿔 여러 전이 구간을 제공.

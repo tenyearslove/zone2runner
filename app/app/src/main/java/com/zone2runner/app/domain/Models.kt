@@ -78,6 +78,7 @@ data class LiveState(
     // 심박 동역학 모델 출력(spec-014). 미로드/워밍업 전 = -1/0.0
     val predictedHr60: Int = -1,          // 현재 페이스 유지 시 60초 뒤 예측 심박(bpm)
     val recommendedPaceMinKm: Double = 0.0, // Zone2 목표 페이스 제안(min/km), 0=없음
+    val predictionWhy: String = "",        // 예측이 현재와 벌어진 이유(항목 분해, 설명용이성). 차이 작으면 빈 문자열
 )
 
 /** 경로 점(존 색으로 폴리라인 채색). */

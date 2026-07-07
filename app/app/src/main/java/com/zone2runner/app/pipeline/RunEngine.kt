@@ -72,6 +72,7 @@ class RunEngine(
     // 동역학 모델 출력(표시용)
     private var predictedHr60 = -1
     private var recommendedPace = 0.0
+    private var predWhy = ""           // 예측이 현재와 벌어진 이유(항목 분해, 설명용이성)
     private var sustainedHr = -1       // 최근 지속 심박(코칭 컨텍스트용)
     private var coachLoBpm = 0
     private var coachHiBpm = 0
@@ -154,6 +155,7 @@ class RunEngine(
                     val pred = ode.predict(df, profile.hrr)            // 개인 파라미터 반영된 예측
                     ode.record(s.tSec, df, pred, profile.hrr, s.paceMinKm) // 60초 뒤 검증용 버퍼
                     predictedHr60 = (profile.restingHr + pred.last() * profile.hrr).toInt()
+                    predWhy = buildPredWhy(sustainedHr) // 예측이 현재와 벌어진 이유(항목 분해)
                     // 추천 페이스: 개인 수요맵을 밴드 중심으로 해석적 역산
                     val rec = ode.recommendPace(df, b.lFrac, b.uFrac)
                     // 표시 안정화: 직전 추천과 한 스텝(0.25) 이내면 유지
@@ -220,6 +222,30 @@ class RunEngine(
      * 선제 코칭(spec-014 FR4): 판정은 IN인데 현재 페이스 유지 시 60초 뒤 예측이 경계 밖이면
      * 이탈 전에 미리 방향 코칭. 같은 예측 방향이 이어지면 1회만.
      */
+    /**
+     * 예측(60초)이 현재 심박과 벌어졌을 때 "왜 그렇게 나왔나"를 항목 분해로 설명(설명용이성, QA6).
+     * 생리 ODE라 예측 = 현재 + 추세 + 드리프트 + 잔차로 정확히 쪼갤 수 있다(블랙박스면 불가).
+     * 사실은 물리/규칙이 확정(지어낸 수치 없음). 차이가 작으면(<5bpm) 빈 문자열.
+     */
+    private fun buildPredWhy(currentHr: Int): String {
+        val e = ode.last
+        val hrr = profile.hrr
+        val predBpm = (profile.restingHr + e.predFrac * hrr).toInt()
+        if (currentHr <= 0) return ""
+        val gap = predBpm - currentHr
+        if (kotlin.math.abs(gap) < 5) return ""
+        val trend = e.trendFrac * hrr
+        val drift = e.driftFrac * hrr
+        val resid = e.residFrac * hrr
+        val parts = ArrayList<String>()
+        if (kotlin.math.abs(trend) >= 1.0) parts += "추세 %+.0f".format(trend)
+        if (kotlin.math.abs(drift) >= 1.0) parts += "드리프트 %+.0f".format(drift)
+        if (kotlin.math.abs(resid) >= 1.0) parts += "개인보정 %+.0f".format(resid)
+        val dir = if (gap > 0) "오를" else "내릴"
+        val head = "이 페이스면 60초 뒤 ${predBpm}bpm — 지금보다 ${kotlin.math.abs(gap)} $dir 전망"
+        return if (parts.isEmpty()) head else "$head (${parts.joinToString(", ")}bpm)"
+    }
+
     private suspend fun maybePreemptiveCoach(s: Sample, loBpm: Double, hiBpm: Double) {
         if (!preemptiveEnabled) return
         if (judgment != ZoneJudgment.IN || predictedHr60 <= 0) return
@@ -284,6 +310,7 @@ class RunEngine(
         dHrPerSec = lastFeat?.get(2),
         predictedHr60 = predictedHr60,
         recommendedPaceMinKm = recommendedPace,
+        predictionWhy = predWhy,
     )
 
     fun report(): RunReport = RunReport(

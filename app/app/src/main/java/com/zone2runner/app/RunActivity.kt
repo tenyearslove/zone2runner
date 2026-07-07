@@ -692,7 +692,11 @@ class RunActivity : AppCompatActivity() {
         if (s.recommendedPaceMinKm > 0.0 && s.predictedHr60 > 0) {
             val rp = s.recommendedPaceMinKm
             val paceTxt = "%d'%02d\"".format(rp.toInt(), ((rp % 1) * 60).toInt())
-            adviceView.text = "🎯 Zone2 페이스 $paceTxt · 이대로면 60초 뒤 ~${s.predictedHr60} bpm"
+            // 예측이 현재와 벌어지면 왜 그렇게 나왔는지(추세/드리프트/개인보정 분해)를 둘째 줄에 설명(설명용이성)
+            adviceView.text = if (s.predictionWhy.isNotBlank())
+                "🎯 Zone2 페이스 $paceTxt\n💡 ${s.predictionWhy}"
+            else
+                "🎯 Zone2 페이스 $paceTxt · 이대로면 60초 뒤 ~${s.predictedHr60} bpm"
         } else if (running) {
             adviceView.text = when {
                 s.hr <= 0 -> "심박 신호 대기 중 (워치 연결 확인)"

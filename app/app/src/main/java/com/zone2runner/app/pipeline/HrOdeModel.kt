@@ -40,12 +40,26 @@ class HrOdeModel(init: DoubleArray? = null, private val residual: HrResidual? = 
         val dhPerSec = if (hrr > 0) df[2] / hrr else 0.0  // bpm/s → frac/s
         val hSS = (hNow + tauSec * dhPerSec).coerceIn(SS_MIN, SS_MAX)
         val res = residual?.residual(df, hrr)  // [res30, res60] frac (clamp됨) 또는 null
-        return DoubleArray(horizonsSec.size) { i ->
+        val out = DoubleArray(horizonsSec.size) { i ->
             val h = horizonsSec[i].toDouble()
             val ode = hSS + (hNow - hSS) * exp(-h / tauSec) + driftPerMin * (h / 60.0)
             (ode + (res?.get(i) ?: 0.0)).coerceIn(SS_MIN, SS_MAX)
         }
+        // 설명용 60초 예측 분해(frac): pred60 − hNow = 추세 + 드리프트 + 잔차 (clamp 전 기준)
+        val e60 = exp(-60.0 / tauSec)
+        last = Explain(hNow = hNow, hSSFrac = hSS,
+            trendFrac = (hSS - hNow) * (1 - e60),   // 현재 추세로 정상상태를 향해 가는 몫
+            driftFrac = driftPerMin,                // 60초분 누적 드리프트
+            residFrac = res?.get(1) ?: 0.0,         // 잔차 NN 보정
+            predFrac = out.last())
+        return out
     }
+
+    /** 마지막 predict()의 60초 예측 분해(설명용, frac 단위). */
+    data class Explain(val hNow: Double, val hSSFrac: Double, val trendFrac: Double,
+                       val driftFrac: Double, val residFrac: Double, val predFrac: Double)
+    var last = Explain(0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+        private set
 
     /**
      * Zone2 목표 페이스 역질의: 정상상태 수요맵을 밴드 중심으로 역산(해석적).
