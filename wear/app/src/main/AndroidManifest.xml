@@ -22,20 +22,25 @@
         android:label="Zone2 Runner"
         android:supportsRtl="true"
         android:theme="@android:style/Theme.DeviceDefault">
+        <!-- singleTask: 폰이 /run/start·/run/mirror로 다시 띄워도 새 인스턴스를 쌓지 않고
+             기존 인스턴스로 onNewIntent 전달(중복 스택→상태공유 오류 방지, 2026-07-08). -->
         <activity
             android:name=".WearRunActivity"
-            android:exported="true">
+            android:exported="true"
+            android:launchMode="singleTask">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
-        <!-- 토크테스트 전체화면 설문(별도 화면). 폰이 타이밍 판단 후 /run/talk으로 명령(adr-023) -->
+        <!-- 토크테스트 전체화면 설문. 폰이 타이밍 판단 후 /run/talk으로 명령(adr-023).
+             singleTop + active 정적 가드로 설문이 중복으로 쌓이지 않게. -->
         <activity
             android:name=".TalkTestActivity"
             android:exported="false"
             android:excludeFromRecents="true"
+            android:launchMode="singleTop"
             android:theme="@android:style/Theme.DeviceDefault" />
 
         <service

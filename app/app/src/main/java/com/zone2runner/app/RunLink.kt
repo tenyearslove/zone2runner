@@ -17,6 +17,13 @@ object RunLink {
     const val PATH_TALK = "/run/talk"       // 폰 → 워치: 토크테스트 설문 표시 명령(adr-023, 타이밍 판단은 폰)
     const val PATH_TALK_DONE = "/run/talkdone" // 폰 → 워치: 폰에서 답함 → 열린 설문 닫기(중복 응답 방지)
 
+    /** 워치(Wear 노드) 연결 여부를 콜백으로 반환. 연결 노드가 하나라도 있으면 true. 실패 시 false. */
+    fun watchConnected(ctx: Context, cb: (Boolean) -> Unit) {
+        Wearable.getNodeClient(ctx.applicationContext).connectedNodes
+            .addOnSuccessListener { nodes -> cb(nodes.isNotEmpty()) }
+            .addOnFailureListener { cb(false) }
+    }
+
     fun send(ctx: Context, path: String, payload: ByteArray = ByteArray(0)) {
         val app = ctx.applicationContext
         Wearable.getNodeClient(app).connectedNodes.addOnSuccessListener { nodes ->

@@ -65,6 +65,22 @@ class WearRunActivity : ComponentActivity() {
         render()
     }
 
+    /**
+     * singleTask라 폰이 다시 띄우면(새 세션의 /run/start·/run/mirror) 새 인스턴스 대신 이 인스턴스로
+     * 전달된다 → 중복 스택/상태공유 오류 방지. 미러 여부가 바뀌면 리스너를 재동기화하고 다시 그린다.
+     */
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        val newMirror = intent.getBooleanExtra(EXTRA_MIRROR, false)
+        if (newMirror != mirror) {
+            mirror = newMirror
+            unregisterMirror()
+            if (mirror) registerMirror()
+        }
+        render()
+    }
+
     override fun onResume() {
         super.onResume()
         RunBus.listener = { render() }
@@ -91,6 +107,10 @@ class WearRunActivity : ComponentActivity() {
         super.onPause()
         RunBus.listener = null
         ui.removeCallbacks(ticker)
+        unregisterMirror()
+    }
+
+    private fun unregisterMirror() {
         mirrorListener?.let { runCatching { com.google.android.gms.wearable.Wearable.getMessageClient(this).removeListener(it) }; mirrorListener = null }
     }
 

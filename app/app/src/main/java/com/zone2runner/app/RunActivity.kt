@@ -74,8 +74,7 @@ class RunActivity : AppCompatActivity() {
     private var manualTempC = 20.0 // 기온 ℃ — 더위 코칭 테스트(실측 조회 대신 입력값 주입)
     private var vrRows: LinearLayout? = null
     private var vrSummary: TextView? = null
-    private var watchLinkCheck: android.widget.CheckBox? = null
-    private var watchLink = true // 시작 시점에 고정(수동 러너 모드만 체크박스, 그 외 항상 연동)
+    // 워치는 항상 페어(실제도 항상 페어 → 시뮬도 동일, 2026-07-08 사용자 결정). 별도 연동 옵션 없음.
     private var talkDialog: android.app.AlertDialog? = null
     private var virtualRunner = com.zone2runner.app.domain.VirtualRunner.DEFAULT // 가상러너(자동 시나리오)
     private var runnerChip: TextView? = null
@@ -83,6 +82,8 @@ class RunActivity : AppCompatActivity() {
     private lateinit var uEstView: TextView
     private lateinit var startBtn: Button
     private lateinit var subtitle: TextView
+    private lateinit var watchStatusView: TextView
+    private val watchPoll = android.os.Handler(android.os.Looper.getMainLooper())
     private lateinit var zoneBand: com.zone2runner.app.ui.ZoneBandView
     private lateinit var rangeView: TextView
     private lateinit var slopeView: TextView
@@ -200,6 +201,10 @@ class RunActivity : AppCompatActivity() {
         subtitle = TextView(this).apply { textSize = 11f; setTextColor(C_MUTED) }
         dash.addView(subtitle)
 
+        // 워치 연결 상태(항상 페어 전제 — 끊기면 눈에 띄게). 3초 주기 폴링.
+        watchStatusView = TextView(this).apply { textSize = 12f; setTextColor(C_MUTED); setPadding(0, dp(2), 0, 0) }
+        dash.addView(watchStatusView)
+
         val hrRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
         hrView = TextView(this).apply {
             text = "-- bpm"; textSize = 34f; setTypeface(Typeface.DEFAULT_BOLD); setTextColor(C_TEXT)
@@ -304,7 +309,7 @@ class RunActivity : AppCompatActivity() {
             manualRow.addView(manualChip)
             dash.addView(manualRow, mt(6))
 
-            // 수동 가상러너 조종부(spec-022): 케이던스/보폭/심박 보정 + 시계연동. RUNNER 모드에서만 표시.
+            // 수동 가상러너 조종부(spec-022): 케이던스/보폭/심박 보정/경사. RUNNER 모드에서만 표시.
             vrRows = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
             vrSummary = TextView(this).apply { textSize = 12f; setTextColor(C_TEXT); setTypeface(typeface, Typeface.BOLD) }
             vrRows!!.addView(vrSummary, mt(4))
@@ -324,11 +329,6 @@ class RunActivity : AppCompatActivity() {
                 manualSlope = p / 2.0 - 10.0 // 0.5% 단위
                 (source as? com.zone2runner.app.sim.ManualVirtualRunnerSource)?.slopePct = manualSlope
             }, mt(2))
-            watchLinkCheck = android.widget.CheckBox(this).apply {
-                text = "시계연동 (워치에 심박/존 표시 + 설문 팝업)"; textSize = 12f; setTextColor(C_TEXT)
-                isChecked = false
-            }
-            vrRows!!.addView(watchLinkCheck, mt(2))
             dash.addView(vrRows, mt(4))
             updateVrSummary()
 
@@ -540,8 +540,6 @@ class RunActivity : AppCompatActivity() {
             }
         }
         source = src
-        // 시계연동(spec-022 FR5): 수동 러너 모드만 체크박스로 선택, 그 외(라이브/자동/수동페이스)는 항상 연동.
-        watchLink = if (mode != MODE_LIVE && simInput == SimInput.RUNNER) watchLinkCheck?.isChecked == true else true
         // 시뮬 자동 시나리오: 가상러너의 기온을 코칭 맥락에 주입(더위 취약형 등 검증 가능). 실측 조회는 좌표 확보 시 덮어씀.
         if (mode == MODE_SIM && simInput == SimInput.AUTO) {
             if (settings.heatCoachingEnabled) eng.ambientTempC = virtualRunner.tempC
@@ -574,11 +572,10 @@ class RunActivity : AppCompatActivity() {
         running = true; finished = false
         isRunning = true; remoteStopRequested = false
         registerTalkListener() // 워치 토크테스트 답변(/talk)은 모든 모드에서 수신(시뮬 미러 포함)
-        // 실센서면 워치가 자기 센서로 러닝, 시뮬/목이면 워치를 미러 모드로(폰 심박 표시+토크테스트).
-        // 수동 러너 모드에서 시계연동 해제 시엔 워치로 아무것도 보내지 않는다(spec-022 FR5).
+        // 워치는 항상 페어(사용자 결정). 실센서면 워치가 자기 센서로 러닝, 시뮬이면 워치를 미러 모드로.
         when {
             mode == MODE_LIVE -> RunLink.send(this, RunLink.PATH_START)
-            watchLink -> RunLink.send(this, RunLink.PATH_MIRROR)
+            else -> RunLink.send(this, RunLink.PATH_MIRROR)
         }
         // 러닝 중 화면 유지: LLM 코칭은 포그라운드 전용(adr-007), GPS/파이프라인도 화면off 스로틀 회피.
         // 설정(spec-021)에서 끄면 화면 자동 꺼짐 허용(실센서 모드 배터리 절약).
@@ -595,10 +592,10 @@ class RunActivity : AppCompatActivity() {
                 displayZone = displayJudge.judge(state.hr, lo, hi, profile.maxHr)
             }
             // 시뮬/목: 심박을 워치로 스트림(미러) — 워치에서 표시+토크테스트 가능
-            if (mode != MODE_LIVE && watchLink && state.hr > 0 && frame % 25 == 0) RunLink.sendMirrorHr(this, state.hr)
+            if (mode != MODE_LIVE && state.hr > 0 && frame % 25 == 0) RunLink.sendMirrorHr(this, state.hr)
             // adr-023: 폰이 확정한 표시 존을 워치로 푸시 → 워치는 무로직 뷰어(항상 폰 연결 전제).
             // MODE_LIVE=매초, 시뮬=미러와 같은 캐던스.
-            if (watchLink && state.hr > 0 && (mode == MODE_LIVE || frame % 25 == 0)) pushWatchZone(state)
+            if (state.hr > 0 && (mode == MODE_LIVE || frame % 25 == 0)) pushWatchZone(state)
             // 토크테스트 설문 타이밍(adr-023: 폰이 판단, 워치는 /run/talk 수신 시 표시만)
             updateTalkPrompt(state)
             if (!tempFetched && s.lat.isFinite() && s.lon.isFinite()) { // 기온 1회 조회(유효 좌표 확보 후)
@@ -666,7 +663,7 @@ class RunActivity : AppCompatActivity() {
         talkDialog?.let { runCatching { it.dismiss() } } // 폰 토크 팝업 정리(spec-022)
         unregisterTalkListener()
         // 러닝 종료면 워치도 종료(실센서 자동기동/시뮬 미러 모두). 원격 종료가 아닐 때만 되쏨.
-        if (!remoteStopRequested && watchLink) RunLink.send(this, RunLink.PATH_STOP)
+        if (!remoteStopRequested) RunLink.send(this, RunLink.PATH_STOP)
         remoteStopRequested = false
         window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         source?.stop()
@@ -750,7 +747,7 @@ class RunActivity : AppCompatActivity() {
         if ((elevatedAsk || fallback) && wallOk) {
             lastTalkAskSimSec = simSec
             lastTalkPromptWallMs = now
-            if (watchLink) RunLink.send(this, RunLink.PATH_TALK)
+            RunLink.send(this, RunLink.PATH_TALK)
             // 폰에도 5지선다 팝업(사용자 확정: 폰/워치 모두 팝업) — 고정 칩 UI는 제거됨.
             // 시뮬 소스는 팝업 동안 시간 정지, 실센서는 무시(현실은 안 멈춤).
             showPhoneTalkDialog()
@@ -775,7 +772,7 @@ class RunActivity : AppCompatActivity() {
             .setItems(states.map { it.first }.toTypedArray()) { _, i ->
                 engine?.observeTalkTest(states[i].second)
                 logger?.event("talktest") { put("t", (System.currentTimeMillis() - startedAt) / 1000); put("state", states[i].second.name); put("src", "phone_popup") }
-                if (watchLink) RunLink.send(this, RunLink.PATH_TALK_DONE) // 폰에서 답함 → 워치 설문도 닫기
+                RunLink.send(this, RunLink.PATH_TALK_DONE) // 폰에서 답함 → 워치 설문도 닫기
                 Toast.makeText(this, "기록됨 · 개인 경계에 반영", Toast.LENGTH_SHORT).show()
             }
             .setNegativeButton("건너뛰기", null)
@@ -1088,14 +1085,28 @@ class RunActivity : AppCompatActivity() {
     private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
     private fun fmt(d: Double?) = if (d == null) "-" else "%.2f".format(d)
 
-    override fun onResume() { super.onResume(); map.onResume() }
-    override fun onPause() { super.onPause(); map.onPause() }
+    override fun onResume() { super.onResume(); map.onResume(); watchPoll.post(watchTick) }
+    override fun onPause() { super.onPause(); map.onPause(); watchPoll.removeCallbacks(watchTick) }
     override fun onDestroy() {
         super.onDestroy(); source?.stop()
         isRunning = false
+        watchPoll.removeCallbacks(watchTick)
         unregisterTalkListener()
         logger?.close(); logger = null // 중도 이탈 시에도 로그 파일 마감
         tts?.stop(); tts?.shutdown()
+    }
+
+    /** 워치 연결 상태 3초 폴링 → 상태 텍스트 갱신(항상 페어 전제라 끊기면 빨간 경고). */
+    private val watchTick = object : Runnable {
+        override fun run() {
+            RunLink.watchConnected(this@RunActivity) { connected ->
+                if (::watchStatusView.isInitialized) {
+                    watchStatusView.text = if (connected) "⌚ 워치 연결됨" else "⌚ 워치 연결 끊김 — 페어링/블루투스 확인"
+                    watchStatusView.setTextColor(if (connected) C_ACCENT else C_RED)
+                }
+            }
+            watchPoll.postDelayed(this, 3000)
+        }
     }
 
     companion object {
@@ -1113,6 +1124,7 @@ class RunActivity : AppCompatActivity() {
         private val C_ACCENT_DIM = Color.parseColor("#1E7A38") // 배속/선택 칩 배경(팔레트 외 로컬)
         private val C_BLUE = Palette.BLUE
         private val C_AMBER = Palette.AMBER
+        private val C_RED = Palette.RED
         private val C_CARD = Palette.CARD
         private val C_STROKE = Palette.STROKE
     }
