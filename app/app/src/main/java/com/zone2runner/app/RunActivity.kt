@@ -20,14 +20,12 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.zone2runner.app.coaching.LlmCoach
-import com.zone2runner.app.data.MockConfigStore
 import com.zone2runner.app.data.ProfileStore
 import com.zone2runner.app.data.RunLogger
 import com.zone2runner.app.data.SessionStore
 import com.zone2runner.app.domain.LiveState
 import com.zone2runner.app.pipeline.RunEngine
 import com.zone2runner.app.sensor.LiveRunSource
-import com.zone2runner.app.sensor.MockRunSource
 import com.zone2runner.app.sensor.RunSource
 import com.zone2runner.app.sensor.SimulatedRunSource
 import com.zone2runner.app.sensor.WatchHrProvider
@@ -170,7 +168,6 @@ class RunActivity : AppCompatActivity() {
         val model = "규칙 판정 + 심박 예측 ODE(개인화) + 페이스 제안"
         subtitle.text = when (mode) {
             MODE_LIVE -> "$model · 실센서(GPS+워치HR) — 실기기 필요"
-            MODE_MOCK -> "$model · 가짜 라이브(테스트) — 워치 없이 실시간 합성"
             else -> "$model · 시뮬레이션 재생"
         }
     }
@@ -399,7 +396,6 @@ class RunActivity : AppCompatActivity() {
         finished -> "리포트 보기"
         running -> "정지 · 저장"
         mode == MODE_LIVE -> "실센서 러닝 시작"
-        mode == MODE_MOCK -> "가짜 라이브 러닝 시작"
         else -> "파이프라인 시뮬레이션 시작"
     }
 
@@ -524,7 +520,6 @@ class RunActivity : AppCompatActivity() {
 
         val src: RunSource = when (mode) {
             MODE_LIVE -> LiveRunSource(this, WatchHrProvider(this).also { watchProvider = it })
-            MODE_MOCK -> MockRunSource(MockConfigStore.load(this), seed = System.nanoTime())
             else -> when (simInput) {
                 SimInput.PACE -> com.zone2runner.app.sim.ManualRunSource(profile, manualPace, delayMs = simDelayMs, seed = System.nanoTime())
                 SimInput.RUNNER -> com.zone2runner.app.sim.ManualVirtualRunnerSource(
@@ -1107,7 +1102,6 @@ class RunActivity : AppCompatActivity() {
         const val EXTRA_MODE = "mode"
         const val MODE_SIM = "sim"
         const val MODE_LIVE = "live"
-        const val MODE_MOCK = "mock"
         // 워치 원격 제어 연동(RunControlService)용 프로세스 전역 상태
         @Volatile var isRunning = false          // 러닝 중이면 워치발 /run/start 중복 실행 방지
         @Volatile var remoteStopRequested = false // 워치에서 종료 → 폰 러닝 루프가 감지해 종료

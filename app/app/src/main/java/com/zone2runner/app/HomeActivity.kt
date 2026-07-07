@@ -83,9 +83,7 @@ class HomeActivity : AppCompatActivity() {
         col.addView(bigButton("실센서 러닝 (GPS+워치)", Palette.CARD) {
             startActivity(Intent(this, RunActivity::class.java).putExtra(RunActivity.EXTRA_MODE, RunActivity.MODE_LIVE))
         })
-        col.addView(bigButton("가짜 라이브 러닝 (테스트)", Palette.CARD) {
-            startActivity(Intent(this, MockConfigActivity::class.java))
-        })
+        // 가짜 라이브(Mock)는 수동 러너 시뮬(spec-022)이 상위호환이라 제거(2026-07-08 사용자 결정)
         col.addView(bigButton("기록 보기", Palette.CARD) {
             startActivity(Intent(this, HistoryActivity::class.java))
         })
