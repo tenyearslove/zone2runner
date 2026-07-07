@@ -4,7 +4,12 @@
 
 > **새 세션에서 이어가는 법**: Claude에게 "HANDOFF.md 읽고 이어가자"라고 하면 된다.
 
-최종 갱신: 2026-07-06 세션 C (워치 존/HR 폰 미러 adr-022 / 워치 UI 잘림·토크테스트 전체화면 / 소량데이터 ML 심층연구 → PINN 경로 — 아래 ★★ 블록)
+최종 갱신: 2026-07-07 세션 D (예측 설명화면 추가 → gray-box 잔차NN 구현했다가 최종 제거, 순수 ODE+온라인개인화로 확정 / 워치 UI(중앙고정)·배경심박권한·시작종료 레이스 수정 / DP1 보고서 report-006 — 아래 ★★★ 블록)
+
+> **★★★ 2026-07-07 세션 D — 잔차 NN 제거(순수 ODE 확정) + 워치 실기기 수정 + DP1 보고서 [여기서 이어가기]**
+> - **★ 심박 예측 잔차 NN(gray-box/PINN) 최종 제거 — 순수 생리 ODE + 온라인 파라미터 개인화로 확정.** 흐름: 예측이 현재 심박과 벌어질 때 "왜"를 항목 분해로 설명(추세/드리프트/개인보정)하는 화면을 넣음 → 그 김에 gray-box 잔차 NN을 실제 구현(train_hr_residual.py 오프라인 학습→hr_residual.json→HrResidual.kt 추론, 시뮬 홀드아웃 +10%). **그러나 사용자 결정으로 제거**: (1) 사전학습을 실데이터 없이 시뮬로만 할 수 있어 실사용 이득 불확실(옛 MLP "시뮬 학습" 우려의 약한 재판), (2) **자체 학습 NN이 필수 아님** — ODE 파라미터 온라인 추정(τ/드리프트)과 Zone2 Bayesian이 이미 진짜 ML이고 **사전학습이 필요 없어** 더 깨끗. 제거: HrResidual.kt/hr_residual.json/train_hr_residual.py/HrResidualTest(git 이력 보존). 예측 설명은 추세+드리프트 두 물리 항만. **테스트 67건**. 폰 설치. gray-box는 "설계 검토·프로토타입했으나 실데이터 없어 미배포한 연구 후보"로 문서화(백서 ML지도/5-1부록, report-005 상태, report-006 §2-2 박스). **핵심 원칙: 예측엔 자체 NN 없음. '뛸수록 개인화'는 잔차NN이 아니라 ODE 파라미터 온라인 학습이 담당.**
+> - **★ DP1 설계 보고서 신설 (report-006)**: 인증 샘플(씬스틸러 PDF, report/references/) DP 슬라이드 형식 준수 — [설계문제정의]→[후보 2안: 구조 블록다이어그램 + QA별 별점]→[결정근거]. 후보를 도구명 아닌 '구조'로: (1안) 블랙박스 신경망 회귀 vs (2안) 생리 ODE+온라인 개인화 ★채택. 도메인 지식 0 독자용 쉬운설명+용어사전. **다음: DP2~ 같은 형식으로 확장 가능.**
+> - **★ 워치 실기기 수정 3건**: (1) 페이스/거리/속도 행 — **거리 화면 정중앙 고정**(RelativeLayout CENTER_HORIZONTAL) + 좌우 LEFT_OF/RIGHT_OF 고정간격(텍스트 길이 변해도 중심 안 흔들림). (2) **시작→즉시 종료 레이스**: startExerciseAsync 완료 전 종료 시 고아 운동 방지(stopRequested 플래그, onDestroy 무조건 endExercise). (3) **BODY_SENSORS_BACKGROUND 미부여** → 시작 직후 'WHS_PermissionPolicy: healthservices doesn't have permission BODY_SENSORS' 경고 + HR 막힘. 전경 권한 승인 후 배경 심박을 **단독 2단계 요청**(REQ_BODY_BG). **사용자가 '항상 허용' 선택해야 화면off HR 됨** — 안 뜨면 설정에서 수동.
 
 > **★ adr-016 (2026-07-04): AI≠NN, 문제별 도구 선택 — 최종 구조.**
 > - **심박 예측 = NN(딥러닝, HrDynamics)**: 1Hz 스트림 → 30/60초 뒤 심박. 선제 코칭/페이스 제안. 문헌 athlete_hr_predict(LSTM)/Zhu 2025.
