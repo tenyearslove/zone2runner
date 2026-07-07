@@ -33,6 +33,7 @@ class TalkTestActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        current = this
         window.addFlags(
             WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON or
                 WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON or
@@ -45,6 +46,7 @@ class TalkTestActivity : ComponentActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+        if (current === this) current = null
         ui.removeCallbacks(autoDismiss)
     }
 
@@ -107,6 +109,12 @@ class TalkTestActivity : ComponentActivity() {
 
     companion object {
         @Volatile var active = false // 설문 표시 중(RunControlService가 중복 실행 방지에 확인)
+        @Volatile private var current: TalkTestActivity? = null // onDestroy에서 해제(누수 없음)
+
+        /** 폰에서 답함(/run/talkdone) → 열린 설문 닫기. RunControlService가 호출. */
+        fun closeCurrent() {
+            current?.let { a -> a.runOnUiThread { runCatching { a.finish() } } }
+        }
         private val C_TEXT = Color.parseColor("#E8EAED")
         // 강도색: 존 팔레트와 같은 계열(파랑=여유 → 빨강=한계). "보통"만 중립 회색.
         private val C_BLUE = Color.parseColor("#2E7CB8")

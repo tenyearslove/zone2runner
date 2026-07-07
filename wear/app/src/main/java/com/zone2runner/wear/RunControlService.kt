@@ -37,6 +37,8 @@ class RunControlService : WearableListenerService() {
             }
             return
         }
+        // 폰에서 답함 → 워치에 열린 설문 닫기(중복 응답 방지)
+        if (event.path == RunLink.PATH_TALK_DONE) { TalkTestActivity.closeCurrent(); return }
         android.util.Log.i("RunControl", "recv ${event.path} state=${RunBus.state}")
         when (event.path) {
             RunLink.PATH_START -> {

@@ -15,6 +15,7 @@ object RunLink {
     const val PATH_MIRROR_HR = "/run/mirrorhr" // 폰 시뮬 심박 스트림(payload=bpm)
     const val PATH_LIVE = "/run/live"          // 폰 → 워치 표시 판정("순간심박,존인덱스,존내위치" CSV, adr-023)
     const val PATH_TALK = "/run/talk"          // 폰 → 워치 토크테스트 설문 표시 명령(adr-023)
+    const val PATH_TALK_DONE = "/run/talkdone" // 폰에서 답함 → 열린 설문 닫기(중복 응답 방지)
 
     fun send(ctx: Context, path: String) {
         val app = ctx.applicationContext

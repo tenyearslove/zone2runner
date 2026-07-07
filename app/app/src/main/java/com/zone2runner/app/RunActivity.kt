@@ -650,6 +650,7 @@ class RunActivity : AppCompatActivity() {
                 runOnUiThread {
                     engine?.observeTalkTest(st)
                     logger?.event("talktest") { put("t", (System.currentTimeMillis() - startedAt) / 1000); put("state", st.name); put("src", "watch") }
+                    talkDialog?.let { runCatching { it.dismiss() } } // 워치에서 답함 → 폰 팝업도 닫기(중복 응답 방지)
                     Toast.makeText(this, "워치 응답 반영: ${st.name}", Toast.LENGTH_SHORT).show()
                 }
             }
@@ -779,6 +780,7 @@ class RunActivity : AppCompatActivity() {
             .setItems(states.map { it.first }.toTypedArray()) { _, i ->
                 engine?.observeTalkTest(states[i].second)
                 logger?.event("talktest") { put("t", (System.currentTimeMillis() - startedAt) / 1000); put("state", states[i].second.name); put("src", "phone_popup") }
+                if (watchLink) RunLink.send(this, RunLink.PATH_TALK_DONE) // 폰에서 답함 → 워치 설문도 닫기
                 Toast.makeText(this, "기록됨 · 개인 경계에 반영", Toast.LENGTH_SHORT).show()
             }
             .setNegativeButton("건너뛰기", null)
