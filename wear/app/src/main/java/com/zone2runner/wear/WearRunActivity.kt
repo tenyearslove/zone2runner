@@ -45,11 +45,6 @@ class WearRunActivity : ComponentActivity() {
     private lateinit var spdVal: TextView
     private lateinit var btnRow: LinearLayout
 
-    // 토크테스트 프롬프트(심박 높을 때 가끔 물어봄 → 폰 개인화에 반영). 설문은 별도 전체화면 TalkTestActivity.
-    private var lastTalkAskMs = 0L
-    private var talkActive = false // 설문 화면이 떠 있는 동안 중복 실행 방지
-    private var elevatedSec = 0
-
     private val state: RunState get() = RunBus.state
 
     private val ticker = object : Runnable {
@@ -66,14 +61,12 @@ class WearRunActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         mirror = intent.getBooleanExtra(EXTRA_MIRROR, false)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        Zones.load(this) // 폰에서 동기화된 개인 존 경계 적용(없으면 기본값)
         setContentView(buildUi())
         render()
     }
 
     override fun onResume() {
         super.onResume()
-        talkActive = false // 설문 화면에서 돌아옴 → 다시 프롬프트 가능
         RunBus.listener = { render() }
         ui.post(ticker)
         if (mirror) registerMirror()
@@ -236,29 +229,7 @@ class WearRunActivity : ComponentActivity() {
 
     private fun space() = View(this).apply { layoutParams = LinearLayout.LayoutParams(dp(8), 1) }
 
-    /**
-     * 토크테스트 타이밍 — 심박이 높아져 특정 구간에 '머물' 때만 가끔 묻는다(사용자 요청, 고정 주기 아님).
-     *  (A) 지속 심박(폰 존)이 Zone 2 이상에 30초 이상 머물렀고, 최근 3분 안에 안 물었을 때.
-     *      = 경계 근처/이상에 안정적으로 있을 때가 "이 강도 편해?" 확인이 가장 유용(active learning).
-     *  (B) 오래(10분) 아예 안 물었으면 폴백 — 낮은 심박도 그 사람껜 힘들 수 있으니.
-     * 조건 충족 시 전체화면 설문(TalkTestActivity)을 띄운다 — 좁은 대시보드에 끼워넣지 않는다.
-     */
-    private fun updateTalkPrompt() {
-        val zone = phoneZone() // 폰 판정 존(지속 심박 기준). 폰 상태가 없으면 프롬프트 억제.
-        val running = state == RunState.RUNNING && zone != null
-        val inZone2Plus = running && zone != HrZone.Z1
-        if (inZone2Plus) elevatedSec++ else elevatedSec = 0
-        if (talkActive) return // 설문 화면이 떠 있는 동안엔 재실행 안 함(onResume에서 해제)
-        val now = SystemClock.elapsedRealtime()
-        val since = now - lastTalkAskMs
-        val elevatedAsk = inZone2Plus && elevatedSec >= 30 && since > 3 * 60 * 1000L
-        val fallback = running && since > 10 * 60 * 1000L
-        if (elevatedAsk || fallback) {
-            lastTalkAskMs = now
-            talkActive = true
-            runCatching { startActivity(android.content.Intent(this, TalkTestActivity::class.java)) }
-        }
-    }
+    // 토크테스트 타이밍 판단은 폰으로 이관(adr-023) — 워치는 RunControlService가 /run/talk 수신 시 설문 표시만.
 
     // ---- 렌더링 ----
 
@@ -269,33 +240,30 @@ class WearRunActivity : ComponentActivity() {
         val totalSec = (ms / 1000).toInt()
         timeView.text = "%02d:%02d".format(totalSec / 60, totalSec % 60)
 
-        // HR + 존 (adr-022: 존은 폰 판정을 미러. 큰 숫자 = 워치 순간 심박(폰 대시보드와 동일 구성)).
+        // HR + 존 (adr-023: 폰이 확정한 표시 존을 그대로 그린다 — 워치는 무로직 뷰어).
         val hr = RunBus.hr
         val running = state != RunState.IDLE
-        val zone = phoneZone() // 폰이 보낸 지속 심박+개인 경계로 계산(없으면 null)
+        val zone = phoneZone() // 폰이 보낸 존 인덱스(신선할 때만, 없으면 null)
         if (!running) {
             hrView.text = "--"; hrView.setTextColor(C_MUTED); bpmLabel.setTextColor(C_MUTED)
             zoneLabel.text = RunBus.error ?: "시작 대기"
             zoneLabel.setTextColor(if (RunBus.error != null) C_AMBER else C_MUTED)
             gauge.update(null, 0f, false)
         } else if (zone != null) {
-            // 큰 숫자 = 폰이 표시하는 순간 심박(정제됨) → 폰과 동일 값. 존 = 폰 지속 심박 기준.
-            val shownHr = if (RunBus.instHr > 0) RunBus.instHr else RunBus.susHr
-            hrView.text = shownHr.toString()
+            // 큰 숫자/존/마커 전부 폰이 보낸 값 그대로 → 폰 화면과 구성상 항상 일치.
+            val shownHr = if (RunBus.instHr > 0) RunBus.instHr else hr
+            hrView.text = if (shownHr > 0) shownHr.toString() else "--"
             hrView.setTextColor(zone.color); bpmLabel.setTextColor(zone.color)
-            val tag = when { zone == HrZone.Z2 -> "목표 유지"; RunBus.susHr < RunBus.boundLo -> "존 낮음"; else -> "존 높음" }
+            val tag = when (zone) { HrZone.Z1 -> "존 낮음"; HrZone.Z2 -> "목표 유지"; else -> "존 높음" }
             zoneLabel.text = "${zone.short} ${zone.desc} · $tag"
             zoneLabel.setTextColor(zone.color)
-            gauge.update(zone, Zones.gaugeFraction(RunBus.susHr, RunBus.boundLo, RunBus.boundHi, RunBus.boundMax), true)
+            // 등폭 게이지 마커 각도 = (존인덱스-1 + 존내위치)/5 — 폰이 보낸 값의 표시 산술만
+            gauge.update(zone, (zone.idx - 1 + RunBus.zoneFrac / 1000f) / 5f, true)
         } else if (hr > 0) {
-            // 폰 판정 미수신(폰 러닝 화면 미실행 등). 폰이 피드하면 위 미러로 자동 전환되므로 불일치 걱정 없음.
-            // 그 전까진 워치 자체 존(동기화된 경계/기본값)으로 표시 — 빈 화면보다 유용(사용자 요청).
-            val localZone = Zones.zoneOf(hr)
-            hrView.text = hr.toString(); hrView.setTextColor(localZone.color); bpmLabel.setTextColor(localZone.color)
-            val tag = when { localZone == HrZone.Z2 -> "목표 유지"; hr < Zones.zone2Bpm.first -> "존 낮음"; else -> "존 높음" }
-            zoneLabel.text = "${localZone.short} ${localZone.desc} · $tag"
-            zoneLabel.setTextColor(localZone.color)
-            gauge.update(localZone, Zones.gaugeFraction(hr), true)
+            // 폰 판정 미수신/두절(8초+) — 존은 표시하지 않는다(adr-023: 워치 자체 판정 삭제). 숫자는 회색 유지.
+            hrView.text = hr.toString(); hrView.setTextColor(C_MUTED); bpmLabel.setTextColor(C_MUTED)
+            zoneLabel.text = "폰 동기화 중…"; zoneLabel.setTextColor(C_MUTED)
+            gauge.update(null, 0f, true)
         } else {
             hrView.text = "--"; hrView.setTextColor(C_MUTED); bpmLabel.setTextColor(C_MUTED)
             zoneLabel.text = "센서 예열중…"; zoneLabel.setTextColor(C_AMBER)
@@ -310,15 +278,13 @@ class WearRunActivity : ComponentActivity() {
         spdVal.text = if (speedKmh < 0.3) "--" else "%.1f".format(speedKmh)
 
         if (btnRow.childCount == 0 || btnTagMismatch()) rebuildButtons()
-        updateTalkPrompt()
     }
 
-    /** 폰이 보낸 판정 상태가 신선하면 그 지속 심박+개인 경계로 존을 계산. 없으면 null(폰 판정 대기). */
+    /** 폰이 보낸 표시 판정이 신선하면 그 존을 그대로 사용. 없으면 null(폰 동기화 대기, adr-023). */
     private fun phoneZone(): HrZone? {
         val fresh = RunBus.liveMs > 0 &&
-            SystemClock.elapsedRealtime() - RunBus.liveMs < LIVE_STALE_MS &&
-            RunBus.susHr > 0 && RunBus.boundHi > RunBus.boundLo
-        return if (fresh) Zones.zoneOf(RunBus.susHr, RunBus.boundLo, RunBus.boundHi, RunBus.boundMax) else null
+            SystemClock.elapsedRealtime() - RunBus.liveMs < LIVE_STALE_MS
+        return if (fresh) HrZone.fromIdx(RunBus.zoneIdx) else null
     }
 
     private var lastBtnState: RunState? = null

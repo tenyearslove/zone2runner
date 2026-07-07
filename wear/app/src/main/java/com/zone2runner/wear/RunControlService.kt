@@ -22,10 +22,19 @@ import com.google.android.gms.wearable.WearableListenerService
 class RunControlService : WearableListenerService() {
 
     override fun onMessageReceived(event: MessageEvent) {
-        // 판정 상태(/run/live)는 1Hz라 로그 제외. 나머지 제어 메시지만 로깅.
+        // 표시 판정(/run/live)은 1Hz라 로그 제외. 나머지 제어 메시지만 로깅.
         if (event.path == RunLink.PATH_LIVE) {
             val p = String(event.data).split(",").mapNotNull { it.trim().toIntOrNull() }
-            if (p.size == 5) { RunBus.setLive(p[0], p[1], p[2], p[3], p[4]); RunBus.notifyUi() }
+            if (p.size == 3) { RunBus.setLive(p[0], p[1], p[2]); RunBus.notifyUi() } // 순간심박,존인덱스,존내위치(adr-023)
+            return
+        }
+        // 토크테스트 설문 표시 명령(adr-023: 타이밍 판단은 폰 — 워치는 표시만)
+        if (event.path == RunLink.PATH_TALK) {
+            if (!TalkTestActivity.active) {
+                try {
+                    startActivity(Intent(this, TalkTestActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                } catch (t: Throwable) { /* BG 액티비티 제한 시 이번 설문은 건너뜀(놓쳐도 무해, 폰이 다시 판단) */ }
+            }
             return
         }
         android.util.Log.i("RunControl", "recv ${event.path} state=${RunBus.state}")

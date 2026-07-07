@@ -13,7 +13,8 @@ object RunLink {
     const val PATH_STOP = "/run/stop"
     const val PATH_MIRROR = "/run/mirror"   // 시뮬: 워치를 미러 모드로(폰 심박 표시 + 토크테스트만)
     const val PATH_MIRROR_HR = "/run/mirrorhr" // 시뮬 심박 스트림(payload=bpm)
-    const val PATH_LIVE = "/run/live"       // 폰 판정 상태(지속 심박+개인 경계)를 워치로 매초 푸시(adr-022)
+    const val PATH_LIVE = "/run/live"       // 폰이 확정한 표시 존을 워치로 매초 푸시(adr-023)
+    const val PATH_TALK = "/run/talk"       // 폰 → 워치: 토크테스트 설문 표시 명령(adr-023, 타이밍 판단은 폰)
 
     fun send(ctx: Context, path: String, payload: ByteArray = ByteArray(0)) {
         val app = ctx.applicationContext
@@ -26,11 +27,11 @@ object RunLink {
     fun sendMirrorHr(ctx: Context, bpm: Int) = send(ctx, PATH_MIRROR_HR, bpm.toString().toByteArray())
 
     /**
-     * 폰 판정 상태를 워치로 전송 — 워치가 폰과 '같은' 심박 숫자와 존을 표시하게 한다(adr-022).
-     * payload = "순간심박,지속심박,하한,상한,최대심박" CSV(bpm).
-     * 순간심박 = 폰이 정제(OutlierGuard)해 표시하는 값(워치가 이걸 그대로 표시 → 숫자 일치),
-     * 지속심박+경계 = 존 계산 기준.
+     * 폰이 확정한 표시 판정을 워치로 전송(adr-023) — 워치는 계산 없이 이 값으로만 그린다.
+     * payload = "순간심박,존인덱스(1~5),존내위치(0~1000)" CSV.
+     * 순간심박 = 폰이 정제(OutlierGuard)해 표시하는 값(워치 큰 숫자와 일치),
+     * 존 = 폰이 순간심박+히스테리시스로 확정(DisplayZoneJudge), 존내위치 = 등폭 게이지 마커용.
      */
-    fun sendLive(ctx: Context, instHr: Int, susHr: Int, lo: Int, hi: Int, maxHr: Int) =
-        send(ctx, PATH_LIVE, "$instHr,$susHr,$lo,$hi,$maxHr".toByteArray())
+    fun sendLive(ctx: Context, instHr: Int, zoneIdx: Int, zoneFracPerMille: Int) =
+        send(ctx, PATH_LIVE, "$instHr,$zoneIdx,$zoneFracPerMille".toByteArray())
 }

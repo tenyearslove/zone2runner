@@ -31,7 +31,7 @@
             </intent-filter>
         </activity>
 
-        <!-- 토크테스트 전체화면 설문(별도 화면). 러닝 중 폰 존 기준으로 WearRunActivity가 띄움 -->
+        <!-- 토크테스트 전체화면 설문(별도 화면). 폰이 타이밍 판단 후 /run/talk으로 명령(adr-023) -->
         <activity
             android:name=".TalkTestActivity"
             android:exported="false"
@@ -42,16 +42,6 @@
             android:name=".RunService"
             android:exported="false"
             android:foregroundServiceType="health|location" />
-
-        <!-- 폰 → 워치 존 경계 동기화 수신(/zones). 앱 미실행 시에도 GMS가 깨워서 전달 -->
-        <service
-            android:name=".ZoneSyncService"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="com.google.android.gms.wearable.MESSAGE_RECEIVED" />
-                <data android:scheme="wear" android:host="*" android:pathPrefix="/zones" />
-            </intent-filter>
-        </service>
 
         <!-- 폰 → 워치 러닝 원격 제어(/run/start, /run/stop). 폰에서 시작하면 워치 서비스 자동 기동 -->
         <service

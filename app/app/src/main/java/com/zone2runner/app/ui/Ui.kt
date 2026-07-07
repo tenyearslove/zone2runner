@@ -13,7 +13,7 @@ import android.widget.TextView
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 
-/** 앱 전역 팔레트(다크). 존 색은 domain.ZoneJudgment/HrZone과 일치. */
+/** 앱 전역 팔레트(다크). 존 색은 domain.DisplayZone(폰-워치 공통 5색, adr-023)과 일치. */
 object Palette {
     val BG = Color.parseColor("#0E1116")
     val CARD = Color.parseColor("#171B22")
@@ -22,6 +22,7 @@ object Palette {
     val MUTED = Color.parseColor("#9AA0A6")
     val ACCENT = Color.parseColor("#30D158")
     val BLUE = Color.parseColor("#5AC8FA")
+    val YELLOW = Color.parseColor("#FFD60A")
     val AMBER = Color.parseColor("#FF9F0A")
     val RED = Color.parseColor("#FF3B30")
 }

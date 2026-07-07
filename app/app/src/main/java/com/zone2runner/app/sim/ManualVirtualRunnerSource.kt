@@ -1,0 +1,89 @@
+package com.zone2runner.app.sim
+
+import com.zone2runner.app.domain.MPS_PER_MIN_KM
+import com.zone2runner.app.domain.Sample
+import com.zone2runner.app.sensor.RunSource
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlin.math.cos
+import kotlin.math.sin
+
+/**
+ * 수동 가상러너 시뮬 소스(spec-022) — 사용자가 케이던스/보폭을 슬라이더로 직접 조종하면
+ * 가상러너가 그 속도로 달리고, 심박은 신체 스펙 기반 생리 모델이 자동 계산한다:
+ * 속도 = 케이던스 x 보폭 → 페이스 → 강도 역산 → 목표 심박 1차 지연(hrTau) 추종 +
+ * 임계 초과 시 카디악 드리프트 + 최대심박 포화(ManualRunSource와 동일 방정식 계열, adr-020).
+ * 심박 보정(hrOffsetBpm)은 관측 심박에 마지막에 가산 — 개인차/컨디션 재현용.
+ * 평지 고정(조종 변수 효과만 관찰). 배속(delayMs)/슬라이더는 재생 중 변경 가능.
+ */
+class ManualVirtualRunnerSource(
+    private val body: Body,
+    delayMs: Long = 1000L,
+    private val seed: Long = 42L,
+    private val maxDurationSec: Int = 60 * 60,
+) : RunSource {
+
+    /** 신체 스펙(spec-022 FR1) — 기본값은 활성 프로필에서. basePace = 편하게 달리는 기준 페이스. */
+    data class Body(val age: Int, val restingHr: Int, val maxHr: Int, val basePaceMinKm: Double) {
+        val hrr: Double get() = (maxHr - restingHr).toDouble()
+    }
+
+    override val label = "시뮬(수동 러너)"
+    override val realtime = false
+
+    /** 샘플 간 지연(ms) — 배속 칩으로 재생 중 변경. */
+    @Volatile var delayMs: Long = delayMs
+
+    // 조종 슬라이더(spec-022 FR2) — 재생 중 실시간 반영
+    @Volatile var targetSpm: Int = 168          // 케이던스 140~200
+    @Volatile var targetStrideM: Double = 1.00  // 보폭 0.60~1.50m
+    @Volatile var hrOffsetBpm: Int = 0          // 심박 보정 -20~+20
+
+    private var job: Job? = null
+    private val rng = java.util.Random(seed)
+
+    override fun start(scope: CoroutineScope, onSample: suspend (Sample) -> Unit, onComplete: suspend () -> Unit) {
+        job = scope.launch {
+            var hr = body.restingHr + 0.45 * body.hrr // 가벼운 시작 강도
+            var drift = 0.0
+            var lat = 37.5665; var lon = 126.9780; var heading = 0.0
+            val uAbs = 0.70 * body.maxHr // 진짜 임계 근사(%HRmax 70%) — 드리프트 발동 기준으로만 사용
+            var t = 0
+            while (isActive && t < maxDurationSec) {
+                val spm = targetSpm.coerceIn(140, 200)
+                val stride = targetStrideM.coerceIn(0.60, 1.50)
+                val pace = (1000.0 / (spm * stride)).coerceIn(3.0, 13.0) // min/km = 1000m / (spm x 보폭 m/min)
+                // 페이스→강도 역산(RunSimulator 계열 공통식): pace = basePace - 3.2*(effort-0.5)
+                val effort = (0.5 + (body.basePaceMinKm - pace) / 3.2).coerceIn(0.30, 1.05)
+                val effortHr = body.restingHr + effort * body.hrr
+                hr += (effortHr - hr) * (1.0 / HR_TAU)
+                val excess = maxOf(0.0, effortHr - uAbs)
+                drift += (DRIFT_SCALE * excess - drift) * (1.0 / DRIFT_TAU)
+                val hrObs = (hr + drift + rng.nextGaussian() * NOISE_SD + hrOffsetBpm)
+                    .coerceIn(35.0, body.maxHr.toDouble())
+
+                val mps = MPS_PER_MIN_KM / pace
+                heading += rng.nextGaussian() * 0.05 + 0.02
+                lat += (mps * cos(heading)) / 111_320.0
+                lon += (mps * sin(heading)) / (111_320.0 * cos(Math.toRadians(lat)))
+
+                onSample(Sample(t, hrObs.toInt(), pace, (spm + rng.nextGaussian() * 1.5).toInt(), 0.0, lat, lon))
+                t++
+                delay(delayMs)
+            }
+            onComplete()
+        }
+    }
+
+    override fun stop() { job?.cancel() }
+
+    private companion object {
+        const val HR_TAU = 30.0       // 심박 반응 시상수(초)
+        const val DRIFT_SCALE = 0.45  // 임계 초과분 대비 드리프트 크기
+        const val DRIFT_TAU = 140.0   // 드리프트 누적 시상수(초)
+        const val NOISE_SD = 0.8      // 관측 노이즈(bpm)
+    }
+}

@@ -22,12 +22,10 @@ object RunBus {
     @Volatile var availability = "-"
     @Volatile var error: String? = null
 
-    // B(adr-022): 폰이 매초 보내는 판정 상태. 워치는 자체 판정 없이 이 값으로만 표시(폰 연결 상시 전제).
+    // adr-023: 폰이 매초 보내는 표시 판정 결과. 워치는 계산 없이 이 값으로만 그린다(폰 연결 상시 전제).
     @Volatile var instHr = -1    // 폰이 표시하는 순간 심박(정제됨) = 큰 숫자(폰과 동일 값)
-    @Volatile var susHr = -1     // 폰 지속 심박(60초 평균) = 존/판정 기준
-    @Volatile var boundLo = -1   // 개인 Zone2 하한(bpm)
-    @Volatile var boundHi = -1   // 개인 Zone2 상한(bpm)
-    @Volatile var boundMax = -1  // 최대 심박(bpm)
+    @Volatile var zoneIdx = -1   // 폰이 확정한 표시 존(1~5, 순간심박+히스테리시스)
+    @Volatile var zoneFrac = 0   // 존 내 위치(0~1000) — 등폭 게이지 마커 각도용
     @Volatile var liveMs = 0L    // 마지막 /run/live 수신 시각(elapsedRealtime); 신선도 판단용
 
     @Volatile var listener: (() -> Unit)? = null
@@ -38,9 +36,9 @@ object RunBus {
         main.post(l)
     }
 
-    /** 폰 판정 상태 수신 반영(RunControlService). */
-    fun setLive(inst: Int, sus: Int, lo: Int, hi: Int, max: Int) {
-        instHr = inst; susHr = sus; boundLo = lo; boundHi = hi; boundMax = max
+    /** 폰 표시 판정 수신 반영(RunControlService). */
+    fun setLive(inst: Int, zone: Int, frac: Int) {
+        instHr = inst; zoneIdx = zone; zoneFrac = frac
         liveMs = SystemClock.elapsedRealtime()
     }
 
@@ -48,6 +46,6 @@ object RunBus {
         hr = -1; distanceM = 0.0; speedKmh = 0.0
         accumulatedMs = 0L; runStart = 0L
         sentCount = 0; availability = "-"; error = null
-        instHr = -1; susHr = -1; boundLo = -1; boundHi = -1; boundMax = -1; liveMs = 0L
+        instHr = -1; zoneIdx = -1; zoneFrac = 0; liveMs = 0L
     }
 }

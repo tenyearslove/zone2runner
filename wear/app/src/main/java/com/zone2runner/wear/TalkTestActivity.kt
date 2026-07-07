@@ -19,12 +19,15 @@ import androidx.activity.ComponentActivity
  * 토크테스트 전체화면 설문(별도 Activity) — 좁은 러닝 대시보드에 끼워넣지 않고 새 화면으로 덮는다.
  * 5단계 답 중 하나를 누르면 폰으로 전송(/talk/<state>) 후 닫힘. 30초 무응답이면 자동 닫힘.
  * 러닝 세션은 RunService가 계속 소유하므로 이 화면이 떠 있어도 측정/누적은 지속(adr-009).
- * 답은 폰이 개인화(observeTalkTest)에 반영. 언제 띄울지는 WearRunActivity가 폰 존 기준으로 결정.
+ * 답은 폰이 개인화(observeTalkTest)에 반영. 언제 띄울지는 폰이 판단해 /run/talk으로 명령(adr-023).
  */
 class TalkTestActivity : ComponentActivity() {
 
     private val ui = Handler(Looper.getMainLooper())
     private val autoDismiss = Runnable { finish() } // 30초 무응답 시 닫힘
+
+    override fun onResume() { super.onResume(); active = true }
+    override fun onPause() { super.onPause(); active = false }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -93,8 +96,9 @@ class TalkTestActivity : ComponentActivity() {
 
     private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
 
-    private companion object {
-        val C_TEXT = Color.parseColor("#E8EAED")
-        val C_MUTED = Color.parseColor("#9AA0A6")
+    companion object {
+        @Volatile var active = false // 설문 표시 중(RunControlService가 중복 실행 방지에 확인)
+        private val C_TEXT = Color.parseColor("#E8EAED")
+        private val C_MUTED = Color.parseColor("#9AA0A6")
     }
 }

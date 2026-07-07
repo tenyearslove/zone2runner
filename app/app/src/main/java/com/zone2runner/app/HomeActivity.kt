@@ -45,7 +45,7 @@ class HomeActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         setContentView((buildUi()).withSystemBarInsets()) // 프로필/기록 변경 반영
-        com.zone2runner.app.data.ZoneSync.push(this) // 워치 존 기준 동기화(프로필 변경 반영, fire-and-forget)
+        // 구 /zones prior 동기화(ZoneSync)는 adr-023으로 삭제 — 존은 러닝 중 /run/live로만 전달
     }
 
     private fun buildUi(): View {
@@ -184,7 +184,7 @@ class HomeActivity : AppCompatActivity() {
             .setTitle("이 프로필로 러닝")
             .setItems(names) { _, which ->
                 com.zone2runner.app.data.Profiles.setActive(this, profiles[which].id)
-                recreate() // 홈 갱신(목표 심박/개인화 반영) + onResume에서 ZoneSync 재푸시
+                recreate() // 홈 갱신(목표 심박/개인화 반영)
             }
             .setNeutralButton("프로필 관리") { _, _ -> startActivity(Intent(this, ProfileActivity::class.java)) }
             .setNegativeButton("닫기", null).show()

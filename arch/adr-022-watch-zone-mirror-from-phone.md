@@ -1,6 +1,10 @@
 # ADR-022: 워치 존 표시를 폰 판정의 실시간 미러로 전환
 
-- 상태: 채택(2026-07-06 구현 완료 — 폰 `/run/live` 매초 푸시, 워치 `RunControlService` 수신 + `WearRunActivity` 렌더 교체, 두 기기 설치)
+> **대체됨(2026-07-07)**: adr-023이 이 결정을 대체한다. 워치가 경계를 받아 존을 "재계산"하는 방식 대신,
+> 폰이 표시 존(순간심박+히스테리시스)까지 확정해 존 인덱스를 푸시하고 워치는 무로직 뷰어로 전환.
+> `arch/adr-023-watch-pure-viewer-instant-hr-display-zone.md` 참조.
+
+- 상태: 대체됨(adr-023) — 이전: 채택(2026-07-06 구현 완료 — 폰 `/run/live` 매초 푸시, 워치 `RunControlService` 수신 + `WearRunActivity` 렌더 교체, 두 기기 설치)
 - 날짜: 2026-07-06
 - 관련: adr-001(워치-폰 하이브리드), adr-013(판정/예측 역할 분리), adr-004/016(개인화 Bayesian), spec-010(워치 대시보드)
 - 대체 대상: spec-010의 "워치 경량 존 판정(순간 심박 + `/zones` prior 동기화, 폴백 %HRmax)"

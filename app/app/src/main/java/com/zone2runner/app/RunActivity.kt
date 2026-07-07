@@ -60,10 +60,23 @@ class RunActivity : AppCompatActivity() {
     private var promptView: TextView? = null // LLM 프롬프트 노출(시뮬/목 모드만, null=라이브)
     private var simDelayMs = 14L // 시뮬 재생 배속(샘플 간 ms): 14≈×70, 33≈×30, 100=×10, 1000=×1. 재생 중 변경 가능
     private val speedChips = LinkedHashMap<Long, TextView>()
-    private var manualMode = false // 시뮬 수동 페이스 모드(페이스 슬라이더 → 심박이 따라옴)
+
+    /** 시뮬 입력 모드: 자동(가상러너 시나리오) / 수동 페이스 / 수동 러너(케이던스+보폭, spec-022). */
+    private enum class SimInput { AUTO, PACE, RUNNER }
+    private var simInput = SimInput.AUTO
     private var manualPace = 7.0
     private var manualChip: TextView? = null
     private var paceRow: LinearLayout? = null
+    // 수동 가상러너(spec-022): 신체 스펙 + 조종 슬라이더 + 시계연동
+    private var manualBody: com.zone2runner.app.sim.ManualVirtualRunnerSource.Body? = null
+    private var manualSpm = 168
+    private var manualStride = 1.00
+    private var manualHrOffset = 0
+    private var vrRows: LinearLayout? = null
+    private var vrSummary: TextView? = null
+    private var watchLinkCheck: android.widget.CheckBox? = null
+    private var watchLink = true // 시작 시점에 고정(수동 러너 모드만 체크박스, 그 외 항상 연동)
+    private var talkDialog: android.app.AlertDialog? = null
     private var virtualRunner = com.zone2runner.app.domain.VirtualRunner.DEFAULT // 가상러너(자동 시나리오)
     private var runnerChip: TextView? = null
     private var paceLabel: TextView? = null
@@ -93,6 +106,13 @@ class RunActivity : AppCompatActivity() {
     private var tts: TextToSpeech? = null
     private var ttsReady = false
     private var lastSpoken = ""
+    // 표시 존(adr-023): 순간심박+히스테리시스 — 화면 색과 워치 존의 유일 기준(코칭/통계는 60초 평균 유지)
+    private val displayJudge = com.zone2runner.app.domain.DisplayZoneJudge()
+    private var displayZone: com.zone2runner.app.domain.DisplayZone? = null
+    // 토크테스트 설문 타이밍(adr-023: 워치→폰 이관). 벽시계 1초 단위 평가.
+    private var talkElevatedSec = 0
+    private var lastTalkAskMs = 0L
+    private var lastTalkTickMs = 0L
     private var settings = com.zone2runner.app.data.AppSettings() // spec-021, start()에서 로드
 
     private val mode: String by lazy { intent.getStringExtra(EXTRA_MODE) ?: MODE_SIM }
@@ -120,15 +140,22 @@ class RunActivity : AppCompatActivity() {
         centerMapOnLastFix()
     }
 
-    /**
-     * Zone2 밴드 게이지 + 범위/이탈 텍스트 갱신.
-     * hr = 지속 심박(최근 60초 평균) — 마커/텍스트 기준(판정 칩과 동일 기준). instantHr = 순간 심박(참고 틱).
-     */
-    private fun updateZoneUi(hr: Int, uEstFrac: Double, instantHr: Int = -1, predHr: Int = -1) {
-        val p = profile ?: return
+    /** 개인 Zone2 경계(bpm) 하한/상한 — 표시 판정/밴드/워치 전송이 공유하는 단일 산식. */
+    private fun zoneBounds(uEstFrac: Double): Pair<Int, Int>? {
+        val p = profile ?: return null
         val hi = (p.restingHr + uEstFrac * p.hrr).toInt()
         val lo = (p.restingHr + (uEstFrac - com.zone2runner.app.domain.Zone2Prior.BAND) * p.hrr).toInt()
-        zoneBand.update(lo, hi, p.maxHr, hr, instantHr, predHr)
+        return lo to hi
+    }
+
+    /**
+     * Zone2 밴드 게이지 + 범위/이탈 텍스트 갱신.
+     * hr = 순간 심박 — 표시 존/솔리드 마커 기준(adr-023, 칩과 동일 기준). susHr = 지속 심박(참고 틱).
+     */
+    private fun updateZoneUi(hr: Int, uEstFrac: Double, susHr: Int = -1, predHr: Int = -1) {
+        val p = profile ?: return
+        val (lo, hi) = zoneBounds(uEstFrac) ?: return
+        zoneBand.update(lo, hi, p.maxHr, hr, susHr, predHr)
         when {
             hr <= 0 -> { rangeView.text = "Zone 2 목표 $lo ~ $hi bpm"; rangeView.setTextColor(C_MUTED) }
             hr < lo -> { rangeView.text = "Zone 2 목표 $lo ~ $hi · ${lo - hr} bpm 아래"; rangeView.setTextColor(C_BLUE) }
@@ -193,9 +220,9 @@ class RunActivity : AppCompatActivity() {
             text = "ⓘ Zone 2 구간을 탭하면 계산 방식을 설명해드려요"
             textSize = 10f; setTextColor(C_MUTED)
         }, mt(2))
-        // 밴드/판정 기준 안내: 큰 숫자=순간 심박, 마커·판정=지속 심박(최근 60초). 순간 스파이크로 색이 튀지 않음.
+        // 밴드/판정 기준 안내(adr-023): 존 색=순간 심박(큰 숫자와 일치, 히스테리시스로 깜빡임 방지).
         dash.addView(TextView(this).apply {
-            text = "● 지속 심박(최근 60초, 판정 기준)  |  큰 숫자·얇은 틱 = 순간 심박"
+            text = "● 순간 심박(존 색 기준, 큰 숫자와 동일)  |  얇은 틱 = 60초 평균(코칭 기준)"
             textSize = 10f; setTextColor(C_MUTED)
         }, mt(2))
 
@@ -277,13 +304,42 @@ class RunActivity : AppCompatActivity() {
                     if (running) {
                         Toast.makeText(this@RunActivity, "시작 전에만 전환할 수 있어요", Toast.LENGTH_SHORT).show()
                     } else {
-                        manualMode = !manualMode
+                        simInput = when (simInput) { // 자동 → 수동 페이스 → 수동 러너 순환
+                            SimInput.AUTO -> SimInput.PACE
+                            SimInput.PACE -> SimInput.RUNNER
+                            SimInput.RUNNER -> SimInput.AUTO
+                        }
+                        if (simInput == SimInput.RUNNER) showBodySpecDialog() // 신체 스펙 입력(spec-022 FR1)
                         updateManualUi()
                     }
                 }
             }
             manualRow.addView(manualChip)
             dash.addView(manualRow, mt(6))
+
+            // 수동 가상러너 조종부(spec-022): 케이던스/보폭/심박 보정 + 시계연동. RUNNER 모드에서만 표시.
+            vrRows = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+            vrSummary = TextView(this).apply { textSize = 12f; setTextColor(C_TEXT); setTypeface(typeface, Typeface.BOLD) }
+            vrRows!!.addView(vrSummary, mt(4))
+            vrRows!!.addView(vrSeek("케이던스", 60, manualSpm - 140, { p -> // 140~200 spm
+                manualSpm = 140 + p
+                (source as? com.zone2runner.app.sim.ManualVirtualRunnerSource)?.targetSpm = manualSpm
+            }), mt(2))
+            vrRows!!.addView(vrSeek("보폭", 90, ((manualStride - 0.60) * 100).toInt(), { p -> // 0.60~1.50m
+                manualStride = 0.60 + p * 0.01
+                (source as? com.zone2runner.app.sim.ManualVirtualRunnerSource)?.targetStrideM = manualStride
+            }), mt(2))
+            vrRows!!.addView(vrSeek("심박 보정", 40, manualHrOffset + 20, { p -> // -20~+20 bpm
+                manualHrOffset = p - 20
+                (source as? com.zone2runner.app.sim.ManualVirtualRunnerSource)?.hrOffsetBpm = manualHrOffset
+            }), mt(2))
+            watchLinkCheck = android.widget.CheckBox(this).apply {
+                text = "시계연동 (워치에 심박/존 표시 + 설문 팝업)"; textSize = 12f; setTextColor(C_TEXT)
+                isChecked = false
+            }
+            vrRows!!.addView(watchLinkCheck, mt(2))
+            dash.addView(vrRows, mt(4))
+            updateVrSummary()
 
             // 가상러너 선택(자동 시나리오 모드): 신체/스타일/코칭반응이 다른 프리셋. 폐루프로 개인화 검증.
             val runnerRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
@@ -465,13 +521,21 @@ class RunActivity : AppCompatActivity() {
         engine = eng
         startedAt = System.currentTimeMillis()
         frame = 0
+        // 표시 존/토크테스트 타이밍 초기화(adr-023). 폴백 10분은 세션 시작부터 계산.
+        displayJudge.reset(); displayZone = null
+        talkElevatedSec = 0; lastTalkTickMs = 0L
+        lastTalkAskMs = android.os.SystemClock.elapsedRealtime()
 
         val src: RunSource = when (mode) {
             MODE_LIVE -> LiveRunSource(this, WatchHrProvider(this).also { watchProvider = it })
             MODE_MOCK -> MockRunSource(MockConfigStore.load(this), seed = System.nanoTime())
-            else ->
-                if (manualMode) com.zone2runner.app.sim.ManualRunSource(profile, manualPace, delayMs = simDelayMs, seed = System.nanoTime())
-                else com.zone2runner.app.sim.SimRunnerSource(
+            else -> when (simInput) {
+                SimInput.PACE -> com.zone2runner.app.sim.ManualRunSource(profile, manualPace, delayMs = simDelayMs, seed = System.nanoTime())
+                SimInput.RUNNER -> com.zone2runner.app.sim.ManualVirtualRunnerSource(
+                    manualBody ?: com.zone2runner.app.sim.ManualVirtualRunnerSource.Body(profile.age, profile.restingHr, profile.maxHr, 7.0),
+                    delayMs = simDelayMs, seed = System.nanoTime(),
+                ).also { it.targetSpm = manualSpm; it.targetStrideM = manualStride; it.hrOffsetBpm = manualHrOffset }
+                SimInput.AUTO -> com.zone2runner.app.sim.SimRunnerSource(
                     virtualRunner, delayMs = simDelayMs, seed = System.nanoTime(),
                     onTalkTest = { st ->
                         runOnUiThread {
@@ -479,10 +543,13 @@ class RunActivity : AppCompatActivity() {
                             logger?.event("talktest") { put("t", (System.currentTimeMillis() - startedAt) / 1000); put("state", st.name); put("src", "virtual") }
                         }
                     })
+            }
         }
         source = src
+        // 시계연동(spec-022 FR5): 수동 러너 모드만 체크박스로 선택, 그 외(라이브/자동/수동페이스)는 항상 연동.
+        watchLink = if (mode != MODE_LIVE && simInput == SimInput.RUNNER) watchLinkCheck?.isChecked == true else true
         // 시뮬 자동 시나리오: 가상러너의 기온을 코칭 맥락에 주입(더위 취약형 등 검증 가능). 실측 조회는 좌표 확보 시 덮어씀.
-        if (mode == MODE_SIM && !manualMode) {
+        if (mode == MODE_SIM && simInput == SimInput.AUTO) {
             if (settings.heatCoachingEnabled) eng.ambientTempC = virtualRunner.tempC
             tempView.text = "%.0f℃".format(virtualRunner.tempC); tempFetched = true
         }
@@ -508,10 +575,11 @@ class RunActivity : AppCompatActivity() {
         running = true; finished = false
         isRunning = true; remoteStopRequested = false
         registerTalkListener() // 워치 토크테스트 답변(/talk)은 모든 모드에서 수신(시뮬 미러 포함)
-        // 실센서면 워치가 자기 센서로 러닝, 시뮬/목이면 워치를 미러 모드로(폰 심박 표시+토크테스트)
-        when (mode) {
-            MODE_LIVE -> RunLink.send(this, RunLink.PATH_START)
-            else -> RunLink.send(this, RunLink.PATH_MIRROR)
+        // 실센서면 워치가 자기 센서로 러닝, 시뮬/목이면 워치를 미러 모드로(폰 심박 표시+토크테스트).
+        // 수동 러너 모드에서 시계연동 해제 시엔 워치로 아무것도 보내지 않는다(spec-022 FR5).
+        when {
+            mode == MODE_LIVE -> RunLink.send(this, RunLink.PATH_START)
+            watchLink -> RunLink.send(this, RunLink.PATH_MIRROR)
         }
         // 러닝 중 화면 유지: LLM 코칭은 포그라운드 전용(adr-007), GPS/파이프라인도 화면off 스로틀 회피.
         // 설정(spec-021)에서 끄면 화면 자동 꺼짐 허용(실센서 모드 배터리 절약).
@@ -523,11 +591,17 @@ class RunActivity : AppCompatActivity() {
             val state = eng.onSample(s)
             src.onFeedback(state) // 폐루프: 판정을 소스로 되먹임(가상러너가 코칭에 반응)
             log.sample(s, state, watchProvider?.lastAgeMs() ?: -1L)
+            // 표시 존 판정(adr-023): 순간심박+히스테리시스. 화면 칩/밴드 마커/워치 존의 유일 기준.
+            if (state.hr > 0) zoneBounds(state.uEstFrac)?.let { (lo, hi) ->
+                displayZone = displayJudge.judge(state.hr, lo, hi, profile.maxHr)
+            }
             // 시뮬/목: 심박을 워치로 스트림(미러) — 워치에서 표시+토크테스트 가능
-            if (mode != MODE_LIVE && state.hr > 0 && frame % 25 == 0) RunLink.sendMirrorHr(this, state.hr)
-            // B(adr-022): 폰 판정 상태(지속 심박+개인 경계)를 워치로 푸시 → 워치가 같은 존 표시(불일치 해소).
-            // 폰이 유일한 판정 주체(항상 폰 연결 전제). MODE_LIVE=매초, 시뮬=미러와 같은 캐던스.
-            if (state.hr > 0 && (mode == MODE_LIVE || frame % 25 == 0)) pushWatchZone(state)
+            if (mode != MODE_LIVE && watchLink && state.hr > 0 && frame % 25 == 0) RunLink.sendMirrorHr(this, state.hr)
+            // adr-023: 폰이 확정한 표시 존을 워치로 푸시 → 워치는 무로직 뷰어(항상 폰 연결 전제).
+            // MODE_LIVE=매초, 시뮬=미러와 같은 캐던스.
+            if (watchLink && state.hr > 0 && (mode == MODE_LIVE || frame % 25 == 0)) pushWatchZone(state)
+            // 토크테스트 설문 타이밍(adr-023: 폰이 판단, 워치는 /run/talk 수신 시 표시만)
+            updateTalkPrompt(state)
             if (!tempFetched && s.lat.isFinite() && s.lon.isFinite()) { // 기온 1회 조회(유효 좌표 확보 후)
                 tempFetched = true
                 lifecycleScope.launch {
@@ -588,9 +662,11 @@ class RunActivity : AppCompatActivity() {
         if (!running) return
         running = false
         isRunning = false
+        displayZone = null // 종료 요약 렌더가 마지막 존 색을 재사용하지 않게
+        talkDialog?.let { runCatching { it.dismiss() } } // 폰 토크 팝업 정리(spec-022)
         unregisterTalkListener()
         // 러닝 종료면 워치도 종료(실센서 자동기동/시뮬 미러 모두). 원격 종료가 아닐 때만 되쏨.
-        if (!remoteStopRequested) RunLink.send(this, RunLink.PATH_STOP)
+        if (!remoteStopRequested && watchLink) RunLink.send(this, RunLink.PATH_STOP)
         remoteStopRequested = false
         window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         source?.stop()
@@ -638,27 +714,79 @@ class RunActivity : AppCompatActivity() {
     }
 
     /**
-     * B(adr-022): 워치가 폰과 같은 존을 표시하도록 판정 상태를 전송.
-     * 지속 심박(smoothedHr, 판정 기준)과 개인 경계(lo/hi/max)를 updateZoneUi/판정과 동일 산식으로 계산 →
-     * 워치는 자체 판정 없이 이 값으로만 존을 그린다(항상 폰 연결 전제, 워치 단독 없음).
+     * adr-023: 폰이 확정한 표시 존을 워치로 푸시 — 워치는 계산 없이 그대로 그린다(무로직 뷰어).
+     * 존인덱스(1~5) + 존내위치(0~1000, 등폭 게이지 마커 각도용) + 순간심박(큰 숫자 동일).
      */
     private fun pushWatchZone(s: LiveState) {
         val p = profile ?: return
+        val z = displayZone ?: return
+        if (s.hr <= 0) return
+        val (lo, hi) = zoneBounds(s.uEstFrac) ?: return
+        val frac = com.zone2runner.app.domain.DisplayZones.withinFrac(s.hr, z, lo, hi, p.maxHr)
+        RunLink.sendLive(this, s.hr, z.idx, (frac * 1000).toInt())
+    }
+
+    /**
+     * 토크테스트 설문 타이밍(adr-023: 워치에서 폰으로 이관 — 워치는 /run/talk 수신 시 표시만).
+     *  (A) 지속 심박이 Zone2 하한 이상에 30초+ 머묾 + 최근 3분 미질문(경계 근처가 관측 가치 최대, active learning).
+     *  (B) 10분 무질문 폴백 — 낮은 심박도 그 사람에겐 힘들 수 있으니.
+     * 시뮬 가속에서도 실제 시간 기준이 되도록 벽시계 1초 단위로만 평가(기존 워치 동작과 동일).
+     */
+    private fun updateTalkPrompt(s: LiveState) {
+        val now = android.os.SystemClock.elapsedRealtime()
+        if (now - lastTalkTickMs < 1000) return
+        lastTalkTickMs = now
+        val (lo, _) = zoneBounds(s.uEstFrac) ?: return
         val sus = if (s.smoothedHr > 0) s.smoothedHr else s.hr
-        if (sus <= 0) return
-        val inst = if (s.hr > 0) s.hr else sus // 폰이 표시하는 순간 심박(정제됨) — 워치가 같은 숫자로 표시
-        val hi = (p.restingHr + s.uEstFrac * p.hrr).toInt()
-        val lo = (p.restingHr + (s.uEstFrac - com.zone2runner.app.domain.Zone2Prior.BAND) * p.hrr).toInt()
-        RunLink.sendLive(this, inst, sus, lo, hi, p.maxHr)
+        val elevated = sus > 0 && sus >= lo // Zone2 이상(지속 심박 기준 — 개인화 관측과 같은 채널)
+        if (elevated) talkElevatedSec++ else talkElevatedSec = 0
+        val since = now - lastTalkAskMs
+        val elevatedAsk = elevated && talkElevatedSec >= 30 && since > 3 * 60 * 1000L
+        val fallback = sus > 0 && since > 10 * 60 * 1000L
+        if (elevatedAsk || fallback) {
+            lastTalkAskMs = now
+            if (watchLink) RunLink.send(this, RunLink.PATH_TALK)
+            // 수동 러너 모드(spec-022 FR4): 폰에도 5지선다 팝업 — 사람이 직접 답하며 전체 루프 테스트
+            if (mode == MODE_SIM && simInput == SimInput.RUNNER) showPhoneTalkDialog()
+        }
+    }
+
+    /** 폰 토크테스트 팝업(spec-022) — 30초 무응답 자동 닫힘, 중복 표시 방지. */
+    private fun showPhoneTalkDialog() {
+        if (talkDialog?.isShowing == true) return
+        val states = listOf(
+            "아주편함" to com.zone2runner.app.pipeline.TalkState.VERY_COMFORTABLE,
+            "편함" to com.zone2runner.app.pipeline.TalkState.COMFORTABLE,
+            "보통" to com.zone2runner.app.pipeline.TalkState.BORDERLINE,
+            "벅참" to com.zone2runner.app.pipeline.TalkState.HARD,
+            "매우벅참" to com.zone2runner.app.pipeline.TalkState.VERY_HARD,
+        )
+        val d = android.app.AlertDialog.Builder(this)
+            .setTitle("대화 되나요? (지금 강도)")
+            .setItems(states.map { it.first }.toTypedArray()) { _, i ->
+                engine?.observeTalkTest(states[i].second)
+                logger?.event("talktest") { put("t", (System.currentTimeMillis() - startedAt) / 1000); put("state", states[i].second.name); put("src", "phone_popup") }
+                Toast.makeText(this, "기록됨 · 개인 경계에 반영", Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("건너뛰기", null)
+            .create()
+        d.setOnDismissListener { if (talkDialog === d) talkDialog = null }
+        d.show()
+        talkDialog = d
+        hrView.postDelayed({ if (talkDialog === d) runCatching { d.dismiss() } }, 30_000L)
     }
 
     private fun render(s: LiveState) {
         hrView.text = if (s.hr > 0) "${s.hr} bpm" else "-- bpm"
-        val j = s.judgment
-        if (j != null) {
+        // 존 칩/숫자 색 = 표시 존(adr-023: 순간심박+히스테리시스, 워치와 동일 존/색)
+        val z = displayZone
+        if (z != null && s.hr > 0) {
+            val zc = Color.parseColor(z.colorHex)
+            zoneChip.text = "${z.short} ${z.desc}"; zoneChip.background = pill(zc); hrView.setTextColor(zc)
+        } else s.judgment?.let { j -> // 표시 존 없음(재생/요약 렌더 등) — 기존 판정 칩 폴백
             zoneChip.text = j.label; zoneChip.background = pill(j.color); hrView.setTextColor(j.color)
         }
-        updateZoneUi(if (s.smoothedHr > 0) s.smoothedHr else s.hr, s.uEstFrac, s.hr, s.predictedHr60)
+        updateZoneUi(s.hr, s.uEstFrac, if (s.smoothedHr > 0) s.smoothedHr else -1, s.predictedHr60)
         timeView.text = "%02d:%02d".format(s.elapsedSec / 60, s.elapsedSec % 60)
         distView.text = if (s.distanceM < 1000) "${s.distanceM.toInt()}m" else "%.2fkm".format(s.distanceM / 1000)
         // 움직이기 전(정지/GPS 미확보)엔 페이스/케이던스/보폭을 근거 없이 표시하지 않는다("--").
@@ -766,14 +894,15 @@ class RunActivity : AppCompatActivity() {
             (source as? SimulatedRunSource)?.delayMs = ms
             (source as? com.zone2runner.app.sim.ManualRunSource)?.delayMs = ms
             (source as? com.zone2runner.app.sim.SimRunnerSource)?.delayMs = ms
+            (source as? com.zone2runner.app.sim.ManualVirtualRunnerSource)?.delayMs = ms
             highlightSpeed()
         }
     }
 
     private fun updateRunnerChip() {
         runnerChip?.text = virtualRunner.name
-        // 수동 모드에선 가상러너 무의미 → 흐리게
-        runnerChip?.alpha = if (manualMode) 0.4f else 1f
+        // 수동 모드(페이스/러너)에선 가상러너 프리셋 무의미 → 흐리게
+        runnerChip?.alpha = if (simInput != SimInput.AUTO) 0.4f else 1f
     }
 
     /** 가상러너 선택 — 카드형(현재 선택 강조 + 특성 표시). 텍스트 목록보다 선택 화면임이 명확. */
@@ -841,18 +970,81 @@ class RunActivity : AppCompatActivity() {
     }
 
     private fun updateManualUi() {
+        val manual = simInput != SimInput.AUTO
         manualChip?.apply {
-            text = if (manualMode) "수동 페이스" else "자동 시나리오"
-            setTextColor(if (manualMode) Color.WHITE else C_TEXT)
+            text = when (simInput) {
+                SimInput.AUTO -> "자동 시나리오"
+                SimInput.PACE -> "수동 페이스"
+                SimInput.RUNNER -> "수동 러너"
+            }
+            setTextColor(if (manual) Color.WHITE else C_TEXT)
             background = GradientDrawable().apply {
-                setColor(if (manualMode) C_ACCENT_DIM else C_CARD)
+                setColor(if (manual) C_ACCENT_DIM else C_CARD)
                 cornerRadius = dp(14).toFloat()
-                setStroke(dp(1), if (manualMode) C_ACCENT else C_STROKE)
+                setStroke(dp(1), if (manual) C_ACCENT else C_STROKE)
             }
         }
-        paceRow?.visibility = if (manualMode) android.view.View.VISIBLE else android.view.View.GONE
+        paceRow?.visibility = if (simInput == SimInput.PACE) android.view.View.VISIBLE else android.view.View.GONE
+        vrRows?.visibility = if (simInput == SimInput.RUNNER) android.view.View.VISIBLE else android.view.View.GONE
         updatePaceLabel()
+        updateVrSummary()
         updateRunnerChip()
+    }
+
+    /** 수동 러너 조종 슬라이더 한 줄(라벨 + SeekBar). 값 표시는 updateVrSummary가 통합 갱신. */
+    private fun vrSeek(title: String, max: Int, initial: Int, onChange: (Int) -> Unit): LinearLayout {
+        val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
+        row.addView(TextView(this).apply { text = title; textSize = 11f; setTextColor(C_MUTED) },
+            LinearLayout.LayoutParams(dp(58), WRAP_CONTENT))
+        row.addView(android.widget.SeekBar(this).apply {
+            this.max = max; progress = initial.coerceIn(0, max)
+            setOnSeekBarChangeListener(object : android.widget.SeekBar.OnSeekBarChangeListener {
+                override fun onProgressChanged(sb: android.widget.SeekBar?, p: Int, fromUser: Boolean) {
+                    onChange(p); updateVrSummary()
+                }
+                override fun onStartTrackingTouch(sb: android.widget.SeekBar?) {}
+                override fun onStopTrackingTouch(sb: android.widget.SeekBar?) {}
+            })
+        }, LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f))
+        return row
+    }
+
+    /** 조종 값 요약: 케이던스 x 보폭 → 페이스 환산 + 심박 보정. */
+    private fun updateVrSummary() {
+        val pace = 1000.0 / (manualSpm * manualStride)
+        vrSummary?.text = "%d spm x %.2fm → %d'%02d\"  ·  심박 보정 %+d bpm"
+            .format(manualSpm, manualStride, pace.toInt(), ((pace % 1) * 60).toInt(), manualHrOffset)
+    }
+
+    /** 신체 스펙 입력(spec-022 FR1) — 기본값은 활성 프로필. 수동 러너 모드 선택 시 표시. */
+    private fun showBodySpecDialog() {
+        val p = profile ?: ProfileStore.load(this).also { profile = it }
+        val cur = manualBody ?: com.zone2runner.app.sim.ManualVirtualRunnerSource.Body(p.age, p.restingHr, p.maxHr, 7.0)
+        fun field(hint: String, value: String) = android.widget.EditText(this).apply {
+            this.hint = hint; setText(value)
+            inputType = android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL
+        }
+        val age = field("나이", cur.age.toString())
+        val rhr = field("안정 심박(bpm)", cur.restingHr.toString())
+        val mhr = field("최대 심박(bpm)", cur.maxHr.toString())
+        val bp = field("기준 페이스(min/km, 편한 속도)", cur.basePaceMinKm.toString())
+        val col = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL; setPadding(dp(20), dp(8), dp(20), 0)
+            listOf(age, rhr, mhr, bp).forEach { addView(it) }
+        }
+        android.app.AlertDialog.Builder(this)
+            .setTitle("수동 러너 신체 스펙")
+            .setView(col)
+            .setPositiveButton("확인") { _, _ ->
+                manualBody = com.zone2runner.app.sim.ManualVirtualRunnerSource.Body(
+                    age.text.toString().toIntOrNull()?.coerceIn(10, 90) ?: cur.age,
+                    rhr.text.toString().toIntOrNull()?.coerceIn(35, 90) ?: cur.restingHr,
+                    mhr.text.toString().toIntOrNull()?.coerceIn(120, 230) ?: cur.maxHr,
+                    bp.text.toString().toDoubleOrNull()?.coerceIn(3.5, 12.0) ?: cur.basePaceMinKm,
+                )
+            }
+            .setNegativeButton("취소", null)
+            .show()
     }
 
     private fun updatePaceLabel() {
