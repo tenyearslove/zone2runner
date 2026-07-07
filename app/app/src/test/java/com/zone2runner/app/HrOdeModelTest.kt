@@ -60,8 +60,8 @@ class HrOdeModelTest {
         val m = HrOdeModel()
         val pred = m.predict(df(0.5, 0.3), hrr) // 상승 중
         val e = m.last
-        // pred60 = 현재 + 추세 + 드리프트 + 잔차 (설명 항목 합이 예측과 일치 — 설명용이성 정직성)
-        val sum = e.hNow + e.trendFrac + e.driftFrac + e.residFrac
+        // pred60 = 현재 + 추세 + 드리프트 (설명 항목 합이 예측과 일치 — 설명용이성 정직성)
+        val sum = e.hNow + e.trendFrac + e.driftFrac
         assertEquals("분해 합 = 예측", pred[1], sum, 1e-9)
         assertEquals("predFrac 저장", pred[1], e.predFrac, 1e-9)
         assertTrue("상승 중이면 추세 항 양수", e.trendFrac > 0)

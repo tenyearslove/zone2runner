@@ -138,7 +138,7 @@ class RunActivity : AppCompatActivity() {
     }
 
     private fun updateSubtitle() {
-        val model = "규칙 판정 + 심박 예측 ODE+잔차NN(개인화) + 페이스 제안"
+        val model = "규칙 판정 + 심박 예측 ODE(개인화) + 페이스 제안"
         subtitle.text = when (mode) {
             MODE_LIVE -> "$model · 실센서(GPS+워치HR) — 실기기 필요"
             MODE_MOCK -> "$model · 가짜 라이브(테스트) — 워치 없이 실시간 합성"
@@ -457,10 +457,9 @@ class RunActivity : AppCompatActivity() {
         // coachScope 전달 → 코칭 생성(LLM ~2초)이 샘플 루프/렌더를 멈추지 않음
         val learnedPrior = com.zone2runner.app.data.LearnedZone.uFrac(this) // 세션 누적 학습값(있으면 prior)
         val odeParams = com.zone2runner.app.data.LearnedDynamics.params(this) // 예측 ODE 개인 파라미터 누적(adr-020)
-        val residual = com.zone2runner.app.pipeline.HrResidual.fromAssets(this) // 잔차 NN(gray-box, report-005). 없으면 null
         val eng = RunEngine(
             profile, c, coachScope = lifecycleScope,
-            priorUFrac = learnedPrior, priorOdeParams = odeParams, residual = residual,
+            priorUFrac = learnedPrior, priorOdeParams = odeParams,
             cadence = settings.cadence, preemptiveEnabled = settings.preemptiveEnabled, // spec-021
         )
         engine = eng
@@ -692,7 +691,7 @@ class RunActivity : AppCompatActivity() {
         if (s.recommendedPaceMinKm > 0.0 && s.predictedHr60 > 0) {
             val rp = s.recommendedPaceMinKm
             val paceTxt = "%d'%02d\"".format(rp.toInt(), ((rp % 1) * 60).toInt())
-            // 예측이 현재와 벌어지면 왜 그렇게 나왔는지(추세/드리프트/개인보정 분해)를 둘째 줄에 설명(설명용이성)
+            // 예측이 현재와 벌어지면 왜 그렇게 나왔는지(추세/드리프트 분해)를 둘째 줄에 설명(설명용이성)
             adviceView.text = if (s.predictionWhy.isNotBlank())
                 "🎯 Zone2 페이스 $paceTxt\n💡 ${s.predictionWhy}"
             else

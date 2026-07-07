@@ -20,7 +20,7 @@ import kotlin.math.exp
  * "이 페이스 유지 시" 조건부라, 페이스가 유지된 표본만 학습에 쓴다(페이스 바뀌면 조건이 달라진 것).
  * 값은 전부 HR frac(HRR 비율). 세션 종료 시 파라미터 저장 → 다음 세션이 이어서 개인화.
  */
-class HrOdeModel(init: DoubleArray? = null, private val residual: HrResidual? = null) {
+class HrOdeModel(init: DoubleArray? = null) {
 
     // 개인 파라미터 (init 있으면 이어서, 없으면 모집단 prior)
     private var tauSec = init?.getOrNull(0) ?: TAU0
@@ -33,32 +33,29 @@ class HrOdeModel(init: DoubleArray? = null, private val residual: HrResidual? = 
 
     /**
      * df = FeatureExtractor.dynFeaturesAt (7종). hrr = 여유심박. 반환 = [frac30, frac60].
-     * 최종 = 생리 ODE(뼈대) + 잔차NN(gray-box, 있으면). 잔차는 HrResidual이 물리 경계로 clamp한다.
+     * 예측 = 생리 ODE(뼈대) 전방적분. 개인화는 τ/드리프트/수요맵 온라인 추정으로만(자체 학습 NN 없음).
      */
     fun predict(df: DoubleArray, hrr: Double): DoubleArray {
         val hNow = df[0]                       // hr_now_frac
         val dhPerSec = if (hrr > 0) df[2] / hrr else 0.0  // bpm/s → frac/s
         val hSS = (hNow + tauSec * dhPerSec).coerceIn(SS_MIN, SS_MAX)
-        val res = residual?.residual(df, hrr)  // [res30, res60] frac (clamp됨) 또는 null
         val out = DoubleArray(horizonsSec.size) { i ->
             val h = horizonsSec[i].toDouble()
-            val ode = hSS + (hNow - hSS) * exp(-h / tauSec) + driftPerMin * (h / 60.0)
-            (ode + (res?.get(i) ?: 0.0)).coerceIn(SS_MIN, SS_MAX)
+            (hSS + (hNow - hSS) * exp(-h / tauSec) + driftPerMin * (h / 60.0)).coerceIn(SS_MIN, SS_MAX)
         }
-        // 설명용 60초 예측 분해(frac): pred60 − hNow = 추세 + 드리프트 + 잔차 (clamp 전 기준)
+        // 설명용 60초 예측 분해(frac): pred60 − hNow = 추세 + 드리프트 (물리 두 항)
         val e60 = exp(-60.0 / tauSec)
         last = Explain(hNow = hNow, hSSFrac = hSS,
             trendFrac = (hSS - hNow) * (1 - e60),   // 현재 추세로 정상상태를 향해 가는 몫
             driftFrac = driftPerMin,                // 60초분 누적 드리프트
-            residFrac = res?.get(1) ?: 0.0,         // 잔차 NN 보정
             predFrac = out.last())
         return out
     }
 
     /** 마지막 predict()의 60초 예측 분해(설명용, frac 단위). */
     data class Explain(val hNow: Double, val hSSFrac: Double, val trendFrac: Double,
-                       val driftFrac: Double, val residFrac: Double, val predFrac: Double)
-    var last = Explain(0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+                       val driftFrac: Double, val predFrac: Double)
+    var last = Explain(0.0, 0.0, 0.0, 0.0, 0.0)
         private set
 
     /**

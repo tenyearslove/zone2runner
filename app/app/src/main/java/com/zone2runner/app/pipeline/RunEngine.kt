@@ -32,15 +32,14 @@ class RunEngine(
     private val coachScope: CoroutineScope? = null,
     priorUFrac: Double? = null,        // 세션 누적 학습값(LearnedZone). 없으면 공식 prior
     priorOdeParams: DoubleArray? = null, // 심박 예측 ODE 개인 파라미터 누적(LearnedDynamics, adr-020)
-    residual: HrResidual? = null,        // 심박 예측 잔차 NN(gray-box, report-005). null이면 ODE 단독
     private val cadence: CoachCadence = CoachCadence.DEFAULT, // 코칭 빈도(spec-021)
     private val preemptiveEnabled: Boolean = true,            // 선제 코칭 on/off(spec-021)
 ) {
     private val extractor = FeatureExtractor()
     private val personalization = Personalization(profile, priorUFrac)
     private val judge = ZoneJudge()
-    // 심박 예측: 생리 ODE(뼈대) + 개인 파라미터 온라인 추정 + 잔차 NN(gray-box, adr-020/report-005).
-    private val ode = HrOdeModel(priorOdeParams, residual)
+    // 심박 예측: 생리 ODE(뼈대) + 개인 파라미터 온라인 추정(adr-020). 자체 학습 NN 없음.
+    private val ode = HrOdeModel(priorOdeParams)
     private val uEstStart = personalization.boundary().uFrac
 
     private var lastValidHr: Int? = null
@@ -224,8 +223,8 @@ class RunEngine(
      */
     /**
      * 예측(60초)이 현재 심박과 벌어졌을 때 "왜 그렇게 나왔나"를 항목 분해로 설명(설명용이성, QA6).
-     * 생리 ODE라 예측 = 현재 + 추세 + 드리프트 + 잔차로 정확히 쪼갤 수 있다(블랙박스면 불가).
-     * 사실은 물리/규칙이 확정(지어낸 수치 없음). 차이가 작으면(<5bpm) 빈 문자열.
+     * 생리 ODE라 예측 = 현재 + 추세 + 드리프트로 정확히 쪼갤 수 있다(블랙박스면 불가).
+     * 사실은 물리가 확정(지어낸 수치 없음). 차이가 작으면(<5bpm) 빈 문자열.
      */
     private fun buildPredWhy(currentHr: Int): String {
         val e = ode.last
@@ -236,11 +235,9 @@ class RunEngine(
         if (kotlin.math.abs(gap) < 5) return ""
         val trend = e.trendFrac * hrr
         val drift = e.driftFrac * hrr
-        val resid = e.residFrac * hrr
         val parts = ArrayList<String>()
         if (kotlin.math.abs(trend) >= 1.0) parts += "추세 %+.0f".format(trend)
         if (kotlin.math.abs(drift) >= 1.0) parts += "드리프트 %+.0f".format(drift)
-        if (kotlin.math.abs(resid) >= 1.0) parts += "개인보정 %+.0f".format(resid)
         val dir = if (gap > 0) "오를" else "내릴"
         val head = "이 페이스면 60초 뒤 ${predBpm}bpm — 지금보다 ${kotlin.math.abs(gap)}bpm $dir 전망"
         // 내역은 모두 bpm 기여분 — 단위를 앞에 한 번 명시해 항목별 오해 방지
