@@ -242,8 +242,9 @@ class RunEngine(
         if (kotlin.math.abs(drift) >= 1.0) parts += "드리프트 %+.0f".format(drift)
         if (kotlin.math.abs(resid) >= 1.0) parts += "개인보정 %+.0f".format(resid)
         val dir = if (gap > 0) "오를" else "내릴"
-        val head = "이 페이스면 60초 뒤 ${predBpm}bpm — 지금보다 ${kotlin.math.abs(gap)} $dir 전망"
-        return if (parts.isEmpty()) head else "$head (${parts.joinToString(", ")}bpm)"
+        val head = "이 페이스면 60초 뒤 ${predBpm}bpm — 지금보다 ${kotlin.math.abs(gap)}bpm $dir 전망"
+        // 내역은 모두 bpm 기여분 — 단위를 앞에 한 번 명시해 항목별 오해 방지
+        return if (parts.isEmpty()) head else "$head · 내역(bpm): ${parts.joinToString(", ")}"
     }
 
     private suspend fun maybePreemptiveCoach(s: Sample, loBpm: Double, hiBpm: Double) {
