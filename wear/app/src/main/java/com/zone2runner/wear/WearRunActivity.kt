@@ -332,7 +332,13 @@ class WearRunActivity : ComponentActivity() {
     // ---- 제어(서비스 위임) ----
 
     private fun start() {
-        if (!hasPerms()) { requestPerms(); return }
+        if (!hasPerms()) { requestPerms(); return }              // 1단계: 전경(심박/위치)
+        if (needsBodyBackground()) { requestBodyBackground(); return } // 2단계: 배경 심박(화면off HR 위임)
+        launchService()
+    }
+
+    /** 실제 서비스 시작(권한 게이트 통과 후). 배경 심박 거부 시에도 전경 러닝은 되도록 여기서 바로 띄운다. */
+    private fun launchService() {
         val intent = Intent(this, RunService::class.java).setAction(RunService.ACTION_START)
         ContextCompat.startForegroundService(this, intent)
     }
@@ -352,19 +358,39 @@ class WearRunActivity : ComponentActivity() {
     }
 
     private fun requestPerms() {
+        // 1단계(전경): 심박/위치/케이던스/알림. 배경 심박은 전경 승인 뒤 '따로' 요청해야 한다(아래 2단계).
         val perms = mutableListOf(
             Manifest.permission.BODY_SENSORS,
             Manifest.permission.ACCESS_FINE_LOCATION,
             Manifest.permission.ACTIVITY_RECOGNITION,
         )
         if (Build.VERSION.SDK_INT >= 33) perms += Manifest.permission.POST_NOTIFICATIONS
-        ActivityCompat.requestPermissions(this, perms.toTypedArray(), 1)
+        ActivityCompat.requestPermissions(this, perms.toTypedArray(), REQ_FOREGROUND)
     }
+
+    /**
+     * 배경 심박(BODY_SENSORS_BACKGROUND, API33+) — Health Services가 별도 프로세스에서 우리를 대신해
+     * 센서를 읽으려면(화면off 지속 HR, adr-009) 이 배경 권한 위임이 필요하다. 없으면 시작 직후
+     * "WHS_PermissionPolicy: healthservices doesn't have permission BODY_SENSORS" 경고와 함께 HR이 막힌다.
+     * 전경 권한이 이미 있어야 요청 가능하고, 반드시 단독으로 요청한다(전경과 함께 요청하면 무시됨).
+     */
+    private fun needsBodyBackground(): Boolean = Build.VERSION.SDK_INT >= 33 &&
+        ContextCompat.checkSelfPermission(this, "android.permission.BODY_SENSORS_BACKGROUND") != PackageManager.PERMISSION_GRANTED
+
+    private fun requestBodyBackground() =
+        ActivityCompat.requestPermissions(this, arrayOf("android.permission.BODY_SENSORS_BACKGROUND"), REQ_BODY_BG)
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (hasPerms()) start()
-        else { zoneLabel.text = "권한 필요(심박/위치)"; zoneLabel.setTextColor(C_RED) }
+        when (requestCode) {
+            REQ_FOREGROUND -> when {
+                !hasPerms() -> { zoneLabel.text = "권한 필요(심박/위치)"; zoneLabel.setTextColor(C_RED) }
+                needsBodyBackground() -> requestBodyBackground() // 전경 OK → 배경 심박 단독 요청
+                else -> launchService()
+            }
+            // 배경 심박 결과(승인/거부 무관): 러닝은 시작한다. 거부 시 화면off HR이 제한될 수 있음(전경은 동작).
+            REQ_BODY_BG -> launchService()
+        }
     }
 
     // ---- helpers ----
@@ -373,6 +399,8 @@ class WearRunActivity : ComponentActivity() {
 
     companion object {
         const val EXTRA_MIRROR = "mirror" // 시뮬 미러 모드로 실행(폰 심박 수신 + 토크테스트만)
+        private const val REQ_FOREGROUND = 1 // 권한 요청 코드: 1단계 전경(심박/위치)
+        private const val REQ_BODY_BG = 2    // 2단계 배경 심박(화면off HR 위임)
         private const val LIVE_STALE_MS = 8000L // 폰 판정 상태 신선도 한계(1Hz 수신, BT 끊김 관용)
         private val C_TEXT = Color.parseColor("#E8EAED")
         private val C_MUTED = Color.parseColor("#9AA0A6")
