@@ -32,14 +32,15 @@ class RunEngine(
     private val coachScope: CoroutineScope? = null,
     priorUFrac: Double? = null,        // 세션 누적 학습값(LearnedZone). 없으면 공식 prior
     priorOdeParams: DoubleArray? = null, // 심박 예측 ODE 개인 파라미터 누적(LearnedDynamics, adr-020)
+    residual: HrResidual? = null,        // 심박 예측 잔차 NN(gray-box, report-005). null이면 ODE 단독
     private val cadence: CoachCadence = CoachCadence.DEFAULT, // 코칭 빈도(spec-021)
     private val preemptiveEnabled: Boolean = true,            // 선제 코칭 on/off(spec-021)
 ) {
     private val extractor = FeatureExtractor()
     private val personalization = Personalization(profile, priorUFrac)
     private val judge = ZoneJudge()
-    // 심박 예측: 생리 ODE + 개인 파라미터 온라인 추정(adr-020). 시뮬-학습 NN 폐기.
-    private val ode = HrOdeModel(priorOdeParams)
+    // 심박 예측: 생리 ODE(뼈대) + 개인 파라미터 온라인 추정 + 잔차 NN(gray-box, adr-020/report-005).
+    private val ode = HrOdeModel(priorOdeParams, residual)
     private val uEstStart = personalization.boundary().uFrac
 
     private var lastValidHr: Int? = null
