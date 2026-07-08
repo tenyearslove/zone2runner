@@ -203,7 +203,16 @@ class RunEngine(
         lastCoachSec = s.tSec
         lastJudgmentForCoach = null // 다시 움직이면 판정 코칭이 새로 나가게
         val line = if (distanceM > 30) "잠깐 멈췄네요. 준비되면 다시 뛰어볼까요." else "이제 가볍게 출발해 볼까요."
-        recordCoaching(s.tSec, line, 0L)
+        recordCoaching(s.tSec, line, 0L, "정지")
+    }
+
+    /** 코칭 사유 태그(설명용이성, spec-023 FR3) — 각 코칭이 왜 나갔는지. */
+    private fun reasonOf(j: ZoneJudgment, preemptive: Boolean): String = when {
+        preemptive && j == ZoneJudgment.ABOVE -> "곧 초과(예측)"
+        preemptive && j == ZoneJudgment.BELOW -> "곧 미달(예측)"
+        j == ZoneJudgment.ABOVE -> "초과"
+        j == ZoneJudgment.BELOW -> "미달"
+        else -> "유지"
     }
 
     private suspend fun maybeCoach(s: Sample) {
@@ -262,19 +271,20 @@ class RunEngine(
         if (scope != null && coachJob?.isActive == true) return // 이전 생성이 아직 진행 중이면 건너뜀
         lastCoachSec = s.tSec
         if (!preemptive) lastJudgmentForCoach = j
+        val reason = reasonOf(j, preemptive)
         val ctx = CoachContext(
             j, s.slopePct, s.paceMinKm, s.tSec, spm = s.spm, preemptive = preemptive,
             currentHr = sustainedHr, loBpm = coachLoBpm, hiBpm = coachHiBpm, predictedHr60 = predictedHr60,
             tempC = ambientTempC,
         )
         if (scope == null) {
-            recordCoaching(s.tSec, coach.say(ctx), 0L)
+            recordCoaching(s.tSec, coach.say(ctx), 0L, reason)
         } else {
             // coachScope는 메인 디스패처(lifecycleScope) 가정 — recordCoaching이 onSample과 같은 스레드에서 실행됨
             coachJob = scope.launch {
                 val t0 = System.currentTimeMillis()
                 val line = coach.say(ctx)
-                recordCoaching(ctx.elapsedSec, line, System.currentTimeMillis() - t0)
+                recordCoaching(ctx.elapsedSec, line, System.currentTimeMillis() - t0, reason)
             }
         }
     }
@@ -282,8 +292,10 @@ class RunEngine(
     /** 코칭 라인 확정 시 호출(비동기 생성 완료 시점). 필드 로그(spec-012)용. */
     var onCoachingRecorded: ((tSec: Int, line: String, tookMs: Long) -> Unit)? = null
 
-    private fun recordCoaching(tSec: Int, line: String, tookMs: Long) {
-        coachingLines += "[%02d:%02d] %s".format(tSec / 60, tSec % 60, line)
+    private fun recordCoaching(tSec: Int, line: String, tookMs: Long, reason: String = "") {
+        // 코칭 로그에 사유 태그를 붙여 스스로 설명되게 한다(spec-023 FR3). 예: "[03:12] (초과) 페이스를 낮춰볼까요".
+        val tag = if (reason.isNotBlank()) "($reason) " else ""
+        coachingLines += "[%02d:%02d] %s%s".format(tSec / 60, tSec % 60, tag, line)
         lastCoachText = line
         onCoachingRecorded?.invoke(tSec, line, tookMs)
     }

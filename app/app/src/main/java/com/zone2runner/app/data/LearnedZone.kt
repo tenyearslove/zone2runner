@@ -18,9 +18,14 @@ object LearnedZone {
     private const val KEY_HIST = "u_history"  // 세션별 uFrac, 콤마 구분(최근 HIST_CAP)
     private const val KEY_TALK = "talk_obs"   // 누적 말하기 테스트 관측 수
     private const val KEY_SIGMA = "sigma_bpm" // 최근 세션 종료 시 개인화 불확실성 σ(bpm)
+    private const val KEY_EXPLAIN = "explain" // 세션 종료 시 1회 생성한 개인화 설명(이후 재사용, LLM 재호출 없음) spec-023
     private const val HIST_CAP = 50
 
     private fun prefs(ctx: Context) = ctx.getSharedPreferences(Profiles.prefName(ctx, PREF), Context.MODE_PRIVATE)
+
+    /** 세션 종료 시 저장된 개인화 설명(LLM 풀이 또는 규칙 폴백). 없으면 null → 프로필은 규칙 팩트 표시. */
+    fun explanation(ctx: Context): String? = prefs(ctx).getString(KEY_EXPLAIN, null)?.takeIf { it.isNotBlank() }
+    fun setExplanation(ctx: Context, text: String) = prefs(ctx).edit().putString(KEY_EXPLAIN, text).apply()
 
     /** 누적된 개인 uFrac. 학습 이력 없으면 null. */
     fun uFrac(ctx: Context): Double? {

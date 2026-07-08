@@ -702,12 +702,39 @@ class RunActivity : AppCompatActivity() {
             put("directionRejects", coach?.directionRejects ?: 0)
         }
         logger?.close(); logger = null
+        // 설명 서비스(spec-023): 개인화 설명을 세션 종료 시 1회 생성해 저장 → 프로필이 LLM 재호출 없이 재사용.
+        generateAndStorePersonalizationExplanation()
         render(LiveState(elapsedSec = report.durationSec, hr = report.avgHr, smoothedHr = report.avgHr,
             judgment = null, paceMinKm = report.avgPaceMinKm, distanceM = report.distanceM,
             coaching = "세션 종료 · 저장됨", uEstFrac = report.uEstEndFrac))
         finished = true
         startBtn.text = primaryLabel()
         Toast.makeText(this, "세션 저장됨", Toast.LENGTH_SHORT).show()
+    }
+
+    /** 개인화 설명을 세션 종료 시 1회 생성(규칙 팩트 우선 저장 → LLM 가용 시 풀이로 덮어씀)해 저장. spec-023 FR1. */
+    private fun generateAndStorePersonalizationExplanation() {
+        val p = profile ?: return
+        val prior = com.zone2runner.app.domain.Zone2Prior.of(p)
+        val status = com.zone2runner.app.domain.PersonalizationStatus(
+            restingHr = p.restingHr, hrr = p.hrr, priorUFrac = prior.uFrac0,
+            learnedUFrac = com.zone2runner.app.data.LearnedZone.uFrac(this),
+            band = com.zone2runner.app.domain.Zone2Prior.BAND,
+            sessions = com.zone2runner.app.data.LearnedZone.sessionCount(this),
+            talkObs = com.zone2runner.app.data.LearnedZone.talkObs(this),
+            predUpdates = com.zone2runner.app.data.LearnedDynamics.updates(this),
+            sigmaBpm = com.zone2runner.app.data.LearnedZone.sigmaBpm(this),
+            uFracHistory = com.zone2runner.app.data.LearnedZone.history(this),
+        )
+        // 규칙 팩트를 먼저 저장(폴백 보장) → LLM 가용 시 자연어 풀이로 덮어쓴다.
+        com.zone2runner.app.data.LearnedZone.setExplanation(this, com.zone2runner.app.coaching.PersonalizationExplainer.facts(status))
+        lifecycleScope.launch {
+            val out = runCatching {
+                com.zone2runner.app.coaching.LlmCoach(this@RunActivity)
+                    .freeform(com.zone2runner.app.coaching.PersonalizationExplainer.prompt(status))
+            }.getOrNull()
+            if (!out.isNullOrBlank()) com.zone2runner.app.data.LearnedZone.setExplanation(this@RunActivity, out)
+        }
     }
 
     /**

@@ -13,8 +13,6 @@ import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.lifecycleScope
-import com.zone2runner.app.coaching.LlmCoach
 import com.zone2runner.app.coaching.PersonalizationExplainer
 import com.zone2runner.app.data.LearnedDynamics
 import com.zone2runner.app.data.LearnedZone
@@ -273,25 +271,15 @@ class ProfileActivity : AppCompatActivity() {
         })
         addView(PersonalizationView(this@ProfileActivity).apply { set(s) },
             LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply { topMargin = dpi(6) })
-        // AI 설명(설명용이성): 사실은 규칙, 표현은 LLM. 기본은 규칙 문장, 버튼 누르면 LLM 풀이.
-        val explain = TextView(this@ProfileActivity).apply {
-            text = PersonalizationExplainer.facts(s); textSize = 12f; setTextColor(Palette.MUTED)
-            setPadding(0, dpi(8), 0, 0)
-        }
-        addView(explain)
+        // AI 설명(설명용이성, spec-023): 세션 종료 시 1회 생성해 저장한 설명을 텍스트로 표시.
+        // 여기선 LLM을 재호출하지 않는다(정지 상태는 모두 텍스트, TTS 없음 — 사용자 결정). 저장본 없으면 규칙 팩트.
         addView(TextView(this@ProfileActivity).apply {
-            text = "🤖 AI 설명 듣기"; textSize = 12f; setTextColor(Palette.BLUE)
-            setPadding(0, dpi(8), 0, dpi(2)); isClickable = true
-            setOnClickListener {
-                text = "🤖 생각 중…"
-                val btn = this
-                lifecycleScope.launch {
-                    val llm = LlmCoach(this@ProfileActivity)
-                    val out = llm.freeform(PersonalizationExplainer.prompt(s))
-                    if (out != null) { explain.text = out; explain.setTextColor(Palette.TEXT); btn.text = "🤖 다시 설명" }
-                    else { btn.text = "🤖 AI 미가용 (규칙 설명 표시 중)"; }
-                }
-            }
+            text = com.zone2runner.app.data.LearnedZone.explanation(this@ProfileActivity) ?: PersonalizationExplainer.facts(s)
+            textSize = 12f; setTextColor(Palette.TEXT); setPadding(0, dpi(8), 0, 0)
+        })
+        addView(TextView(this@ProfileActivity).apply {
+            text = "AI 설명은 러닝 종료 시 자동 생성됩니다."; textSize = 10f; setTextColor(Palette.MUTED)
+            setPadding(0, dpi(4), 0, 0)
         })
     }
 
