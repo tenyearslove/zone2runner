@@ -1,11 +1,9 @@
-package com.zone2runner.app.sim
+﻿package com.zone2runner.app.sim
 
 import com.zone2runner.app.domain.MPS_PER_MIN_KM
 import com.zone2runner.app.domain.Profile
 import com.zone2runner.app.domain.Sample
 import java.util.Random
-import kotlin.math.cos
-import kotlin.math.sin
 
 /**
  * 물리 기반 러닝 세션 시뮬레이터(ml/simulator.py의 경량 Kotlin 포팅).
@@ -122,8 +120,7 @@ class RunSimulator(seed: Long = 42L) {
         }
 
         val samples = ArrayList<Sample>(n)
-        var lat = startLat; var lon = startLon
-        var heading = 0.0
+        val route = RouteWalk(startLat, startLon, rng) // 직선+코너 경로(원형 랜덤워크 대체)
         for (i in 0 until n) {
             val hrObs = hr[i] + gauss(0.0, r.noiseSd)
             var pace = r.basePace - 3.2 * (chosen[i] - 0.5) + 0.10 * slope[i] + gauss(0.0, 0.08)
@@ -131,13 +128,10 @@ class RunSimulator(seed: Long = 42L) {
             var spm = 168 - 4.0 * (pace - 6.0) + gauss(0.0, 2.5)
             spm = spm.coerceIn(150.0, 200.0)
 
-            // GPS: 속도(m/s)=MPS_PER_MIN_KM/pace, heading 완만한 랜덤워크로 루프 경로
-            val mps = MPS_PER_MIN_KM / pace
-            heading += gauss(0.0, 0.05) + 0.02 // 완만히 휘어 루프
-            lat += (mps * cos(heading)) / 111_320.0
-            lon += (mps * sin(heading)) / (111_320.0 * cos(Math.toRadians(lat)))
+            // GPS: 속도(m/s)=MPS_PER_MIN_KM/pace. 직선+코너 경로(RouteWalk)
+            route.step(MPS_PER_MIN_KM / pace)
 
-            samples += Sample(i, hrObs.toInt(), pace, spm.toInt(), slope[i], lat, lon)
+            samples += Sample(i, hrObs.toInt(), pace, spm.toInt(), slope[i], route.lat, route.lon)
         }
         return Session(samples, r)
     }

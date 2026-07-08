@@ -1,4 +1,4 @@
-package com.zone2runner.app.sim
+﻿package com.zone2runner.app.sim
 
 import com.zone2runner.app.domain.MPS_PER_MIN_KM
 import com.zone2runner.app.domain.Profile
@@ -9,8 +9,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlin.math.cos
-import kotlin.math.sin
 
 /**
  * 수동 페이스 시뮬 소스 — 사용자가 슬라이더로 페이스를 정하면 심박이 생리 모델로 따라온다.
@@ -46,7 +44,7 @@ class ManualRunSource(
         job = scope.launch {
             var hr = runner.resting + 0.45 * runner.hrr // 가벼운 시작 강도
             var drift = 0.0
-            var lat = 37.5665; var lon = 126.9780; var heading = 0.0
+            val route = RouteWalk(37.5665, 126.9780, rng) // 직선+코너 경로(원형 랜덤워크 대체)
             val uAbs = runner.resting + runner.uFrac * runner.hrr
             var t = 0
             while (isActive && t < maxDurationSec) {
@@ -62,12 +60,9 @@ class ManualRunSource(
                     .coerceAtMost(runner.maxHr.toDouble())
                 val spm = (168 - 4.0 * (pace - 6.0) + rng.nextGaussian() * 2.5).coerceIn(150.0, 200.0)
 
-                val mps = MPS_PER_MIN_KM / pace
-                heading += rng.nextGaussian() * 0.05 + 0.02
-                lat += (mps * cos(heading)) / 111_320.0
-                lon += (mps * sin(heading)) / (111_320.0 * cos(Math.toRadians(lat)))
+                route.step(MPS_PER_MIN_KM / pace)
 
-                onSample(Sample(t, hrObs.toInt(), pace + rng.nextGaussian() * 0.05, spm.toInt(), 0.0, lat, lon))
+                onSample(Sample(t, hrObs.toInt(), pace + rng.nextGaussian() * 0.05, spm.toInt(), 0.0, route.lat, route.lon))
                 t++
                 delay(delayMs)
             }

@@ -1,4 +1,4 @@
-package com.zone2runner.app.sim
+﻿package com.zone2runner.app.sim
 
 import com.zone2runner.app.domain.LiveState
 import com.zone2runner.app.domain.MPS_PER_MIN_KM
@@ -13,7 +13,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.util.Random
-import kotlin.math.cos
 import kotlin.math.sin
 
 /**
@@ -78,7 +77,7 @@ class SimRunnerSource(
             var effort = targetEffortBase + (1 - runner.pacingDiscipline) * 0.12
             var hr = restingHr + effort * runner.hrr
             var drift = 0.0
-            var lat = 37.5665; var lon = 126.9780; var heading = 0.0
+            val route = RouteWalk(37.5665, 126.9780, rng) // 직선+코너 경로(원형 랜덤워크 대체)
             var lastTalk = -999
             val slope = terrainProfile(maxDurationSec)
             val heat = ((runner.tempC - 18.0) / 14.0).coerceIn(-0.5, 1.0) // 18℃ 기준 더위 계수
@@ -137,11 +136,9 @@ class SimRunnerSource(
                 val pace = (runner.basePaceMinKm - 3.2 * (effort - 0.5) + slope[t] * 0.06 + gauss(0.05)).coerceIn(3.0, 13.0)
                 val spm = (runner.cadenceBase - 4.0 * (pace - 6.0) + gauss(2.5)).coerceIn(150.0, 200.0)
                 val mps = MPS_PER_MIN_KM / pace
-                heading += gauss(0.05) + 0.02
-                lat += (mps * cos(heading)) / 111_320.0
-                lon += (mps * sin(heading)) / (111_320.0 * cos(Math.toRadians(lat)))
+                route.step(mps)
 
-                onSample(Sample(t, emitHr, pace, spm.toInt(), slope[t], lat, lon))
+                onSample(Sample(t, emitHr, pace, spm.toInt(), slope[t], route.lat, route.lon))
 
                 // ---- 내부 토크테스트(90초마다, 워밍업 후): 진짜 임계 대비 현재 심박 + 개인 편향/흔들림 ----
                 if (t - lastTalk >= 90 && t > 120) {

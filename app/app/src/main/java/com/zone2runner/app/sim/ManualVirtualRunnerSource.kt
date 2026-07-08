@@ -1,4 +1,4 @@
-package com.zone2runner.app.sim
+﻿package com.zone2runner.app.sim
 
 import com.zone2runner.app.domain.MPS_PER_MIN_KM
 import com.zone2runner.app.domain.Sample
@@ -8,8 +8,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlin.math.cos
-import kotlin.math.sin
 
 /**
  * 수동 가상러너 시뮬 소스(spec-022) — 사용자가 케이던스/보폭을 슬라이더로 직접 조종하면
@@ -52,7 +50,7 @@ class ManualVirtualRunnerSource(
         job = scope.launch {
             var hr = body.restingHr + 0.45 * body.hrr // 가벼운 시작 강도
             var drift = 0.0
-            var lat = 37.5665; var lon = 126.9780; var heading = 0.0
+            val route = RouteWalk(37.5665, 126.9780, rng) // 직선+코너 경로(원형 랜덤워크 대체)
             val uAbs = 0.70 * body.maxHr // 진짜 임계 근사(%HRmax 70%) — 드리프트 발동 기준으로만 사용
             var t = 0
             while (isActive && t < maxDurationSec) {
@@ -75,15 +73,10 @@ class ManualVirtualRunnerSource(
                 val hrObs = (hr + drift + rng.nextGaussian() * NOISE_SD + hrOffsetBpm)
                     .coerceIn(35.0, body.maxHr.toDouble())
 
-                if (moving) {
-                    val mps = MPS_PER_MIN_KM / pace
-                    heading += rng.nextGaussian() * 0.05 + 0.02
-                    lat += (mps * cos(heading)) / 111_320.0
-                    lon += (mps * sin(heading)) / (111_320.0 * cos(Math.toRadians(lat)))
-                }
+                if (moving) route.step(MPS_PER_MIN_KM / pace)
 
                 val spmOut = if (spm <= 0) 0 else (spm + rng.nextGaussian() * 1.5).toInt().coerceAtLeast(0)
-                onSample(Sample(t, hrObs.toInt(), pace, spmOut, if (moving) slope else 0.0, lat, lon))
+                onSample(Sample(t, hrObs.toInt(), pace, spmOut, if (moving) slope else 0.0, route.lat, route.lon))
                 t++
                 delay(delayMs)
             }
