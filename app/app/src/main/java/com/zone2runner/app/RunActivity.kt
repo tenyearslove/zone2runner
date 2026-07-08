@@ -144,6 +144,15 @@ class RunActivity : AppCompatActivity() {
         updateZoneUi(-1, startUFrac)
         // 지도 초기 위치: 서울 고정 좌표 대신 마지막 알려진 위치로 즉시 센터링(GPS 새 fix 전에도 근처 표시)
         centerMapOnLastFix()
+        // BACK = 정상 종료(정지·저장 버튼과 동일 — 시뮬/실센서 공통, 사용자 요청 2026-07-08).
+        // finalizeSession이 저장/개인화 누적/워치 종료까지 처리하고, 사후 LLM 설명은 규칙 폴백을
+        // 먼저 저장하는 구조(spec-023)라 화면이 닫히며 코루틴이 취소돼도 안전하다.
+        onBackPressedDispatcher.addCallback(this, object : androidx.activity.OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (running) finalizeSession()
+                finish()
+            }
+        })
     }
 
     /** 개인 Zone2 경계(bpm) 하한/상한 — 표시 판정/밴드/워치 전송이 공유하는 단일 산식. */
@@ -401,7 +410,7 @@ class RunActivity : AppCompatActivity() {
         finished -> "리포트 보기"
         running -> "정지 · 저장"
         mode == MODE_LIVE -> "실센서 러닝 시작"
-        else -> "파이프라인 시뮬레이션 시작"
+        else -> "시뮬레이션 시작"
     }
 
     private fun onPrimary() {
