@@ -78,6 +78,7 @@ class RunControlService : WearableListenerService() {
             }
             RunLink.PATH_STOP -> {
                 // 실센서면 RunService 종료, 미러면 RunBus만 IDLE로(서비스 없음)
+                TalkTestActivity.closeCurrent() // 세션 종료 시 열려 있던 설문도 닫기
                 if (RunBus.state != RunState.IDLE) { RunBus.state = RunState.IDLE; RunBus.notifyUi() }
                 startService(
                     Intent(this, RunService::class.java)

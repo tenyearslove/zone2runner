@@ -55,6 +55,7 @@ class WearRunActivity : ComponentActivity() {
     }
 
     private var mirror = false // 시뮬 미러 모드(폰 심박 수신, 자기 센서/서비스 안 씀)
+    private var mirrorWasLive = false // 미러 세션이 한 번이라도 돌았는지 — IDLE 복귀 시 화면 닫기 판단용
     private var mirrorListener: com.google.android.gms.wearable.MessageClient.OnMessageReceivedListener? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -78,6 +79,7 @@ class WearRunActivity : ComponentActivity() {
             unregisterMirror()
             if (mirror) registerMirror()
         }
+        mirrorWasLive = false // 새 세션 재진입 — 이전 세션의 "돌았음" 플래그로 즉시 닫히지 않게
         render()
     }
 
@@ -254,6 +256,13 @@ class WearRunActivity : ComponentActivity() {
     // ---- 렌더링 ----
 
     private fun render() {
+        // 미러(시뮬) 모드: 제어가 전부 폰에 있으므로 세션이 끝나면(IDLE 전환) 화면도 닫는다.
+        // 폰 정지 버튼/BACK 이탈 모두 /run/stop → RunBus IDLE 경로로 들어온다. 초기 IDLE(첫 심박 전)과
+        // 구분하기 위해 한 번이라도 돌았을 때만 닫는다(사용자 보고 2026-07-08: BACK 시 워치 화면이 남음).
+        if (mirror) {
+            if (state != RunState.IDLE) mirrorWasLive = true
+            else if (mirrorWasLive) { finish(); return }
+        }
         // 경과시간(서비스가 누적)
         val ms = RunBus.accumulatedMs +
             if (state == RunState.RUNNING) SystemClock.elapsedRealtime() - RunBus.runStart else 0L
