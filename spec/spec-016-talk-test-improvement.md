@@ -4,7 +4,7 @@
 - **날짜**: 2026-07-05
 - **관련 ADR**: `arch/adr-004-personalization-model-approach.md`(Bayesian 개인화), `arch/adr-016-ai-method-selection.md`(문제별 도구 선택)
 - **관련 Spec**: `spec/spec-004-zone2-personalization.md`(개인화), `arch/zone2-physiology-and-estimation.md §6`(토크테스트 근거)
-- **관련(예정)**: `arch/adr-018-ondevice-speech-talk-test.md`(Tier 2 마이크/VAD 결정 — 구현 전 작성)
+- **관련(기각됨)**: `arch/archive/adr-018-ondevice-speech-talk-test.md`(Tier 2 음성 객관화 — 온디바이스 음향 분석 신뢰 불가로 Rejected, 주관 5단계 유지)
 
 ## 배경 — 왜 토크 테스트를 개선하나
 
@@ -41,7 +41,7 @@
   `side<0 && z≥muUpper`면 갱신 스킵.
 - **FR3 (폰 UI)**: 폰 대시보드의 토크 칩을 5개로 표시(아주 편함/편함/보통/벅참/매우 벅참).
   가로 폭 제약 시 자동 줄바꿈 또는 축약 라벨 허용. 앱 표시 텍스트에 ADR/내부용어 노출 금지.
-- **FR4 (워치 5단계, 2줄)**: 워치도 5칩을 표시하되 화면이 작아 2줄로 배치(아주편함/편함/보통 · 벅참/매우벅참).
+- **FR4 (워치 5단계, 2줄)**: 워치도 5칩을 표시하되 화면이 작아 2줄로 배치(1줄: 아주편함/편함/보통, 2줄: 벅참/매우벅참).
   워치→폰 전송 문자열에 `very_comfortable`/`very_hard`를 추가하고 폰 매핑도 5분기로 확장.
   (2026-07-05 갱신: 초기엔 워치 3칩 유지였으나 사용자 요청으로 5단계로 통일.)
 - **FR6 (워치 프롬프트 타이밍)**: 토크 칩은 항상 표시하지 않는다. 지속 심박이 **Zone 2 이상(개인 경계
@@ -85,7 +85,7 @@
 > **결론(2026-07-05)**: voice-poc로 음향 VAD / ASR 완성도 / YAMNet 호흡 감지 3가지를 실기기 검증했으나
 > 모두 온디바이스 신뢰 불가로 확인(YAMNet은 폰 마이크 날숨을 Beatboxing/Music으로 오분류). 폰 마이크
 > 호흡 감지는 현 단계 부적합(문헌도 러닝 소음으로 마스크 마이크 필요). **개인화 라벨은 Tier1 주관 5단계
-> 설문으로 확정.** 상세는 `arch/adr-018`. 아래는 기각된 원래 설계(기록 보존).
+> 설문으로 확정.** 상세는 `arch/archive/adr-018-ondevice-speech-talk-test.md`. 아래는 기각된 원래 설계(기록 보존).
 
 ### 개념
 

@@ -1,7 +1,7 @@
 # ADR-008: Wear 실시간 HR 수집 API 및 Watch 앱 배포 방식
 
 - **날짜**: 2026-07-02
-- **상태**: Proposed (PoC로 검증 예정)
+- **상태**: Accepted (2026-07-08 현행화 — sensor-poc 실기기 검증 완료, wear 실앱이 Health Services ExerciseClient 기반으로 운용 중)
 - **결정자**: 성시원
 - **보고서 매핑**: 설계 - Architectural Decision (DP0/adr-001 후속)
 
@@ -47,14 +47,14 @@ Wearable Data Layer(Play Services). 실시간 HR 스트림은 **MessageClient**(
 
 - **Watch 앱**: Health Services로 실시간 HR 수집 → MessageClient로 폰 전송. (가능하면 걸음/케이던스도)
 - **Phone 앱**: HR 수신 표시 + FusedLocationProvider(위치/고도) + 고도 변화로 경사(slope) 계산 + (선택)날씨 API.
-- **확인**: HR이 1~2초 주기로 실제 오는지 / 위치·고도·경사 얻는지 / 전송 지연(QA4 기여).
+- **확인**: HR이 1~2초 주기로 실제 오는지 / 위치·고도·경사 얻는지 / 전송 지연(QA6 수행효율성 기여).
 - **날씨/기온은 모델 입력이 아니다** — Zone2 판정(규칙, adr-013)과 개인화(spec-004)는 날씨를 안 쓴다(더위의 심박 영향은 디커플링 특징이 간접 반영). 날씨는 LLM 코칭 문장의 맥락(spec-005)일 뿐이라 **이번 PoC에서 제외**. 필요 시 추후 프롬프트에 기온만 추가.
 
 ---
 
 ## 결과 / 영향
 
-- spec-003(HR 파이프라인)의 실체가 본 PoC로 검증된다. HrSource 추상화로 Mock/Health Services/Samsung SDK 교체 가능하게 유지(QA5).
+- spec-003(HR 파이프라인)의 실체가 본 PoC로 검증된다. HrSource 추상화로 시뮬(수동 가상러너, spec-022)/Health Services/Samsung SDK 교체 가능하게 유지(QA5 테스트가능성). (구 Mock 소스는 spec-022 수동 러너 시뮬이 상위호환해 제거됨)
 - 화면off 시 HR 지속 수집은 Health Services ongoing exercise 또는 B로 별도 확인 필요(앞선 LLM 포그라운드 제약과 함께 "화면off 러닝" 시나리오 과제).
 
 ## Sources

@@ -29,7 +29,9 @@ Android + Galaxy Watch 기반 Zone 2 운동 코칭 앱.
 | Spec   | `spec/spec-{nnn}-{title}.md`     | 기능 명세 |
 | ADR    | `arch/adr-{nnn}-{title}.md`      | 아키텍처 결정 기록 |
 | Report | `report/report-{nnn}-{title}.md` | 발표·보고용 문서 |
+| Archive | `spec/archive/`, `arch/archive/` | 탈락/대체 문서(역사 기록, 각 README에 탈락 사유표) |
 
+- Superseded/Rejected/Obsolete 문서는 archive 폴더로 이동하고 README 표를 갱신한다. `spec/`, `arch/` 최상위 = 현재 적용 중인 문서만
 - 번호는 3자리 (`001`, `002`, …)
 - 제목은 구체적으로 (❌ "데이터 설계" → ✅ "심박수 로컬 캐시 전략")
 - ADR은 반드시 2~3개 대안 비교 포함

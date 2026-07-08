@@ -47,5 +47,5 @@ Galaxy Watch8에서 HRV(심박변이도)의 원신호인 RR간격(= IBI, Inter-B
 ## 관련 문서
 
 - ADR: `arch/adr-016`(AI 방법 선택 — 문제별 도구, 본 결정과 동일 철학), `arch/adr-004`(Bayesian 개인화 — LT1 추정의 현행 경로), `arch/adr-012`(콜드스타트 prior)
-- Spec: `spec/spec-014`(심박 동역학 NN), `spec/spec-004`(개인화)
+- Spec: `spec/archive/spec-014`(심박 동역학 NN — adr-020 생리 ODE로 대체), `spec/spec-004`(개인화)
 - 참고: Samsung Health Sensor SDK(IBI 1Hz, Partner Program), Android Health Services(RMSSD), zone2-physiology-and-estimation.md(참값 부재/토크테스트=라벨)

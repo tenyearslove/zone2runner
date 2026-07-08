@@ -2,7 +2,7 @@
 
 - **상태**: Draft (voice-poc 실험)
 - **날짜**: 2026-07-05
-- **관련**: `arch/adr-018`(객관 음성 측정 재개), `spec/spec-016`(주관 5단계, 현 배포), `arch/adr-016`(도구 선택)
+- **관련**: `arch/archive/adr-018-ondevice-speech-talk-test.md`(객관 음성 측정 재개), `spec/spec-016`(주관 5단계, 현 배포), `arch/adr-016`(도구 선택)
 - **위치**: `voice-poc/phone`
 
 ## 배경 — 왜 이 프로토콜인가

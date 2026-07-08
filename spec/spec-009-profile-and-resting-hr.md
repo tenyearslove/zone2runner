@@ -2,7 +2,7 @@
 
 - **상태**: Draft
 - **날짜**: 2026-07-02
-- **관련 요구**: spec-001 FR1, C02, adr-003(baseline/RHR 사다리), spec-004(개인화 prior)
+- **관련 요구**: spec-001 FR1, C02, `arch/archive/adr-003-zone2-classification-approach.md`(baseline/RHR 사다리), spec-004(개인화 prior)
 
 ## 목표
 

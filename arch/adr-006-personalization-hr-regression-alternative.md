@@ -56,8 +56,8 @@ DP4(adr-005)는 Zone2를 직접 3분류하는 MLP를, DP3(adr-004)는 개인 경
 ---
 
 ## 관련 문서
-- ADR: `arch/adr-004` (DP3 Bayesian), `arch/adr-005` (DP4 분류기)
-- Spec: `spec/spec-004` (개인화), `spec/spec-006` (분류 NN)
+- ADR: `arch/adr-004` (DP3 Bayesian), `arch/archive/adr-005` (DP4 분류기 — adr-013로 Superseded)
+- Spec: `spec/spec-004` (개인화), `spec/archive/spec-006` (분류 NN — Superseded)
 - 실증: `ml/hr_regressor.py`, `ml/COMPARISON.md`
 
 ## Sources

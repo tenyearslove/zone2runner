@@ -1,6 +1,8 @@
 # ADR-019: 심박 예측의 온라인 개인 보정 (실주행 오차로 학습)
 
-- **상태**: Accepted
+> **대체됨(2026-07-08 정리)**: 보정 대상이던 심박 예측 NN이 adr-020(생리 ODE)으로 폐기됨. 이 ADR의 핵심 원리(실주행 오차 기반 온라인 점추정)는 adr-020의 ODE 파라미터(τ/드리프트/수요) 온라인 추정으로 승계되어 살아있고, 이 문서 자체는 NN 보정 시점의 역사 기록이다.
+
+- **상태**: Superseded by adr-020 — 원 상태: Accepted
 - **날짜**: 2026-07-05
 - **관련**: `spec/spec-018-online-prediction-correction.md`, `arch/adr-016`(도구 선택), `arch/adr-004`(Bayesian 개인화), `spec/spec-014`(심박 예측 NN)
 

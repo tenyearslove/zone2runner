@@ -56,7 +56,7 @@ adb install -r phone/build/outputs/apk/debug/phone-debug.apk
 - [ ] 실시간 HR이 워치에서 실제로 나오는가 (Health Services ExerciseClient)
 - [ ] HR이 Data Layer로 폰까지 오는가 (기존 페어링 활용)
 - [ ] 폰에서 위치/고도/경사를 얻는가
-- [ ] 전송 지연이 체감상 수 초 이내인가 (QA4 기여)
+- [ ] 전송 지연이 체감상 수 초 이내인가 (QA6 수행효율성 기여)
 - [ ] **워치 백그라운드/화면off에서 HR 전송이 지속되는가 (adr-009)**
 - [ ] **폰 앱이 백그라운드/종료 상태여도 수신되는가 (WearableListenerService, adr-009)**
 

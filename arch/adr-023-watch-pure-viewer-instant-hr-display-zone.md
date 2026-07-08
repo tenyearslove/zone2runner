@@ -62,6 +62,6 @@ adr-022 적용 후에도 실주행에서 폰(오렌지)/워치(레드) 존 색�
 
 ## 관련 문서
 
-- ADR: `arch/adr-022-watch-zone-mirror-from-phone.md` (본 ADR로 대체)
+- ADR: `arch/archive/adr-022-watch-zone-mirror-from-phone.md` (본 ADR로 대체)
 - ADR: `arch/adr-013-zone2-judgment-role-separation.md` (역할 분리 원칙 연장)
 - Spec: `spec/spec-010-watch-dashboard.md` (갱신 필요)

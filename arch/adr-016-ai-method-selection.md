@@ -62,8 +62,8 @@ Bayesian이 전담하는 것이 옳다(토크테스트가 최선의 라벨이며
 ## 관련 문서
 
 - ADR: `arch/adr-004`(Bayesian 개인화, DP2 근거), `arch/adr-013`(판정=규칙, DP3 근거),
-  `arch/adr-014`(역치 NN — 본 ADR로 개인화 경로 강등), `arch/adr-002`(LLM 코칭)
-- Spec: `spec/spec-014`(심박 동역학 NN=DP1), `spec/spec-004`(개인화), `spec/spec-015`(역치 NN — 강등)
+  `arch/archive/adr-014`(역치 NN — 본 ADR로 개인화 경로 강등), `arch/adr-002`(LLM 코칭)
+- Spec: `spec/archive/spec-014`(심박 동역학 NN=당시 DP1 — 이후 adr-020 생리 ODE로 대체), `spec/spec-004`(개인화), `spec/archive/spec-015`(역치 NN — 강등)
 - 참고: `ml/AI_EXPLAINED.md`(쉬운 설명 — "적은 데이터엔 Bayesian, 큰 패턴엔 NN"),
   `arch/zone2-physiology-and-estimation.md`(참값 부재/토크테스트=라벨)
 - 문헌: Zhu et al. 2025(RNN 심박/역치); athlete_hr_predict(LSTM 심박 예측, MIT)

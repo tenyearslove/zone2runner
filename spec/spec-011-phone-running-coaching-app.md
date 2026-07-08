@@ -2,7 +2,7 @@
 
 - **상태**: Draft
 - **날짜**: 2026-07-03
-- **관련 요구**: spec-001 FR1(프로필/RHR)/FR2(실시간 표시)/FR3(존 판정)/FR4(코칭)/FR5(지도)/FR6(세션 기록), adr-001(Phone=AI), adr-002(LLM 코칭), adr-003/004(개인화), adr-013(규칙 판정)/spec-014(심박예측 NN), adr-007(온디바이스 LLM), adr-010(지도), adr-011(순수 Kotlin 추론)
+- **관련 요구**: spec-001 FR1(프로필/RHR)/FR2(실시간 표시)/FR3(존 판정)/FR4(코칭)/FR5(지도)/FR6(세션 기록), adr-001(Phone=AI), adr-002(LLM 코칭), adr-004(개인화, 구 adr-003은 arch/archive), adr-013(규칙 판정)/`spec/archive/spec-014-hr-dynamics-model.md`(심박예측 NN — 폐기, 현행 예측은 adr-020 생리 ODE), adr-007(온디바이스 LLM), adr-010(지도), `arch/archive/adr-011-ondevice-mlp-inference-runtime.md`(순수 Kotlin 추론)
 - **구현 위치**: `app/` (독립 Gradle 모듈, applicationId `com.zone2runner.app`)
 
 ## 목표
@@ -12,9 +12,9 @@
 ## 범위
 
 **포함**
-- 화면 네비게이션: 홈 → 러닝 → 리포트, 홈 ↔ 기록/프로필/가짜라이브 (6개 Activity)
+- 화면 네비게이션: 홈 → 러닝 → 리포트, 홈 ↔ 기록/프로필 (5개 Activity — 구 가짜라이브 화면은 제거, 아래 참고)
 - 실시간 러닝 대시보드: 지도(컴팩트, 경로 추적), HR/존 판정, **Zone 2 밴드 게이지(목표 구간 bpm + 현재 심박 마커 + 이탈량)**, 페이스/거리/시간, **판정 요소 타일(경사/케이던스/드리프트 + 기온 참고)**, 코칭 문구 + 음성(TTS)
-- 입력 소스 3종: 시뮬레이션(물리 시뮬레이터 가속 재생) / 실센서(실 GPS + 워치 HR) / 가짜 라이브(워치 없이 실시간 합성, QA 테스트 가능성)
+- 입력 소스 2종: 시뮬레이션(가상러너 자동/수동 페이스/수동 러너 조종, 가속 재생 — spec-019/022) / 실센서(실 GPS + 워치 HR). 구 가짜 라이브(Mock)는 커밋 7e6d172에서 제거 — 수동 가상러너 시뮬(spec-022)이 상위호환(QA5 테스트가능성)
 - 온디바이스 파이프라인: 이상치 가드 → 규칙 판정(경계 비교) + 특징추출 → 심박예측 NN(선제코칭/페이스제안) → Bayesian 개인화 → 코칭
 - 코칭: 규칙이 방향 결정 + LLM(Gemini Nano) 표현, 실패 시 규칙 폴백 (adr-002)
 - 리포트: 요약 지표, 존 체류 분포, HR/페이스 시계열 차트, 존 타임라인, 유산소 분석(심혈관 드리프트), 개인화 결과, 존 색 경로 지도, 코칭 로그
@@ -37,7 +37,8 @@
 | ReportActivity | 세션 리포트 | 요약 + 존 분포 + 시계열 차트 + 유산소 분석 + 개인화 + 경로 지도 + 코칭 로그 |
 | HistoryActivity | 기록 | 저장 세션 목록(탭 상세, 롱프레스 삭제) |
 | ProfileActivity | 프로필 | 나이/안정HR/최대HR(0=Tanaka 자동) 입력, Zone2 목표 미리보기 |
-| MockConfigActivity | 가짜 라이브 설정 | 심박/속도 범위 + 프리셋, 워치 없이 실시간 합성 러닝 시작(QA/시연) |
+
+- 구 MockConfigActivity(가짜 라이브 설정)는 커밋 7e6d172에서 제거 — 수동 가상러너 시뮬(spec-022)이 상위호환. 홈 진입점은 시뮬레이션/실센서 둘.
 
 ### AI 파이프라인 (RunEngine, 1Hz)
 ```
@@ -46,7 +47,7 @@ Sample → OutlierGuard(40~220 가드) → FeatureExtractor(7특징)
       → Coach(규칙 방향 + LLM 표현) → 세션 누적(지표/경로/시계열/코칭)
 ```
 - 판정: 규칙(ZoneJudge) — 지속 심박 vs 개인 경계 + 히스테리시스. 결정론(adr-013).
-- 심박 예측 NN(spec-014): 7특징 → 30/60초 뒤 심박 회귀, `assets/hr_dynamics.json` 순수 Kotlin 순전파(adr-011). 선제 코칭/페이스 제안.
+- 심박 예측 NN(spec/archive/spec-014, adr은 arch/archive/adr-011): 7특징 → 30/60초 뒤 심박 회귀, `assets/hr_dynamics.json` 순수 Kotlin 순전파. 선제 코칭/페이스 제안. (구 설계 — 현행 예측은 생리 ODE, adr-020)
 - 개인화: 공식(%HRmax 70%) 사전 + 토크테스트(주)/디커플링(약보조) 관측으로 켤레 가우시안 갱신(adr-004)
 - 콜드스타트: 공식 prior에서 시작(규칙 판정은 항상 동작)
 - (LEGACY) 구 MLP 판정기 Zone2Classifier/zone2_mlp.json은 결함 재현 테스트로만 보존(adr-013 Superseded)
@@ -62,7 +63,7 @@ Sample → OutlierGuard(40~220 가드) → FeatureExtractor(7특징)
 - `SimulatedRunSource`: 물리 시뮬레이터 세션을 가속 재생(≈70배). 실기기 없이 전 파이프라인 구동.
 - `LiveRunSource`: FusedLocation 실 GPS(속도→페이스, 고도→경사, 페이스→케이던스 추정) + `HrProvider`.
   - `WatchHrProvider`: 워치가 Data Layer(`/hr`)로 보낸 HR 수신(sensor-poc 프로토콜, 워치 HrForwarder와 짝).
-- `MockRunSource`: 워치/실기기 없이 실시간(1Hz) 합성 데이터 주입(QA 테스트 가능성 + 개발/시연). 심박/속도 "범위"를 지정(MockConfigActivity, 프리셋 제공)하면 GPS가 그 속도로 실제 이동하고 페이스가 계산된다. 시뮬 재생과 달리 실시간이며 좌표가 지도에서 움직인다.
+- `ManualVirtualRunnerSource`(수동 가상러너 시뮬, spec-022): 워치/실기기 없이 케이던스/보폭 슬라이더로 조종, 심박은 생리 모델(adr-020 계열)이 자동 계산(QA5 테스트가능성 + 개발/시연). `ManualRunSource`(수동 페이스)와 함께 시뮬 입력 3모드를 구성. 구 `MockRunSource`(가짜 라이브)는 커밋 7e6d172에서 제거 — 수동 러너 시뮬이 상위호환.
 
 ### 코칭 (adr-002)
 - 방향(의도)은 규칙이 결정: 미달→SPEED_UP, 유지→MAINTAIN, 초과→SLOW_DOWN.
@@ -86,7 +87,7 @@ Sample → OutlierGuard(40~220 가드) → FeatureExtractor(7특징)
 - [ ] AC-5: 프로필(나이/안정HR/최대HR)을 저장하면 홈의 Zone 2 목표 심박과 판정 기준에 반영된다.
 - [x] AC-6: 판정은 규칙(ZoneJudge). 심박예측 NN 로드 시 선제코칭/페이스제안, 미로드 시 규칙 판정만(둘 다 크래시 없음).
 - [ ] AC-7: 실센서 모드 진입 시 위치 권한을 요청하고, 워치 HR 미수신 시에도 앱이 안정적으로 동작한다.
-- [ ] AC-9 (일부 검증): 가짜 라이브 모드에서 지정한 심박/속도 범위 내로 값이 들어오고, 지도에서 위치가 이동하며 페이스가 계산된다(범위 준수/이동은 단위 테스트로 검증, 실기기 지도 이동은 후속).
+- AC-9 (대체됨 2026-07-08): 가짜 라이브 모드는 제거(커밋 7e6d172) — 워치 없는 실시간 검증은 수동 가상러너 시뮬(spec-022)의 AC가 승계.
 - [x] AC-8 (검증됨): 순수 Kotlin 순전파가 export된 심박예측 NN을 로드해 학습 모델과 일치(허용오차 1e-4). ZoneJudge 규칙 판정 모순 불가(속성 테스트). 전체 단위 테스트 66건 통과.
 
 ## 미해결 사항 (실기기 튜닝/후속)

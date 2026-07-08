@@ -2,7 +2,7 @@
 
 - **상태**: Draft
 - **날짜**: 2026-07-06
-- **관련 요구**: spec-001 FR1/FR5, spec-009(프로필), spec-013(factor prior), adr-004/016(개인화), spec-018(예측 보정)
+- **관련 요구**: spec-001 FR1/FR5, spec-009(프로필), spec-013(factor prior), adr-004/016(개인화), `spec/archive/spec-018-online-prediction-correction.md`(예측 보정 — 폐기, adr-020으로 승계)
 - **구현 위치**: `app/` data/(Profiles/ProfileStore/LearnedZone/LearnedDynamics), domain/PersonalizationStatus, ui/PersonalizationView, ProfileActivity
 
 ## 배경과 목적
@@ -23,7 +23,7 @@
 - 최소 1개 프로필은 항상 존재(마지막 프로필은 삭제 불가, 초기화만).
 
 ### FR2. 신체 정보 (기존 spec-009/013 유지)
-- 나이/안정심박(0=자동)/최대심박(0=자동)/키/몸무게 + 체형·러닝수준·주간빈도 5단계. 활성 프로필에 저장.
+- 나이/안정심박(0=자동)/최대심박(0=자동)/키/몸무게 + 체형/러닝수준/주간빈도 5단계. 활성 프로필에 저장.
 
 ### FR3. 개인화 진행 시각화 (핵심)
 활성 프로필의 학습 상태를 한 카드에 시각적으로 보여준다:

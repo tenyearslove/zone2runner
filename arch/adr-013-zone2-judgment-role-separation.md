@@ -17,7 +17,7 @@
    비교하지 않고 별도 학습된 분류기(adr-005)가 낸다. 화면의 밴드와 판정 칩이 서로 모순될 수 있는
    구조 자체가 결함이다.
 2. **라벨과 지표의 자기참조**: 판정 MLP의 라벨을 시뮬레이터가 생성했고, 성능 지표(acc 0.826,
-   QA1 0.996)도 같은 시뮬레이터 라벨로 채점했다. "판정이 정확히 무엇에 대한 분류인가"(현재 지속
+   방향일치 0.996 — 구 QA1 지표, 현 체계에선 QA4 제어가능성 계열)도 같은 시뮬레이터 라벨로 채점했다. "판정이 정확히 무엇에 대한 분류인가"(현재 지속
    상태인가, 곧 도달할 상태인가)를 spec에서 정의하지 않은 채 구현으로 넘어갔다.
 
 재점검을 위해 파이프라인 전 구간(센싱/판정/경계/코칭/분석)에서 NN 후보를 전수 조사했다.
@@ -108,13 +108,13 @@ NN의 용도(하나의 모델, 네 얼굴):
   RMSE) -> export -> 앱 통합(규칙 판정+히스테리시스, 페이스 제안, 선제 코칭) -> 문서 환류
 - 개인화 관측 채널(용도 3)과 드롭아웃 브리지(용도 4)는 후속 단계로 유보 — 유보 자체가 설계 판단
 - 판정 지표의 재정의: "판정 정확도"(시뮬 라벨 채점)는 폐기. 새 지표 = 예측 RMSE(baseline 대비)
-  + 존 체류 시간(시뮬/필드), QA1(코칭 방향)은 규칙 판정 기준으로 재측정
+  + 존 체류 시간(시뮬/필드), 코칭 방향(구 QA1 — 현 체계에선 QA4 제어가능성 소관)은 규칙 판정 기준으로 재측정
 
 ## 관련 문서
 
-- ADR: `arch/adr-003-zone2-classification-approach.md` (하이브리드 원칙 - 본 ADR이 그 원칙을 판정 층에 관철)
-- ADR: `arch/adr-005-zone2-classifier-nn.md` (판정 NN - 본 ADR로 Superseded)
+- ADR: `arch/archive/adr-003-zone2-classification-approach.md` (하이브리드 원칙 - 본 ADR이 그 원칙을 판정 층에 관철)
+- ADR: `arch/archive/adr-005-zone2-classifier-nn.md` (판정 NN - 본 ADR로 Superseded)
 - ADR: `arch/adr-004-personalization-model-approach.md`, `arch/adr-012-cold-start-prior-from-profile-factors.md` (경계 추정 - 유지)
-- Spec: `spec/spec-006-zone2-mlp-classifier.md` (Superseded), `spec/spec-004-personalized-zone2-boundary.md` (유지),
-  `spec/spec-014-hr-dynamics-model.md` (신규 - 본 결정의 명세)
+- Spec: `spec/archive/spec-006-zone2-classifier-nn.md` (Superseded), `spec/spec-004-zone2-personalization.md` (유지),
+  `spec/archive/spec-014-hr-dynamics-model.md` (본 결정의 예측 명세였으나 adr-020 생리 ODE로 대체)
 - 참고: `arch/zone2-physiology-and-estimation.md` (참값 부재 C04, 심박 지연 근거)

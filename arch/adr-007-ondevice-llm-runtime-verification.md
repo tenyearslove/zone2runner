@@ -9,7 +9,7 @@
 
 ## 맥락
 
-DP2(adr-002)는 코칭 문장 생성을 On-device LLM으로 하되 "구체 런타임은 구현 시 확정"으로 유보했다. 그러나 **S26 Ultra에서 온디바이스 LLM이 실제로 되는지 미검증**이다. QA4(5초 이내)와 러닝 중 네트워크 불안정/프라이버시 때문에 온디바이스가 선호되지만, 안 되면 자체 탑재나 서버로 가야 한다. 진행 전에 실현 방식을 정하고 검증한다.
+DP2(adr-002)는 코칭 문장 생성을 On-device LLM으로 하되 "구체 런타임은 구현 시 확정"으로 유보했다. 그러나 **S26 Ultra에서 온디바이스 LLM이 실제로 되는지 미검증**이다. QA6 수행효율성(5초 이내)과 러닝 중 네트워크 불안정/프라이버시 때문에 온디바이스가 선호되지만, 안 되면 자체 탑재나 서버로 가야 한다. 진행 전에 실현 방식을 정하고 검증한다.
 
 ## 리서치 요약 (2026 중반)
 
@@ -27,7 +27,7 @@ DP2(adr-002)는 코칭 문장 생성을 On-device LLM으로 하되 "구체 런�
 | 오프라인 | O | O | X |
 | 프라이버시 | O (온디바이스) | O | X (데이터 전송) |
 | 앱 크기 | 작음 (OS 공유 모델) | 큼 (모델 번들 수백MB~) | 작음 |
-| 지연(QA4) | 낮음(하드웨어 가속) | 중(기기 의존) | 네트워크 의존 |
+| 지연(QA6 수행효율성) | 낮음(하드웨어 가속) | 중(기기 의존) | 네트워크 의존 |
 | 개발 부담 | 낮음(고수준 API) | 중~높음(런타임/모델 관리) | 낮음 |
 | 리스크 | availability 게이팅 | 성능/발열/배터리 | 오프라인 미충족 |
 
@@ -41,12 +41,12 @@ DP2(adr-002)는 코칭 문장 생성을 On-device LLM으로 하되 "구체 런�
 
 ## 실기기 검증 계획 (S26 Ultra)
 
-**목표**: A가 실제로 되는지, QA4 예산에 맞는지 확인.
+**목표**: A가 실제로 되는지, QA6 수행효율성 예산에 맞는지 확인.
 
 1. **가용성 확인**: 최소 앱에서 ML Kit GenAI Prompt API의 feature 상태 조회(AVAILABLE / DOWNLOADABLE / UNAVAILABLE). 필요 시 experimental access 등록 여부 확인. (기기 지역/칩셋 Snapdragon vs Exynos, OS 버전 주의)
 2. **동작 확인**: 코칭형 프롬프트 1개 실행 → 출력 텍스트 확인 (예: "심박 초과, 오르막, 더운 날씨 → 페이스 낮추라는 한 문장").
 3. **측정**:
-   - 지연: 콜드(첫 호출) vs 웜(이후) 각각. TTS 포함 end-to-end 5초 예산과 대조 (QA4).
+   - 지연: 콜드(첫 호출) vs 웜(이후) 각각. TTS 포함 end-to-end 5초 예산과 대조 (QA6 수행효율성).
    - 오프라인: 비행기 모드에서 동작 여부.
    - 모델 준비: 최초 다운로드 크기/시간.
    - 출력 품질: 방향(가속/감속) 일관성 (규칙 가드로 보정 가능하나 기저 품질 확인).
@@ -71,7 +71,7 @@ llm-verify 앱(ML Kit Prompt API `com.google.mlkit:genai-prompt:1.0.0-beta2`)으
 - **Exynos S26에서도 Gemini Nano 동작 확인** → 지원 목록(Snapdragon/Tensor/Dimensity)에 명시 안 된 Exynos도 됨.
 - **모델 크기 ~4GB** (측정: 4023.8MB). 최초 1회 다운로드, 진행률(%) 표시됨. 저장공간/데이터 UX에 반영 필요.
 - 앱을 나가면 백그라운드 다운로드로 전환되어 진행률 추적 끊김 → **다운로드 UX는 포그라운드 관찰 권장**(spec-005 반영).
-- 세션 시작 시 warmup 후 반복 호출은 warm(~2초)로 동작 → QA4 5초 예산 내(LLM 2초 + TTS 여유 3초).
+- 세션 시작 시 warmup 후 반복 호출은 warm(~2초)로 동작 → QA6 수행효율성 5초 예산 내(LLM 2초 + TTS 여유 3초).
 
 ### ⚠️ 리스크: 포그라운드 전용 (ErrorCode 30)
 - Gemini Nano 생성/warmup은 **앱이 포그라운드일 때만** 허용됨(`GenAiException ErrorCode 30: Background usage is blocked`). 백그라운드에서 호출 시 차단.
@@ -81,7 +81,7 @@ llm-verify 앱(ML Kit Prompt API `com.google.mlkit:genai-prompt:1.0.0-beta2`)으
 
 - spec-005(LLM 코칭)의 "LLM 런타임"이 본 검증으로 확정된다.
 - 최초 실행 모델 다운로드 진행 화면 + 다운로드 중 규칙/템플릿 코칭 graceful degradation 필요(spec-005 §모델 준비).
-- PoC 단계에서는 LLM 호출을 인터페이스(`CoachingTextGenerator`)로 추상화해, A/B/C를 교체 가능하게 둔다(Mock 포함). → QA5 및 리스크 격리.
+- PoC 단계에서는 LLM 호출을 인터페이스(`CoachingTextGenerator`)로 추상화해, A/B/C를 교체 가능하게 둔다(Mock 포함). → QA5 테스트가능성 및 리스크 격리.
 - 검증은 최소 테스트 앱(Kotlin, ML Kit GenAI Prompt API)으로 수행. 코드는 별도 작성.
 
 ## Sources
