@@ -127,6 +127,11 @@ class RunActivity : AppCompatActivity() {
             if (status == TextToSpeech.SUCCESS) {
                 tts?.language = java.util.Locale.KOREAN
                 tts?.setSpeechRate(settings.ttsRate)
+                tts?.setPitch(settings.ttsPitch) // spec-024 FR2
+                // spec-024 FR1: 선택 보이스 적용. 소실(TTS 앱 업데이트 등)/열거 실패 시 조용히 기기 기본 유지
+                settings.voiceName?.let { name ->
+                    runCatching { tts?.voices?.firstOrNull { it.name == name }?.let { v -> tts?.voice = v } }
+                }
                 ttsReady = true
             }
         }
@@ -500,7 +505,7 @@ class RunActivity : AppCompatActivity() {
 
         val profile = ProfileStore.load(this).also { this.profile = it }
         tempFetched = false
-        val c = LlmCoach(this) // 미가용 기기에선 내부적으로 RuleCoach 폴백
+        val c = LlmCoach(this, personaKey = settings.personaKey) // 미가용 기기에선 내부적으로 RuleCoach 폴백. 말투=spec-024
         coach = c
         lifecycleScope.launch { c.prewarm() } // checkStatus+warmup을 첫 코칭 전에 미리
         // coachScope 전달 → 코칭 생성(LLM ~2초)이 샘플 루프/렌더를 멈추지 않음

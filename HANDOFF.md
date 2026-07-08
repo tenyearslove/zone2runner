@@ -4,10 +4,17 @@
 
 > **새 세션에서 이어가는 법**: Claude에게 "HANDOFF.md 읽고 이어가자"라고 하면 된다.
 
-최종 갱신: 2026-07-08 세션 G (설명 서비스 spec-023 FR1~FR6 + 브랜드명 Zone2Runner 통일 + **6대 QA 강의 상세로 확정**)
+최종 갱신: 2026-07-08 세션 H (문서 총정합화 + 탈락 문서 archive 분리 + 음성 설정 spec-024 구현/설치)
+
+> **★★★★★ 2026-07-08 세션 H — 문서 총정합화(신 QA 체계) + archive 분리 + 음성 설정(spec-024) [여기서 이어가기]**
+> - **★ 탈락/대체 문서 archive 분리(사용자 지시 "현재 적용 vs 탈락 구분")**: `spec/archive/`(spec-006 판정MLP, 014 심박NN, 015 역치NN, 018 NN보정) + `arch/archive/`(adr-003 구판정, 005 판정MLP, 011 MLP런타임(Obsolete — 앱 내 NN 전소멸), 014 역치NN, 018 음성기각, 019 NN보정(원리는 adr-020 승계), 022 워치미러(adr-023 대체)). 각 폴더 README에 탈락 사유표. 활성 문서의 참조는 archive 경로로 수정. CLAUDE.md에 archive 규칙 추가. **adr-008 상태 Proposed→Accepted 현행화.**
+> - **★ 문서 총정합화(신 6대 QA)**: 구 체계(QA1 기능정확성/QA2 강건성/QA3 적응성/QA4 효율성/QA5 테스트/QA6 설명) → 신 체계(QA1 설명용이성/QA2 기능적응성/QA3 강건성/QA4 제어가능성/QA5 테스트가능성/QA6 수행효율성)로 백서/STUDY_GUIDE/FIELD_TEST/architecture-overview(모듈 목록 현행화 포함)/활성 ADR 전부/활성 spec 전부/report-002~006/각 README 정리. 역사 수치는 보존+"(구 지표 — 현 QA-n 계열)" 주석. report-002/003의 FR/제약도 현행 spec-001(FR1~6, C01~04)로 교체. **HANDOFF 구 요약의 "신뢰성 선정" 오기 정정(최종 = 수행효율성 IN, 신뢰성 OUT)**.
+> - **★ 음성 코칭 설정(spec-024, Implemented)**: 설정 화면에 (1) 목소리 = 기기 한국어 오프라인 TTS 보이스 열거 + 탭 미리듣기 + 선택(AppSettings.voiceName, 소실 시 기기 기본 폴백), (2) 음 높낮이 3단계(setPitch), (3) **코칭 말투 4종**(친절한 코치/스파르타 교관/다정한 친구/차분한 안내) = coach_prompt.json `persona` 맵 + CoachPrompt.render(ctx, personaKey) — **direction/must 방향 잠금은 페르소나 무관 불변**, DirectionGuard 그대로. 규칙 폴백(RuleCoach)은 중립 톤 유지(미해결 사항으로 기록). 단위 테스트 +4건(페르소나 문체 주입/기본 하위호환/방향 잠금 유지/미지 키 폴백) 전건 통과. **폰 설치 완료.** 실기기 AC-1/2(보이스/피치 실청취)는 다음 사용에서 확인.
+> - **잔여**: STUDY_GUIDE §4와 spec-011 본문의 "심박 예측=NN" 서술이 내용상 구식(현행 ODE) — QA/경로 범위 밖이라 미수정(후속 후보). spec-007의 FR 번호 구식. 워치는 이번 변경 무관(재설치 불필요). 미커밋 파일: scripts/connect-adb.ps1(출처 미상 untracked — 커밋 안 함).
+> - 빌드 메모: gradlew `-Dorg.gradle.java.home` 방식은 이 PC에서 안 먹힘 → **PowerShell `$env:JAVA_HOME="C:\Program Files\Android\Android Studio\jbr"` 설정 후 빌드**.
 
 > **★★★★★ 2026-07-08 세션 G — 6대 QA 확정(척추) + 설명 서비스 완성 [여기서 이어가기]**
-> - **★ 6대 QA 최종 확정(강의 QA별 상세 PDF 9종 반영, report-007)**: 설명용이성/기능적응성/제어가능성/강건성(AI 4) + 테스트가능성/신뢰성(일반 2). 기능정확성/프라이버시/공정성/수행효율성 제외.
+> - **★ 6대 QA 최종 확정(강의 QA별 상세 PDF 9종 반영, report-007)**: QA1 설명용이성/QA2 기능적응성/QA3 강건성/QA4 제어가능성(AI 4) + QA5 테스트가능성/QA6 수행효율성(일반 2). 기능정확성/프라이버시/공정성/**신뢰성** 제외(신뢰성은 비차별적이라 수행효율성으로 교체 — ef8b392에서 최종 확정. 이전 버전 요약에 "신뢰성 선정"으로 적혀 있던 것은 오기였음).
 >   - **근거(강의 앱유형표)**: 우리 앱 = 예측/진단 분석 AI + 의사결정/에이전트 AI → 두 유형 중요 QA 합집합 = 우리 AI 4개와 정확히 일치.
 >   - **강건성**: "얇다" 철회 → 최강 적합. 강의 지표 Flicker Rate(판정 번복률)/Stability Index/Robustness Score가 히스테리시스/OutlierGuard/창회귀와 직결, clean입력 기준 노이즈주입 폐루프로 측정(C04 우회). = 아키텍처 "입력 가드레일".
 >   - **제어↔설명 겹침 해소**: 강의상 "출력 가드레일=제어" → DirectionGuard는 제어가능성 단독 귀속(설명용이성의 충실성은 그 결과).

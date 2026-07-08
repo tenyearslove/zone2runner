@@ -19,6 +19,7 @@ class LlmCoach(
     context: Context,
     private val fallback: RuleCoach = RuleCoach(),
     private val template: CoachPrompt = CoachPrompt.load(context), // 프롬프트 문구는 assets에서(코드 밖)
+    private val personaKey: String = "default", // 말투(spec-024 FR3) — 문체만, 방향은 규칙 불변
 ) : Coach {
     override val name = "llm"
 
@@ -99,7 +100,7 @@ class LlmCoach(
 
     /** 프롬프트 생성 = 외부 템플릿(assets/coach_prompt.json) 위임(adr-002). 방향은 규칙이 정하고
      *  템플릿은 문구 껍데기만 채운다 — CoachPrompt.render 참조. 문구 편집은 코드가 아니라 에셋에서. */
-    private fun buildPrompt(ctx: CoachContext): String = template.render(ctx)
+    private fun buildPrompt(ctx: CoachContext): String = template.render(ctx, personaKey)
 
     /** 출력 가드(adr-002): 이모지 제거(TTS가 읽음)/공백 정리/따옴표 제거/최대 2문장/길이 제한. 비면 null(폴백). */
     private fun guard(raw: String?): String? {

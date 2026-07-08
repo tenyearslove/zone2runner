@@ -14,8 +14,11 @@ import org.json.JSONObject
  */
 class CoachPrompt private constructor(private val t: JSONObject) {
 
-    /** 규칙이 정한 방향/의도 + 상황을 채워 최종 프롬프트 문자열 생성. */
-    fun render(ctx: CoachContext): String {
+    /**
+     * 규칙이 정한 방향/의도 + 상황을 채워 최종 프롬프트 문자열 생성.
+     * personaKey(spec-024 FR3): 말투 문체 절만 추가 — direction/must(방향 잠금)는 페르소나와 무관하게 항상 포함.
+     */
+    fun render(ctx: CoachContext, personaKey: String = "default"): String {
         val intent = intentOf(ctx.judgment)
         val terrain = t.g("terrain").optString(
             when { ctx.slopePct > 2 -> "uphill"; ctx.slopePct < -2 -> "downhill"; else -> "flat" }
@@ -37,15 +40,21 @@ class CoachPrompt private constructor(private val t: JSONObject) {
         val heat = if (ctx.heat == HeatBand.HOT)
             t.optString("heat_hot").replace("{temp}", ctx.tempC?.toInt()?.toString() ?: "") else ""
         val context = buildContext(ctx)
-        return t.optString("base")
+        // 말투 절: 템플릿에 persona 맵/키가 없으면 빈 문자열(기본 말투) — 에셋 하위 호환
+        val persona = t.g("persona").optString(personaKey)
+        val base = t.optString("base")
+        val filled = base
             .replace("{terrain}", terrain)
             .replace("{context}", context)
             .replace("{direction}", t.g("direction").optString(dirKey))
             .replace("{must}", t.g("must").optString(mustKey))
             .replace("{cadence}", cadence)
             .replace("{heat}", heat)
+            .replace("{persona}", persona)
             .replace("{limits}", t.optString("limits"))
-            .replace(Regex("\\s+"), " ").trim()
+        // 구버전 에셋(base에 {persona} 없음)에서도 말투가 동작하도록 끝에 덧붙임
+        val withPersona = if (persona.isNotBlank() && !base.contains("{persona}")) "$filled $persona" else filled
+        return withPersona.replace(Regex("\\s+"), " ").trim()
     }
 
     /** 현재 심박/목표 범위/예측이 유효할 때만 {context} 줄을 채운다(없으면 빈 문자열 → 기존 동작). */
@@ -95,6 +104,12 @@ class CoachPrompt private constructor(private val t: JSONObject) {
           "cadence": {
             "low":" 케이던스가 {spm}spm으로 낮아 보폭이 큰 편입니다. 발걸음을 잘게 자주 디디라는 조언을 짧게 덧붙이세요.",
             "high":" 케이던스가 {spm}spm으로 지나치게 높습니다. 발걸음 빈도를 살짝 낮추라는 조언을 짧게 덧붙이세요."
+          },
+          "persona": {
+            "default":"",
+            "spartan":"말투는 군대 교관처럼 짧고 단호한 명령형으로 하세요.",
+            "friend":"말투는 친한 친구처럼 편한 반말로 다정하게 하세요.",
+            "calm":"말투는 아나운서처럼 차분하고 담백한 존댓말로 하세요."
           }
         }"""
     }

@@ -69,4 +69,36 @@ class CoachPromptTest {
         val ok = p.render(CoachContext(ZoneJudgment.IN, 0.0, 6.0, 300, spm = 175))
         assertFalse("정상 케이던스면 폼 조언 없음", ok.contains("발걸음"))
     }
+
+    // ---- 말투(페르소나, spec-024 FR3) ----
+
+    @Test fun persona_styleClauseInjected_perKey() {
+        val ctx = CoachContext(ZoneJudgment.ABOVE, 0.0, 6.0, 300)
+        assertTrue(p.render(ctx, "spartan").contains("교관"))
+        assertTrue(p.render(ctx, "friend").contains("반말"))
+        assertTrue(p.render(ctx, "calm").contains("아나운서"))
+    }
+
+    @Test fun persona_default_matchesLegacyPrompt() {
+        val ctx = CoachContext(ZoneJudgment.ABOVE, 0.0, 6.0, 300)
+        // 기본 말투는 페르소나 인자 없던 기존 렌더와 동일해야(하위 호환)
+        org.junit.Assert.assertEquals(p.render(ctx), p.render(ctx, "default"))
+        assertFalse(p.render(ctx, "default").contains("말투는"))
+    }
+
+    @Test fun persona_directionLockRemains_forEveryPersona() {
+        // 방향 잠금(must 절)은 말투와 무관하게 항상 포함 — DirectionGuard 전제(spec-024 AC-3)
+        for (key in listOf("default", "spartan", "friend", "calm")) {
+            val slow = p.render(CoachContext(ZoneJudgment.ABOVE, 0.0, 6.0, 300), key)
+            assertTrue("[$key] 낮추는 방향 지시", slow.contains("낮춰"))
+            assertTrue("[$key] 방향어 강제(must)", slow.contains("반드시 포함"))
+            val up = p.render(CoachContext(ZoneJudgment.BELOW, 0.0, 6.0, 300), key)
+            assertTrue("[$key] 올리는 방향 지시", up.contains("올려") || up.contains("높여"))
+        }
+    }
+
+    @Test fun persona_unknownKey_fallsBackToDefaultTone() {
+        val ctx = CoachContext(ZoneJudgment.IN, 0.0, 6.0, 300)
+        org.junit.Assert.assertEquals(p.render(ctx), p.render(ctx, "no_such_persona"))
+    }
 }
