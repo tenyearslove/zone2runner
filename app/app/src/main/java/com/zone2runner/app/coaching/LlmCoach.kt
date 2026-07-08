@@ -17,9 +17,9 @@ import kotlinx.coroutines.withTimeout
  */
 class LlmCoach(
     context: Context,
-    private val fallback: RuleCoach = RuleCoach(),
-    private val template: CoachPrompt = CoachPrompt.load(context), // 프롬프트 문구는 assets에서(코드 밖)
     private val personaKey: String = "default", // 말투(spec-024 FR3) — 문체만, 방향은 규칙 불변
+    private val fallback: RuleCoach = RuleCoach(personaKey), // 폴백(첫 코칭 warmup 전 포함)도 같은 말투
+    private val template: CoachPrompt = CoachPrompt.load(context), // 프롬프트 문구는 assets에서(코드 밖)
 ) : Coach {
     override val name = "llm"
 

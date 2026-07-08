@@ -96,4 +96,39 @@ class DirectionGuardTest {
         slowDown.forEach { assertTrue("SLOW_DOWN 통과 실패: $it", DirectionGuard.ok(CoachIntent.SLOW_DOWN, it)) }
         maintain.forEach { assertTrue("MAINTAIN 통과 실패: $it", DirectionGuard.ok(CoachIntent.MAINTAIN, it)) }
     }
+
+    // ---- 페르소나별 RuleCoach 문구도 전부 자기 의도에서 통과 (spec-024: 폴백 말투) ----
+
+    @Test fun ruleCoach_allPersonas_allSituations_passDirectionGuard() = kotlinx.coroutines.runBlocking {
+        fun ctx(j: com.zone2runner.app.domain.ZoneJudgment, slope: Double = 0.0, pre: Boolean = false, spm: Int = 0, temp: Double? = null) =
+            com.zone2runner.app.coaching.CoachContext(j, slope, 6.5, 300, spm = spm, preemptive = pre, tempC = temp)
+        val cases = listOf( // (판정, 경사, 선제) 조합으로 모든 문구 분기를 훑는다
+            Triple(com.zone2runner.app.domain.ZoneJudgment.BELOW, 0.0, false),
+            Triple(com.zone2runner.app.domain.ZoneJudgment.BELOW, -3.0, false),
+            Triple(com.zone2runner.app.domain.ZoneJudgment.BELOW, 0.0, true),
+            Triple(com.zone2runner.app.domain.ZoneJudgment.ABOVE, 0.0, false),
+            Triple(com.zone2runner.app.domain.ZoneJudgment.ABOVE, 3.0, false),
+            Triple(com.zone2runner.app.domain.ZoneJudgment.ABOVE, 0.0, true),
+            Triple(com.zone2runner.app.domain.ZoneJudgment.IN, 0.0, false),
+            Triple(com.zone2runner.app.domain.ZoneJudgment.IN, 0.0, true),
+        )
+        for (persona in listOf("default", "spartan", "friend", "calm")) {
+            val coach = com.zone2runner.app.coaching.RuleCoach(persona)
+            repeat(2) { // counter 순환으로 리스트의 두 문구 모두 검사
+                for ((j, slope, pre) in cases) {
+                    val line = coach.say(ctx(j, slope, pre, spm = 150, temp = 31.0)) // 케이던스+더위 팁까지 얹어 검사
+                    assertTrue("[$persona] ${j}/slope=$slope/pre=$pre 방향 위반: $line",
+                        DirectionGuard.ok(com.zone2runner.app.coaching.intentOf(j), line))
+                }
+            }
+        }
+    }
+
+    @Test fun ruleCoach_unknownPersona_fallsBackToDefault() = kotlinx.coroutines.runBlocking {
+        val d = com.zone2runner.app.coaching.RuleCoach("default")
+        val u = com.zone2runner.app.coaching.RuleCoach("no_such")
+        val ctx = com.zone2runner.app.coaching.CoachContext(
+            com.zone2runner.app.domain.ZoneJudgment.IN, 0.0, 6.5, 300)
+        assertEquals(d.say(ctx), u.say(ctx))
+    }
 }

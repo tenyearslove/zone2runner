@@ -93,61 +93,154 @@ object DirectionGuard {
     }
 }
 
-/** 정적 규칙 코치. 의도별 문구를 상황(경사/케이던스)에 맞게 고른다. */
-class RuleCoach : Coach {
+/**
+ * 정적 규칙 코치. 의도별 문구를 상황(경사/케이던스)에 맞게 고른다.
+ * spec-024: 말투(페르소나)별 문구 세트 — LLM 폴백(warmup 전 첫 코칭 등)에서도 말투가 유지되게
+ * (사용자 보고 2026-07-08: 말투 변경이 두 번째 코칭부터 적용됨 — 첫 코칭=규칙 폴백이 중립 톤이던 문제).
+ * 방향어(올려/낮춰 등)는 모든 페르소나에서 고정 — 어미/톤만 다르다.
+ */
+class RuleCoach(personaKey: String = "default") : Coach {
     override val name = "rule"
 
     private var counter = 0
+    private val p = PHRASES[personaKey] ?: PHRASES.getValue("default")
+
+    /** 페르소나별 문구 세트. 방향어는 고정, 어미만 변형. */
+    private class Phrases(
+        val preSlow: String, val preUp: String, val preKeep: String,
+        val upDownhill: String, val up: List<String>,
+        val slowUphill: String, val slow: List<String>,
+        val keep: List<String>,
+        val cadenceLow: String, val cadenceHigh: String, val heat: String,
+    )
 
     override suspend fun say(ctx: CoachContext): String {
         val uphill = ctx.slopePct > 2
         val downhill = ctx.slopePct < -2
-        // 선제 코칭(spec-014 FR4): 아직 존 안 — "곧 이탈" 예측을 미리 알려 존 체류 시간을 지킨다
+        // 선제 코칭(FR3 선제, 구 spec-014 FR4): 아직 존 안 — "곧 이탈" 예측을 미리 알려 존 체류 시간을 지킨다
         if (ctx.preemptive) {
             val line = when (intentOf(ctx.judgment)) {
-                CoachIntent.SLOW_DOWN -> "이대로면 심박이 곧 Zone 2를 넘겠어요. 미리 살짝 늦춰요."
-                CoachIntent.SPEED_UP -> "심박이 곧 Zone 2 아래로 내려가겠어요. 페이스를 조금 올려요."
-                CoachIntent.MAINTAIN -> "좋아요, Zone 2 유지 중이에요. 이 리듬 그대로."
+                CoachIntent.SLOW_DOWN -> p.preSlow
+                CoachIntent.SPEED_UP -> p.preUp
+                CoachIntent.MAINTAIN -> p.preKeep
             }
             return guard(line + cadenceTip(ctx) + heatTip(ctx))
         }
         val lines = when (intentOf(ctx.judgment)) {
-            CoachIntent.SPEED_UP -> when {
-                downhill -> listOf("내리막이에요. 조금 더 밀어서 심박을 Zone 2로 올려볼까요.")
-                else -> listOf(
-                    "여유가 있어요. 페이스를 살짝 올려 Zone 2로 들어가요.",
-                    "심박이 낮아요. 조금만 더 속도를 내볼게요.",
-                )
-            }
-            CoachIntent.SLOW_DOWN -> when {
-                uphill -> listOf("오르막이라 심박이 올랐어요. 천천히, 보폭을 줄여 올라가요.")
-                else -> listOf(
-                    "심박이 Zone 2를 넘었어요. 페이스를 조금 늦춰요.",
-                    "약간 빨라요. 호흡을 고르며 속도를 낮춰볼게요.",
-                )
-            }
-            CoachIntent.MAINTAIN -> listOf(
-                "좋아요, Zone 2 유지 중이에요. 이 리듬 그대로.",
-                "완벽해요. 지금 페이스를 계속 지켜주세요.",
-            )
+            CoachIntent.SPEED_UP -> if (downhill) listOf(p.upDownhill) else p.up
+            CoachIntent.SLOW_DOWN -> if (uphill) listOf(p.slowUphill) else p.slow
+            CoachIntent.MAINTAIN -> p.keep
         }
         return guard(lines[counter++ % lines.size] + cadenceTip(ctx) + heatTip(ctx))
     }
 
     /** 케이던스 폼 가이드(범위 밖일 때만 덧붙임). 방향 문구가 아니라 폼 문구 — DirectionGuard는 케이던스 절을 제외하고 판정. */
     private fun cadenceTip(ctx: CoachContext): String = when (ctx.cadence) {
-        CadenceBand.LOW -> " 부상 예방을 위해 보폭은 줄이고 발걸음은 더 자주 디뎌요."
-        CadenceBand.HIGH -> " 발걸음 빈도는 살짝 낮추고 보폭을 편안하게."
+        CadenceBand.LOW -> p.cadenceLow
+        CadenceBand.HIGH -> p.cadenceHigh
         else -> ""
     }
 
-    /** 더위 맥락(28℃+). 더울수록 심박·드리프트↑ → 무리 말고 수분. 방향 아님(DirectionGuard 제외 절). */
+    /** 더위 맥락(28℃+). 더울수록 심박/드리프트↑ → 무리 말고 수분. 방향 아님(DirectionGuard 제외 절). */
     private fun heatTip(ctx: CoachContext): String =
-        if (ctx.heat == HeatBand.HOT) " 더우니 무리하지 말고 수분 챙겨요." else ""
+        if (ctx.heat == HeatBand.HOT) p.heat else ""
 
     /** 출력 가드: 길이 제한/공백 정리(adr-002 출력 가드의 최소판). */
     private fun guard(s: String): String {
         val t = s.trim().replace(Regex("\\s+"), " ")
         return if (t.length > 80) t.take(79) + "…" else t
+    }
+
+    private companion object {
+        val PHRASES: Map<String, Phrases> = mapOf(
+            "default" to Phrases(
+                preSlow = "이대로면 심박이 곧 Zone 2를 넘겠어요. 미리 살짝 늦춰요.",
+                preUp = "심박이 곧 Zone 2 아래로 내려가겠어요. 페이스를 조금 올려요.",
+                preKeep = "좋아요, Zone 2 유지 중이에요. 이 리듬 그대로.",
+                upDownhill = "내리막이에요. 조금 더 밀어서 심박을 Zone 2로 올려볼까요.",
+                up = listOf(
+                    "여유가 있어요. 페이스를 살짝 올려 Zone 2로 들어가요.",
+                    "심박이 낮아요. 조금만 더 속도를 내볼게요.",
+                ),
+                slowUphill = "오르막이라 심박이 올랐어요. 천천히, 보폭을 줄여 올라가요.",
+                slow = listOf(
+                    "심박이 Zone 2를 넘었어요. 페이스를 조금 늦춰요.",
+                    "약간 빨라요. 호흡을 고르며 속도를 낮춰볼게요.",
+                ),
+                keep = listOf(
+                    "좋아요, Zone 2 유지 중이에요. 이 리듬 그대로.",
+                    "완벽해요. 지금 페이스를 계속 지켜주세요.",
+                ),
+                cadenceLow = " 부상 예방을 위해 보폭은 줄이고 발걸음은 더 자주 디뎌요.",
+                cadenceHigh = " 발걸음 빈도는 살짝 낮추고 보폭을 편안하게.",
+                heat = " 더우니 무리하지 말고 수분 챙겨요.",
+            ),
+            "spartan" to Phrases(
+                preSlow = "이대로면 곧 Zone 2를 넘는다. 미리 늦춰.",
+                preUp = "심박이 곧 Zone 2 아래로 떨어진다. 페이스 올려.",
+                preKeep = "Zone 2 유지 중이다. 그대로 간다.",
+                upDownhill = "내리막이다. 더 밀어서 심박을 Zone 2로 올려.",
+                up = listOf(
+                    "심박이 낮다. 페이스 올려.",
+                    "여유 부릴 때 아니다. 속도를 올려 Zone 2로 들어가.",
+                ),
+                slowUphill = "오르막이다. 천천히, 보폭 줄여서 올라가.",
+                slow = listOf(
+                    "Zone 2 초과다. 페이스 낮춰.",
+                    "빠르다. 호흡 다스리고 속도 낮춰.",
+                ),
+                keep = listOf(
+                    "좋다. 이 페이스 그대로 유지해.",
+                    "완벽하다. 흐트러지지 마라.",
+                ),
+                cadenceLow = " 보폭 줄이고 발은 더 자주 디뎌.",
+                cadenceHigh = " 발걸음 빈도 살짝 낮추고 보폭 편하게.",
+                heat = " 덥다. 무리하지 말고 수분 챙겨.",
+            ),
+            "friend" to Phrases(
+                preSlow = "이대로면 곧 Zone 2 넘겠어. 미리 살짝 늦추자.",
+                preUp = "심박이 곧 Zone 2 아래로 내려가겠는데? 페이스 조금 올리자.",
+                preKeep = "좋아, Zone 2 유지 중! 이대로 가자.",
+                upDownhill = "내리막이야! 조금만 더 밀어서 심박을 Zone 2로 올려보자.",
+                up = listOf(
+                    "아직 여유 있네. 페이스 살짝 올려볼까?",
+                    "심박이 낮아. 조금만 더 속도 올려보자!",
+                ),
+                slowUphill = "오르막이라 심박이 올라갔네. 천천히, 보폭 줄여서 올라가자.",
+                slow = listOf(
+                    "Zone 2 살짝 넘었어. 페이스 조금만 늦춰줘.",
+                    "좀 빠른데? 호흡 고르면서 속도 낮춰보자.",
+                ),
+                keep = listOf(
+                    "딱 좋아! Zone 2 그대로야. 이 리듬 계속 가자.",
+                    "완벽해! 지금 페이스 그대로!",
+                ),
+                cadenceLow = " 보폭은 줄이고 발은 더 자주! 무릎 아끼자.",
+                cadenceHigh = " 발걸음 빈도 살짝 낮추고 보폭 편하게 가자.",
+                heat = " 덥다, 무리하지 말고 물 꼭 챙겨!",
+            ),
+            "calm" to Phrases(
+                preSlow = "이대로면 심박이 곧 Zone 2를 넘을 것으로 예상됩니다. 미리 조금 늦춰주십시오.",
+                preUp = "심박이 곧 Zone 2 아래로 내려갈 것으로 예상됩니다. 페이스를 살짝 올려주십시오.",
+                preKeep = "Zone 2 유지 중입니다. 현재 리듬 그대로 가시면 됩니다.",
+                upDownhill = "내리막 구간입니다. 조금 더 밀어 심박을 Zone 2로 올려주십시오.",
+                up = listOf(
+                    "심박에 여유가 있습니다. 페이스를 살짝 올려주십시오.",
+                    "심박이 낮은 상태입니다. 속도를 조금 올려주시기 바랍니다.",
+                ),
+                slowUphill = "오르막 구간으로 심박이 상승했습니다. 천천히, 보폭을 줄여 오르십시오.",
+                slow = listOf(
+                    "심박이 Zone 2를 넘었습니다. 페이스를 조금 늦춰주십시오.",
+                    "다소 빠릅니다. 호흡을 고르며 속도를 낮춰주시기 바랍니다.",
+                ),
+                keep = listOf(
+                    "Zone 2를 유지하고 있습니다. 현재 리듬을 지켜주십시오.",
+                    "안정적입니다. 지금 페이스를 그대로 유지하시기 바랍니다.",
+                ),
+                cadenceLow = " 부상 예방을 위해 보폭을 줄이고 발걸음을 더 자주 디뎌주십시오.",
+                cadenceHigh = " 발걸음 빈도를 살짝 낮추고 보폭을 편안하게 하십시오.",
+                heat = " 기온이 높습니다. 무리하지 마시고 수분을 섭취하십시오.",
+            ),
+        )
     }
 }
