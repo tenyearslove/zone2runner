@@ -25,7 +25,7 @@ import androidx.core.content.ContextCompat
 import androidx.wear.widget.BoxInsetLayout
 
 /**
- * Zone2 Runner — 워치 러닝 대시보드.
+ * Zone2Runner — 워치 러닝 대시보드.
  * 한 화면(스크롤 없음)에 HR, 현재 존, 페이스/거리/속도, 경과시간, 조작 버튼을 배치한다.
  * 측정/누적은 RunService(포그라운드 서비스, adr-009)가 소유 — 화면이 꺼져도 세션 유지.
  * 이 액티비티는 RunBus를 구독해 렌더하고, 버튼은 서비스에 액션 인텐트만 보낸다.

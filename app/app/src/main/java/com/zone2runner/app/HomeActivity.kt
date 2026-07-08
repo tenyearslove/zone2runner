@@ -60,7 +60,7 @@ class HomeActivity : AppCompatActivity() {
             text = "AI Specialist"; textSize = 12f; setTextColor(Palette.ACCENT)
             letterSpacing = 0.12f; setTypeface(typeface, android.graphics.Typeface.BOLD)
         })
-        col.addView(title("Zone2 Runner"))
+        col.addView(title("Zone2Runner"))
         col.addView(subtitle("개인화 유산소(Zone 2) 러닝 코칭 · 온디바이스 AI"))
 
         // 프로필 + 목표 심박 카드

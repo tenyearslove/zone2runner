@@ -19,7 +19,7 @@
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
-        android:label="Zone2 Runner"
+        android:label="Zone2Runner"
         android:supportsRtl="true"
         android:theme="@android:style/Theme.DeviceDefault">
         <!-- singleTask: 폰이 /run/start·/run/mirror로 다시 띄워도 새 인스턴스를 쌓지 않고

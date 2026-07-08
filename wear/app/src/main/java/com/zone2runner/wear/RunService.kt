@@ -228,7 +228,7 @@ class RunService : Service() {
             )
         }
         return NotificationCompat.Builder(this, CHANNEL)
-            .setContentTitle("Zone2 Runner")
+            .setContentTitle("Zone2Runner")
             .setContentText(text)
             .setSmallIcon(android.R.drawable.ic_menu_mylocation)
             .setOngoing(true)
