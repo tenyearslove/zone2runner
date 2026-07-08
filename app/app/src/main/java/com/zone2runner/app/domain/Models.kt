@@ -115,6 +115,7 @@ data class RunReport(
     val coachSource: String = "rule",      // 코칭 표현 소스(rule/llm)
     val sourceMode: String = "sim",        // 입력 소스(sim/live)
     val avgSpm: Int = 0,                   // 평균 케이던스(spm). 0=미상(구버전 세션)
+    val sessionStory: String = "",         // 사후 "왜 이렇게 코칭했나" 세션 스토리(설명 서비스, spec-023 FR2). 세션 종료 시 1회 생성
 ) {
     /** 평균 보폭(m) = 총거리 / 총걸음수(케이던스 적분 근사). 케이던스 미상이면 null. */
     val avgStrideM: Double?

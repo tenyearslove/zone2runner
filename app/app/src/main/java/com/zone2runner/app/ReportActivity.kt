@@ -12,6 +12,7 @@ import android.widget.ScrollView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.zone2runner.app.domain.RunReport
+import com.zone2runner.app.domain.Zone2Prior
 import com.zone2runner.app.domain.ZoneJudgment
 import com.zone2runner.app.ui.Palette
 import com.zone2runner.app.ui.ReportHolder
@@ -58,6 +59,13 @@ class ReportActivity : AppCompatActivity() {
             textSize = 11f; setTextColor(C_MUTED); setPadding(0, dp(2), 0, dp(12))
         })
 
+        // 사후 세션 스토리(spec-023 FR2): "이번 러닝에서 왜 이렇게 코칭했나". 세션 종료 시 1회 생성·저장.
+        if (r.sessionStory.isNotBlank()) {
+            col.addView(card("이번 러닝 이야기", TextView(this).apply {
+                text = r.sessionStory; textSize = 14f; setTextColor(C_TEXT); setLineSpacing(dp(3).toFloat(), 1f)
+            }))
+        }
+
         // 요약 그리드 (2열 x 3행)
         val grid = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         grid.addView(statRow(
@@ -76,12 +84,24 @@ class ReportActivity : AppCompatActivity() {
 
         // 존 분포
         val bar = ZoneBarView(this).also { it.set(r.belowSec, r.inSec, r.aboveSec) }
+        // FR4: 판정 "왜 이 존" 미니 설명 — 평균심박 vs 개인 상/하한 → 판정 근거를 한 줄로.
+        val hrrB = (r.maxHrProfile - r.restingHr).toDouble()
+        val hiB = (r.restingHr + r.uEstEndFrac * hrrB).toInt()
+        val loB = (r.restingHr + (r.uEstEndFrac - Zone2Prior.BAND) * hrrB).toInt()
+        val whyZone = when {
+            r.avgHr > hiB -> "평균 ${r.avgHr} > 상한 ${hiB}bpm → 평균적으로 초과"
+            r.avgHr < loB -> "평균 ${r.avgHr} < 하한 ${loB}bpm → 평균적으로 미달"
+            else -> "평균 ${r.avgHr}bpm이 개인 범위 ${loB}~${hiB}bpm 안 → Zone 2 유지"
+        }
         col.addView(card("존 체류 분포", LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             addView(bar, LinearLayout.LayoutParams(MATCH_PARENT, dp(40)))
             addView(TextView(this@ReportActivity).apply {
                 text = "미달 ${sec(r.belowSec)} · 유지 ${sec(r.inSec)} · 초과 ${sec(r.aboveSec)}"
                 textSize = 11f; setTextColor(C_MUTED); setPadding(0, dp(6), 0, 0)
+            })
+            addView(TextView(this@ReportActivity).apply {
+                text = whyZone; textSize = 12f; setTextColor(C_TEXT); setPadding(0, dp(6), 0, 0)
             })
         }))
 
@@ -185,8 +205,13 @@ class ReportActivity : AppCompatActivity() {
             drift >= 0 -> "\n심박이 %.1f%%로 안정적으로 유지됐어요. 좋은 유산소 컨디션입니다.".format(drift)
             else -> "\n후반부 심박이 오히려 안정됐어요(워밍업 후 안정화)."
         }
+        // FR5: 드리프트→코칭 인과 연결. 후반 드리프트가 크고 초과 코칭이 있었다면 둘을 원인-결과로 잇는다.
+        val overCoach = r.coachingLines.count { it.contains("(초과") }
+        val causalNote = if (drift >= 5 && overCoach > 0)
+            "\n→ 이 드리프트로 같은 페이스에서도 심박이 올라, 후반에 초과 알림이 ${overCoach}회 나갔어요. 후반엔 페이스를 조금 늦추면 유지에 도움이 됩니다."
+        else ""
         val z2min = r.inSec / 60
-        return "$base\nZone 2 유지 ${z2min}분(${z2}%), 평균 심박 ${r.avgHr} bpm.$driftNote"
+        return "$base\nZone 2 유지 ${z2min}분(${z2}%), 평균 심박 ${r.avgHr} bpm.$driftNote$causalNote"
     }
 
     private fun drawTrack(mv: MapView, r: RunReport) {

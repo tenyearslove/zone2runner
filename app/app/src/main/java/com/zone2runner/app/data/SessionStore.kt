@@ -49,6 +49,12 @@ object SessionStore {
         runCatching { File(dir(ctx), "$id.json").delete() }
     }
 
+    /** 저장된 세션의 사후 스토리만 교체(LLM 풀이가 규칙 폴백을 덮어씀). spec-023 FR2. */
+    fun updateStory(ctx: Context, id: String, story: String) {
+        val r = load(ctx, id) ?: return
+        save(ctx, r.copy(sessionStory = story))
+    }
+
     // ---- 직렬화 ----
 
     internal fun toJson(r: RunReport): JSONObject {
@@ -71,6 +77,7 @@ object SessionStore {
         o.put("coachSource", r.coachSource)
         o.put("sourceMode", r.sourceMode)
         o.put("avgSpm", r.avgSpm)
+        o.put("sessionStory", r.sessionStory)
         o.put("coachingLines", JSONArray(r.coachingLines))
         val tr = JSONArray()
         for (t in r.track) {
@@ -133,6 +140,7 @@ object SessionStore {
             coachSource = o.optString("coachSource", "rule"),
             sourceMode = o.optString("sourceMode", "sim"),
             avgSpm = o.optInt("avgSpm", 0),
+            sessionStory = o.optString("sessionStory", ""),
         )
     }
 }

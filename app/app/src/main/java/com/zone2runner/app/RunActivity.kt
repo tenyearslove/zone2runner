@@ -684,10 +684,12 @@ class RunActivity : AppCompatActivity() {
             put("predTau", eng.odeTau())
             put("predBase60", pr.base); put("predModel60", pr.model)
         }
-        val report = eng.report().copy(
+        val base = eng.report().copy(
             startedAtEpochMs = startedAt, sourceMode = mode,
             coachSource = coach?.sessionSource() ?: "rule",
         )
+        // 사후 세션 스토리(spec-023 FR2): 규칙 팩트를 먼저 저장(폴백 보장) → 아래에서 LLM 풀이로 덮어씀.
+        val report = base.copy(sessionStory = com.zone2runner.app.coaching.SessionExplainer.facts(base))
         if (report.durationSec < 5) { // 데이터 너무 적으면 저장 생략
             logger?.event("end") { put("saved", false); put("durationSec", report.durationSec) }
             logger?.close(); logger = null
@@ -704,6 +706,16 @@ class RunActivity : AppCompatActivity() {
         logger?.close(); logger = null
         // 설명 서비스(spec-023): 개인화 설명을 세션 종료 시 1회 생성해 저장 → 프로필이 LLM 재호출 없이 재사용.
         generateAndStorePersonalizationExplanation()
+        // 사후 세션 스토리(FR2): LLM 가용 시 자연어 풀이로 저장된 규칙 폴백을 덮어쓴다(1회, 이후 재호출 없음).
+        ReportHolder.last?.id?.let { savedId ->
+            lifecycleScope.launch {
+                val out = runCatching {
+                    com.zone2runner.app.coaching.LlmCoach(this@RunActivity)
+                        .freeform(com.zone2runner.app.coaching.SessionExplainer.prompt(report))
+                }.getOrNull()
+                if (!out.isNullOrBlank()) SessionStore.updateStory(this@RunActivity, savedId, out)
+            }
+        }
         render(LiveState(elapsedSec = report.durationSec, hr = report.avgHr, smoothedHr = report.avgHr,
             judgment = null, paceMinKm = report.avgPaceMinKm, distanceM = report.distanceM,
             coaching = "세션 종료 · 저장됨", uEstFrac = report.uEstEndFrac))

@@ -271,6 +271,23 @@ class ProfileActivity : AppCompatActivity() {
         })
         addView(PersonalizationView(this@ProfileActivity).apply { set(s) },
             LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply { topMargin = dpi(6) })
+        // FR6: 심박 예측 개인화(τ/드리프트) — 경계 학습과 별개로 예측 ODE도 내 몸에 맞춰짐을 텍스트로 노출.
+        LearnedDynamics.params(this@ProfileActivity)?.takeIf { s.predUpdates > 0 }?.let { pr ->
+            val tauSec = pr[0].toInt()
+            val driftBpmMin = pr[1] * s.hrr // frac/분 → bpm/분
+            val base = com.zone2runner.app.pipeline.HrOdeModel.TAU0.toInt()
+            val tauNote = when {
+                tauSec > base + 3 -> "심박이 페이스 변화에 느리게 반응(${tauSec}초, 기본 ${base}초보다 김)"
+                tauSec < base - 3 -> "심박이 페이스 변화에 빠르게 반응(${tauSec}초, 기본 ${base}초보다 짧음)"
+                else -> "심박 반응 속도는 일반적(${tauSec}초)"
+            }
+            val driftNote = if (kotlin.math.abs(driftBpmMin) >= 0.3)
+                ", 장시간 러닝 시 분당 %.1fbpm 상승 경향".format(driftBpmMin) else ""
+            addView(TextView(this@ProfileActivity).apply {
+                text = "심박 예측 개인화: $tauNote$driftNote (예측 학습 ${s.predUpdates}회)"
+                textSize = 12f; setTextColor(Palette.TEXT); setPadding(0, dpi(8), 0, 0)
+            })
+        }
         // AI 설명(설명용이성, spec-023): 세션 종료 시 1회 생성해 저장한 설명을 텍스트로 표시.
         // 여기선 LLM을 재호출하지 않는다(정지 상태는 모두 텍스트, TTS 없음 — 사용자 결정). 저장본 없으면 규칙 팩트.
         addView(TextView(this@ProfileActivity).apply {
