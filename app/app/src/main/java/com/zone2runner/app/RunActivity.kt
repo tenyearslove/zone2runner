@@ -1129,6 +1129,8 @@ class RunActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy(); source?.stop()
         isRunning = false
+        // BACK/화면 이탈로 종료해도 워치가 계속 돌지 않게 종료 신호 전송(멈춤은 멱등 — finalizeSession이 이미 보냈어도 무해). 2026-07-08 버그 수정.
+        if (isFinishing) RunLink.send(this, RunLink.PATH_STOP)
         watchPoll.removeCallbacks(watchTick)
         unregisterTalkListener()
         logger?.close(); logger = null // 중도 이탈 시에도 로그 파일 마감
