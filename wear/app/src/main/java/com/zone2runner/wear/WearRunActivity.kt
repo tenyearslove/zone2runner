@@ -97,7 +97,9 @@ class WearRunActivity : ComponentActivity() {
             if (e.path == RunLink.PATH_MIRROR_HR) {
                 val bpm = runCatching { String(e.data).trim().toInt() }.getOrNull() ?: return@OnMessageReceivedListener
                 RunBus.hr = bpm
-                if (RunBus.state == RunState.IDLE) { RunBus.state = RunState.RUNNING; RunBus.runStart = SystemClock.elapsedRealtime(); RunBus.accumulatedMs = 0 }
+                // 첫 심박에만 세션 시작(IDLE→RUNNING). 이미 돌았던 세션(mirrorWasLive)은 되살리지 않는다 —
+                // 정지 직후 늦게 도착한 미러 심박이 세션을 되살려 자동닫기를 막던 레이스 방지(2026-07-09).
+                if (RunBus.state == RunState.IDLE && !mirrorWasLive) { RunBus.state = RunState.RUNNING; RunBus.runStart = SystemClock.elapsedRealtime(); RunBus.accumulatedMs = 0 }
                 runOnUiThread { RunBus.notifyUi() }
             }
         }

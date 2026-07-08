@@ -114,6 +114,7 @@ class RunActivity : AppCompatActivity() {
     private var lastTalkAskSimSec = -1   // 마지막 질문 시점(세션 초, -1=아직 없음)
     private var lastTalkTickSimSec = -1  // 마지막 평가 시점(세션 초)
     private var lastTalkPromptWallMs = 0L // 마지막 표시 시각(벽시계) — 가속 재생 팝업 스팸 방지
+    private val talkWarmupSec = 120       // 첫 토크테스트 전 워밍업(세션 초). 시작 직후 조기 팝업 방지 — HR가 지속 강도를 대표하려면 시간 필요(가상러너는 존 안에서 시작)
     private var settings = com.zone2runner.app.data.AppSettings() // spec-021, start()에서 로드
 
     private val mode: String by lazy { intent.getStringExtra(EXTRA_MODE) ?: MODE_SIM }
@@ -793,7 +794,8 @@ class RunActivity : AppCompatActivity() {
         val elevated = sus > 0 && sus >= lo // Zone2 이상(지속 심박 기준 — 개인화 관측과 같은 채널)
         if (elevated) talkElevatedSec += dt else talkElevatedSec = 0
         val sinceAsk = simSec - lastTalkAskSimSec
-        val elevatedAsk = elevated && talkElevatedSec >= 30 && (lastTalkAskSimSec < 0 || sinceAsk > 3 * 60)
+        val warmedUp = simSec >= talkWarmupSec // 워밍업 전엔 안 물음(시작 직후 조기 팝업 방지)
+        val elevatedAsk = elevated && warmedUp && talkElevatedSec >= 30 && (lastTalkAskSimSec < 0 || sinceAsk > 3 * 60)
         val fallback = sus > 0 && (simSec - maxOf(lastTalkAskSimSec, 0)) > 10 * 60
         val now = android.os.SystemClock.elapsedRealtime()
         val wallOk = now - lastTalkPromptWallMs > 30_000L || lastTalkPromptWallMs == 0L
