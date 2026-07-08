@@ -1,55 +1,51 @@
 # Spec-001: 기능 요구사항 및 제약사항
 
-- **상태**: Approved
-- **날짜**: 2026-06-25
+- **상태**: Approved (2026-07-08 갱신 — QA/제약/FR 확정 반영)
+- **관련**: report-001(과제 개요), report-007(QA 척추), spec-002(품질속성), references/강의요약-AI-8대QA-상세.md
 
 ---
 
-## 기능 요구사항
+## 기능 요구사항 (Functional Requirements)
+
+| ID | TITLE | Description | AI |
+|:--:|:--|:--|:--:|
+| FR1 | 개인 Zone 2 경계 설정 | 프로필(나이/안정심박/최대심박/신체 factor)로 개인 유산소 상한과 하한을 산정하고, 학습 데이터가 없으면 factor 기반 초기값을 제공한다. | |
+| FR2 | 실시간 심박 수집 및 존 판정 | 갤럭시워치/센서에서 심박을 1초 주기로 수집하고, 규칙 기반으로 Zone 2 미달/유지/초과를 실시간 판정한다. | ● |
+| FR3 | 심박 예측 및 선제 코칭 | 생리 모델(ODE)로 현재 페이스 유지 시의 앞선 심박을 예측해, 존을 벗어나기 전에 미리 코칭한다. | ● |
+| FR4 | 개인화 학습 | 실주행 관측(말하기 테스트/드리프트)으로 개인 경계와 심박 반응 파라미터를 세션마다 자동 보정한다(점진적 개인화). | ● |
+| FR5 | 실시간 코칭 제공 | 규칙이 코칭 방향과 사실을 확정하고, 온디바이스 LLM(Gemini Nano)이 이를 자연어(음성/텍스트)로 표현한다. | ● |
+| FR6 | 세션 리포트 및 근거 설명 | 종료 후 경로/심박 추이/유산소 분석과 함께 "왜 이렇게 판정하고 코칭했는지"를 설명으로 제공한다. | ● |
+
+- 규정 충족: FR 6개(최소 4개 이상), **AI 관련 FR = FR2/FR3/FR4/FR5/FR6**.
+
+---
+
+## 제약사항 (Constraints)
 
 | ID | TITLE | Description |
-|:---:|:---|:---|
-| FR1 | 초기 Zone 2 범위 산정 | 사용자의 나이, 성별, 체중, 안정시 심박수 등 기본 프로필을 입력받아 운동생리학 공식(%HRmax 60~70%, 유산소 임계 근사) 기반으로 개인별 초기 Zone 2 심박 범위를 산정한다. |
-| FR2 | 웨어러블 심박 데이터 수집 | Galaxy Watch에 설치된 Wear OS 앱이 Samsung Health Sensor SDK를 통해 심박수를 실시간 수집하고, Wearable Data Layer API로 Android 폰 앱에 전달한다. |
-| FR3 | 실시간 Zone 2 상태 판단 | 수집된 심박수(지속 심박)를 개인 경계와 비교(규칙+히스테리시스)해 현재 Zone 2 진입 / 유지 / 이탈 상태를 실시간으로 판정한다. 개인 경계는 Bayesian이 학습. |
-| FR4 | 상황 맞춤 음성 코칭 | Zone 2 판정 결과와 GPS(오르막·내리막), 페이스 변화, 날씨 등 실시간 맥락을 On-device LLM에 전달하여 상황에 맞는 코칭 멘트를 생성하고 TTS로 음성 출력한다. |
-| FR5 | 운동 이력 기반 개인화 보정 | 누적된 운동 세션 데이터(HR-Pace 관계, Cardiac Drift, 회복 지표)를 분석하여 개인별 Zone 2 범위를 점진적으로 보정한다. |
-| FR6 | 운동 기록 저장 및 리포트 | 운동 세션 종료 후 주요 지표(Zone 2 유지 시간·비율, 평균 심박수, Cardiac Drift)를 저장하고, 세션별 요약 리포트와 이력 조회를 제공한다. |
+|:--:|:--|:--|
+| C01 | 운영 비용 0 (서버/추론 API 과금 불가) | 1인 프로젝트로 지속 비용 감당 불가 → 온디바이스 추론/LLM(Gemini Nano) 강제, 클라우드 배제. |
+| C02 | 대량 사전학습 데이터 없음 | 단일 사용자, 세션 수십 개 수준 → 블랙박스 신경망 학습 불가, 생리 ODE + 점진적 개인화(온라인 Bayesian) 채택의 전제. |
+| C03 | 개인 참값(젖산/환기역치, Zone 2 상단) 측정 불가 | 소비자 기기로 랩 수준 참값 측정 불가 → 절대 정확도 대신 방향 정확성으로 품질을 목표한다. 근거: arch/zone2-physiology-and-estimation.md |
+| C04 | 정량 평가는 폐루프 시뮬레이션으로 수행 | 실측 참값 부재(C03)로 QA 정량 평가를 가상러너 폐루프로 대신한다 → 소프트웨어/알고리즘 검증 범위이며, 실인간 정확도 주장이 아니다. |
+
+- 온디바이스(전면)는 제약이 아니라 **C01이 강제한 설계 결정(DP0)**이다. (오프라인 동작/프라이버시는 그 부수효과.)
 
 ---
 
-## 제약사항
+## 요구사항 → 설계/QA 추적
 
-| ID | TITLE | Description |
-|:---:|:---|:---|
-| C01 | 웨어러블 데이터 접근 제약 | Samsung Health Sensor SDK는 Galaxy Watch 4 이상에서만 동작하며, 기기·OS 버전·권한 정책에 따라 수집 가능한 센서 데이터 범위가 제한될 수 있다. |
-| C02 | 초기 개인화 정확도 제약 | 운동 데이터가 충분히 누적되기 전까지는 공식(+프로필 factor) 기반 Zone 2 추정값을 사용하며, 개인화 보정(FR5)은 세션 누적으로 점진 적용된다. |
-| C03 | 의료 서비스 범위 제한 | 본 시스템은 운동 보조 목적으로 한정되며, 의료적 진단·처방·질병 예측 기능을 제공하지 않는다. 위험 심박 구간 감지 시 운동 중단 권고 안내를 제공한다. |
-| C04 | 개인 Zone 2 경계의 참값 부재(근본 제약) | Zone 2는 생리학적으로 1차 젖산역치(LT1/유산소 임계) 부근이며, 그 참값은 혈중 젖산 검사 또는 가스교환(VT1) 검사로만 측정된다. **손목 심박+GPS만으로는 참값을 측정할 수 없다** — 소비자 기기의 모든 Zone 2 값은 대리지표 기반 추정이다. 이는 구현 한계가 아니라 문제의 성질이다. 따라서 (a) 판정 정확도 자체가 아니라 코칭 방향 정확성(QA1)으로 품질을 평가하고, (b) 개인화는 참값 수렴이 아니라 물리 관측 기반 적응 메커니즘으로 검증하며, (c) 다신호(디커플링)+자가관측(토크 테스트)로 관측 품질을 높이고 향후 DFA-α1(HRV) 관측을 확장한다. 근거: `arch/zone2-physiology-and-estimation.md`. |
-
----
-
-## 요구사항 → 설계 추적
-
-| 요구 | 설계 문서 | 구현 |
-|:---:|------|------|
-| FR1 초기 Zone2 산정 | spec-009(프로필/RHR), adr-003(HRR baseline), **adr-012/spec-013(factor prior)** | app ProfileActivity(factor 칩 UI)/ProfileStore/Zone2Prior |
-| FR2 웨어러블 HR 수집·전달 | adr-001(Hybrid), adr-008(HR API/배포), adr-009(백그라운드), spec-003(파이프라인) | wear RunService(포그라운드)+HrForwarder, app WatchHrProvider. **appId 통일(Data Layer 필수)** |
-| FR3 실시간 Zone2 판정 | adr-013/016(판정=규칙, ZoneJudge), adr-004(경계=Bayesian) | app ZoneJudge(규칙 판정) + Personalization. 워치 존 표시는 /zones 동기화로 기준 일치. (구 adr-005/spec-006 MLP 판정기는 Superseded) |
-| FR4 상황 코칭 + TTS | adr-002(DP2), adr-007(LLM 런타임 검증), spec-005 | llm-verify, app LlmCoach/RuleCoach + **DirectionGuard(방향 잠금)** + TTS |
-| FR5 개인화 보정 | adr-004/016(DP2 Bayesian), spec-004, spec-013(안전 가드), spec-007(세션 데이터) | ml/personalization.py, app Personalization(prior 연동 + 토크테스트 + ±10bpm / uFrac 0.30~0.75 가드) |
-| FR6 기록 저장·리포트 | spec-007, spec-011(리포트/지도), adr-010(지도) | app SessionStore/ReportActivity/HistoryActivity |
-| 러닝 UI(워치/폰) | spec-010(워치 대시보드), spec-011(폰 앱) | wear/(실기기 레이아웃 튜닝 완료), app/ |
-| 필드 검증 데이터 | **spec-012(필드 로그)** | app RunLogger(JSONL), ml/analyze_runlog.py, FIELD_TEST.md |
-| C01 웨어러블 접근 제약 | adr-001, adr-008 | Health Services 채택으로 해소 |
-| C02 초기 개인화 정확도 | adr-003(콜드스타트), spec-009, **adr-012(factor prior, 오차 -42%)**, spec-004 | 규칙 폴백 + factor prior + RHR 자동 추정 |
-| C03 의료 범위 제한/안전 | spec-008(안전 가드) | 이상치 가드, 코칭 방향 가드, 개인화 상한 가드 |
-| **C04 Zone2 참값 부재** | **arch/zone2-physiology-and-estimation.md**, spec-002(평가 관점), adr-003/004/012 | 방향 정확성 평가(QA1), 물리 관측+토크 테스트 자가관측, 안전 가드, DFA-α1 향후 |
-
-- **참고(FR2 정합)**: spec-001은 실시간 HR 소스로 Samsung Health Sensor SDK를 상정했으나, adr-008에서 **PoC는 Wear OS Health Services**(승인 불필요)로 채택하고 HRV/화면off 필요 시 Samsung SDK로 승격하기로 정함.
-- **QA 달성 현황**: `spec/spec-002-quality-attributes.md` 부록(검증 스냅샷) 참조 — QA1/QA2/QA5 달성, QA3 메커니즘 실증, QA4 실기기 측정 대기.
+| 요구 | 관련 QA | 핵심 설계/구현 |
+|:--:|:--|:--|
+| FR1 초기 경계 | - | Zone2Prior(공식 + factor prior, adr-012/spec-013), ProfileStore |
+| FR2 수집/판정 | 강건성, 수행효율성 | Health Services HR 수집(adr-008/009), ZoneJudge(규칙 판정, adr-013), OutlierGuard/히스테리시스 |
+| FR3 예측/선제 | 설명용이성, 수행효율성 | HrOdeModel(생리 ODE, adr-020), 예측 항목분해(buildPredWhy) |
+| FR4 개인화 | 기능적응성 | Personalization(온라인 Bayesian, adr-004/016), 토크테스트(spec-016), LearnedZone/LearnedDynamics 누적 |
+| FR5 코칭 | 제어가능성 | RuleCoach/LlmCoach + DirectionGuard(출력 가드레일, adr-002), Nano 미가용 시 규칙 폴백 |
+| FR6 리포트/설명 | 설명용이성 | ReportActivity, 설명 서비스(spec-023: 세션 스토리/판정 왜/드리프트 인과) |
+| 전 파이프라인 검증 | 테스트가능성 | RunSource 추상화 + VirtualRunner 폐루프(spec-019/022) |
 
 ## 관련 문서
-- 설계 전반: `arch/architecture-overview.md`, `arch/adr-001`~`adr-012`
-- 품질: `spec/spec-002-quality-attributes.md`
-- 보고서: `report/report-003-certification-final.md` (DP0~DP4 ↔ ADR 매핑은 그 Appendix D, adr-016 기준)
+- 품질속성: `spec/spec-002-quality-attributes.md`
+- QA 선정 근거(척추): `report/report-007-qa-selection-spine.md`
+- 과제 개요: `report/report-001-project-overview.md`
