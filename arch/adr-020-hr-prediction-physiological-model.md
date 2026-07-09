@@ -100,3 +100,4 @@ hr = hr_lag + drift + noise
 - 폐루프(VirtualRunner): 가상러너의 참 τ/드리프트를 알고 있으므로, 온라인 추정이 그 값으로 수렴하는지 +
   60초 예측 RMSE가 persistence/linear baseline 대비 개선되는지 정량화(EXPERIMENT_LOG 신규 절).
 - 후속: 실필드 로그로 ODE 예측 오차 채점(대안 B 경로).
+- 미결(open, 2026-07-09): 수요맵 경사계수 c의 온라인 식별성이 GPS 경사 노이즈 + 창 지연 + 전이표본 배제로 취약(사실상 준고정) — 처리 방향(문헌 고정 prior / 조건부 게이팅 / 기압계 상대고도) 미정, 실필드 로그로 결정. 상세 = `arch/hr-prediction-formula-and-evidence.md` §5-1.
