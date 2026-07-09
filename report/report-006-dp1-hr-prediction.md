@@ -314,6 +314,8 @@ h초 뒤 심박   = hSS + (지금 심박 − hSS) × e^(−h/τ) + 드리프트 
 - 한계(clamp): 정착 심박 0.20~1.15, τ 12~80초, 드리프트 분당 한계, a/b/c 각각 생리 범위. → 말이 안 되는 값 차단.
 
 ## 부록 B. 근거 문헌
+> 공식의 정확한 유래/상수/문헌 정본은 **`arch/hr-prediction-formula-and-evidence.md`** 참조.
+
 - **Nazaret 외 (2023), npj Digital Medicine 6:207** — 운동 심박을 "지연+드리프트+날씨+개인화" ODE로. 우리 구조의 출판된 검증(Apple).
 - Åstrand-Ryhming (1954) / Conconi 외 (1982) — 저강도에서 심박이 강도에 선형(역치 위에서 곡선).
 - Poole & Jones (2012), Compr Physiol — 저강도(moderate) 심박이 지수적으로 따라옴(단일 지수가 특히 유효한 구간).
