@@ -151,6 +151,8 @@ class RunEngine(
 
         // 관측 분석 엔진(FR3, spec-025): 실시간 파생지표 산출 + 드리프트 개인 노이즈플로어 갱신
         runAnalysis(s.tSec, b)
+        // 반응형 코칭(FR5): 관측된 드리프트 상승에 선제 대응(예측 대체)
+        maybeReactiveCoach(s)
 
         // 코칭: 판정만 있으면 동작(120초 동역학 워밍업과 무관 — HR 들어오면 수십 초부터 코칭 시작).
         // 이전엔 feat(워밍업 필요) 블록 안에 있어 2분 지나야 코칭이 시작되던 문제(실기기).
@@ -245,16 +247,30 @@ class RunEngine(
         fireCoach(s, j)
     }
 
-    private suspend fun fireCoach(s: Sample, j: ZoneJudgment) {
+    private var lastReactiveSec = -9999
+    /**
+     * 반응형 드리프트 코칭(FR5, spec-025): 판정은 IN인데 정속에서 심박이 유의하게 오르는 중이면
+     * 이탈 전에 미리 여유를 안내. 예측 선제 코칭의 대체 — "관측된 추세"에 반응(짜고치기 없음).
+     */
+    private suspend fun maybeReactiveCoach(s: Sample) {
+        if (!driftRising || judgment != ZoneJudgment.IN) return
+        if (s.tSec - lastCoachSec < cadence.minGapSec) return
+        if (s.tSec - lastReactiveSec < cadence.overdueSec) return // 같은 드리프트 연속 억제
+        lastReactiveSec = s.tSec
+        fireCoach(s, ZoneJudgment.IN, reactive = true)
+    }
+
+    private suspend fun fireCoach(s: Sample, j: ZoneJudgment, reactive: Boolean = false) {
         val scope = coachScope
         if (scope != null && coachJob?.isActive == true) return // 이전 생성이 아직 진행 중이면 건너뜀
         lastCoachSec = s.tSec
         lastJudgmentForCoach = j
-        val reason = reasonOf(j)
+        val reason = if (reactive) "드리프트↑" else reasonOf(j)
         val ctx = CoachContext(
             j, s.slopePct, s.paceMinKm, s.tSec, spm = s.spm,
             currentHr = sustainedHr, loBpm = coachLoBpm, hiBpm = coachHiBpm,
             tempC = ambientTempC,
+            driftRising = reactive, gapPaceMinKm = gapPace,
         )
         if (scope == null) {
             recordCoaching(s.tSec, coach.say(ctx), 0L, reason)

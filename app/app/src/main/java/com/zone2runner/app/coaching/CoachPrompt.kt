@@ -60,10 +60,12 @@ class CoachPrompt private constructor(private val t: JSONObject) {
     /** 현재 심박/목표 범위가 유효할 때만 {context} 줄을 채운다(없으면 빈 문자열 → 기존 동작). */
     private fun buildContext(ctx: CoachContext): String {
         if (ctx.currentHr <= 0 || ctx.hiBpm <= ctx.loBpm) return ""
+        // 반응형 드리프트 맥락(FR3 엔진 관측): 정속에서 심박이 오르는 중이면 LLM이 여유를 안내하게(방향 아님)
+        val drift = if (ctx.driftRising) t.optString("drift") else ""
         return t.optString("context")
             .replace("{cur}", ctx.currentHr.toString())
             .replace("{lo}", ctx.loBpm.toString())
-            .replace("{hi}", ctx.hiBpm.toString())
+            .replace("{hi}", ctx.hiBpm.toString()) + drift
     }
 
     private fun JSONObject.g(key: String): JSONObject = optJSONObject(key) ?: JSONObject()
@@ -83,6 +85,7 @@ class CoachPrompt private constructor(private val t: JSONObject) {
           "base": "당신은 러닝 코치입니다. {terrain} 입니다. {context}러너에게 {direction} 격려하는 한국어 한 문장으로 자연스럽게 안내하세요. {must}{cadence}{heat} {limits}",
           "limits": "35자 내외, 따옴표와 이모지 없이.",
           "context": "현재 심박 {cur}bpm, 목표 {lo}~{hi}bpm. ",
+          "drift": "정속인데 심박이 서서히 오르는 중이니 미리 여유를 두라는 뉘앙스로. ",
           "heat_hot": " 기온이 {temp}도로 덥습니다. 무리하지 말고 수분을 챙기라는 조언을 짧게 덧붙이세요.",
           "terrain": {"uphill":"지형은 오르막","flat":"지형은 평지","downhill":"지형은 내리막"},
           "direction": {
