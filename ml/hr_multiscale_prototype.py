@@ -16,6 +16,7 @@ DP1 다중 시간대 추이 심박 예측 — 프로토타입 (설계 검증용)
 값 3분류: 창크기/지평/μ/게이트/floor = C(설계 선택, 근거 있는 출발점). 그 외 라이브 계산=A, 반응배율 g=B.
 """
 
+import os
 import sys
 import numpy as np
 
@@ -34,7 +35,13 @@ MU = 0.02               # 보정 배율 학습률(정규화 LMS, 0<μ<2 안정).
 LMS_EPS = 1.0           # 0 나눗셈 방지.
 G_CLAMP = (0.3, 3.0)    # 반응 배율 상식 범위.
 GATE_ALPHA = 0.97       # 게이트 오차 EWMA 계수(느린 비교).
-HR_CLAMP = (40.0, 210.0)  # 출력 가드레일(생리 가능범위).
+HR_CLAMP = (40.0, 210.0)  # 원시 센서 입력 sanity clamp(관측 심박).
+# --- 감속 곡선 외삽 (직선 과대예측 수정 — 사용자 제안: 프로필 심박 봉투) ---
+# 상승/하강 비대칭 τ는 테스트 후 기각(EXPERIMENT_LOG §15): 결합공식상 τ_down↑이 하강 예측을 오히려
+# 키워 backfire, g_down floor는 τ와 무관(원인=급강하 시 창 기울기 과대표현). → 대칭 단일 τ=30 유지.
+TAU_UP = float(os.environ.get("TAU_UP", "30.0"))     # 감속 시상수(초). HR on-kinetics ~20~45s의 중앙. C.
+TAU_DOWN = float(os.environ.get("TAU_DOWN", "30.0"))  # = τ_up(대칭). env로 재-sweep 가능(재현용).
+PROFILE = {"resting": 55.0, "max": 190.0}  # 프로필 안정/최대심박(입력 or 나이/키/몸무게 기본). C/입력.
 
 
 # ======================= 1. 합성 러너 (지상진실) =======================
@@ -161,11 +168,19 @@ class MultiscalePredictor:
                        else {k: 1.0 / len(ready) for k in ready})
 
         fused_b = sum(weights[k] * ready[k]["b"] for k in ready)
-        equal_b = sum(ready[k]["b"] for k in ready) / len(ready)   # 균등평균 baseline
+        equal_b = sum(ready[k]["b"] for k in ready) / len(ready)   # 균등평균 baseline(직선)
+
+        # 뼈대 예측 = 직선(fused_b·H)이 아니라, 궤적에서 역산한 submaximal 목적지로 향하는 감속 곡선.
+        #   목적지 = 지금 + τ·기울기 (1차 지연 대수). 프로필 [안정,최대] 봉투로 clamp(사용자 제안).
+        #   변화량 = (목적지 − 지금)·(1 − e^(−H/τ)) → 직선 대비 구조적으로 감속(과대예측 해소).
+        tau = TAU_UP if fused_b >= 0 else TAU_DOWN   # 상승/하강 비대칭 시상수
+        dest = float(np.clip(hr_now + tau * fused_b, PROFILE["resting"], PROFILE["max"]))
+        decel = 1.0 - np.exp(-HORIZON / tau)
+        skel_change = (dest - hr_now) * decel
 
         return dict(
-            fused_b=fused_b,
-            skel_change=fused_b * HORIZON,
+            fused_b=fused_b, dest=dest,
+            skel_change=skel_change,
             equal_change=equal_b * HORIZON,
             ready=ready, weights=weights,
         )
@@ -213,7 +228,10 @@ def run_sim(seed=7):
         if mature_t in pending:
             hr_then, skel_change, equal_change = pending.pop(mature_t)
             actual_change = hr_now - hr_then
-            full_change = pred.corrected_change(skel_change)   # 게이트 반영 출력
+            full_change = pred.corrected_change(skel_change)   # 게이트 반영
+            # 출력 가드레일: 최종 예측을 프로필 [안정,최대] 봉투로 clamp
+            full_pred = float(np.clip(hr_then + full_change, PROFILE["resting"], PROFILE["max"]))
+            full_change = full_pred - hr_then
             rows.append((mature_t, actual_change, 0.0, equal_change, skel_change, full_change, pred.gate_on))
             pred.learn(skel_change, actual_change)             # 그 다음 학습(같은 라벨로)
             g_trace.append((mature_t, pred.g_up, pred.g_down, pred.gate_on))
@@ -250,7 +268,8 @@ def report(t, speed, hr_true, hr_obs, rows, g_trace):
     print("DP1 다중 시간대 예측 프로토타입 — 결과")
     print("=" * 74)
     print(f"시나리오: 워밍업→[150s 감속(심박 상승 중!)]→정속(느림)→[600s 재가속]→장시간 정속+드리프트")
-    print(f"총 {int(t[-1])}초, 채점된 예측 {len(rows)}개, 지평 {HORIZON}초\n")
+    print(f"총 {int(t[-1])}초, 채점된 예측 {len(rows)}개, 지평 {HORIZON}초")
+    print(f"뼈대 외삽 = 감속곡선(τ_up={TAU_UP:.0f}s / τ_down={TAU_DOWN:.0f}s) + 프로필 봉투[{PROFILE['resting']:.0f},{PROFILE['max']:.0f}]\n")
 
     print(f"{'구간':<16}{'개수':>6}{'persist':>10}{'균등평균':>10}{'페이스뼈대':>12}{'+보정(풀)':>12}")
     print("-" * 74)
