@@ -19,6 +19,10 @@ object LearnedZone {
     private const val KEY_TALK = "talk_obs"   // 누적 말하기 테스트 관측 수
     private const val KEY_SIGMA = "sigma_bpm" // 최근 세션 종료 시 개인화 불확실성 σ(bpm)
     private const val KEY_EXPLAIN = "explain" // 세션 종료 시 1회 생성한 개인화 설명(이후 재사용, LLM 재호출 없음) spec-023
+    // 분석 엔진 드리프트 개인 노이즈플로어(種類B, spec-025 §4) — 세션 간 누적 EWMA 상태
+    private const val KEY_DF_MEAN = "drift_floor_mean"
+    private const val KEY_DF_VAR = "drift_floor_var"
+    private const val KEY_DF_N = "drift_floor_n"
     private const val HIST_CAP = 50
 
     private fun prefs(ctx: Context) = ctx.getSharedPreferences(Profiles.prefName(ctx, PREF), Context.MODE_PRIVATE)
@@ -64,6 +68,28 @@ object LearnedZone {
             .putInt(KEY_TALK, p.getInt(KEY_TALK, 0) + talkObsThisSession.coerceAtLeast(0))
             .putFloat(KEY_SIGMA, sigmaBpm.toFloat())
             .putString(KEY_HIST, hist.joinToString(",") { "%.4f".format(it) })
+            .apply()
+    }
+
+    /**
+     * 드리프트 개인 노이즈플로어 상태(mean, var, count). 학습 이력 없으면 null → 중립 prior로 시작.
+     * spec-025 §4: 반응형 코칭 판단선 m+k·σ̂의 개인화 근거.
+     */
+    fun driftFloor(ctx: Context): Triple<Double, Double, Int>? {
+        val p = prefs(ctx); if (!p.contains(KEY_DF_N)) return null
+        return Triple(
+            p.getFloat(KEY_DF_MEAN, Float.NaN).toDouble(),
+            p.getFloat(KEY_DF_VAR, Float.NaN).toDouble(),
+            p.getInt(KEY_DF_N, 0),
+        )
+    }
+
+    /** 세션 종료 시 드리프트 노이즈플로어 상태 저장(다음 세션이 이어서 개인화). */
+    fun setDriftFloor(ctx: Context, mean: Double, varr: Double, count: Int) {
+        prefs(ctx).edit()
+            .putFloat(KEY_DF_MEAN, mean.toFloat())
+            .putFloat(KEY_DF_VAR, varr.toFloat())
+            .putInt(KEY_DF_N, count)
             .apply()
     }
 
