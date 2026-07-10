@@ -48,6 +48,7 @@ class RunEngine(
     private val extractor = FeatureExtractor()
     private val personalization = Personalization(profile, priorUFrac)
     private val judge = ZoneJudge()
+    private val safety = SafetyGuard() // 안전 가드(spec-008) — 위험 심박 규칙 권고, LLM 우회
     private val uEstStart = personalization.boundary().uFrac
 
     // 관측 분석 엔진(FR3, spec-025) — 지표별 작은 모듈을 등록해 조립(OCP)
@@ -126,6 +127,10 @@ class RunEngine(
         val clean = OutlierGuard.clean(s.hr, lastValidHr)
         if (clean == null) return liveState(s) // 아직 유효 HR 없음
         lastValidHr = clean
+
+        // 안전 가드(spec-008): 위험 심박 지속 → 규칙 권고 즉시(LLM 우회, 코칭보다 우선)
+        safetyAlert = safety.check(s.tSec, clean, profile.maxHr)
+        safetyAlert?.let { recordCoaching(s.tSec, it, 0L, "안전") }
 
         // 누적 지표
         hrSum += clean; hrCount++; if (clean > maxHr) maxHr = clean
