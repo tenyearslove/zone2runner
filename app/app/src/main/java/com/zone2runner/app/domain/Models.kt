@@ -75,6 +75,12 @@ data class LiveState(
     val spm: Int = 0,                 // 케이던스
     val decoupling: Double? = null,   // 드리프트(디커플링 비율), 워밍업 전 null
     val dHrPerSec: Double? = null,    // 심박 추세(bpm/s), 워밍업 전 null
+    // 관측 분석 엔진(FR3, spec-025) 실시간 산출 — 도메인 원시값으로 담아 analysis 패키지 의존을 피함
+    val driftSlope: Double? = null,       // 드리프트 기울기(bpm/분), 정속창 유효 시
+    val driftRising: Boolean = false,     // 드리프트 유의 상승(FR5 반응형 코칭 트리거)
+    val gapPaceMinKm: Double? = null,     // 경사보정 페이스(min/km)
+    val cadenceUnstable: Boolean = false, // 케이던스 σ > MDC(불안정)
+    val safetyAlert: String? = null,      // 안전 가드 경고(위험 심박) — spec-008
 )
 
 /** 경로 점(존 색으로 폴리라인 채색). */
@@ -112,6 +118,9 @@ data class RunReport(
     val sourceMode: String = "sim",        // 입력 소스(sim/live)
     val avgSpm: Int = 0,                   // 평균 케이던스(spm). 0=미상(구버전 세션)
     val sessionStory: String = "",         // 사후 "왜 이렇게 코칭했나" 세션 스토리(설명 서비스, spec-023 FR2). 세션 종료 시 1회 생성
+    // 관측 분석 엔진(FR3, spec-025) 세션종료 산출 — FR6 리포트 표시/FR4 추세
+    val analysisLines: List<String> = emptyList(), // 지표별 요약 문구(드리프트/서브맥시멀/HRR/케이던스)
+    val submaxHr: Double? = null,          // 대표 서브맥시멀 HR@고정페이스(세션 간 체력 추세)
 ) {
     /** 평균 보폭(m) = 총거리 / 총걸음수(케이던스 적분 근사). 케이던스 미상이면 null. */
     val avgStrideM: Double?

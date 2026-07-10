@@ -1,5 +1,16 @@
 package com.zone2runner.app.pipeline
 
+import com.zone2runner.app.analysis.AnalysisConfig
+import com.zone2runner.app.analysis.AnalysisEngine
+import com.zone2runner.app.analysis.AnalysisInput
+import com.zone2runner.app.analysis.CadenceStabilityMetric
+import com.zone2runner.app.analysis.DriftSlopeMetric
+import com.zone2runner.app.analysis.GapMinettiMetric
+import com.zone2runner.app.analysis.HrrMetric
+import com.zone2runner.app.analysis.NoiseFloor
+import com.zone2runner.app.analysis.SignalBuffer
+import com.zone2runner.app.analysis.SubmaxHrMetric
+import com.zone2runner.app.analysis.Trend
 import com.zone2runner.app.coaching.Coach
 import com.zone2runner.app.coaching.CoachContext
 import com.zone2runner.app.domain.LiveState
@@ -9,6 +20,7 @@ import com.zone2runner.app.domain.RunReport
 import com.zone2runner.app.domain.Sample
 import com.zone2runner.app.domain.SeriesPoint
 import com.zone2runner.app.domain.TrackPoint
+import com.zone2runner.app.domain.Zone2Boundary
 import com.zone2runner.app.domain.ZoneJudgment
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -31,11 +43,30 @@ class RunEngine(
     private val coachScope: CoroutineScope? = null,
     priorUFrac: Double? = null,        // 세션 누적 학습값(LearnedZone). 없으면 공식 prior
     private val cadence: CoachCadence = CoachCadence.DEFAULT, // 코칭 빈도(spec-021)
+    priorDriftFloor: Triple<Double, Double, Int>? = null,    // 드리프트 개인 노이즈플로어 누적(LearnedZone, spec-025 §4)
 ) {
     private val extractor = FeatureExtractor()
     private val personalization = Personalization(profile, priorUFrac)
     private val judge = ZoneJudge()
     private val uEstStart = personalization.boundary().uFrac
+
+    // 관측 분석 엔진(FR3, spec-025) — 지표별 작은 모듈을 등록해 조립(OCP)
+    private val signals = SignalBuffer()
+    private val analysis = AnalysisEngine(listOf(
+        DriftSlopeMetric(), GapMinettiMetric(), CadenceStabilityMetric(),
+        SubmaxHrMetric(), HrrMetric(),
+    ))
+    // 드리프트 개인 노이즈플로어(種類B) — 반응형 코칭 판단선 m+k·σ̂. 세션 간 누적.
+    private val driftFloor = NoiseFloor(
+        seedMean = priorDriftFloor?.first ?: Double.NaN,
+        seedVar = priorDriftFloor?.second ?: Double.NaN,
+        seedCount = priorDriftFloor?.third ?: 0,
+    )
+    // 최근 실시간 분석값(대시보드/코칭용)
+    private var driftSlope: Double? = null
+    private var driftRising = false
+    private var gapPace: Double? = null
+    private var cadenceUnstable = false
 
     private var lastValidHr: Int? = null
     private var judgment: ZoneJudgment? = null
@@ -102,6 +133,7 @@ class RunEngine(
         val mps = MPS_PER_MIN_KM / s.paceMinKm.coerceAtLeast(0.1)
         distanceM += mps
         extractor.add(clean.toDouble(), s.paceMinKm, s.spm, s.slopePct)
+        signals.add(s.tSec, clean.toDouble(), s.paceMinKm, s.spm, s.slopePct)
 
         val b = personalization.boundary()
         val loBpm = profile.restingHr + b.lFrac * profile.hrr
@@ -111,6 +143,9 @@ class RunEngine(
         val sus = extractor.smoothedHrAt(s.tSec)
         if (sus != null) { judgment = judge.judge(sus.toDouble(), loBpm, hiBpm); sustainedHr = sus }
         coachLoBpm = loBpm.toInt(); coachHiBpm = hiBpm.toInt()
+
+        // 관측 분석 엔진(FR3, spec-025): 실시간 파생지표 산출 + 드리프트 개인 노이즈플로어 갱신
+        runAnalysis(s.tSec, b)
 
         // 코칭: 판정만 있으면 동작(120초 동역학 워밍업과 무관 — HR 들어오면 수십 초부터 코칭 시작).
         // 이전엔 feat(워밍업 필요) 블록 안에 있어 2분 지나야 코칭이 시작되던 문제(실기기).
@@ -147,6 +182,27 @@ class RunEngine(
         }
         return liveState(s)
     }
+
+    /** 관측 분석 엔진 실시간 산출 + 드리프트 개인 노이즈플로어 갱신(spec-025). */
+    private fun runAnalysis(tSec: Int, b: Zone2Boundary) {
+        val input = AnalysisInput(tSec, profile, b, signals)
+        analysis.onTick(input)
+        gapPace = analysis.latest(GapMinettiMetric.ID)?.value
+        cadenceUnstable = analysis.latest(CadenceStabilityMetric.ID)?.trend == Trend.UP
+        val drift = analysis.latest(DriftSlopeMetric.ID)
+        if (drift != null && !drift.gated) {
+            driftSlope = drift.value
+            driftFloor.observe(drift.value)
+            // 반응형 코칭 판단선: 통계적 상승(trend UP, within-window k·SE) AND 개인 이력 대비 이례적(m+k·σ̂)
+            val personal = if (driftFloor.ready(AnalysisConfig.DRIFT_FLOOR_MIN_N))
+                driftFloor.threshold(AnalysisConfig.K_SIGMA) else null
+            driftRising = drift.trend == Trend.UP && (personal == null || drift.value > personal)
+        }
+    }
+
+    /** 드리프트 개인 노이즈플로어 상태 [mean, var, count] — 세션 종료 저장(LearnedZone.setDriftFloor)용. */
+    fun driftFloorState(): Triple<Double, Double, Int> =
+        Triple(driftFloor.meanRaw(), driftFloor.varRaw(), driftFloor.count)
 
     private var stationarySec = 0
     private var wasStationary = false
@@ -236,26 +292,41 @@ class RunEngine(
         spm = s.spm,
         decoupling = extractor.displayDriftAt(s.tSec), // 표시용(HR/속도 기반) — 특징 feat[5]와 별개
         dHrPerSec = lastFeat?.get(2),
+        driftSlope = driftSlope,
+        driftRising = driftRising,
+        gapPaceMinKm = gapPace,
+        cadenceUnstable = cadenceUnstable,
+        safetyAlert = safetyAlert,
     )
 
-    fun report(): RunReport = RunReport(
-        durationSec = elapsed,
-        distanceM = distanceM,
-        avgHr = if (hrCount > 0) (hrSum / hrCount).toInt() else 0,
-        maxHr = maxHr,
-        belowSec = belowSec, inSec = inSec, aboveSec = aboveSec,
-        avgPaceMinKm = if (distanceM > 1) (elapsed / 60.0) / (distanceM / 1000.0) else 0.0,
-        coachingLines = coachingLines.toList(),
-        track = track.toList(),
-        uEstStartFrac = uEstStart,
-        uEstEndFrac = personalization.boundary().uFrac,
-        restingHr = profile.restingHr,
-        maxHrProfile = profile.maxHr,
-        series = series.toList(),
-        usedModel = true,
-        coachSource = coachSource,
-        avgSpm = if (spmCount > 0) (spmSum / spmCount).toInt() else 0,
-    )
+    @Volatile var safetyAlert: String? = null // 안전 가드(spec-008) — RunActivity/step7이 설정
+
+    fun report(): RunReport {
+        // 세션종료 분석(FR3): 전체 신호 버퍼로 SESSION_END/BOTH 지표 산출 → FR6 표시/FR4 추세
+        val end = analysis.onSessionEnd(AnalysisInput(signals.tNow, profile, personalization.boundary(), signals))
+        val submax = end.firstOrNull { it.id == SubmaxHrMetric.ID }?.value
+        val lines = end.filter { it.note.isNotBlank() }.map { it.note }
+        return RunReport(
+            durationSec = elapsed,
+            distanceM = distanceM,
+            avgHr = if (hrCount > 0) (hrSum / hrCount).toInt() else 0,
+            maxHr = maxHr,
+            belowSec = belowSec, inSec = inSec, aboveSec = aboveSec,
+            avgPaceMinKm = if (distanceM > 1) (elapsed / 60.0) / (distanceM / 1000.0) else 0.0,
+            coachingLines = coachingLines.toList(),
+            track = track.toList(),
+            uEstStartFrac = uEstStart,
+            uEstEndFrac = personalization.boundary().uFrac,
+            restingHr = profile.restingHr,
+            maxHrProfile = profile.maxHr,
+            series = series.toList(),
+            usedModel = true,
+            coachSource = coachSource,
+            avgSpm = if (spmCount > 0) (spmSum / spmCount).toInt() else 0,
+            analysisLines = lines,
+            submaxHr = submax,
+        )
+    }
 
     private fun median(a: List<Double>): Double {
         val s = a.sorted(); val n = s.size

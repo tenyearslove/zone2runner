@@ -19,7 +19,8 @@ object AnalysisConfig {
     const val HRR_WINDOW = 60           // HRR 회복 관측창(초)
     const val EFFORT_END_SPEED_RATIO = 0.7 // 속도가 직전 평균의 70% 아래로 지속되면 노력 종료(Daanen HRR 관례)
     const val EFFORT_END_HOLD = 10      // 노력 종료 판정 지속(초)
-    const val K_SIGMA = 2.0             // 판단선 배수(slope 대 k·SE)
+    const val K_SIGMA = 2.0             // 판단선 배수(slope 대 k·SE, m+k·σ̂)
+    const val DRIFT_FLOOR_MIN_N = 20    // 드리프트 개인 노이즈플로어가 유의미해지는 최소 관측수
 
     // Minetti 2002 러닝 에너지비용 5차 다항식 Cr(i) [J/kg/m], i=경사(소수). R²=0.999, i∈[-0.45,0.45].
     const val MINETTI_LEVEL = 3.6       // Cr(0) 평지 기준

@@ -523,6 +523,7 @@ class RunActivity : AppCompatActivity() {
             profile, c, coachScope = lifecycleScope,
             priorUFrac = learnedPrior,
             cadence = settings.cadence, // spec-021
+            priorDriftFloor = com.zone2runner.app.data.LearnedZone.driftFloor(this), // 드리프트 개인 플로어 누적(spec-025)
         )
         engine = eng
         startedAt = System.currentTimeMillis()
@@ -685,6 +686,7 @@ class RunActivity : AppCompatActivity() {
         // 다음 세션이 여기서 시작 → 실주행 말하기 테스트가 세션을 넘어 누적/수렴.
         val finalU = eng.currentUFrac()
         com.zone2runner.app.data.LearnedZone.set(this, finalU, eng.talkObservations(), eng.currentSigmaBpm()) // uFrac 이력 + 관측 + σ(spec-020)
+        eng.driftFloorState().let { (m, v, n) -> com.zone2runner.app.data.LearnedZone.setDriftFloor(this, m, v, n) } // 드리프트 개인 플로어 저장(spec-025)
         logger?.event("boundary") {
             put("uFrac", finalU); put("talk", eng.talkObserved)
             put("n", com.zone2runner.app.data.LearnedZone.sessionCount(this@RunActivity))
