@@ -1,5 +1,7 @@
 # Spec-004: Zone 2 개인화 모델 상세 설계
 
+> **정합 note (2026-07-10, FR4/spec-001)**: 주 관측 = **말하기 테스트(검증 가능 실라벨)**. **디커플링은 Conconi 편향으로 경계 관측에 쓰면 발산**(본 문서 §PoC 실증) → 큰 σ로 다운웨이트하거나 체력추세 표시용으로만. §3의 디커플링 임계 **δ=5%는 마법상수 → 개인 도출통계 k·σ로 대체**(CLAUDE.md 값 원칙). 본문 상세 미수정.
+
 - **상태**: Draft
 - **날짜**: 2026-07-01
 - **관련 ADR**: `arch/adr-004-personalization-model-approach.md`, `arch/adr-016-ai-method-selection.md` (DP2 = 개인 Zone2 범위 = Bayesian)

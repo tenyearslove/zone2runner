@@ -1,5 +1,7 @@
 # Spec-020: 프로필 관리 + 개인화 진행 시각화 + 다중 프로필
 
+> **⚠ 예측 de-scope (2026-07-10, adr-024)**: FR3 심박 예측 드롭. 본 문서의 예측 관련 서술(LearnedDynamics/예측 보정 가중치/예측 학습수)은 **de-scope 대상** — 개인화 시각화는 경계 Bayesian(μ/σ 이동)으로 대체. 앱 코드 미변경. 현행 FR=spec-001, 정합 재작성은 안정화 후. 본문 미수정.
+
 - **상태**: Draft
 - **날짜**: 2026-07-06
 - **관련 요구**: spec-001 FR1/FR5, spec-009(프로필), spec-013(factor prior), adr-004/016(개인화), `spec/archive/spec-018-online-prediction-correction.md`(예측 보정 — 폐기, adr-020으로 승계)

@@ -1,5 +1,7 @@
 # Spec-011: 폰 러닝 코칭 앱 (Phone 앱)
 
+> **⚠ 예측 de-scope (2026-07-10, adr-024)**: FR3 심박 예측 드롭. 본 문서의 예측 서술(심박예측 NN/HrDynamics/선제코칭/페이스제안)은 **de-scope 대상**, 앱 코드 미변경이라 일부는 as-built 기록. 현행 FR=spec-001, 정합 재작성은 설계·코드 안정화 후. 본문 미수정.
+
 - **상태**: Draft
 - **날짜**: 2026-07-03
 - **관련 요구**: spec-001 FR1(프로필/RHR)/FR2(실시간 표시)/FR3(존 판정)/FR4(코칭)/FR5(지도)/FR6(세션 기록), adr-001(Phone=AI), adr-002(LLM 코칭), adr-004(개인화, 구 adr-003은 arch/archive), adr-013(규칙 판정)/`spec/archive/spec-014-hr-dynamics-model.md`(심박예측 NN — 폐기, 현행 예측은 adr-020 생리 ODE), adr-007(온디바이스 LLM), adr-010(지도), `arch/archive/adr-011-ondevice-mlp-inference-runtime.md`(순수 Kotlin 추론)

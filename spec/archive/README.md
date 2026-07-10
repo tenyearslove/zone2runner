@@ -8,5 +8,6 @@
 | spec-014 | 심박 동역학 NN(시뮬-학습 MLP 회귀) | 시뮬레이터(손으로 쓴 ODE)를 흉내내는 학습은 순환/공허 → 명시적 생리 ODE로 교체 | adr-020, HrOdeModel |
 | spec-015 | 역치 추정 NN | 개인화는 온라인 Bayesian이 전담(소수 라벨/콜드스타트/불확실성에 NN은 틀린 도구) | adr-016, Personalization |
 | spec-018 | NN 예측의 온라인 LMS 보정 | 보정 대상인 NN 자체가 폐기됨. 온라인 학습 원리는 ODE 파라미터(τ/드리프트) 추정으로 승계 | adr-020, LearnedDynamics |
+| spec-017 | 페이스 강제 낭독 Talk Test(객관 음성으로 VT1 감별) | 온디바이스 음향 분석 신뢰 불가(adr-018 기각 계열)의 후속 탐색 — 배포는 주관 5단계 유지 | spec-016(주관 5단계 말하기 테스트) |
 
 현행 명세는 `spec/`, 현행 결정은 `arch/`(탈락 ADR은 `arch/archive/`) 참조.
