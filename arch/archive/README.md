@@ -15,5 +15,6 @@
 | hr-prediction-formula-and-evidence | 예측 공식 유래/근거 정본 | adr-020 예측 드롭에 종속 소멸 | adr-024 |
 | hr-prediction-multiscale-trend-design | 다중 시간대 추이 예측 설계안(미승인) | 예측 재설계 탐색안, 예측 드롭으로 무효 | adr-024 |
 | hr-prediction-쉬운설명 | 위 설계안의 쉬운 설명판 | 상동 | adr-024 |
+| adr-016 | AI 방법 선택 3-도구(NN 심박예측 / Bayesian 개인화 / 규칙 판정) | "NN=심박예측" 다리가 예측 드롭(adr-024)으로 소멸 → 자체 NN 0개로 재정립 | adr-025 (AI≠NN, NN 0개) |
 
 현행 결정은 `arch/`, 탈락 명세는 `spec/archive/`, 탈락 보고서는 `report/archive/` 참조.
