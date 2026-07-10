@@ -25,12 +25,13 @@
 >
 > **재정립 FR 표(합의, 일부만 반영됨)**: FR1(프로필+초기경계)/FR2(실시간 현재 존판정)/**FR3 신설=관측 다각도 분석·특성화**(구 FR3 예측 삭제)/FR4(토크테스트 역치앵커 ML)/FR5(반응형 코칭, 다중프롬프트+가드레일+폴백)/FR6(그래프·리포트·설명).
 >
-> **★ 이번에 실제 반영/확정한 것 = FR1만**: spec-001 FR1(프로필+초기 콜드스타트 경계, Tanaka/Karvonen/%HRmax 폴백, "FR1만으로 완결 5존 자립", 적응은 FR4) +
-> §FR1 상세 신설 + 추적표. 설계문서 정합: **spec-009**(RHR 사다리 Tanaka/계산 명확화, 자립 명시), **adr-012**(FR1 정합 애드덤 — Tanaka max+%HRmax 폴백+%LTHR은 FR4).
+> **★ 반영/확정 이력**: FR1(이전) + **FR2/FR3(2026-07-10 이 세션)**.
+> - **FR1**: spec-001 FR1(프로필+초기 콜드스타트 경계, Tanaka/Karvonen/%HRmax 폴백, "FR1만으로 완결 5존 자립", 적응은 FR4) + §FR1 상세 + 추적표. 정합: **spec-009**(RHR 사다리), **adr-012**(Tanaka max+%HRmax 폴백).
+> - **FR2**(이 세션 보강): spec-001 FR2 — 이중 기준 판정(표시 5존=순간심박+히스테리시스 / 코칭·통계=60초 지속) + 강건성(가드레일/히스테리시스/두절 폴백) 문장화 + "경계는 FR1/FR4 소비만".
+> - **FR3**(이 세션 재정의): **예측 드롭 → 관측 데이터 분석 엔진**. **adr-024 신설(Accepted)** + spec-001 FR3 재작성 + §FR3 상세(딥리서치 109에이전트/22검증 파생지표: 서브맥시멀HR/드리프트기울기/HRR/Minetti GAP/케이던스σ, 소비처=FR5+FR6+FR4). **예측 문서군 archive 완료**: adr-020, hr-prediction-formula-and-evidence, multiscale-trend-design, 쉬운설명 → arch/archive/; report-006, report-005 → report/archive/(신설, README 사유표). CLAUDE.md 규칙 예시 포인터도 재지정. **딥리서치 결과 원본**: `.../tasks/waza7mfsx.output`.
 >
-> **다음(재개 시)**: (1) **FR4 업데이트**(적응 4종: 관측 피크 최대심박 갱신 / 안정심박 수면HR 추정 / 토크테스트 %LTHR 앵커 / tier 승격 — spec-004 정합),
-> (2) **구 FR3(예측) 삭제** + FR5/FR6 갱신, (3) spec-001 "AI FR=FR2~6" 줄 갱신, (4) **HR 예측 문서군 archive**(report-006/adr-020/hr-prediction-formula-and-evidence/multiscale
-> 설계안/프로토타입 — "탐색 후 정직하게 de-scope" 사유표), (5) FR3/FR6용 신규 spec(분석·리포트 시스템). **문답식 유지, 서두르지 말 것.** 앱 구현 미변경.
+> **다음(재개 시)**: (1) **FR4 업데이트**(적응 4종: 관측 피크 최대심박 갱신 / 안정심박 수면HR 추정 / 토크테스트로 Zone2 상한을 실제 힘들어지는 지점에 맞추기(%LTHR) / tier 승격 — spec-004 정합),
+> (2) **FR5/FR6 갱신**(FR3 엔진 출력이 FR5 코칭/FR6 리포트로 흐르는 배선 반영), (3) spec-001 "AI FR=FR2~6" 줄 확인, (4) **예측 서사 잔여 정합**(아직 예측=NN/ODE로 서술된 현행 문서: spec-002 QA1, spec-011, spec-021, spec-022, spec-023, arch/architecture-overview, adr-016, arch/zone2-physiology-and-estimation, report-002/003/004/007 — 대부분 FR4/5/6 재정립과 함께 손봐야 함), (5) FR3/FR6용 신규 spec(분석 엔진 상세 명세). **문답식 유지, 서두르지 말 것.** 앱 구현 미변경.
 >
 > --- (이하 이전 기록) ---
 

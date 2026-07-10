@@ -30,7 +30,7 @@ Android + Galaxy Watch 기반 Zone 2 운동 코칭 앱.
 
 - **판단선(threshold)은 bpm 상수가 아니라 도출 통계량의 배수(k·σ)로 표현**해 사람마다 자가 보정되게 한다.
 - **리서치로 뭔가 정할 때는 반드시 근거를 댄다.** 근거 없는 이상한 데이터/상수를 지어내지 않는다. 단, 근거는 **SW/ML 방법론**(통계/신호처리/추정론)이면 충분하고 복잡한 운동생리 이론 증명은 불필요.
-- 상세 적용 예시 = `arch/hr-prediction-multiscale-trend-design.md` §0.
+- 상세 적용 예시 = `spec/spec-001-requirements.md` §FR3 상세 + `arch/adr-024-fr3-hr-prediction-drop-to-observation-analysis-engine.md` (분석 엔진이 이 원칙의 구현체 — 종류 A 도출값 + 종류 C Minetti 다항식, "5% 컷오프/온도 상수" 같은 마법상수는 거부하고 k·σ로 대체). 원본 워크스루(예측 설계 맥락, 현재는 탈락) = `arch/archive/hr-prediction-multiscale-trend-design.md` §0.
 
 ### 내가 모르는 상태로 진행하지 않는다
 - **모든 기능 설계 전**: `spec/spec-{nnn}-{title}.md` 에 명세 → 검토 → 승인 후 구현
