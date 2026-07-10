@@ -45,6 +45,12 @@ object SessionStore {
     fun load(ctx: Context, id: String): RunReport? =
         runCatching { fromJson(JSONObject(File(dir(ctx), "$id.json").readText())) }.getOrNull()
 
+    /** 전체 세션을 시간순(오래된→최근)으로 로드 — 추세/개인기록(SessionTrends)용. 데모 규모라 전량 로드. */
+    fun allReports(ctx: Context): List<RunReport> =
+        dir(ctx).listFiles { f -> f.extension == "json" }?.mapNotNull { f ->
+            runCatching { fromJson(JSONObject(f.readText())) }.getOrNull()
+        }?.sortedBy { it.startedAtEpochMs } ?: emptyList()
+
     fun delete(ctx: Context, id: String) {
         runCatching { File(dir(ctx), "$id.json").delete() }
     }

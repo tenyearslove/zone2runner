@@ -61,6 +61,13 @@ class ReportActivity : AppCompatActivity() {
         // 이전 세션 대비 향상/악화(FR6, spec-025) — 데이터를 세션 간으로 활용
         buildCompareCard(r)?.let { col.addView(it) }
 
+        // 세션 간 추세 + 개인 기록(누적 데이터 활용)
+        val history = com.zone2runner.app.data.SessionStore.allReports(this).let { h ->
+            if (h.none { it.id == r.id }) h + r else h
+        }
+        buildTrendCard(history)?.let { col.addView(it) }
+        buildRecordsCard(history, r)?.let { col.addView(it) }
+
         // 사후 세션 스토리(spec-023 FR2): "이번 러닝에서 왜 이렇게 코칭했나". 세션 종료 시 1회 생성·저장.
         if (r.sessionStory.isNotBlank()) {
             col.addView(card("이번 러닝 이야기", TextView(this).apply {
@@ -202,6 +209,11 @@ class ReportActivity : AppCompatActivity() {
             r.submaxHr?.let { row("서브맥시멀 심박 %.0f bpm — 낮아지면 체력 개선".format(it)) }
             r.analysisLines.forEach { ln -> row("· $ln", muted = true) }
         }))
+
+        // 구간(splits) / 경사 분해 / 워밍업 — 수집 시계열 최대 활용
+        buildSplitsCard(r)?.let { col.addView(it) }
+        buildGradeCard(r)?.let { col.addView(it) }
+        buildWarmupCard(r)?.let { col.addView(it) }
     }
 
     /** 이전 세션 대비 향상/악화 카드(FR6). 직전 세션이 없으면 안내, 비교 항목 없으면 null. */
@@ -230,6 +242,88 @@ class ReportActivity : AppCompatActivity() {
             })
         }
         return card("이전 세션 대비", box)
+    }
+
+    /** 세션 간 추세 스파크라인(FR6) — 지표별 최근 N세션 미니 그래프. */
+    private fun buildTrendCard(history: List<RunReport>): android.view.View? {
+        val trends = com.zone2runner.app.domain.SessionTrends.trends(history)
+        if (trends.isEmpty()) return null
+        val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        trends.forEach { t ->
+            val row = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; setPadding(0, dp(4), 0, dp(4))
+            }
+            row.addView(TextView(this).apply {
+                text = t.label; textSize = 12f; setTextColor(C_TEXT)
+                layoutParams = LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f)
+            })
+            row.addView(com.zone2runner.app.ui.SparklineView(this).apply { set(t.values, t.higherBetter) }.also {
+                it.layoutParams = LinearLayout.LayoutParams(dp(96), dp(28))
+            })
+            row.addView(TextView(this).apply {
+                val last = t.values.last()
+                text = if (t.unit.isBlank()) "  %.2f".format(last) else "  %.0f%s".format(last, t.unit)
+                textSize = 12f; setTextColor(C_MUTED)
+            })
+            box.addView(row)
+        }
+        return card("세션 추세 (최근 ${trends.first().values.size}회)", box)
+    }
+
+    /** 개인 기록(PR) + 이번 세션 신기록 배지(FR6). */
+    private fun buildRecordsCard(history: List<RunReport>, cur: RunReport): android.view.View? {
+        val recs = com.zone2runner.app.domain.SessionTrends.records(history, cur)
+        if (recs.isEmpty()) return null
+        val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        recs.forEach { rec ->
+            box.addView(TextView(this).apply {
+                val badge = if (rec.isNew) "   🏅 이번 세션 신기록!" else ""
+                text = "${rec.label}: ${rec.value}$badge"
+                textSize = 13f; setTextColor(if (rec.isNew) C_GREEN else C_TEXT); setPadding(0, dp(3), 0, dp(3))
+            })
+        }
+        return card("개인 기록", box)
+    }
+
+    /** km 구간 분석(FR6). */
+    private fun buildSplitsCard(r: RunReport): android.view.View? {
+        val splits = com.zone2runner.app.analysis.SessionAnalytics.splits(r)
+        if (splits.size < 2) return null
+        val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        box.addView(TextView(this).apply {
+            text = "km    심박     페이스     경사보정"; textSize = 11f; setTextColor(C_MUTED); setPadding(0, 0, 0, dp(4))
+        })
+        splits.forEach { s ->
+            box.addView(TextView(this).apply {
+                text = "%-4d %d bpm   %s   %s".format(s.km, s.avgHr, fmtPace(s.avgPaceMinKm), fmtPace(s.avgGapMinKm))
+                textSize = 12f; setTextColor(C_TEXT); setPadding(0, dp(2), 0, dp(2))
+            })
+        }
+        return card("구간 분석 (km별, 경사보정 포함)", box)
+    }
+
+    /** 오르막/평지/내리막 분해(FR6). */
+    private fun buildGradeCard(r: RunReport): android.view.View? {
+        val bands = com.zone2runner.app.analysis.SessionAnalytics.gradeBreakdown(r)
+        if (bands.size < 2) return null
+        val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        bands.forEach { b ->
+            box.addView(TextView(this).apply {
+                text = "%s   %d:%02d   평균 %d bpm   경사보정 %s".format(b.label, b.sec / 60, b.sec % 60, b.avgHr, fmtPace(b.avgGapMinKm))
+                textSize = 12f; setTextColor(C_TEXT); setPadding(0, dp(2), 0, dp(2))
+            })
+        }
+        return card("경사 구간 분해", box)
+    }
+
+    /** 워밍업 품질(FR6). */
+    private fun buildWarmupCard(r: RunReport): android.view.View? {
+        val w = com.zone2runner.app.analysis.SessionAnalytics.warmup(r) ?: return null
+        val note = if (w.abrupt)
+            "초반 %d초 만에 심박이 %d→%d bpm으로 급상승했어요. 다음엔 천천히 올리면 후반 드리프트를 줄일 수 있어요.".format(w.reachSec, w.startHr, w.plateauHr)
+        else
+            "심박이 %d초에 걸쳐 %d→%d bpm으로 완만히 올랐어요. 좋은 워밍업이에요.".format(w.reachSec, w.startHr, w.plateauHr)
+        return card("워밍업", TextView(this).apply { text = note; textSize = 13f; setTextColor(C_TEXT); setLineSpacing(dp(2).toFloat(), 1f) })
     }
 
     private fun aerobicAssessment(r: RunReport): String {
