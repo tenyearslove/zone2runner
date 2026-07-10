@@ -30,7 +30,8 @@
 > - **결선**: RunEngine이 onTick(실시간)/onSessionEnd(리포트) 실행, 드리프트 개인 플로어 갱신+LearnedZone 저장/복원. LiveState/RunReport 원시필드(도메인 순환 회피). SafetyGuard(spec-008, LLM 우회) 결선. FR5 반응형 코칭(driftRising 트리거, 예측 선제 대체) + RuleCoach driftWarn 4페르소나. FR6 리포트 '관측 분석 지표' 카드 + 대시보드 라이브 드리프트/GAP/안전.
 > - **검증**: 단위+통합 테스트 **106건 전부 통과**, `assembleDebug` APK 빌드 성공. 폐루프(손 구성 세션) 통합검증 포함. 시뮬(VirtualRunner/Manual) 그대로 동작.
 > - **커밋**: spec-025 초안→Implemented, 구현 10커밋(RollingLinReg/예측제거/코어/5지표/NoiseFloor/RunEngine결선/SafetyGuard/반응형코칭/리포트/통합검증).
-> - **후속(미완, 설계 안정화 후)**: architecture-overview 전면 재작성(예측→분석엔진+AI System 매핑), 실기기 설치/실주행 검증, spec-004 디커플링 δ=5%→k·σ 본문 반영, HRR 노력종료 감지 정밀화(spec-025 미해결), 리포트 재작성.
+> - **후속 처리(2026-07-10 추가 완료)**: ★architecture-overview **전면 재작성 완료**(예측→분석엔진 + 강의 AI System 아키텍처 매핑 절 + 6QA/모듈뷰 현행화). 잔존 예측 참조 정합(spec-019/022 죽은 adr 포인터, 시뮬 합성HR≠앱예측 명확화). **4개 실기기 installDebug 완료**(사용자 실주행 테스트 중).
+> - **남은 후속(우선순위 낮음 / 실데이터 대기)**: spec-004 디커플링 δ=5%→k·σ 본문 반영(배너는 있음), HRR 노력종료 감지 정밀화(현재 기능·테스트 완비, 실주행 데이터로 튜닝), zone2-physiology §5 예측절(배너 처리됨), 리포트 재작성(설계 안정화 후). 실인간 정확도 = 실주행 검증 후.
 >
 > **★★ 문서 대수선 진행 중 (2026-07-10, 사용자 지시)**: 방향 전환 누적으로 문서 정합이 깨져 대수선. 원칙 = (a) 드롭된 내용 문서는 고치지 말고 과감히 archive, (b) 흩어진 내용은 단일 정본으로 통합(문서 규칙 재정립), (c) **report는 설계 안정화 후 착수 → 전량 archive**(살릴 것만 이관), (d) **강의 프레임워크 학습분은 framework/ 정본으로 영구 보존**.
 > - **배치 1(4cebeba)**: framework/ 신설(ai-system-and-quality.md, ai-8-qa.md, lecture-pdfs/, assignment/, README), CLAUDE.md 문서규칙 재정립(Framework 종류/Report 중단/단일정본).
