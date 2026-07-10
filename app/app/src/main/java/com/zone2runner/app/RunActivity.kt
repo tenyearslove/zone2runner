@@ -872,8 +872,26 @@ class RunActivity : AppCompatActivity() {
             uEstView.text = "개인 Zone 2 상단: $upBpm bpm (러닝하며 보정 중)"
         }
 
-        // 러닝 조언 표시 자리(추후 분석 엔진용). 현재는 비워 둔다.
-        adviceView.text = ""
+        // 관측 분석 엔진(FR3) 라이브 표시: 안전 경고 우선, 없으면 드리프트/경사보정 페이스.
+        val advice = buildString {
+            val safety = s.safetyAlert
+            if (!safety.isNullOrBlank()) {
+                append("⚠ $safety")
+            } else {
+                s.driftSlope?.let { d ->
+                    if (kotlin.math.abs(d) >= 0.5)
+                        append("드리프트 %+.1f bpm/분%s".format(d, if (s.driftRising) " ↑" else ""))
+                }
+                s.gapPaceMinKm?.let { g ->
+                    if (moving && kotlin.math.abs(s.slopePct) > 2.0) {
+                        if (isNotEmpty()) append("   ")
+                        append("경사보정 %.2f min/km".format(g))
+                    }
+                }
+            }
+        }
+        adviceView.text = advice
+        adviceView.setTextColor(if (s.safetyAlert != null) C_AMBER else C_MUTED)
     }
 
     /** 코칭 문장을 음성으로(llm-verify에서 검증한 TTS end-to-end). 세션 종료 문구는 제외. */

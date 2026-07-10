@@ -188,6 +188,24 @@ class ReportActivity : AppCompatActivity() {
         col.addView(card("유산소 분석", TextView(this).apply {
             text = aerobicAssessment(r); textSize = 13f; setTextColor(C_TEXT)
         }))
+
+        // 관측 분석 엔진(FR3, spec-025) 세션종료 지표 — 드리프트/서브맥시멀/HRR/케이던스
+        if (r.analysisLines.isNotEmpty()) {
+            col.addView(card("관측 분석 지표", LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                r.submaxHr?.let {
+                    addView(TextView(this@ReportActivity).apply {
+                        text = "서브맥시멀 심박 %.0f bpm — 세션 간 낮아지면 유산소 체력 개선".format(it)
+                        textSize = 12f; setTextColor(C_TEXT); setPadding(0, dp(2), 0, dp(4))
+                    })
+                }
+                r.analysisLines.forEach { ln ->
+                    addView(TextView(this@ReportActivity).apply {
+                        text = "· $ln"; textSize = 12f; setTextColor(C_MUTED); setPadding(0, dp(2), 0, dp(2))
+                    })
+                }
+            }))
+        }
     }
 
     private fun aerobicAssessment(r: RunReport): String {
