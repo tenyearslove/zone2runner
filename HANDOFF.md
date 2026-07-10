@@ -25,6 +25,11 @@
 >
 > **재정립 FR 표(합의, 일부만 반영됨)**: FR1(프로필+초기경계)/FR2(실시간 현재 존판정)/**FR3 신설=관측 다각도 분석·특성화**(구 FR3 예측 삭제)/FR4(토크테스트 역치앵커 ML)/FR5(반응형 코칭, 다중프롬프트+가드레일+폴백)/FR6(그래프·리포트·설명).
 >
+> **★★ 문서 대수선 진행 중 (2026-07-10, 사용자 지시) [여기서 이어가기]**: 방향 전환 누적으로 문서 정합이 깨져 대수선. 원칙 = (a) 드롭된 내용 문서는 고치지 말고 과감히 archive, (b) 흩어진 내용은 단일 정본으로 통합(문서 규칙 재정립), (c) **report는 설계 안정화 후 착수 → 전량 archive**(살릴 것만 이관), (d) **강의 프레임워크 학습분은 framework/ 정본으로 영구 보존**.
+> - **배치 1 완료(4cebeba)**: framework/ 신설(ai-system-and-quality.md, ai-8-qa.md, lecture-pdfs/, assignment/), CLAUDE.md 문서규칙 재정립(Framework 종류/Report 중단/단일정본 원칙). report/references/ 비움.
+> - **남은 배치**: (2) **spec-002 QA 전면 재작성**(report-007 정본 흡수 — 6 QA를 6요소 시나리오로, 예측 참조 제거) → (3) **report 전량 archive**(report-001/002/003/004/007, 살릴 것 이관 후, report/archive README 사유표) → (4) **spec archive/편집**: spec-017 archive(객관음성 VT1=adr-018 기각계열), 예측 제거 편집(spec-011/020/021/023, spec-004 §3 디커플링 5%→k·σ) → (5) **arch 정합**: adr-013 註(NN예측 반쪽 adr-024로 대체), **adr-016 새 ADR로 대체**(AI≠NN, NN 0개—Bayesian/규칙/통계/LLM), architecture-overview/zone2-physiology 예측절 편집 → (6) CLAUDE.md/HANDOFF 최종 갱신.
+> - **adr-016 결정**: 새 ADR로 대체(사용자 승인). **문답식 유지, 서두르지 말 것.**
+>
 > **★ 반영/확정 이력**: **FR1~6 재정립 1차 완료** — FR1(이전) + **FR2/FR3/FR4/FR5/FR6(2026-07-10 이 세션)**.
 > - **FR1**: spec-001 FR1(프로필+초기 콜드스타트 경계, Tanaka/Karvonen/%HRmax 폴백, "FR1만으로 완결 5존 자립", 적응은 FR4) + §FR1 상세 + 추적표. 정합: **spec-009**(RHR 사다리), **adr-012**(Tanaka max+%HRmax 폴백).
 > - **FR2**(이 세션 보강): spec-001 FR2 — 이중 기준 판정(표시 5존=순간심박+히스테리시스 / 코칭·통계=60초 지속) + 강건성(가드레일/히스테리시스/두절 폴백) 문장화 + "경계는 FR1/FR4 소비만".
