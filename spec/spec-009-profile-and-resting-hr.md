@@ -1,8 +1,8 @@
 # Spec-009: 프로필 입력 및 안정시심박(RHR) 확보
 
-- **상태**: Draft
+- **상태**: Draft (2026-07-10 FR1 정합 — Tanaka 폴백/RHR 계산 명확화, 적응=FR4)
 - **날짜**: 2026-07-02
-- **관련 요구**: spec-001 FR1, C02, `arch/archive/adr-003-zone2-classification-approach.md`(baseline/RHR 사다리), spec-004(개인화 prior)
+- **관련 요구**: spec-001 FR1(프로필+초기 경계), FR4(적응), C02, `arch/adr-012`(콜드스타트 prior), spec-004(개인화 prior)
 
 ## 목표
 
@@ -23,16 +23,16 @@
 ### RHR 확보 사다리 (adr-003, 정확도/자동화 순)
 | 순위 | 소스 | 방식 |
 |:---:|------|------|
-| 1 | Samsung Health 안정시심박 기록 | Phone에서 Samsung Health Data SDK 조회(수면 기반 실측) |
+| 1 | Samsung Health 수면/상시 심박 이력 | Phone에서 Samsung Health Data SDK로 심박 시계열 조회 → **수면 최저 분위수로 RHR 계산**(SDK가 완성 RHR값은 안 줌 — 우리가 계산). 파트너 등록 완료, 개발자 모드로 개발 가능 |
 | 2 | 온보딩 측정 | 워치로 3~5분 안정 상태 HR 측정 후 안정값 채택 |
 | 3 | 수동 입력 | 사용자가 아는 RHR 직접 입력 |
-| 4 | %HRmax 폴백 | RHR 없이 `220-age` 기반 %HRmax (나이만 있으면 항상 동작) |
+| 4 | %HRmax 폴백 | RHR 없이 **Tanaka(`208−0.7×나이`)** 기반 %HRmax (나이만 있으면 항상 동작). **틀린 RHR을 Karvonen에 꽂지 않고 %HRmax로 감** |
 
 ### 주요 흐름
 1. 온보딩: 프로필 입력 → RHR 확보(1순위부터 시도, 실패 시 하위로)
-2. 확보한 RHR/나이로 초기 Zone 2 경계(HRR) 산정 → 개인화 prior로 전달(spec-004)
+2. 확보한 RHR/나이로 초기 Zone 2 경계 산정 — **RHR 있으면 Karvonen(%HRR), 없으면 %HRmax(Tanaka)** → 개인화 prior로 전달(spec-004). **이 초기값만으로 완결된 5존이 나와 앱이 동작(FR1 자립)**
 3. RHR 미확보 시 %HRmax 폴백으로도 앱은 정상 시작(C02 콜드스타트)
-4. 이후 운동 누적으로 개인화가 경계를 실측 기반 보정(FR5)
+4. 이후 운동 누적으로 개인화가 경계를 실측 기반 보정 — **토크테스트로 Zone 2 상한을 유산소 역치(%LTHR)에 앵커, 관측 피크로 최대심박 갱신(FR4)**
 
 ### 예외 처리
 - Samsung Health 권한 거부/데이터 없음 → 2~4순위로 폴백
@@ -45,6 +45,7 @@
 - [ ] AC-4: 최대심박 자동 산정 + 사용자 수정 가능
 
 ## 미해결 사항
-- [ ] Samsung Health Data SDK 안정시심박 레코드명/권한 확정
+- [ ] Samsung Health Data SDK: 심박 시계열 조회 API/권한 확정 (완성 RHR값은 미노출 확인됨 → 수면 최저로 우리가 계산). 파트너 등록 완료, 배포 시에만 패키지+SHA-256 승인
+- [ ] 수면 최저 → RHR 계산 파라미터(분위수/최소 지속시간)
 - [ ] 온보딩 측정 프로토콜(시간/안정 판정)
 - [ ] 성별/체중의 Zone 산정 반영 여부(현재 나이/RHR 중심)
