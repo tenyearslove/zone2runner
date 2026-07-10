@@ -133,6 +133,14 @@ data class RunReport(
         get() = if (durationSec > 0) (inSec * 100 / durationSec) else 0
 
     /**
+     * 효율(Efficiency Factor 근사, 種類A) = 평균 속도(m/분) / 평균 심박.
+     * 심박 1회당 나아간 거리 — 페이스 차이를 심박으로 정규화해 세션 간 유산소 효율을 비교하는 대표 지표.
+     * 높을수록 같은 심박으로 더 빨리 = 유산소 개선. 0=산출 불가.
+     */
+    val ef: Double
+        get() = if (avgHr > 0 && durationSec > 0) (distanceM / (durationSec / 60.0)) / avgHr else 0.0
+
+    /**
      * 심혈관 드리프트(Cardiac Drift) 추정: 세션 전반부 대비 후반부의 HR/페이스 비율 상승률(%).
      * 유산소(Zone2) 지속의 대표 지표. 같은 페이스에서 HR이 오르면 드리프트 증가.
      */

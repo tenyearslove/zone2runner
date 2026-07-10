@@ -52,12 +52,14 @@ class ReportActivity : AppCompatActivity() {
         })
         col.addView(TextView(this).apply {
             val src = if (r.sourceMode == "live") "실센서(GPS+워치HR)" else "시뮬레이션"
-            // 판정은 항상 규칙(ZoneJudge, adr-013). NN은 심박 예측(usedModel=동역학 모델 로드).
-            val pred = if (r.usedModel) " + 심박예측" else ""
+            // 판정=규칙(adr-013), 분석=관측 엔진(adr-024), 표현=LLM/규칙(adr-002).
             val coach = if (r.coachSource == "llm") "Gemini Nano 코칭" else "규칙 코칭"
-            text = "$src · 규칙 판정 + 개인화$pred + $coach"
+            text = "$src · 규칙 판정 + 관측 분석 + 개인화 + $coach"
             textSize = 11f; setTextColor(C_MUTED); setPadding(0, dp(2), 0, dp(12))
         })
+
+        // 이전 세션 대비 향상/악화(FR6, spec-025) — 데이터를 세션 간으로 활용
+        buildCompareCard(r)?.let { col.addView(it) }
 
         // 사후 세션 스토리(spec-023 FR2): "이번 러닝에서 왜 이렇게 코칭했나". 세션 종료 시 1회 생성·저장.
         if (r.sessionStory.isNotBlank()) {
@@ -189,23 +191,45 @@ class ReportActivity : AppCompatActivity() {
             text = aerobicAssessment(r); textSize = 13f; setTextColor(C_TEXT)
         }))
 
-        // 관측 분석 엔진(FR3, spec-025) 세션종료 지표 — 드리프트/서브맥시멀/HRR/케이던스
-        if (r.analysisLines.isNotEmpty()) {
-            col.addView(card("관측 분석 지표", LinearLayout(this).apply {
-                orientation = LinearLayout.VERTICAL
-                r.submaxHr?.let {
-                    addView(TextView(this@ReportActivity).apply {
-                        text = "서브맥시멀 심박 %.0f bpm — 세션 간 낮아지면 유산소 체력 개선".format(it)
-                        textSize = 12f; setTextColor(C_TEXT); setPadding(0, dp(2), 0, dp(4))
-                    })
-                }
-                r.analysisLines.forEach { ln ->
-                    addView(TextView(this@ReportActivity).apply {
-                        text = "· $ln"; textSize = 12f; setTextColor(C_MUTED); setPadding(0, dp(2), 0, dp(2))
-                    })
-                }
-            }))
+        // 관측 분석 엔진(FR3, spec-025) 지표 — 항상 계산되는 효율/드리프트 + 게이트 통과한 세션종료 지표
+        col.addView(card("관측 분석 지표", LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            fun row(t: String, muted: Boolean = false) = addView(TextView(this@ReportActivity).apply {
+                text = t; textSize = 12f; setTextColor(if (muted) C_MUTED else C_TEXT); setPadding(0, dp(2), 0, dp(2))
+            })
+            if (r.ef > 0) row("효율(심박당 거리) %.2f — 세션 간 높아지면 유산소 개선".format(r.ef))
+            row("심혈관 드리프트 %.1f%% — 낮을수록 안정(같은 페이스에 심박 상승 적음)".format(r.cardiacDriftPct))
+            r.submaxHr?.let { row("서브맥시멀 심박 %.0f bpm — 낮아지면 체력 개선".format(it)) }
+            r.analysisLines.forEach { ln -> row("· $ln", muted = true) }
+        }))
+    }
+
+    /** 이전 세션 대비 향상/악화 카드(FR6). 직전 세션이 없으면 안내, 비교 항목 없으면 null. */
+    private fun buildCompareCard(cur: RunReport): android.view.View? {
+        val curStart = cur.startedAtEpochMs.takeIf { it > 0 } ?: Long.MAX_VALUE
+        val prevSum = com.zone2runner.app.data.SessionStore.listSummaries(this)
+            .filter { it.id != cur.id && it.startedAtEpochMs in 1 until curStart }
+            .maxByOrNull { it.startedAtEpochMs }
+            ?: return card("이전 세션 대비", TextView(this).apply {
+                text = "첫 세션이에요. 다음 러닝부터 이전 대비 무엇이 향상/악화됐는지 보여드려요."
+                textSize = 12f; setTextColor(C_MUTED)
+            })
+        val prev = com.zone2runner.app.data.SessionStore.load(this, prevSum.id) ?: return null
+        val lines = com.zone2runner.app.domain.SessionCompare.compare(cur, prev)
+        if (lines.isEmpty()) return null
+        val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        lines.forEach { ln ->
+            val (color, mark) = when (ln.verdict) {
+                com.zone2runner.app.domain.Verdict.BETTER -> C_GREEN to "▲ 개선"
+                com.zone2runner.app.domain.Verdict.WORSE -> C_AMBER to "▼ 악화"
+                com.zone2runner.app.domain.Verdict.SIMILAR -> C_MUTED to "= 비슷"
+            }
+            box.addView(TextView(this).apply {
+                text = "${ln.label}   ${ln.prev} → ${ln.cur}   $mark (${ln.delta})"
+                textSize = 13f; setTextColor(color); setPadding(0, dp(3), 0, dp(3))
+            })
         }
+        return card("이전 세션 대비", box)
     }
 
     private fun aerobicAssessment(r: RunReport): String {
@@ -297,5 +321,7 @@ class ReportActivity : AppCompatActivity() {
         val C_TEXT = Palette.TEXT
         val C_MUTED = Palette.MUTED
         val C_BLUE = Palette.BLUE
+        val C_GREEN = Palette.ACCENT
+        val C_AMBER = Palette.AMBER
     }
 }

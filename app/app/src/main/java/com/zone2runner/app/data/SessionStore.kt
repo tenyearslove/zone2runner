@@ -78,6 +78,8 @@ object SessionStore {
         o.put("sourceMode", r.sourceMode)
         o.put("avgSpm", r.avgSpm)
         o.put("sessionStory", r.sessionStory)
+        if (r.submaxHr != null) o.put("submaxHr", r.submaxHr)
+        if (r.analysisLines.isNotEmpty()) o.put("analysisLines", JSONArray(r.analysisLines))
         o.put("coachingLines", JSONArray(r.coachingLines))
         val tr = JSONArray()
         for (t in r.track) {
@@ -141,6 +143,8 @@ object SessionStore {
             sourceMode = o.optString("sourceMode", "sim"),
             avgSpm = o.optInt("avgSpm", 0),
             sessionStory = o.optString("sessionStory", ""),
+            submaxHr = if (o.has("submaxHr")) o.optDouble("submaxHr") else null,
+            analysisLines = o.optJSONArray("analysisLines")?.let { a -> List(a.length()) { a.getString(it) } } ?: emptyList(),
         )
     }
 }
