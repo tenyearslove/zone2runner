@@ -21,6 +21,7 @@ data class CoachContext(
     // 관측 분석 엔진(FR3, spec-025) 반응형 코칭 컨텍스트. 예측 대체 — 관측된 드리프트 상승에 반응.
     val driftRising: Boolean = false,   // 정속인데 심박이 유의하게 오르는 중(드리프트↑) → 선제적 감속 안내
     val gapPaceMinKm: Double? = null,   // 경사보정 페이스(오르막 맥락, 방향 아님)
+    val milestoneMin: Int = 0,          // Zone 2 연속 유지 마일스톤(분). >0이면 격려 코칭(FR5)
 ) {
     /** 기온 밴드. 더위만 코칭 맥락에 반영(생리적으로 Zone2 드리프트에 영향). 방향은 아님. */
     val heat: HeatBand
@@ -112,11 +113,16 @@ class RuleCoach(personaKey: String = "default") : Coach {
         val keep: List<String>,
         val cadenceLow: String, val cadenceHigh: String, val heat: String,
         val driftWarn: String,
+        val milestone: String, // "{min}" 치환
     )
 
     override suspend fun say(ctx: CoachContext): String {
         val uphill = ctx.slopePct > 2
         val downhill = ctx.slopePct < -2
+        // 마일스톤 격려(FR5): Zone 2 연속 유지 N분 달성 — 동기부여(방향 아님).
+        if (ctx.milestoneMin > 0) {
+            return guard(p.milestone.replace("{min}", ctx.milestoneMin.toString()))
+        }
         // 반응형(FR5, spec-025): 아직 Zone 2 안이지만 정속인데 심박이 오르는 중(관측 드리프트↑) → 미리 여유를 안내.
         // 예측이 아니라 "지금 관측된 추세"에 반응(방향 강제 없이 MAINTAIN 톤 — 잘못된 방향 위험 없음).
         if (ctx.driftRising && ctx.judgment == ZoneJudgment.IN) {
@@ -168,6 +174,7 @@ class RuleCoach(personaKey: String = "default") : Coach {
                 cadenceHigh = " 발걸음 빈도는 살짝 낮추고 보폭을 편안하게.",
                 heat = " 더우니 무리하지 말고 수분 챙겨요.",
                 driftWarn = "심박이 서서히 오르고 있어요. 지금 페이스에 여유를 두고 리듬을 지켜봐요.",
+                milestone = "Zone 2 {min}분째 완벽 유지예요! 이 리듬 그대로 가요.",
             ),
             "spartan" to Phrases(
                 upDownhill = "내리막이다. 더 밀어서 심박을 Zone 2로 올려.",
@@ -188,6 +195,7 @@ class RuleCoach(personaKey: String = "default") : Coach {
                 cadenceHigh = " 발걸음 빈도 살짝 낮추고 보폭 편하게.",
                 heat = " 덥다. 무리하지 말고 수분 챙겨.",
                 driftWarn = "심박이 슬슬 오른다. 지금 페이스에 여유 두고 리듬 지켜.",
+                milestone = "Zone 2 {min}분 유지. 잘하고 있다. 그대로 간다.",
             ),
             "friend" to Phrases(
                 upDownhill = "내리막이야! 조금만 더 밀어서 심박을 Zone 2로 올려보자.",
@@ -208,6 +216,7 @@ class RuleCoach(personaKey: String = "default") : Coach {
                 cadenceHigh = " 발걸음 빈도 살짝 낮추고 보폭 편하게 가자.",
                 heat = " 덥다, 무리하지 말고 물 꼭 챙겨!",
                 driftWarn = "심박이 슬슬 올라오네. 지금 페이스에 여유 두고 리듬 지켜보자.",
+                milestone = "Zone 2 {min}분째야! 완전 잘하고 있어. 이대로 가자.",
             ),
             "calm" to Phrases(
                 upDownhill = "내리막 구간입니다. 조금 더 밀어 심박을 Zone 2로 올려주십시오.",
@@ -228,6 +237,7 @@ class RuleCoach(personaKey: String = "default") : Coach {
                 cadenceHigh = " 발걸음 빈도를 살짝 낮추고 보폭을 편안하게 하십시오.",
                 heat = " 기온이 높습니다. 무리하지 마시고 수분을 섭취하십시오.",
                 driftWarn = "심박이 서서히 상승하고 있습니다. 현재 페이스에 여유를 두고 리듬을 지켜보십시오.",
+                milestone = "Zone 2를 {min}분째 유지하고 있습니다. 아주 좋습니다. 현재 리듬을 지켜주십시오.",
             ),
         )
     }

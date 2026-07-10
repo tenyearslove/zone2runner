@@ -26,6 +26,12 @@ class ReactiveCoachTest {
         assertFalse("드리프트 아닐 땐 유지 문구: $line", line.contains("서서히 오르"))
     }
 
+    @Test fun milestone_returnsEncouragementWithMinutes() = runBlocking {
+        val c = RuleCoach("default")
+        val line = c.say(CoachContext(ZoneJudgment.IN, 0.0, 6.0, 600, milestoneMin = 10))
+        assertTrue("마일스톤 분수 포함: $line", line.contains("10분"))
+    }
+
     @Test fun driftFlag_ignoredWhenNotIn() = runBlocking {
         // 판정이 ABOVE면 드리프트 플래그와 무관하게 초과 방향 코칭(드리프트 경고는 IN 전용)
         val c = RuleCoach("default")

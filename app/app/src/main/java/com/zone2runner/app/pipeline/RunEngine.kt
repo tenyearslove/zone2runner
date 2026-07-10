@@ -167,13 +167,14 @@ class RunEngine(
             val hrRecent = profile.restingHr + hrFrac * profile.hrr
             if (feat[5] in 0.03..0.10) obsCandidates += hrRecent
         }
-        // 존 체류 시간(초 단위 누적)
+        // 존 체류 시간(초 단위 누적) + Zone 2 연속 유지 스트릭(마일스톤 격려용)
         when (judgment) {
-            ZoneJudgment.BELOW -> belowSec++
-            ZoneJudgment.ABOVE -> aboveSec++
-            ZoneJudgment.IN -> inSec++
+            ZoneJudgment.BELOW -> { belowSec++; zone2StreakSec = 0 }
+            ZoneJudgment.ABOVE -> { aboveSec++; zone2StreakSec = 0 }
+            ZoneJudgment.IN -> { inSec++; zone2StreakSec++ }
             null -> {}
         }
+        maybeMilestoneCoach(s)
         // 경로 + 시계열(3초마다 다운샘플). GPS 미확보(NaN) 좌표는 경로에 넣지 않음
         if (s.tSec % 3 == 0) {
             if (s.lat.isFinite() && s.lon.isFinite()) track += TrackPoint(s.lat, s.lon, judgment)
@@ -247,6 +248,17 @@ class RunEngine(
         fireCoach(s, j)
     }
 
+    private var zone2StreakSec = 0
+    private var lastMilestoneMin = 0
+    /** Zone 2 연속 유지 5분 단위 마일스톤 격려(FR5) — 누적 데이터 활용, 동기부여. */
+    private suspend fun maybeMilestoneCoach(s: Sample) {
+        if (zone2StreakSec == 0 || zone2StreakSec % 300 != 0) return // 정확히 5/10/15…분에
+        val min = zone2StreakSec / 60
+        if (min <= lastMilestoneMin || s.tSec - lastCoachSec < cadence.minGapSec) return
+        lastMilestoneMin = min
+        fireCoach(s, ZoneJudgment.IN, milestoneMin = min)
+    }
+
     private var lastReactiveSec = -9999
     /**
      * 반응형 드리프트 코칭(FR5, spec-025): 판정은 IN인데 정속에서 심박이 유의하게 오르는 중이면
@@ -260,17 +272,17 @@ class RunEngine(
         fireCoach(s, ZoneJudgment.IN, reactive = true)
     }
 
-    private suspend fun fireCoach(s: Sample, j: ZoneJudgment, reactive: Boolean = false) {
+    private suspend fun fireCoach(s: Sample, j: ZoneJudgment, reactive: Boolean = false, milestoneMin: Int = 0) {
         val scope = coachScope
         if (scope != null && coachJob?.isActive == true) return // 이전 생성이 아직 진행 중이면 건너뜀
         lastCoachSec = s.tSec
-        lastJudgmentForCoach = j
-        val reason = if (reactive) "드리프트↑" else reasonOf(j)
+        if (milestoneMin == 0) lastJudgmentForCoach = j
+        val reason = when { milestoneMin > 0 -> "마일스톤"; reactive -> "드리프트↑"; else -> reasonOf(j) }
         val ctx = CoachContext(
             j, s.slopePct, s.paceMinKm, s.tSec, spm = s.spm,
             currentHr = sustainedHr, loBpm = coachLoBpm, hiBpm = coachHiBpm,
             tempC = ambientTempC,
-            driftRising = reactive, gapPaceMinKm = gapPace,
+            driftRising = reactive, gapPaceMinKm = gapPace, milestoneMin = milestoneMin,
         )
         if (scope == null) {
             recordCoaching(s.tSec, coach.say(ctx), 0L, reason)
