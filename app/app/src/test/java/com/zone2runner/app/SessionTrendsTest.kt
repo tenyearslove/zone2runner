@@ -1,0 +1,48 @@
+package com.zone2runner.app
+
+import com.zone2runner.app.domain.RunReport
+import com.zone2runner.app.domain.SessionTrends
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+class SessionTrendsTest {
+
+    private fun rep(avgHr: Int, submax: Double?, dist: Double = 3000.0, dur: Int = 1200, inSec: Int = 600) =
+        RunReport(
+            durationSec = dur, distanceM = dist, avgHr = avgHr, maxHr = avgHr + 20,
+            belowSec = 0, inSec = inSec, aboveSec = dur - inSec, avgPaceMinKm = 6.0,
+            coachingLines = emptyList(), track = emptyList(),
+            uEstStartFrac = 0.70, uEstEndFrac = 0.70, restingHr = 55, maxHrProfile = 185,
+            avgSpm = 176, submaxHr = submax,
+        )
+
+    @Test fun trends_efIncreasing() {
+        val history = listOf(rep(155, 148.0), rep(150, 146.0), rep(145, 143.0), rep(140, 140.0))
+        val trends = SessionTrends.trends(history)
+        val ef = trends.first { it.label == "효율(EF)" }
+        assertEquals(4, ef.values.size)
+        assertTrue("EF 우상향", ef.values.last() > ef.values.first())
+        assertTrue(ef.higherBetter)
+        val submax = trends.first { it.label == "서브맥시멀 심박" }
+        assertTrue("서브맥시멀 하강", submax.values.last() < submax.values.first())
+    }
+
+    @Test fun records_currentSessionSetsPR() {
+        val prev = listOf(rep(155, 148.0), rep(150, 146.0))
+        val current = rep(140, 138.0) // 최고 효율 + 최저 서브맥시멀
+        val history = prev + current
+        val recs = SessionTrends.records(history, current)
+        assertTrue(recs.first { it.label == "최고 효율(EF)" }.isNew)
+        assertTrue(recs.first { it.label == "최저 서브맥시멀 심박" }.isNew)
+        // newRecords는 갱신분만
+        assertTrue(SessionTrends.newRecords(history, current).any { it.label == "최고 효율(EF)" })
+    }
+
+    @Test fun records_notNewWhenWorse() {
+        val prev = listOf(rep(140, 138.0)) // 이미 좋은 기록
+        val current = rep(155, 150.0)       // 더 나쁨
+        val history = prev + current
+        assertTrue(SessionTrends.newRecords(history, current).none { it.label == "최고 효율(EF)" })
+    }
+}

@@ -1,0 +1,86 @@
+package com.zone2runner.app.analysis
+
+import com.zone2runner.app.domain.MPS_PER_MIN_KM
+import com.zone2runner.app.domain.RunReport
+import com.zone2runner.app.domain.SeriesPoint
+import com.zone2runner.app.analysis.AnalysisConfig.MINETTI_LEVEL
+import com.zone2runner.app.analysis.AnalysisConfig.minettiCr
+
+/**
+ * 세션 내 심층 분석(FR6, spec-025) — 수집 시계열을 최대한 활용해 구간/경사/워밍업을 분해한다.
+ * 순수 함수(테스트 가능). GAP은 Minetti 다항식(경사 정규화). 시계열이 얕으면 빈 결과.
+ */
+object SessionAnalytics {
+
+    data class Split(val km: Int, val avgHr: Int, val avgPaceMinKm: Double, val avgGapMinKm: Double)
+    data class GradeBand(val label: String, val sec: Int, val avgHr: Int, val avgGapMinKm: Double)
+    data class Warmup(val reachSec: Int, val startHr: Int, val plateauHr: Int, val abrupt: Boolean)
+
+    private fun mps(pace: Double) = MPS_PER_MIN_KM / pace.coerceAtLeast(0.1)   // m/s
+    private fun gap(pace: Double, slopePct: Double) = pace * (MINETTI_LEVEL / minettiCr(slopePct / 100.0))
+    private fun valid(p: SeriesPoint) = p.hr > 0 && p.paceMinKm in 2.0..20.0
+
+    /** 각 점의 시간 간격(초) — 다운샘플 간격을 추정(최대 5초로 클램프해 이상 구간 방어). */
+    private fun dt(series: List<SeriesPoint>, i: Int): Int {
+        if (series.size < 2) return 3
+        val d = if (i + 1 < series.size) series[i + 1].tSec - series[i].tSec else series[i].tSec - series[i - 1].tSec
+        return d.coerceIn(1, 5)
+    }
+
+    /** km 구간별 평균 심박/페이스/경사보정 페이스. 누적거리로 버킷팅. */
+    fun splits(r: RunReport): List<Split> {
+        val s = r.series
+        if (s.size < 8) return emptyList()
+        val hrSum = HashMap<Int, Double>(); val paceSum = HashMap<Int, Double>()
+        val gapSum = HashMap<Int, Double>(); val wSum = HashMap<Int, Double>()
+        var dist = 0.0
+        for (i in s.indices) {
+            val p = s[i]; if (!valid(p)) continue
+            val w = dt(s, i).toDouble()
+            val km = (dist / 1000.0).toInt()
+            hrSum[km] = (hrSum[km] ?: 0.0) + p.hr * w
+            paceSum[km] = (paceSum[km] ?: 0.0) + p.paceMinKm * w
+            gapSum[km] = (gapSum[km] ?: 0.0) + gap(p.paceMinKm, p.slopePct) * w
+            wSum[km] = (wSum[km] ?: 0.0) + w
+            dist += mps(p.paceMinKm) * w
+        }
+        return wSum.keys.sorted().mapNotNull { km ->
+            val w = wSum[km] ?: return@mapNotNull null
+            if (w < 20) return@mapNotNull null // 20초 미만 조각 구간은 생략(마지막 짧은 꼬리)
+            Split(km + 1, Math.round(hrSum[km]!! / w).toInt(), paceSum[km]!! / w, gapSum[km]!! / w)
+        }
+    }
+
+    /** 오르막(>2%)/평지/내리막(<-2%)별 체류시간+평균 심박+경사보정 페이스. */
+    fun gradeBreakdown(r: RunReport): List<GradeBand> {
+        val s = r.series
+        if (s.size < 8) return emptyList()
+        data class Acc(var sec: Double = 0.0, var hr: Double = 0.0, var gap: Double = 0.0)
+        val up = Acc(); val flat = Acc(); val down = Acc()
+        for (i in s.indices) {
+            val p = s[i]; if (!valid(p)) continue
+            val w = dt(s, i).toDouble()
+            val a = when { p.slopePct > 2 -> up; p.slopePct < -2 -> down; else -> flat }
+            a.sec += w; a.hr += p.hr * w; a.gap += gap(p.paceMinKm, p.slopePct) * w
+        }
+        fun band(label: String, a: Acc): GradeBand? =
+            if (a.sec < 20) null else GradeBand(label, a.sec.toInt(), Math.round(a.hr / a.sec).toInt(), a.gap / a.sec)
+        return listOfNotNull(band("오르막", up), band("평지", flat), band("내리막", down))
+    }
+
+    /** 워밍업 품질 — 초반 심박 상승. 안정심박대(중반 평균) 도달까지 시간. 급상승이면 abrupt. */
+    fun warmup(r: RunReport): Warmup? {
+        val s = r.series.filter { valid(it) }
+        if (s.size < 20) return null
+        val end = s.last().tSec
+        if (end < 300) return null // 5분 미만은 워밍업 분해 무의미
+        val mid = s.filter { it.tSec in 120..minOf(360, end) }
+        if (mid.isEmpty()) return null
+        val plateau = Math.round(mid.map { it.hr }.average()).toInt()
+        val startHr = s.first().hr
+        val reach = s.firstOrNull { it.hr >= plateau - 5 }?.tSec ?: return null
+        // 급상승: 안정대 도달 90초 이내 + 초반 상승폭이 큼(種類C: 90초/15bpm 선언)
+        val abrupt = reach < 90 && (plateau - startHr) >= 15
+        return Warmup(reach, startHr, plateau, abrupt)
+    }
+}

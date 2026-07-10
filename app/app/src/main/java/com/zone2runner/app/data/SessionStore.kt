@@ -88,7 +88,7 @@ object SessionStore {
         o.put("track", tr)
         val se = JSONArray()
         for (p in r.series) {
-            se.put(JSONArray().put(p.tSec).put(p.hr).put(p.paceMinKm).put(p.judgmentIndex))
+            se.put(JSONArray().put(p.tSec).put(p.hr).put(p.paceMinKm).put(p.judgmentIndex).put(p.slopePct))
         }
         o.put("series", se)
         return o
@@ -117,7 +117,8 @@ object SessionStore {
         val series = o.optJSONArray("series")?.let { a ->
             List(a.length()) {
                 val p = a.getJSONArray(it)
-                SeriesPoint(p.getInt(0), p.getInt(1), p.getDouble(2), p.getInt(3))
+                SeriesPoint(p.getInt(0), p.getInt(1), p.getDouble(2), p.getInt(3),
+                    if (p.length() > 4) p.getDouble(4) else 0.0)
             }
         } ?: emptyList()
         return RunReport(

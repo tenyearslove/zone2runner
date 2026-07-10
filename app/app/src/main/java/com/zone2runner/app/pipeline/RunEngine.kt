@@ -177,7 +177,7 @@ class RunEngine(
         // 경로 + 시계열(3초마다 다운샘플). GPS 미확보(NaN) 좌표는 경로에 넣지 않음
         if (s.tSec % 3 == 0) {
             if (s.lat.isFinite() && s.lon.isFinite()) track += TrackPoint(s.lat, s.lon, judgment)
-            series += SeriesPoint(s.tSec, clean, s.paceMinKm, judgment?.index ?: -1)
+            series += SeriesPoint(s.tSec, clean, s.paceMinKm, judgment?.index ?: -1, s.slopePct)
         }
 
         // 개인화 갱신(5분마다) — 디커플링(드리프트) 관측. 편향(Conconi)이 있어 약한 신호로만 반영(obsSd 큼).

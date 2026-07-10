@@ -86,12 +86,13 @@ data class LiveState(
 /** 경로 점(존 색으로 폴리라인 채색). */
 data class TrackPoint(val lat: Double, val lon: Double, val judgment: ZoneJudgment?)
 
-/** 리포트 시계열 한 점(HR/페이스 차트, 심혈관 드리프트 분석용, 다운샘플). */
+/** 리포트 시계열 한 점(HR/페이스 차트, 드리프트/구간/경사 분석용, 다운샘플). */
 data class SeriesPoint(
     val tSec: Int,
     val hr: Int,
     val paceMinKm: Double,
     val judgmentIndex: Int, // -1=판정없음, 0=미달, 1=유지, 2=초과
+    val slopePct: Double = 0.0, // 경사 %(오르막 +) — 구간/경사 분해용(구버전 세션=0)
 )
 
 /** 세션 종료 리포트. */
