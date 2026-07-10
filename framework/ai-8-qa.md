@@ -1,8 +1,8 @@
 # 강의 요약 — AI 8대 QA 상세 (per-QA 정본 재구성)
 
-> 소스: `report/references/` 의 QA별 상세 PDF 9종
+> 소스: `framework/lecture-pdfs/` 의 QA별 상세 PDF 9종
 > (2-기능정확성, 4-프라이버시, 5-공정성, 6-수행효율성, 7-기능적응성, 8-제어가능성, 9-설명용이성, 강건성, 10-우선순위/Trade-off).
-> 상위 개요 2종(0-AI시스템, 1-AI품질)은 `강의요약-AI시스템설계와품질.md`에 별도 정리.
+> 상위 개요 2종(0-AI시스템, 1-AI품질)은 `framework/ai-system-and-quality.md`에 별도 정리.
 > 이 문서는 **각 QA를 강의가 정의한 방식(ISO 근거 + 유형 + 평가지표 + 6요소 QA 시나리오)** 으로 재구성하고,
 > **우리 zone2runner 프로젝트에의 매핑/재검토**를 각 QA 끝에 붙인다. spec-002 재작성과 architecture-overview의 정본.
 

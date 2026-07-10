@@ -1,8 +1,8 @@
 # 강의 요약 — AI 시스템 설계와 품질 (인증 필수 참고)
 
 > 강의 PDF 2개를 읽기 쉽게 재구성한 요약. **원본이 정본**:
-> - `report/references/0-AI-시스템-개요.pdf` (28p) — AI 시스템을 어떻게 구성/표현하는가
-> - `report/references/1-AI-품질-개요.pdf` (17p) — AI 품질모델과 **AI 8대 QA**
+> - `framework/lecture-pdfs/0-AI-시스템-개요.pdf` (28p) — AI 시스템을 어떻게 구성/표현하는가
+> - `framework/lecture-pdfs/1-AI-품질-개요.pdf` (17p) — AI 품질모델과 **AI 8대 QA**
 >
 > **인증 필수 규칙(CLAUDE.md 반영)**: (1) 우리 AI 시스템을 아래 "AI System 아키텍처" 구성으로 표현할 것.
 > (2) 우리 AI QA는 아래 "AI 8대 QA" 중에서 선택할 것(과제 규정: 품질속성 4개 이상, 그중 AI 특화 2개 이상).

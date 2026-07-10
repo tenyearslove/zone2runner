@@ -9,10 +9,11 @@ Android + Galaxy Watch 기반 Zone 2 운동 코칭 앱.
 ## 핵심 규칙
 
 ### ★ 인증 강의 프레임워크 준수 (필수 — 설계/QA의 정본)
-인증 강의가 정의한 AI 시스템 구성과 품질 프레임워크를 **반드시 따른다.** 원본 2개 + 재구성 요약:
-- `report/references/0-AI-시스템-개요.pdf` (AI 시스템 구성/아키텍처)
-- `report/references/1-AI-품질-개요.pdf` (AI 품질모델 + **AI 8대 QA**)
-- `report/references/강의요약-AI시스템설계와품질.md` (위 2개를 읽기 쉽게 재구성 — 빠른 참조용)
+인증 강의가 정의한 AI 시스템 구성과 품질 프레임워크를 **반드시 따른다.** **정본 = `framework/`** (영구 보존, 프로젝트 방향이 바뀌어도 불변):
+- `framework/README.md` (정본 인덱스 + 두 필수 규칙 + 관리 원칙)
+- `framework/ai-system-and-quality.md` (AI System 아키텍처 + AI 8대 QA 개관 — 빠른 참조)
+- `framework/ai-8-qa.md` (QA별 상세 + 6요소 시나리오)
+- `framework/lecture-pdfs/` (강의 원본 PDF 11종 = 최종 정본), `framework/assignment/` (과제 규정/샘플)
 
 두 가지 필수 규칙:
 1. **AI 시스템 표현**: 우리 시스템을 강의의 "AI System 아키텍처"(AI Operation Subsystem = 운영/추론/설명/분석 서비스 + AI Development Subsystem = 데이터셋 구축/Model Construction/모델 테스팅 + Model·Container Registry, 입력/출력 가드레일, HITL/HOTL 제어, Retraining 루프) 구성에 **매핑해 표현**한다.
@@ -40,16 +41,17 @@ Android + Galaxy Watch 기반 Zone 2 운동 코칭 앱.
 ### 문서 규칙
 | 종류 | 경로 | 용도 |
 |------|------|------|
+| Framework | `framework/` | ★인증 강의 프레임워크 정본(불변). 강의 지식은 여기에만, spec/arch는 참조 |
 | Spec   | `spec/spec-{nnn}-{title}.md`     | 기능 명세 |
 | ADR    | `arch/adr-{nnn}-{title}.md`      | 아키텍처 결정 기록 |
-| Report | `report/report-{nnn}-{title}.md` | 발표·보고용 문서 |
-| Archive | `spec/archive/`, `arch/archive/` | 탈락/대체 문서(역사 기록, 각 README에 탈락 사유표) |
+| Archive | `spec/archive/`, `arch/archive/`, `report/archive/` | 탈락/대체 문서(역사 기록, 각 README에 탈락 사유표) |
 
+- **Report는 지금 쓰지 않는다**: 리포트(발표·보고 원고)는 설계가 안정된 뒤 착수하는 최종 산출물이다. 방향이 계속 바뀌는 현 단계에선 미리 쓰면 정합이 깨진다 → **기존 report는 `report/archive/`에 보존**하고, 설계 안정화 후 정본(spec/arch/framework)에서 새로 뽑는다.
+- **주제별 단일 정본**: 같은 내용을 여러 문서에 중복하지 않는다. FR/제약=spec-001, QA=spec-002, 강의 프레임워크=framework/, 시스템 아키텍처=arch/architecture-overview, 각 결정=해당 ADR.
 - Superseded/Rejected/Obsolete 문서는 archive 폴더로 이동하고 README 표를 갱신한다. `spec/`, `arch/` 최상위 = 현재 적용 중인 문서만
 - 번호는 3자리 (`001`, `002`, …)
 - 제목은 구체적으로 (❌ "데이터 설계" → ✅ "심박수 로컬 캐시 전략")
 - ADR은 반드시 2~3개 대안 비교 포함
-- Report는 PPT/보고서 작성을 위한 텍스트 원고. 슬라이드 구조 그대로 작성
 - `·` 기호 사용 금지. 열거는 `,` 또는 `/`, 강조는 `-` 사용
 
 ## 프로젝트 구조 (예정)
@@ -58,9 +60,10 @@ zone2runner/
 ├── app/              # Android 핸드폰 앱
 ├── wear/             # Galaxy Watch Wear OS 앱
 ├── shared/           # 공유 도메인 모델
+├── framework/        # ★인증 강의 프레임워크 정본(불변) + 과제 규정
 ├── spec/             # 기능 명세
 ├── arch/             # ADR 문서
-├── report/           # 발표·보고용 문서
+├── report/archive/   # (리포트는 설계 안정화 후 착수 — 현재 archive 보존)
 └── CLAUDE.md
 ```
 
