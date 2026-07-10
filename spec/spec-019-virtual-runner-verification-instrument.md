@@ -2,7 +2,7 @@
 
 - **상태**: Draft
 - **날짜**: 2026-07-06
-- **관련 요구**: spec-002 QA5 테스트가능성/QA4 제어가능성(판정/코칭 방향)/QA2 기능적응성(개인화 수렴), adr-016(도구 선택), `spec/archive/spec-018-online-prediction-correction.md`(예측 — 폐기, adr-020으로 승계), `spec/archive/spec-014-hr-dynamics-model.md`(동역학 — 폐기)
+- **관련 요구**: spec-002 QA5 테스트가능성/QA3 제어가능성(판정/코칭 방향)/QA2 기능적응성(개인화 수렴), adr-025(AI 방법 선택 — AI≠NN), `spec/archive/`(예측/동역학 계열 폐기 — adr-024로 분석 엔진 대체)
 - **구현 위치**: `app/` domain/VirtualRunner.kt, sim/SimRunnerSource.kt, RunActivity(선택 UI)
 
 ## 배경과 목적
