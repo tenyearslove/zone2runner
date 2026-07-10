@@ -25,7 +25,14 @@
 >
 > **재정립 FR 표(합의, 일부만 반영됨)**: FR1(프로필+초기경계)/FR2(실시간 현재 존판정)/**FR3 신설=관측 다각도 분석·특성화**(구 FR3 예측 삭제)/FR4(토크테스트 역치앵커 ML)/FR5(반응형 코칭, 다중프롬프트+가드레일+폴백)/FR6(그래프·리포트·설명).
 >
-> **★★ 문서 대수선 진행 중 (2026-07-10, 사용자 지시) [여기서 이어가기]**: 방향 전환 누적으로 문서 정합이 깨져 대수선. 원칙 = (a) 드롭된 내용 문서는 고치지 말고 과감히 archive, (b) 흩어진 내용은 단일 정본으로 통합(문서 규칙 재정립), (c) **report는 설계 안정화 후 착수 → 전량 archive**(살릴 것만 이관), (d) **강의 프레임워크 학습분은 framework/ 정본으로 영구 보존**.
+> **★★★ FR3 관측 분석 엔진 완전 구현 완료 (2026-07-10) [최신]**: spec-025 승인 → 10단계 완전 구현. 예측(HrOdeModel/ODE) 코드 완전 제거하고 관측 데이터 분석 엔진으로 대체.
+> - **모듈(SOLID/GRASP)**: `analysis/` 패키지 — LinearRegression(SlopeEstimator서 추출, slope/SE/R²), AnalysisMetric 인터페이스+AnalysisEngine 레지스트리(OCP), SignalWindow/SignalBuffer, NoiseFloor(개인 k·σ EWMA). 5지표: DriftSlope/GapMinetti/CadenceStability/SubmaxHr/Hrr(문헌 근거). AnalysisConfig(種類C 상수 한곳).
+> - **결선**: RunEngine이 onTick(실시간)/onSessionEnd(리포트) 실행, 드리프트 개인 플로어 갱신+LearnedZone 저장/복원. LiveState/RunReport 원시필드(도메인 순환 회피). SafetyGuard(spec-008, LLM 우회) 결선. FR5 반응형 코칭(driftRising 트리거, 예측 선제 대체) + RuleCoach driftWarn 4페르소나. FR6 리포트 '관측 분석 지표' 카드 + 대시보드 라이브 드리프트/GAP/안전.
+> - **검증**: 단위+통합 테스트 **106건 전부 통과**, `assembleDebug` APK 빌드 성공. 폐루프(손 구성 세션) 통합검증 포함. 시뮬(VirtualRunner/Manual) 그대로 동작.
+> - **커밋**: spec-025 초안→Implemented, 구현 10커밋(RollingLinReg/예측제거/코어/5지표/NoiseFloor/RunEngine결선/SafetyGuard/반응형코칭/리포트/통합검증).
+> - **후속(미완, 설계 안정화 후)**: architecture-overview 전면 재작성(예측→분석엔진+AI System 매핑), 실기기 설치/실주행 검증, spec-004 디커플링 δ=5%→k·σ 본문 반영, HRR 노력종료 감지 정밀화(spec-025 미해결), 리포트 재작성.
+>
+> **★★ 문서 대수선 진행 중 (2026-07-10, 사용자 지시)**: 방향 전환 누적으로 문서 정합이 깨져 대수선. 원칙 = (a) 드롭된 내용 문서는 고치지 말고 과감히 archive, (b) 흩어진 내용은 단일 정본으로 통합(문서 규칙 재정립), (c) **report는 설계 안정화 후 착수 → 전량 archive**(살릴 것만 이관), (d) **강의 프레임워크 학습분은 framework/ 정본으로 영구 보존**.
 > - **배치 1(4cebeba)**: framework/ 신설(ai-system-and-quality.md, ai-8-qa.md, lecture-pdfs/, assignment/, README), CLAUDE.md 문서규칙 재정립(Framework 종류/Report 중단/단일정본).
 > - **배치 2-3(8c9d2e8)**: spec-002 QA 단일 정본 재작성(6 QA=설명/적응/제어/강건+테스트/효율, 시나리오+측정, 예측 제거, report-007 선정근거 흡수). report 전량 archive(001/002/003/004/007), 사유표.
 > - **배치 4(99622b6)**: spec-017 archive(객관음성 VT1). spec-011/020/021/023 예측 de-scope 배너(본문 미수정). spec-004 디커플링 δ=5%→k·σ note.

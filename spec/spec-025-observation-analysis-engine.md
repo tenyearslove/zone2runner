@@ -1,6 +1,6 @@
 # Spec-025: 관측 데이터 분석 엔진 (FR3) — 완전 구현 설계
 
-- **상태**: Approved (2026-07-10 사용자 승인 — 완전 구현 진행, 미해결 항목은 §3 출발값/구현순서대로 확정하며 진행)
+- **상태**: Implemented (2026-07-10 — 10단계 완전 구현, 단위+통합 테스트 106건 통과, APK 빌드 성공. AC-1~9 충족)
 - **날짜**: 2026-07-10
 - **관련 ADR**: `arch/adr-024-fr3-hr-prediction-drop-to-observation-analysis-engine.md`(예측 드롭→분석 엔진), `arch/adr-025-ai-method-selection-no-nn.md`(AI≠NN, 분석=통계·회귀)
 - **관련 Spec**: spec-001 §FR3/§FR4/§FR5-6, spec-004(개인화), spec-005(코칭), spec-007(리포트), spec-008(안전 가드)
