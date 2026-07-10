@@ -75,10 +75,6 @@ data class LiveState(
     val spm: Int = 0,                 // 케이던스
     val decoupling: Double? = null,   // 드리프트(디커플링 비율), 워밍업 전 null
     val dHrPerSec: Double? = null,    // 심박 추세(bpm/s), 워밍업 전 null
-    // 심박 동역학 모델 출력(spec-014). 미로드/워밍업 전 = -1/0.0
-    val predictedHr60: Int = -1,          // 현재 페이스 유지 시 60초 뒤 예측 심박(bpm)
-    val recommendedPaceMinKm: Double = 0.0, // Zone2 목표 페이스 제안(min/km), 0=없음
-    val predictionWhy: String = "",        // 예측이 현재와 벌어진 이유(항목 분해, 설명용이성). 차이 작으면 빈 문자열
 )
 
 /** 경로 점(존 색으로 폴리라인 채색). */
@@ -111,7 +107,7 @@ data class RunReport(
     val series: List<SeriesPoint> = emptyList(),
     val id: String = "",                   // 저장 식별자(에폭ms 기반), SessionStore가 채움
     val startedAtEpochMs: Long = 0L,       // 세션 시작 시각
-    val usedModel: Boolean = true,         // 심박 예측 NN(동역학) 로드 여부. 판정은 항상 규칙(adr-013)
+    val usedModel: Boolean = true,         // 레거시: 저장된 JSON 하위호환용(항상 true). 심박 예측 기능은 adr-024로 제거됨
     val coachSource: String = "rule",      // 코칭 표현 소스(rule/llm)
     val sourceMode: String = "sim",        // 입력 소스(sim/live)
     val avgSpm: Int = 0,                   // 평균 케이던스(spm). 0=미상(구버전 세션)

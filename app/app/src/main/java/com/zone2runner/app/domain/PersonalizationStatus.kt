@@ -12,7 +12,6 @@ data class PersonalizationStatus(
     val band: Double,                // Zone2 밴드폭(HRR 비율)
     val sessions: Int,               // 러닝 세션 수
     val talkObs: Int,                // 말하기 테스트 누적 관측 수(주 라벨)
-    val predUpdates: Int,            // 예측 보정 학습 횟수
     val sigmaBpm: Double?,           // 개인화 불확실성 σ(bpm, 작을수록 확신)
     val uFracHistory: List<Double>,  // 세션별 uFrac(스파크라인)
 ) {

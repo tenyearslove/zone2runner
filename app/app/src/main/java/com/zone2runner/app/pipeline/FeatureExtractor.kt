@@ -5,7 +5,6 @@ import com.zone2runner.app.domain.Profile
 /**
  * 1Hz 시계열 특징 추출. 현재 소비처(adr-016):
  *   - smoothedHrAt: 지속 심박(60초 평균) → 규칙 판정(ZoneJudge)의 입력.
- *   - dynFeaturesAt: 심박 예측 ODE(HrOdeModel) 입력 7특징.
  *   - extractAt: 개인화 관측(디커플링)/표시용 지표(dHR 추세). [decoupling 임계 부근 지속HR을 관측 후보로]
  *   - displayDriftAt: 사용자 표시용 드리프트(생리 지표).
  * 이상치 제거된 HR을 넣는다(OutlierGuard).
@@ -52,28 +51,6 @@ class FeatureExtractor {
         val end = minOf(t, hr.size - 1)
         val m = mean(hr, end - HRW + 1, end + 1)
         return if (m > 0) Math.round(m).toInt() else null
-    }
-
-    /**
-     * 심박 동역학 모델 입력 7종 (spec-014, ml/train_hr_dynamics.py extract_dynamics와 동일 규약):
-     *   [hr_now_frac(10초), hr_sus_frac(60초), dHR(30초), pace_plan, slope, spm, elapsed_min]
-     * pace_plan = 앞으로 유지할 페이스(호출자가 후보/현재 페이스를 공급). 워밍업 전 null.
-     * decoupling(드리프트)은 ablation에서 예측에 무익해 제거됨(adr-013 옵션1) — 표시/리포트 전용 지표로만 남김.
-     */
-    fun dynFeaturesAt(t: Int, profile: Profile, pacePlan: Double, slopeNow: Double, spmNow: Int): DoubleArray? {
-        if (baseRatio.isNaN() || t < WARMUP_S || t >= hr.size) return null
-        val hrNow = mean(hr, t - 10, t)
-        val hrSus = mean(hr, t - HRW, t)
-        val dHR = (hr[t] - hr[t - W]) / W
-        return doubleArrayOf(
-            (hrNow - profile.restingHr) / profile.hrr,
-            (hrSus - profile.restingHr) / profile.hrr,
-            dHR,
-            pacePlan,
-            slopeNow,
-            spmNow.toDouble(),
-            t / 60.0,
-        )
     }
 
     /** t(현재 인덱스, =size-1)가 STRIDE 지점이면 특징 반환, 아니면 null. */

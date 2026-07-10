@@ -17,8 +17,7 @@ import kotlinx.coroutines.launch
 /**
  * 전체 러닝 파이프라인 오케스트레이터 (arch/architecture-overview, adr-013 역할 재분리).
  *   샘플 → 이상치 가드 → [판정 = 규칙(지속 심박 vs 개인화 경계 + 히스테리시스)]
- *        → 특징추출 → 개인화 갱신 → [동역학 NN: 60초 예측 + 목표 페이스 역질의 + 선제 코칭]
- *        → 코칭 → 세션 누적
+ *        → 특징추출 → 개인화 갱신 → 코칭 → 세션 누적
  * 판정과 밴드가 같은 개인화 경계를 참조하므로 모순이 구조적으로 불가능(spec-014 FR1).
  * 시뮬레이터/실기기 공통. onSample을 1Hz로 호출.
  *
@@ -31,15 +30,11 @@ class RunEngine(
     private val coach: Coach,
     private val coachScope: CoroutineScope? = null,
     priorUFrac: Double? = null,        // 세션 누적 학습값(LearnedZone). 없으면 공식 prior
-    priorOdeParams: DoubleArray? = null, // 심박 예측 ODE 개인 파라미터 누적(LearnedDynamics, adr-020)
     private val cadence: CoachCadence = CoachCadence.DEFAULT, // 코칭 빈도(spec-021)
-    private val preemptiveEnabled: Boolean = true,            // 선제 코칭 on/off(spec-021)
 ) {
     private val extractor = FeatureExtractor()
     private val personalization = Personalization(profile, priorUFrac)
     private val judge = ZoneJudge()
-    // 심박 예측: 생리 ODE(뼈대) + 개인 파라미터 온라인 추정(adr-020). 자체 학습 NN 없음.
-    private val ode = HrOdeModel(priorOdeParams)
     private val uEstStart = personalization.boundary().uFrac
 
     private var lastValidHr: Int? = null
@@ -64,19 +59,12 @@ class RunEngine(
     // 코칭/개인화 타이밍
     private var lastCoachSec = -999
     private var lastJudgmentForCoach: ZoneJudgment? = null
-    private var lastPreemptiveIntent: ZoneJudgment? = null // 선제 코칭 중복 방지(같은 예측이 연속되면 1회만)
     private var lastPersonalizeSec = 0
     private val obsCandidates = ArrayList<Double>() // decoupling 임계 부근 지속HR(bpm)
 
-    // 동역학 모델 출력(표시용)
-    private var predictedHr60 = -1
-    private var recommendedPace = 0.0
-    private var predWhy = ""           // 예측이 현재와 벌어진 이유(항목 분해, 설명용이성)
     private var sustainedHr = -1       // 최근 지속 심박(코칭 컨텍스트용)
     private var coachLoBpm = 0
     private var coachHiBpm = 0
-
-    val usingModel: Boolean get() = true // 심박 예측 ODE는 에셋 의존이 없어 항상 가용
 
     /** 토크 테스트 자가관측을 개인화 경계에 반영(arch/zone2-physiology §6). 현재 유효 HR이 있을 때만. */
     fun observeTalkTest(state: com.zone2runner.app.pipeline.TalkState) {
@@ -86,14 +74,6 @@ class RunEngine(
 
     /** 현재 개인화 경계 uFrac — 세션 누적 저장(LearnedZone)용. 토크테스트+디커플링이 반영됨. */
     fun currentUFrac(): Double = personalization.boundary().uFrac
-
-    /** 예측 ODE 개인 파라미터 [τ, drift, a, b, c] — 세션 누적 저장(LearnedDynamics)용. */
-    fun odeParams(): DoubleArray = ode.params()
-
-    /** 예측 성과(모집단 τ 기준선 vs 개인화 RMSE, bpm) — 표시/검증용. */
-    fun predRmse(): HrOdeModel.Rmse = ode.rmseBpm(profile.hrr)
-    fun predUpdates(): Int = ode.updates
-    fun odeTau(): Double = ode.tau
 
     /** 이번 세션에 토크테스트가 한 번이라도 반영됐는지(저장 판단/표시용). */
     /** 현재 기온(℃) — 코칭 맥락(더위)용. RunActivity가 날씨 조회/가상러너로 세팅. 방향엔 무관. */
@@ -144,25 +124,6 @@ class RunEngine(
             val hrFrac = feat[0] + b.uFrac
             val hrRecent = profile.restingHr + hrFrac * profile.hrr
             if (feat[5] in 0.03..0.10) obsCandidates += hrRecent
-
-            // 심박 예측 ODE(adr-020): 현재 페이스 유지 시 30/60초 뒤 예측 + Zone2 목표 페이스 역질의
-            run {
-                val df = extractor.dynFeaturesAt(s.tSec, profile, s.paceMinKm, s.slopePct, s.spm)
-                if (df != null) {
-                    // 지금 도착한 실제 심박(df[0]=hr_now_frac)으로 만기된 과거 예측을 온라인 학습(페이스 유지분만)
-                    ode.observe(s.tSec, df[0], s.paceMinKm)
-                    val pred = ode.predict(df, profile.hrr)            // 개인 파라미터 반영된 예측
-                    ode.record(s.tSec, df, pred, profile.hrr, s.paceMinKm) // 60초 뒤 검증용 버퍼
-                    predictedHr60 = (profile.restingHr + pred.last() * profile.hrr).toInt()
-                    predWhy = buildPredWhy(sustainedHr) // 예측이 현재와 벌어진 이유(항목 분해)
-                    // 추천 페이스: 개인 수요맵을 밴드 중심으로 해석적 역산
-                    val rec = ode.recommendPace(df, b.lFrac, b.uFrac)
-                    // 표시 안정화: 직전 추천과 한 스텝(0.25) 이내면 유지
-                    if (recommendedPace <= 0.0 || Math.abs(rec - recommendedPace) > 0.25 + 1e-9)
-                        recommendedPace = rec
-                    maybePreemptiveCoach(s, loBpm, hiBpm)
-                }
-            }
         }
         // 존 체류 시간(초 단위 누적)
         when (judgment) {
@@ -207,9 +168,7 @@ class RunEngine(
     }
 
     /** 코칭 사유 태그(설명용이성, spec-023 FR3) — 각 코칭이 왜 나갔는지. */
-    private fun reasonOf(j: ZoneJudgment, preemptive: Boolean): String = when {
-        preemptive && j == ZoneJudgment.ABOVE -> "곧 초과(예측)"
-        preemptive && j == ZoneJudgment.BELOW -> "곧 미달(예측)"
+    private fun reasonOf(j: ZoneJudgment): String = when {
         j == ZoneJudgment.ABOVE -> "초과"
         j == ZoneJudgment.BELOW -> "미달"
         else -> "유지"
@@ -222,59 +181,18 @@ class RunEngine(
         // 초과가 지속될 때 코칭이 영영 침묵한다(실기기 시뮬 관찰)
         val overdue = j != ZoneJudgment.IN && s.tSec - lastCoachSec >= cadence.overdueSec
         if ((!changed && !overdue) || s.tSec - lastCoachSec < cadence.minGapSec) return
-        lastPreemptiveIntent = null // 실제 판정 코칭이 나가면 선제 상태 리셋
-        fireCoach(s, j, preemptive = false)
+        fireCoach(s, j)
     }
 
-    /**
-     * 선제 코칭(spec-014 FR4): 판정은 IN인데 현재 페이스 유지 시 60초 뒤 예측이 경계 밖이면
-     * 이탈 전에 미리 방향 코칭. 같은 예측 방향이 이어지면 1회만.
-     */
-    /**
-     * 예측(60초)이 현재 심박과 벌어졌을 때 "왜 그렇게 나왔나"를 항목 분해로 설명(설명용이성, QA6).
-     * 생리 ODE라 예측 = 현재 + 추세 + 드리프트로 정확히 쪼갤 수 있다(블랙박스면 불가).
-     * 사실은 물리가 확정(지어낸 수치 없음). 차이가 작으면(<5bpm) 빈 문자열.
-     */
-    private fun buildPredWhy(currentHr: Int): String {
-        val e = ode.last
-        val hrr = profile.hrr
-        val predBpm = (profile.restingHr + e.predFrac * hrr).toInt()
-        if (currentHr <= 0) return ""
-        val gap = predBpm - currentHr
-        if (kotlin.math.abs(gap) < 5) return ""
-        val trend = e.trendFrac * hrr
-        val drift = e.driftFrac * hrr
-        val parts = ArrayList<String>()
-        if (kotlin.math.abs(trend) >= 1.0) parts += "추세 %+.0f".format(trend)
-        if (kotlin.math.abs(drift) >= 1.0) parts += "드리프트 %+.0f".format(drift)
-        val dir = if (gap > 0) "오를" else "내릴"
-        val head = "이 페이스면 60초 뒤 ${predBpm}bpm — 지금보다 ${kotlin.math.abs(gap)}bpm $dir 전망"
-        // 내역은 모두 bpm 기여분 — 단위를 앞에 한 번 명시해 항목별 오해 방지
-        return if (parts.isEmpty()) head else "$head · 내역(bpm): ${parts.joinToString(", ")}"
-    }
-
-    private suspend fun maybePreemptiveCoach(s: Sample, loBpm: Double, hiBpm: Double) {
-        if (!preemptiveEnabled) return
-        if (judgment != ZoneJudgment.IN || predictedHr60 <= 0) return
-        val intent = when {
-            predictedHr60 > hiBpm + 2 -> ZoneJudgment.ABOVE
-            predictedHr60 < loBpm - 2 -> ZoneJudgment.BELOW
-            else -> { lastPreemptiveIntent = null; return }
-        }
-        if (intent == lastPreemptiveIntent || s.tSec - lastCoachSec < cadence.minGapSec) return
-        lastPreemptiveIntent = intent
-        fireCoach(s, intent, preemptive = true)
-    }
-
-    private suspend fun fireCoach(s: Sample, j: ZoneJudgment, preemptive: Boolean) {
+    private suspend fun fireCoach(s: Sample, j: ZoneJudgment) {
         val scope = coachScope
         if (scope != null && coachJob?.isActive == true) return // 이전 생성이 아직 진행 중이면 건너뜀
         lastCoachSec = s.tSec
-        if (!preemptive) lastJudgmentForCoach = j
-        val reason = reasonOf(j, preemptive)
+        lastJudgmentForCoach = j
+        val reason = reasonOf(j)
         val ctx = CoachContext(
-            j, s.slopePct, s.paceMinKm, s.tSec, spm = s.spm, preemptive = preemptive,
-            currentHr = sustainedHr, loBpm = coachLoBpm, hiBpm = coachHiBpm, predictedHr60 = predictedHr60,
+            j, s.slopePct, s.paceMinKm, s.tSec, spm = s.spm,
+            currentHr = sustainedHr, loBpm = coachLoBpm, hiBpm = coachHiBpm,
             tempC = ambientTempC,
         )
         if (scope == null) {
@@ -318,9 +236,6 @@ class RunEngine(
         spm = s.spm,
         decoupling = extractor.displayDriftAt(s.tSec), // 표시용(HR/속도 기반) — 특징 feat[5]와 별개
         dHrPerSec = lastFeat?.get(2),
-        predictedHr60 = predictedHr60,
-        recommendedPaceMinKm = recommendedPace,
-        predictionWhy = predWhy,
     )
 
     fun report(): RunReport = RunReport(
@@ -337,7 +252,7 @@ class RunEngine(
         restingHr = profile.restingHr,
         maxHrProfile = profile.maxHr,
         series = series.toList(),
-        usedModel = usingModel,
+        usedModel = true,
         coachSource = coachSource,
         avgSpm = if (spmCount > 0) (spmSum / spmCount).toInt() else 0,
     )

@@ -6,7 +6,6 @@ import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.view.Gravity
 import android.view.View
-import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
 import android.widget.ScrollView
@@ -112,10 +111,6 @@ class SettingsActivity : AppCompatActivity() {
             "코칭 동작",
             LinearLayout(this).apply {
                 orientation = LinearLayout.VERTICAL
-                addView(switchRow("선제 코칭 (60초 뒤 예측으로 미리 알림)", s.preemptiveEnabled) { on ->
-                    s = s.copy(preemptiveEnabled = on); persist()
-                })
-                addView(divider())
                 addView(switchRow("더위 코칭 (기온 반영)", s.heatCoachingEnabled) { on ->
                     s = s.copy(heatCoachingEnabled = on); persist()
                 })
@@ -295,8 +290,4 @@ class SettingsActivity : AppCompatActivity() {
             })
         }
 
-    private fun divider(): View = View(this).apply {
-        setBackgroundColor(Palette.STROKE)
-        layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, dpi(1)).apply { topMargin = dpi(6); bottomMargin = dpi(6) }
-    }
 }

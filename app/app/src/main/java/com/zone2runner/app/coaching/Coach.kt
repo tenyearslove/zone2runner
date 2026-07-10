@@ -13,13 +13,10 @@ data class CoachContext(
     val paceMinKm: Double,
     val elapsedSec: Int,
     val spm: Int = 0, // 케이던스(0=미상). 범위 밖이면 코칭에 폼 가이드 추가
-    /** 선제 코칭(spec-014 FR4): 아직 존 안이지만 동역학 모델이 곧 이탈을 예측 — judgment는 예측된 이탈 방향. */
-    val preemptive: Boolean = false,
     // LLM 표현 풍부화용 실측 수치(방향은 규칙이 결정 — 이 값들은 표현 재료일 뿐, adr-002). 0/-1=미상.
     val currentHr: Int = 0,   // 지속 심박(판정 기준 bpm)
     val loBpm: Int = 0,       // 개인 Zone2 하한
     val hiBpm: Int = 0,       // 개인 Zone2 상한
-    val predictedHr60: Int = -1, // 60초 뒤 예측 심박
     val tempC: Double? = null,   // 기온(℃). 더위는 드리프트↑ → 표현 맥락(방향 아님). null=미상
 ) {
     /** 기온 밴드. 더위만 코칭 맥락에 반영(생리적으로 Zone2 드리프트에 영향). 방향은 아님. */
@@ -107,7 +104,6 @@ class RuleCoach(personaKey: String = "default") : Coach {
 
     /** 페르소나별 문구 세트. 방향어는 고정, 어미만 변형. */
     private class Phrases(
-        val preSlow: String, val preUp: String, val preKeep: String,
         val upDownhill: String, val up: List<String>,
         val slowUphill: String, val slow: List<String>,
         val keep: List<String>,
@@ -117,15 +113,6 @@ class RuleCoach(personaKey: String = "default") : Coach {
     override suspend fun say(ctx: CoachContext): String {
         val uphill = ctx.slopePct > 2
         val downhill = ctx.slopePct < -2
-        // 선제 코칭(FR3 선제, 구 spec-014 FR4): 아직 존 안 — "곧 이탈" 예측을 미리 알려 존 체류 시간을 지킨다
-        if (ctx.preemptive) {
-            val line = when (intentOf(ctx.judgment)) {
-                CoachIntent.SLOW_DOWN -> p.preSlow
-                CoachIntent.SPEED_UP -> p.preUp
-                CoachIntent.MAINTAIN -> p.preKeep
-            }
-            return guard(line + cadenceTip(ctx) + heatTip(ctx))
-        }
         val lines = when (intentOf(ctx.judgment)) {
             CoachIntent.SPEED_UP -> if (downhill) listOf(p.upDownhill) else p.up
             CoachIntent.SLOW_DOWN -> if (uphill) listOf(p.slowUphill) else p.slow
@@ -154,9 +141,6 @@ class RuleCoach(personaKey: String = "default") : Coach {
     private companion object {
         val PHRASES: Map<String, Phrases> = mapOf(
             "default" to Phrases(
-                preSlow = "이대로면 심박이 곧 Zone 2를 넘겠어요. 미리 살짝 늦춰요.",
-                preUp = "심박이 곧 Zone 2 아래로 내려가겠어요. 페이스를 조금 올려요.",
-                preKeep = "좋아요, Zone 2 유지 중이에요. 이 리듬 그대로.",
                 upDownhill = "내리막이에요. 조금 더 밀어서 심박을 Zone 2로 올려볼까요.",
                 up = listOf(
                     "여유가 있어요. 페이스를 살짝 올려 Zone 2로 들어가요.",
@@ -176,9 +160,6 @@ class RuleCoach(personaKey: String = "default") : Coach {
                 heat = " 더우니 무리하지 말고 수분 챙겨요.",
             ),
             "spartan" to Phrases(
-                preSlow = "이대로면 곧 Zone 2를 넘는다. 미리 늦춰.",
-                preUp = "심박이 곧 Zone 2 아래로 떨어진다. 페이스 올려.",
-                preKeep = "Zone 2 유지 중이다. 그대로 간다.",
                 upDownhill = "내리막이다. 더 밀어서 심박을 Zone 2로 올려.",
                 up = listOf(
                     "심박이 낮다. 페이스 올려.",
@@ -198,9 +179,6 @@ class RuleCoach(personaKey: String = "default") : Coach {
                 heat = " 덥다. 무리하지 말고 수분 챙겨.",
             ),
             "friend" to Phrases(
-                preSlow = "이대로면 곧 Zone 2 넘겠어. 미리 살짝 늦추자.",
-                preUp = "심박이 곧 Zone 2 아래로 내려가겠는데? 페이스 조금 올리자.",
-                preKeep = "좋아, Zone 2 유지 중! 이대로 가자.",
                 upDownhill = "내리막이야! 조금만 더 밀어서 심박을 Zone 2로 올려보자.",
                 up = listOf(
                     "아직 여유 있네. 페이스 살짝 올려볼까?",
@@ -220,9 +198,6 @@ class RuleCoach(personaKey: String = "default") : Coach {
                 heat = " 덥다, 무리하지 말고 물 꼭 챙겨!",
             ),
             "calm" to Phrases(
-                preSlow = "이대로면 심박이 곧 Zone 2를 넘을 것으로 예상됩니다. 미리 조금 늦춰주십시오.",
-                preUp = "심박이 곧 Zone 2 아래로 내려갈 것으로 예상됩니다. 페이스를 살짝 올려주십시오.",
-                preKeep = "Zone 2 유지 중입니다. 현재 리듬 그대로 가시면 됩니다.",
                 upDownhill = "내리막 구간입니다. 조금 더 밀어 심박을 Zone 2로 올려주십시오.",
                 up = listOf(
                     "심박에 여유가 있습니다. 페이스를 살짝 올려주십시오.",

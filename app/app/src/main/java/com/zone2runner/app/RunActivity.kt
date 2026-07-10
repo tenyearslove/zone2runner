@@ -43,7 +43,7 @@ import org.osmdroid.views.overlay.Polyline
  * 러닝(라이브) — 입력 소스(RunSource)를 갈아끼워 전체 파이프라인을 구동한다.
  *   sim  = 물리 시뮬레이터 가속 재생(실기기 없이 데모).
  *   live = 실 GPS(FusedLocation) + 워치 심박(Data Layer). 위치 권한 필요.
- * [소스 → 이상치가드 → 규칙판정(ZoneJudge) → 개인화(Bayesian) → 심박예측 → 코칭 → 세션]. 종료 시 저장 후 리포트.
+ * [소스 → 이상치가드 → 규칙판정(ZoneJudge) → 개인화(Bayesian) → 코칭 → 세션]. 종료 시 저장 후 리포트.
  */
 class RunActivity : AppCompatActivity() {
 
@@ -54,7 +54,7 @@ class RunActivity : AppCompatActivity() {
     private lateinit var distView: TextView
     private lateinit var paceView: TextView
     private lateinit var coachView: TextView
-    private lateinit var adviceView: TextView // 동역학 NN: 목표 페이스 제안 + 60초 예측(spec-014)
+    private lateinit var adviceView: TextView // 러닝 조언 표시(추후 분석 엔진용 자리, 현재 미사용)
     private var promptView: TextView? = null // LLM 프롬프트 노출(시뮬/목 모드만, null=라이브)
     private var simDelayMs = 14L // 시뮬 재생 배속(샘플 간 ms): 14≈×70, 33≈×30, 100=×10, 1000=×1. 재생 중 변경 가능
     private val speedChips = LinkedHashMap<Long, TextView>()
@@ -122,7 +122,6 @@ class RunActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Configuration.getInstance().userAgentValue = packageName
-        // 심박 예측 = 생리 ODE(HrOdeModel, adr-020) — 에셋 의존 없음. RunEngine이 내부 생성.
         settings = com.zone2runner.app.data.SettingsStore.load(this) // spec-021: 코칭 빈도/음성/화면 설정
         tts = TextToSpeech(this) { status ->
             if (status == TextToSpeech.SUCCESS) {
@@ -168,10 +167,10 @@ class RunActivity : AppCompatActivity() {
      * Zone2 밴드 게이지 + 범위/이탈 텍스트 갱신.
      * hr = 순간 심박 — 표시 존/솔리드 마커 기준(adr-023, 칩과 동일 기준). susHr = 지속 심박(참고 틱).
      */
-    private fun updateZoneUi(hr: Int, uEstFrac: Double, susHr: Int = -1, predHr: Int = -1) {
+    private fun updateZoneUi(hr: Int, uEstFrac: Double, susHr: Int = -1) {
         val p = profile ?: return
         val (lo, hi) = zoneBounds(uEstFrac) ?: return
-        zoneBand.update(lo, hi, p.maxHr, hr, susHr, predHr)
+        zoneBand.update(lo, hi, p.maxHr, hr, susHr)
         when {
             hr <= 0 -> { rangeView.text = "Zone 2 목표 $lo ~ $hi bpm"; rangeView.setTextColor(C_MUTED) }
             hr < lo -> { rangeView.text = "Zone 2 목표 $lo ~ $hi · ${lo - hr} bpm 아래"; rangeView.setTextColor(C_BLUE) }
@@ -181,7 +180,7 @@ class RunActivity : AppCompatActivity() {
     }
 
     private fun updateSubtitle() {
-        val model = "규칙 판정 + 심박 예측 ODE(개인화) + 페이스 제안"
+        val model = "규칙 판정 + 개인화"
         subtitle.text = when (mode) {
             MODE_LIVE -> "$model · 실센서(GPS+워치HR) — 실기기 필요"
             else -> "$model · 시뮬레이션 재생"
@@ -252,7 +251,7 @@ class RunActivity : AppCompatActivity() {
             textSize = 10f; setTextColor(C_MUTED)
         }, mt(2))
 
-        // 동역학 NN 출력(spec-014): Zone2 목표 페이스 제안 + 60초 뒤 예측 심박
+        // 러닝 조언 표시 자리(추후 분석 엔진용). 현재는 비워 둔다.
         adviceView = TextView(this).apply {
             text = ""; textSize = 13f; setTextColor(C_ACCENT); setTypeface(typeface, Typeface.BOLD)
         }
@@ -265,7 +264,7 @@ class RunActivity : AppCompatActivity() {
         metrics.addView(metricCol(paceView, "페이스"))
         dash.addView(metrics, mt(8))
 
-        // 실시간 러닝 지표(경사/케이던스/보폭/드리프트/기온) — 표시용(판정은 규칙, 예측 NN 입력 일부)
+        // 실시간 러닝 지표(경사/케이던스/보폭/드리프트/기온) — 표시용(판정은 규칙)
         val factors = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
         slopeView = metricVal(); spmView = metricVal(); strideView = metricVal(); tempView = metricVal()
         factors.addView(metricCol(slopeView, "경사"))
@@ -520,11 +519,10 @@ class RunActivity : AppCompatActivity() {
         lifecycleScope.launch { c.prewarm() } // checkStatus+warmup을 첫 코칭 전에 미리
         // coachScope 전달 → 코칭 생성(LLM ~2초)이 샘플 루프/렌더를 멈추지 않음
         val learnedPrior = com.zone2runner.app.data.LearnedZone.uFrac(this) // 세션 누적 학습값(있으면 prior)
-        val odeParams = com.zone2runner.app.data.LearnedDynamics.params(this) // 예측 ODE 개인 파라미터 누적(adr-020)
         val eng = RunEngine(
             profile, c, coachScope = lifecycleScope,
-            priorUFrac = learnedPrior, priorOdeParams = odeParams,
-            cadence = settings.cadence, preemptiveEnabled = settings.preemptiveEnabled, // spec-021
+            priorUFrac = learnedPrior,
+            cadence = settings.cadence, // spec-021
         )
         engine = eng
         startedAt = System.currentTimeMillis()
@@ -573,8 +571,7 @@ class RunActivity : AppCompatActivity() {
             put("profile", org.json.JSONObject()
                 .put("age", profile.age).put("rhr", profile.restingHr).put("maxHr", profile.maxHr))
             put("model", org.json.JSONObject()
-                .put("type", "hr_ode")
-                .put("tau_init", com.zone2runner.app.pipeline.HrOdeModel.TAU0))
+                .put("type", "rule"))
         }
         eng.onCoachingRecorded = { tSec, lineText, tookMs ->
             log.event("coach") { put("t", tSec); put("text", lineText); put("tookMs", tookMs) }
@@ -686,18 +683,11 @@ class RunActivity : AppCompatActivity() {
         // 세션 종료 시 개인 Zone2 경계 누적(adr-016): 개인화는 온라인 Bayesian이 전담한다.
         // 토크테스트(정답에 가장 가까운 라벨) + 디커플링으로 세션 중 갱신된 '최종 경계'를 저장 →
         // 다음 세션이 여기서 시작 → 실주행 말하기 테스트가 세션을 넘어 누적/수렴.
-        // (NN은 심박 예측 전담 — 개인화 경계엔 관여하지 않음. 역치 추정 NN은 adr-014→adr-016으로 강등)
         val finalU = eng.currentUFrac()
         com.zone2runner.app.data.LearnedZone.set(this, finalU, eng.talkObservations(), eng.currentSigmaBpm()) // uFrac 이력 + 관측 + σ(spec-020)
-        // 예측 ODE 개인 파라미터 누적 저장(adr-020) — 다음 세션이 이어서 학습
-        com.zone2runner.app.data.LearnedDynamics.set(this, eng.odeParams(), eng.predUpdates())
-        val pr = eng.predRmse()
         logger?.event("boundary") {
             put("uFrac", finalU); put("talk", eng.talkObserved)
             put("n", com.zone2runner.app.data.LearnedZone.sessionCount(this@RunActivity))
-            put("predUpdates", eng.predUpdates())
-            put("predTau", eng.odeTau())
-            put("predBase60", pr.base); put("predModel60", pr.model)
         }
         val base = eng.report().copy(
             startedAtEpochMs = startedAt, sourceMode = mode,
@@ -749,7 +739,6 @@ class RunActivity : AppCompatActivity() {
             band = com.zone2runner.app.domain.Zone2Prior.BAND,
             sessions = com.zone2runner.app.data.LearnedZone.sessionCount(this),
             talkObs = com.zone2runner.app.data.LearnedZone.talkObs(this),
-            predUpdates = com.zone2runner.app.data.LearnedDynamics.updates(this),
             sigmaBpm = com.zone2runner.app.data.LearnedZone.sigmaBpm(this),
             uFracHistory = com.zone2runner.app.data.LearnedZone.history(this),
         )
@@ -852,7 +841,7 @@ class RunActivity : AppCompatActivity() {
         } else s.judgment?.let { j -> // 표시 존 없음(재생/요약 렌더 등) — 기존 판정 칩 폴백
             zoneChip.text = j.label; zoneChip.background = pill(j.color); hrView.setTextColor(j.color)
         }
-        updateZoneUi(s.hr, s.uEstFrac, if (s.smoothedHr > 0) s.smoothedHr else -1, s.predictedHr60)
+        updateZoneUi(s.hr, s.uEstFrac, if (s.smoothedHr > 0) s.smoothedHr else -1)
         timeView.text = "%02d:%02d".format(s.elapsedSec / 60, s.elapsedSec % 60)
         distView.text = if (s.distanceM < 1000) "${s.distanceM.toInt()}m" else "%.2fkm".format(s.distanceM / 1000)
         // 움직이기 전(정지/GPS 미확보)엔 페이스/케이던스/보폭을 근거 없이 표시하지 않는다("--").
@@ -881,22 +870,8 @@ class RunActivity : AppCompatActivity() {
             uEstView.text = "개인 Zone 2 상단: $upBpm bpm (러닝하며 보정 중)"
         }
 
-        // 동역학 NN 출력: 목표 페이스 제안 + 60초 예측(워밍업 완료 후)
-        if (s.recommendedPaceMinKm > 0.0 && s.predictedHr60 > 0) {
-            val rp = s.recommendedPaceMinKm
-            val paceTxt = "%d'%02d\"".format(rp.toInt(), ((rp % 1) * 60).toInt())
-            // 예측이 현재와 벌어지면 왜 그렇게 나왔는지(추세/드리프트 분해)를 둘째 줄에 설명(설명용이성)
-            adviceView.text = if (s.predictionWhy.isNotBlank())
-                "🎯 Zone2 페이스 $paceTxt\n💡 ${s.predictionWhy}"
-            else
-                "🎯 Zone2 페이스 $paceTxt · 이대로면 60초 뒤 ~${s.predictedHr60} bpm"
-        } else if (running) {
-            adviceView.text = when {
-                s.hr <= 0 -> "심박 신호 대기 중 (워치 연결 확인)"
-                !moving -> "움직이면 페이스를 제안해요"
-                else -> "페이스 제안 준비 중 (워밍업 ~2분)"
-            }
-        }
+        // 러닝 조언 표시 자리(추후 분석 엔진용). 현재는 비워 둔다.
+        adviceView.text = ""
     }
 
     /** 코칭 문장을 음성으로(llm-verify에서 검증한 TTS end-to-end). 세션 종료 문구는 제외. */

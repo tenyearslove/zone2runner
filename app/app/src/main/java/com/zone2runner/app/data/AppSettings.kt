@@ -14,7 +14,6 @@ data class AppSettings(
     val voicePitch: Int = 1,           // 0 낮게 / 1 보통 / 2 높게 (spec-024 FR2)
     val voiceName: String? = null,     // TTS 보이스 식별자. null=기기 기본 (spec-024 FR1)
     val coachPersona: Int = 0,         // 코칭 말투 인덱스(PERSONA_KEYS) (spec-024 FR3)
-    val preemptiveEnabled: Boolean = true,   // 예측 기반 선제 코칭(spec-014 FR4)
     val heatCoachingEnabled: Boolean = true, // 더위(기온) 코칭 맥락
     val keepScreenOn: Boolean = true,        // 러닝 중 화면 항상 켜기
 ) {
@@ -61,7 +60,6 @@ object SettingsStore {
             voiceName = p.getString("voiceName", null),
             coachPersona = p.getInt("persona", d.coachPersona)
                 .coerceIn(0, AppSettings.PERSONA_KEYS.size - 1),
-            preemptiveEnabled = p.getBoolean("preemptive", d.preemptiveEnabled),
             heatCoachingEnabled = p.getBoolean("heat", d.heatCoachingEnabled),
             keepScreenOn = p.getBoolean("keepScreen", d.keepScreenOn),
         )
@@ -75,7 +73,6 @@ object SettingsStore {
             .putInt("voicePitch", s.voicePitch)
             .putString("voiceName", s.voiceName)
             .putInt("persona", s.coachPersona)
-            .putBoolean("preemptive", s.preemptiveEnabled)
             .putBoolean("heat", s.heatCoachingEnabled)
             .putBoolean("keepScreen", s.keepScreenOn)
             .apply()

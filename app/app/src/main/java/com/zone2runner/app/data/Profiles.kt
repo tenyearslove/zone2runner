@@ -5,8 +5,8 @@ import android.content.Context
 /**
  * 다중 프로필 레지스트리 (spec-020 FR1). 이름 붙은 프로필 여러 개 + 활성 프로필 하나.
  *
- * 무손실 하위 호환의 핵심: 기본 프로필 id = "default" → 프로필별 스토어(ProfileStore/LearnedZone/
- * LearnedDynamics)가 접미사 없이 기존 pref 키를 그대로 쓴다. 신규 프로필만 "_<id>" 접미사.
+ * 무손실 하위 호환의 핵심: 기본 프로필 id = "default" → 프로필별 스토어(ProfileStore/LearnedZone)가
+ * 접미사 없이 기존 pref 키를 그대로 쓴다. 신규 프로필만 "_<id>" 접미사.
  * 따라서 기존 단일 프로필 사용자의 신체정보/학습값이 마이그레이션 없이 "기본"으로 이어진다(AC2).
  */
 object Profiles {
@@ -66,7 +66,7 @@ object Profiles {
         if (cur.size <= 1) return false
         writeList(ctx, cur.filter { it.id != id })
         // 스토어 데이터 제거(기본 프로필은 접미사 없어 별도 처리)
-        ProfileStore.clear(ctx, id); LearnedZone.clear(ctx, id); LearnedDynamics.clear(ctx, id)
+        ProfileStore.clear(ctx, id); LearnedZone.clear(ctx, id)
         if (activeId(ctx) == id) setActive(ctx, list(ctx).first().id)
         return true
     }

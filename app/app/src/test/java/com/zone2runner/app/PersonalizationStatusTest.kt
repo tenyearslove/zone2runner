@@ -13,7 +13,7 @@ class PersonalizationStatusTest {
     private fun status(prior: Double, learned: Double?, sessions: Int = 3, sigma: Double? = 6.0) =
         PersonalizationStatus(
             restingHr = 60, hrr = 130.0, priorUFrac = prior, learnedUFrac = learned,
-            band = 0.10, sessions = sessions, talkObs = 5, predUpdates = 40,
+            band = 0.10, sessions = sessions, talkObs = 5,
             sigmaBpm = sigma, uFracHistory = listOf(prior, (prior + (learned ?: prior)) / 2, learned ?: prior),
         )
 
