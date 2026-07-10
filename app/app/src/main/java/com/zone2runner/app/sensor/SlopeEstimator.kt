@@ -1,6 +1,6 @@
 package com.zone2runner.app.sensor
 
-import kotlin.math.abs
+import com.zone2runner.app.analysis.LinearRegression
 
 /**
  * 거리창 기반 경사(grade) 추정 — GPS 고도 노이즈에 강건 (사용자 지적 2026-07-06).
@@ -42,14 +42,12 @@ class SlopeEstimator(
         return ema
     }
 
-    /** 최소제곱 회귀로 alt~dist 기울기(고도변화/거리). 노이즈가 평균화됨. */
+    /** 최소제곱 회귀로 alt~dist 기울기(고도변화/거리). 공유 원시모듈 사용(DRY). 노이즈가 평균화됨. */
     private fun regressionSlope(): Double {
-        val n = buf.size
-        var sx = 0.0; var sy = 0.0; var sxx = 0.0; var sxy = 0.0
-        for (p in buf) { sx += p.dist; sy += p.alt; sxx += p.dist * p.dist; sxy += p.dist * p.alt }
-        val denom = n * sxx - sx * sx
-        if (abs(denom) < 1e-6) return 0.0
-        return (n * sxy - sx * sy) / denom
+        val xs = DoubleArray(buf.size); val ys = DoubleArray(buf.size)
+        var i = 0
+        for (p in buf) { xs[i] = p.dist; ys[i] = p.alt; i++ }
+        return LinearRegression.fit(xs, ys)?.slope ?: 0.0
     }
 
     fun current(): Double = ema
