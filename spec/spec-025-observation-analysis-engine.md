@@ -173,6 +173,26 @@ class AnalysisEngine(private val metrics: List<AnalysisMetric>) {
 9. FR6 리포트 표시(ReportActivity/Charts).
 10. FR4 관측 채널 결선 + 시뮬 폐루프 통합 검증.
 
+## 9. FR6 리포트 / FR5 코칭 강화 (2026-07-13 추가 — "데이터 최대 활용")
+
+사용자 피드백("리포트가 예전과 차이 없다") 반영 — 수집 데이터를 세션 내/세션 간으로 최대 활용.
+
+**세션 간(누적 데이터)**:
+- `SessionCompare`(domain, 순수): 이번 vs 직전 세션 — Zone2 비율/효율(EF=평균속도/평균심박)/드리프트/서브맥시멀/케이던스를 방향 인지 비교(개선/악화/비슷).
+- `SessionTrends`(domain, 순수): 최근 N세션 추세 시퀀스(스파크라인) + 개인 기록(PR) 감지 + 신기록 플래그.
+- `RunReport.ef` 도출값(種類A), `SessionStore` submaxHr/analysisLines/series.slopePct 영속화, `allReports` 전량 로드.
+
+**세션 내(시계열)**:
+- `SessionAnalytics`(analysis, 순수): km 구간 splits(경사보정 GAP 포함) / 오르막·평지·내리막 경사 분해 / 워밍업 품질(급상승 감지).
+
+**리포트 UI**(ReportActivity): 이전 세션 대비 카드, 세션 추세 스파크라인(`SparklineView`), 개인 기록 배지, 구간/경사/워밍업 카드, 항상 뜨는 관측 분석 지표(EF/드리프트).
+
+**코칭**(FR5): Zone 2 연속 유지 5/10/15…분 마일스톤 격려(4페르소나, 누적 스트릭 추적).
+
+**추가 백로그(미구현 아이디어, HANDOFF)**: 컨디션 지표(그날), 이탈 원인 분해, 효율 곡선(HR-페이스 산점도), 주간/월간 요약 / 코칭: 워밍업 큐, 후반 페이싱, 회복 구간 인지, 더위 페이싱 강화, 패턴 학습 예방.
+
+---
+
 ## 미해결 사항 (구현 중 확정)
 
 - [ ] HRR 노력종료 감지의 연속 러닝 대리 지표 정밀화(쿨다운 없을 때).
