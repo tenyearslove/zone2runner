@@ -1,6 +1,6 @@
 # Spec-008: 안전 가드 (위험 심박 감지 및 운동 중단 권고)
 
-- **상태**: Draft
+- **상태**: Implemented (2026-07-10 — `pipeline/SafetyGuard.kt`, 95% 최대심박 15초 지속→규칙 권고 LLM 우회, 30초 재경고 스로틀. RunEngine 결선, LiveState.safetyAlert. 테스트 6건. spec-025 7단계)
 - **날짜**: 2026-07-02
 - **관련 요구**: spec-001 **FR5(안전 가드로 편입, 2026-07-10)**, C03, 제어가능성(안전전환)/강건성 QA
 
