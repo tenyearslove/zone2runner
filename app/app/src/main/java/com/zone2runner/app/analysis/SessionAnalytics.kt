@@ -15,6 +15,10 @@ object SessionAnalytics {
     data class Split(val km: Int, val avgHr: Int, val avgPaceMinKm: Double, val avgGapMinKm: Double)
     data class GradeBand(val label: String, val sec: Int, val avgHr: Int, val avgGapMinKm: Double)
     data class Warmup(val reachSec: Int, val startHr: Int, val plateauHr: Int, val abrupt: Boolean)
+    data class ExitCauses(
+        val aboveSec: Int, val uphillPct: Int, val fastPacePct: Int, val latePct: Int, val otherPct: Int,
+        val note: String,
+    )
 
     private fun mps(pace: Double) = MPS_PER_MIN_KM / pace.coerceAtLeast(0.1)   // m/s
     private fun gap(pace: Double, slopePct: Double) = pace * (MINETTI_LEVEL / minettiCr(slopePct / 100.0))
@@ -66,6 +70,41 @@ object SessionAnalytics {
         fun band(label: String, a: Acc): GradeBand? =
             if (a.sec < 20) null else GradeBand(label, a.sec.toInt(), Math.round(a.hr / a.sec).toInt(), a.gap / a.sec)
         return listOfNotNull(band("오르막", up), band("평지", flat), band("내리막", down))
+    }
+
+    /**
+     * Zone 2 초과(이탈) 원인 분해 — 초과 구간을 오르막/빠른 페이스/후반 드리프트/기타로 귀속(설명용이성 FR6).
+     * 우선순위: 오르막 > 빠른 페이스 > 후반(드리프트) > 기타. 초과가 거의 없으면 null.
+     */
+    fun exitCauses(r: RunReport): ExitCauses? {
+        val s = r.series
+        if (s.size < 8) return null
+        val paces = s.filter { valid(it) }.map { it.paceMinKm }.sorted()
+        if (paces.isEmpty()) return null
+        val medPace = paces[paces.size / 2]
+        val dur = s.last().tSec.coerceAtLeast(1)
+        var above = 0.0; var up = 0.0; var fast = 0.0; var late = 0.0; var other = 0.0
+        for (i in s.indices) {
+            val p = s[i]
+            if (p.judgmentIndex != 2) continue // 2 = 초과(ABOVE)
+            val w = dt(s, i).toDouble()
+            above += w
+            when {
+                p.slopePct > 2 -> up += w
+                p.paceMinKm < medPace * 0.92 -> fast += w   // 세션 중앙값보다 빠름
+                p.tSec > dur * 0.6 -> late += w             // 후반(드리프트 추정)
+                else -> other += w
+            }
+        }
+        if (above < 20) return null
+        fun pct(x: Double) = Math.round(x / above * 100).toInt()
+        val parts = ArrayList<String>()
+        if (pct(up) > 0) parts += "오르막 ${pct(up)}%"
+        if (pct(fast) > 0) parts += "빠른 페이스 ${pct(fast)}%"
+        if (pct(late) > 0) parts += "후반 드리프트 ${pct(late)}%"
+        val note = "초과 ${(above / 60).toInt()}분 중 " + parts.joinToString(", ") +
+            (if (pct(up) >= 50) " — 오르막 전에 미리 페이스를 늦추면 도움돼요." else "")
+        return ExitCauses(above.toInt(), pct(up), pct(fast), pct(late), pct(other), note)
     }
 
     /** 워밍업 품질 — 초반 심박 상승. 안정심박대(중반 평균) 도달까지 시간. 급상승이면 abrupt. */

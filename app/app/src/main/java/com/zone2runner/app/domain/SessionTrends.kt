@@ -54,4 +54,38 @@ object SessionTrends {
     /** 현재 세션이 세운 신기록만(코칭 마일스톤/배지 강조용). */
     fun newRecords(history: List<RunReport>, current: RunReport): List<Record> =
         records(history, current).filter { it.isNew }
+
+    data class Condition(val verdict: Verdict, val note: String)
+
+    /**
+     * 그날 컨디션 지표 — 오늘 효율(EF)을 개인 최근 baseline(직전 N세션 중앙값)과 비교(種類B).
+     * 높으면 컨디션 좋음, 낮으면 피로/더위/수면부족 신호 가능. 직전 세션 3회 미만이면 null.
+     */
+    fun condition(history: List<RunReport>, current: RunReport): Condition? {
+        val priors = history.filter { it !== current && it.ef > 0 }.takeLast(6)
+        if (priors.size < 3 || current.ef <= 0) return null
+        val efs = priors.map { it.ef }.sorted()
+        val base = efs[efs.size / 2] // 중앙값
+        if (base <= 0) return null
+        val ratio = current.ef / base
+        val pct = Math.round((ratio - 1.0) * 100).toInt()
+        return when {
+            ratio >= 1.03 -> Condition(Verdict.BETTER, "오늘 효율이 평소보다 %+d%% 높아요 — 컨디션 좋은 날이에요.".format(pct))
+            ratio <= 0.97 -> Condition(Verdict.WORSE, "오늘 효율이 평소보다 %d%% 낮아요 — 피로/더위/수면부족 신호일 수 있어요.".format(pct))
+            else -> Condition(Verdict.SIMILAR, "오늘 효율이 평소 수준이에요.")
+        }
+    }
+
+    data class Period(val days: Int, val sessions: Int, val zone2Min: Int, val distanceKm: Double, val avgEf: Double)
+
+    /** 최근 days일 요약(누적 데이터 활용). nowEpochMs 기준 롤링 창. 앱이 현재 시각 주입(테스트 가능). */
+    fun period(history: List<RunReport>, nowEpochMs: Long, days: Int): Period {
+        val from = nowEpochMs - days.toLong() * 86_400_000L
+        val inWin = history.filter { it.startedAtEpochMs in from..nowEpochMs }
+        val z2 = inWin.sumOf { it.inSec } / 60
+        val dist = inWin.sumOf { it.distanceM } / 1000.0
+        val efs = inWin.mapNotNull { if (it.ef > 0) it.ef else null }
+        val avgEf = if (efs.isNotEmpty()) efs.average() else 0.0
+        return Period(days, inWin.size, z2, dist, avgEf)
+    }
 }
