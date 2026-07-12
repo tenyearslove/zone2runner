@@ -23,6 +23,9 @@ object LearnedZone {
     private const val KEY_DF_MEAN = "drift_floor_mean"
     private const val KEY_DF_VAR = "drift_floor_var"
     private const val KEY_DF_N = "drift_floor_n"
+    // 오르막 초과 경향(패턴 학습 예방, spec-025) — 세션간 EWMA(0~1). 오르막서 자주 터지면↑
+    private const val KEY_UP_TEND = "uphill_exit_tend"
+    private const val KEY_UP_N = "uphill_exit_n"
     private const val HIST_CAP = 50
 
     private fun prefs(ctx: Context) = ctx.getSharedPreferences(Profiles.prefName(ctx, PREF), Context.MODE_PRIVATE)
@@ -91,6 +94,24 @@ object LearnedZone {
             .putFloat(KEY_DF_VAR, varr.toFloat())
             .putInt(KEY_DF_N, count)
             .apply()
+    }
+
+    /**
+     * 오르막 초과 경향(0~1) — 오르막 구간에서 Zone 2를 초과하는 비율의 개인 EWMA. 학습 이력 없으면 null.
+     * 높으면 다음 세션 오르막 진입 시 사전 큐(패턴 학습 예방, spec-025).
+     */
+    fun uphillTendency(ctx: Context): Double? {
+        val p = prefs(ctx); if (!p.contains(KEY_UP_N)) return null
+        return p.getFloat(KEY_UP_TEND, 0f).toDouble()
+    }
+
+    /** 세션 종료 시 이번 오르막 초과 비율로 EWMA 갱신(α=0.3). */
+    fun updateUphillTendency(ctx: Context, sessionRatio: Double) {
+        val p = prefs(ctx)
+        val n = p.getInt(KEY_UP_N, 0)
+        val prev = if (n == 0) sessionRatio else p.getFloat(KEY_UP_TEND, 0f).toDouble()
+        val ewma = prev + 0.3 * (sessionRatio.coerceIn(0.0, 1.0) - prev)
+        p.edit().putFloat(KEY_UP_TEND, ewma.toFloat()).putInt(KEY_UP_N, n + 1).apply()
     }
 
     /** 개인화 학습 데이터만 초기화(신체 정보는 ProfileStore라 유지). spec-020 FR4. */

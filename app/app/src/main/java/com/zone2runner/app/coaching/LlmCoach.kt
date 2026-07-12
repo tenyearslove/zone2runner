@@ -74,6 +74,10 @@ class LlmCoach(
     }
 
     override suspend fun say(ctx: CoachContext): String {
+        // 격려/인지/예방 코칭(마일스톤/워밍업/회복/오르막 예방)은 방향이 없어 LLM 방향 표현이 부적절 → 규칙 문구.
+        if (ctx.milestoneMin > 0 || ctx.warmup || ctx.recovering || ctx.uphillWarn) {
+            lastPath = "rule(특수 코칭)"; return fallback.say(ctx)
+        }
         val prompt = buildPrompt(ctx)
         lastPrompt = prompt // 디버그 노출: 실제 LLM 호출 여부와 무관하게 "이 프롬프트를 쓴다"를 보여준다
         if (!ensureReady()) { lastPath = "rule(LLM 미가용)"; return fallback.say(ctx) }

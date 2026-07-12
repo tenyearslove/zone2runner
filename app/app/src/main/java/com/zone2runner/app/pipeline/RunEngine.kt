@@ -44,6 +44,7 @@ class RunEngine(
     priorUFrac: Double? = null,        // 세션 누적 학습값(LearnedZone). 없으면 공식 prior
     private val cadence: CoachCadence = CoachCadence.DEFAULT, // 코칭 빈도(spec-021)
     priorDriftFloor: Triple<Double, Double, Int>? = null,    // 드리프트 개인 노이즈플로어 누적(LearnedZone, spec-025 §4)
+    private val priorUphillTendency: Double? = null,         // 오르막 초과 경향 학습값(패턴 학습 예방, spec-025)
 ) {
     private val extractor = FeatureExtractor()
     private val personalization = Personalization(profile, priorUFrac)
@@ -178,6 +179,14 @@ class RunEngine(
         maybeMilestoneCoach(s)
         maybeWarmupCoach(s)   // 초반 급상승 → 천천히 올리기(FR5)
         maybeRecoveryCoach(s) // 심박 급강하 → 회복 인지(FR5)
+        // 오르막 초과 추적 + 구간당 사전 예방(패턴 학습, FR5)
+        val isUphill = s.slopePct > 2
+        if (isUphill) {
+            uphillSec++; if (judgment == ZoneJudgment.ABOVE) uphillAboveSec++
+            if (!wasUphill) uphillWarnedSeg = false // 새 오르막 구간 진입 → 예방 재무장
+            maybeUphillWarn(s)
+        }
+        wasUphill = isUphill
         // 경로 + 시계열(3초마다 다운샘플). GPS 미확보(NaN) 좌표는 경로에 넣지 않음
         if (s.tSec % 3 == 0) {
             if (s.lat.isFinite() && s.lon.isFinite()) track += TrackPoint(s.lat, s.lon, judgment)
@@ -281,6 +290,25 @@ class RunEngine(
     private var warmupCued = false
     private var lastRecoverySec = -9999
 
+    // 패턴 학습 예방(오르막 초과) — 이번 세션 오르막 통계 + 진입 감지
+    private var uphillSec = 0
+    private var uphillAboveSec = 0
+    private var wasUphill = false
+    private var uphillWarnedSeg = false
+
+    /** 이번 세션 오르막 구간에서 초과한 비율(0~1). 오르막이 충분치 않으면 -1(저장 스킵). */
+    fun uphillExitRatio(): Double = if (uphillSec >= 30) uphillAboveSec.toDouble() / uphillSec else -1.0
+
+    /** 오르막 구간당 1회, 학습된 경향이 높으면 사전 예방 큐(패턴 학습). 스로틀 풀리면 발화. */
+    private suspend fun maybeUphillWarn(s: Sample) {
+        if (uphillWarnedSeg) return
+        val tend = priorUphillTendency ?: return
+        if (tend < 0.4) return // 種類C: 오르막서 40% 이상 터지던 경향일 때만
+        if (s.tSec - lastCoachSec < cadence.minGapSec) return
+        uphillWarnedSeg = true
+        fireCoach(s, judgment ?: ZoneJudgment.IN, uphillWarn = true)
+    }
+
     /** 워밍업 큐(FR5): 초반 45~90초에 심박이 급상승(+25bpm 이상)하면 1회 "천천히 올리기" 안내. */
     private suspend fun maybeWarmupCoach(s: Sample) {
         if (warmupCued || firstHr <= 0 || s.tSec !in 45..90) return
@@ -302,22 +330,23 @@ class RunEngine(
     private suspend fun fireCoach(
         s: Sample, j: ZoneJudgment, reactive: Boolean = false, milestoneMin: Int = 0,
         warmup: Boolean = false, latePacing: Boolean = false, recovering: Boolean = false,
+        uphillWarn: Boolean = false,
     ) {
         val scope = coachScope
         if (scope != null && coachJob?.isActive == true) return // 이전 생성이 아직 진행 중이면 건너뜀
         lastCoachSec = s.tSec
-        val special = milestoneMin > 0 || warmup || recovering
+        val special = milestoneMin > 0 || warmup || recovering || uphillWarn
         if (!special) lastJudgmentForCoach = j
         val reason = when {
             milestoneMin > 0 -> "마일스톤"; recovering -> "회복"; warmup -> "워밍업"
-            latePacing -> "후반"; reactive -> "드리프트↑"; else -> reasonOf(j)
+            uphillWarn -> "오르막예방"; latePacing -> "후반"; reactive -> "드리프트↑"; else -> reasonOf(j)
         }
         val ctx = CoachContext(
             j, s.slopePct, s.paceMinKm, s.tSec, spm = s.spm,
             currentHr = sustainedHr, loBpm = coachLoBpm, hiBpm = coachHiBpm,
             tempC = ambientTempC,
             driftRising = reactive, gapPaceMinKm = gapPace, milestoneMin = milestoneMin,
-            warmup = warmup, latePacing = latePacing, recovering = recovering,
+            warmup = warmup, latePacing = latePacing, recovering = recovering, uphillWarn = uphillWarn,
         )
         if (scope == null) {
             recordCoaching(s.tSec, coach.say(ctx), 0L, reason)

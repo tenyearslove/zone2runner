@@ -47,6 +47,11 @@ class ReactiveCoachTest {
         assertTrue("회복 문구: $line", line.contains("회복") || line.contains("내려가"))
     }
 
+    @Test fun uphillWarn_returnsPreventiveCue() = runBlocking {
+        val line = RuleCoach("default").say(CoachContext(ZoneJudgment.IN, 5.0, 6.0, 400, uphillWarn = true))
+        assertTrue("오르막 예방 문구: $line", line.contains("오르막"))
+    }
+
     @Test fun driftFlag_ignoredWhenNotIn() = runBlocking {
         // 판정이 ABOVE면 드리프트 플래그와 무관하게 초과 방향 코칭(드리프트 경고는 IN 전용)
         val c = RuleCoach("default")

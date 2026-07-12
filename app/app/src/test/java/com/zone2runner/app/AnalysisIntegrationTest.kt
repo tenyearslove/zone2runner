@@ -42,6 +42,23 @@ class AnalysisIntegrationTest {
         r.analysisLines.forEach { println("  · $it") }
     }
 
+    @Test fun uphillPattern_learnedTendency_firesPreventiveCue() = runBlocking {
+        // 오르막 초과 경향(0.6)을 prior로 주입 → 오르막 진입 시 사전 예방 코칭
+        val engine = RunEngine(Profile.default(35, 55), RuleCoach(), priorUphillTendency = 0.6)
+        var t = 0
+        for (i in 0 until 80) { engine.onSample(sample(t, 138, 6.0, 176).copy(slopePct = 0.0)); t++ }  // 평지
+        for (i in 0 until 60) { engine.onSample(sample(t, 150, 6.5, 176).copy(slopePct = 8.0)); t++ }  // 오르막 진입
+        val r = engine.report()
+        assertTrue("오르막예방 코칭 발화", r.coachingLines.any { it.contains("오르막예방") })
+    }
+
+    @Test fun uphillRatio_computedFromSession() = runBlocking {
+        val engine = RunEngine(Profile.default(35, 55), RuleCoach())
+        var t = 0
+        for (i in 0 until 120) { engine.onSample(sample(t, 165, 6.5, 176).copy(slopePct = 8.0)); t++ } // 오르막 고심박
+        assertTrue("오르막 초과 비율 산출됨", engine.uphillExitRatio() >= 0.0)
+    }
+
     @Test fun driftFloor_seededFromPrior_wiresThrough() = runBlocking {
         // 개인 드리프트 플로어를 prior로 주입해도 세션이 정상 동작(seed 경로 검증)
         val engine = RunEngine(

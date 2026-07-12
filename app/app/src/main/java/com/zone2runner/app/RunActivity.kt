@@ -524,6 +524,7 @@ class RunActivity : AppCompatActivity() {
             priorUFrac = learnedPrior,
             cadence = settings.cadence, // spec-021
             priorDriftFloor = com.zone2runner.app.data.LearnedZone.driftFloor(this), // 드리프트 개인 플로어 누적(spec-025)
+            priorUphillTendency = com.zone2runner.app.data.LearnedZone.uphillTendency(this), // 오르막 초과 경향(패턴 학습 예방)
         )
         engine = eng
         startedAt = System.currentTimeMillis()
@@ -687,6 +688,7 @@ class RunActivity : AppCompatActivity() {
         val finalU = eng.currentUFrac()
         com.zone2runner.app.data.LearnedZone.set(this, finalU, eng.talkObservations(), eng.currentSigmaBpm()) // uFrac 이력 + 관측 + σ(spec-020)
         eng.driftFloorState().let { (m, v, n) -> com.zone2runner.app.data.LearnedZone.setDriftFloor(this, m, v, n) } // 드리프트 개인 플로어 저장(spec-025)
+        eng.uphillExitRatio().let { if (it >= 0) com.zone2runner.app.data.LearnedZone.updateUphillTendency(this, it) } // 오르막 초과 경향 학습(패턴 예방)
         logger?.event("boundary") {
             put("uFrac", finalU); put("talk", eng.talkObserved)
             put("n", com.zone2runner.app.data.LearnedZone.sessionCount(this@RunActivity))
