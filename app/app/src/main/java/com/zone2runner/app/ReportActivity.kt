@@ -30,6 +30,7 @@ import org.osmdroid.views.overlay.Polyline
 class ReportActivity : AppCompatActivity() {
 
     private var map: MapView? = null
+    private var prevReport: RunReport? = null // 효율곡선 겹치기용 직전 세션
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -65,8 +66,13 @@ class ReportActivity : AppCompatActivity() {
         val history = com.zone2runner.app.data.SessionStore.allReports(this).let { h ->
             if (h.none { it.id == r.id }) h + r else h
         }
+        prevReport = history.filter {
+            it.id != r.id && it.startedAtEpochMs in 1 until (r.startedAtEpochMs.takeIf { s -> s > 0 } ?: Long.MAX_VALUE)
+        }.maxByOrNull { it.startedAtEpochMs }
+        buildConditionCard(history, r)?.let { col.addView(it) }
         buildTrendCard(history)?.let { col.addView(it) }
         buildRecordsCard(history, r)?.let { col.addView(it) }
+        buildWeeklyCard(history)?.let { col.addView(it) }
 
         // 사후 세션 스토리(spec-023 FR2): "이번 러닝에서 왜 이렇게 코칭했나". 세션 종료 시 1회 생성·저장.
         if (r.sessionStory.isNotBlank()) {
@@ -210,10 +216,12 @@ class ReportActivity : AppCompatActivity() {
             r.analysisLines.forEach { ln -> row("· $ln", muted = true) }
         }))
 
-        // 구간(splits) / 경사 분해 / 워밍업 — 수집 시계열 최대 활용
+        // 구간(splits) / 경사 분해 / 워밍업 / 이탈원인 / 효율곡선 — 수집 시계열 최대 활용
         buildSplitsCard(r)?.let { col.addView(it) }
         buildGradeCard(r)?.let { col.addView(it) }
         buildWarmupCard(r)?.let { col.addView(it) }
+        buildExitCauseCard(r)?.let { col.addView(it) }
+        buildScatterCard(r)?.let { col.addView(it) }
     }
 
     /** 이전 세션 대비 향상/악화 카드(FR6). 직전 세션이 없으면 안내, 비교 항목 없으면 null. */
@@ -242,6 +250,60 @@ class ReportActivity : AppCompatActivity() {
             })
         }
         return card("이전 세션 대비", box)
+    }
+
+    /** 그날 컨디션 지표(FR6) — 오늘 효율 vs 개인 평소 baseline. */
+    private fun buildConditionCard(history: List<RunReport>, cur: RunReport): android.view.View? {
+        val c = com.zone2runner.app.domain.SessionTrends.condition(history, cur) ?: return null
+        val color = when (c.verdict) {
+            com.zone2runner.app.domain.Verdict.BETTER -> C_GREEN
+            com.zone2runner.app.domain.Verdict.WORSE -> C_AMBER
+            com.zone2runner.app.domain.Verdict.SIMILAR -> C_TEXT
+        }
+        return card("오늘 컨디션", TextView(this).apply { text = c.note; textSize = 13f; setTextColor(color) })
+    }
+
+    /** 최근 7일 / 30일 요약(FR6) — 누적 데이터. */
+    private fun buildWeeklyCard(history: List<RunReport>): android.view.View? {
+        if (history.size < 2) return null
+        val now = System.currentTimeMillis()
+        val wk = com.zone2runner.app.domain.SessionTrends.period(history, now, 7)
+        val mo = com.zone2runner.app.domain.SessionTrends.period(history, now, 30)
+        if (wk.sessions == 0 && mo.sessions == 0) return null
+        val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        fun row(p: com.zone2runner.app.domain.SessionTrends.Period, label: String) = box.addView(TextView(this).apply {
+            text = "$label: ${p.sessions}회 · Zone 2 ${p.zone2Min}분 · %.1f km · 평균 효율 %.2f".format(p.distanceKm, p.avgEf)
+            textSize = 12f; setTextColor(C_TEXT); setPadding(0, dp(3), 0, dp(3))
+        })
+        row(wk, "최근 7일"); row(mo, "최근 30일")
+        return card("기간 요약", box)
+    }
+
+    /** Zone 2 이탈 원인 분해(FR6, 설명용이성). */
+    private fun buildExitCauseCard(r: RunReport): android.view.View? {
+        val ec = com.zone2runner.app.analysis.SessionAnalytics.exitCauses(r) ?: return null
+        return card("초과 원인 분해", TextView(this).apply {
+            text = ec.note; textSize = 13f; setTextColor(C_TEXT); setLineSpacing(dp(2).toFloat(), 1f)
+        })
+    }
+
+    /** 효율 곡선 산점도(FR6) — 이번 vs 직전 세션 HR-페이스. */
+    private fun buildScatterCard(r: RunReport): android.view.View? {
+        fun pts(rep: RunReport) = rep.series.filter { it.hr > 0 && it.paceMinKm in 2.0..20.0 }
+            .map { it.paceMinKm.toFloat() to it.hr.toFloat() }
+        val cur = pts(r); if (cur.size < 8) return null
+        val prev = prevReport?.let { pts(it) } ?: emptyList()
+        val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        box.addView(com.zone2runner.app.ui.ScatterView(this).also {
+            it.set(cur, prev)
+            it.layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, dp(160))
+        })
+        box.addView(TextView(this).apply {
+            text = if (prev.isEmpty()) "초록: 이번 세션. 같은 페이스에 심박이 낮아지면 유산소 개선."
+            else "초록: 이번 · 회색: 직전. 초록이 회색보다 아래면 같은 페이스에 심박이 낮아진 것(개선)."
+            textSize = 11f; setTextColor(C_MUTED); setPadding(0, dp(6), 0, 0)
+        })
+        return card("효율 곡선 (심박-페이스)", box)
     }
 
     /** 세션 간 추세 스파크라인(FR6) — 지표별 최근 N세션 미니 그래프. */
