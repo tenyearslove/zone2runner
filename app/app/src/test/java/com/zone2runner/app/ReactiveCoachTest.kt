@@ -32,6 +32,21 @@ class ReactiveCoachTest {
         assertTrue("마일스톤 분수 포함: $line", line.contains("10분"))
     }
 
+    @Test fun warmup_returnsWarmupCue() = runBlocking {
+        val line = RuleCoach("default").say(CoachContext(ZoneJudgment.IN, 0.0, 6.0, 60, warmup = true))
+        assertTrue("워밍업 문구: $line", line.contains("천천히") || line.contains("데워"))
+    }
+
+    @Test fun latePacing_usesLatePhrase() = runBlocking {
+        val line = RuleCoach("default").say(CoachContext(ZoneJudgment.IN, 0.0, 6.0, 1600, driftRising = true, latePacing = true))
+        assertTrue("후반 문구: $line", line.contains("후반"))
+    }
+
+    @Test fun recovering_returnsRecoveryLine() = runBlocking {
+        val line = RuleCoach("default").say(CoachContext(ZoneJudgment.IN, 0.0, 6.0, 900, recovering = true))
+        assertTrue("회복 문구: $line", line.contains("회복") || line.contains("내려가"))
+    }
+
     @Test fun driftFlag_ignoredWhenNotIn() = runBlocking {
         // 판정이 ABOVE면 드리프트 플래그와 무관하게 초과 방향 코칭(드리프트 경고는 IN 전용)
         val c = RuleCoach("default")

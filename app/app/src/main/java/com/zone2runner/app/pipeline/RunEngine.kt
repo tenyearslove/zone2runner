@@ -127,6 +127,7 @@ class RunEngine(
         val clean = OutlierGuard.clean(s.hr, lastValidHr)
         if (clean == null) return liveState(s) // 아직 유효 HR 없음
         lastValidHr = clean
+        if (firstHr < 0) firstHr = clean // 워밍업 상승폭 기준
 
         // 안전 가드(spec-008): 위험 심박 지속 → 규칙 권고 즉시(LLM 우회, 코칭보다 우선)
         safetyAlert = safety.check(s.tSec, clean, profile.maxHr)
@@ -175,6 +176,8 @@ class RunEngine(
             null -> {}
         }
         maybeMilestoneCoach(s)
+        maybeWarmupCoach(s)   // 초반 급상승 → 천천히 올리기(FR5)
+        maybeRecoveryCoach(s) // 심박 급강하 → 회복 인지(FR5)
         // 경로 + 시계열(3초마다 다운샘플). GPS 미확보(NaN) 좌표는 경로에 넣지 않음
         if (s.tSec % 3 == 0) {
             if (s.lat.isFinite() && s.lon.isFinite()) track += TrackPoint(s.lat, s.lon, judgment)
@@ -269,20 +272,52 @@ class RunEngine(
         if (s.tSec - lastCoachSec < cadence.minGapSec) return
         if (s.tSec - lastReactiveSec < cadence.overdueSec) return // 같은 드리프트 연속 억제
         lastReactiveSec = s.tSec
-        fireCoach(s, ZoneJudgment.IN, reactive = true)
+        // 후반(경과 LATE_SEC 초과)이면 후반 페이싱 문구로(끝까지 유지). 種類C 상수.
+        fireCoach(s, ZoneJudgment.IN, reactive = true, latePacing = s.tSec > LATE_SEC)
     }
 
-    private suspend fun fireCoach(s: Sample, j: ZoneJudgment, reactive: Boolean = false, milestoneMin: Int = 0) {
+    private val LATE_SEC = 1500 // 세션 후반 판정 경계(초, 種類C — 약 25분)
+    private var firstHr = -1
+    private var warmupCued = false
+    private var lastRecoverySec = -9999
+
+    /** 워밍업 큐(FR5): 초반 45~90초에 심박이 급상승(+25bpm 이상)하면 1회 "천천히 올리기" 안내. */
+    private suspend fun maybeWarmupCoach(s: Sample) {
+        if (warmupCued || firstHr <= 0 || s.tSec !in 45..90) return
+        val hr = lastValidHr ?: return
+        if (hr - firstHr < 25 || s.tSec - lastCoachSec < cadence.minGapSec) return
+        warmupCued = true
+        fireCoach(s, judgment ?: ZoneJudgment.IN, warmup = true)
+    }
+
+    /** 회복 인지(FR5): 심박이 빠르게 하강(bpm/s < -0.3) 중이면 "잘 회복 중" 인지. 90초 스로틀. */
+    private suspend fun maybeRecoveryCoach(s: Sample) {
+        val d = lastFeat?.getOrNull(2) ?: return // bpm/s(음수=하강)
+        if (d > -0.3) return
+        if (s.tSec - lastRecoverySec < 90 || s.tSec - lastCoachSec < cadence.minGapSec) return
+        lastRecoverySec = s.tSec
+        fireCoach(s, judgment ?: ZoneJudgment.IN, recovering = true)
+    }
+
+    private suspend fun fireCoach(
+        s: Sample, j: ZoneJudgment, reactive: Boolean = false, milestoneMin: Int = 0,
+        warmup: Boolean = false, latePacing: Boolean = false, recovering: Boolean = false,
+    ) {
         val scope = coachScope
         if (scope != null && coachJob?.isActive == true) return // 이전 생성이 아직 진행 중이면 건너뜀
         lastCoachSec = s.tSec
-        if (milestoneMin == 0) lastJudgmentForCoach = j
-        val reason = when { milestoneMin > 0 -> "마일스톤"; reactive -> "드리프트↑"; else -> reasonOf(j) }
+        val special = milestoneMin > 0 || warmup || recovering
+        if (!special) lastJudgmentForCoach = j
+        val reason = when {
+            milestoneMin > 0 -> "마일스톤"; recovering -> "회복"; warmup -> "워밍업"
+            latePacing -> "후반"; reactive -> "드리프트↑"; else -> reasonOf(j)
+        }
         val ctx = CoachContext(
             j, s.slopePct, s.paceMinKm, s.tSec, spm = s.spm,
             currentHr = sustainedHr, loBpm = coachLoBpm, hiBpm = coachHiBpm,
             tempC = ambientTempC,
             driftRising = reactive, gapPaceMinKm = gapPace, milestoneMin = milestoneMin,
+            warmup = warmup, latePacing = latePacing, recovering = recovering,
         )
         if (scope == null) {
             recordCoaching(s.tSec, coach.say(ctx), 0L, reason)

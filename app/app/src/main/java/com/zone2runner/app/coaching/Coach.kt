@@ -22,6 +22,9 @@ data class CoachContext(
     val driftRising: Boolean = false,   // 정속인데 심박이 유의하게 오르는 중(드리프트↑) → 선제적 감속 안내
     val gapPaceMinKm: Double? = null,   // 경사보정 페이스(오르막 맥락, 방향 아님)
     val milestoneMin: Int = 0,          // Zone 2 연속 유지 마일스톤(분). >0이면 격려 코칭(FR5)
+    val warmup: Boolean = false,        // 초반 심박 급상승 → 천천히 올리라는 워밍업 큐
+    val latePacing: Boolean = false,    // 세션 후반 드리프트 → 끝까지 유지하려면 여유
+    val recovering: Boolean = false,    // 심박 급강하(회복 구간) → 잘 회복 중 인지
 ) {
     /** 기온 밴드. 더위만 코칭 맥락에 반영(생리적으로 Zone2 드리프트에 영향). 방향은 아님. */
     val heat: HeatBand
@@ -114,6 +117,7 @@ class RuleCoach(personaKey: String = "default") : Coach {
         val cadenceLow: String, val cadenceHigh: String, val heat: String,
         val driftWarn: String,
         val milestone: String, // "{min}" 치환
+        val warmupCue: String, val latePace: String, val recovery: String,
     )
 
     override suspend fun say(ctx: CoachContext): String {
@@ -123,10 +127,15 @@ class RuleCoach(personaKey: String = "default") : Coach {
         if (ctx.milestoneMin > 0) {
             return guard(p.milestone.replace("{min}", ctx.milestoneMin.toString()))
         }
-        // 반응형(FR5, spec-025): 아직 Zone 2 안이지만 정속인데 심박이 오르는 중(관측 드리프트↑) → 미리 여유를 안내.
+        // 회복 구간 인지(FR5): 심박이 빠르게 내려가는 중 — 잘 회복하고 있음을 알림.
+        if (ctx.recovering) return guard(p.recovery + heatTip(ctx))
+        // 워밍업 큐(FR5): 초반 급상승 — 천천히 올리라는 안내(방향 아님).
+        if (ctx.warmup) return guard(p.warmupCue + heatTip(ctx))
+        // 반응형(FR5, spec-025): 정속인데 심박이 오르는 중(관측 드리프트↑) → 미리 여유. 후반이면 후반 페이싱 문구.
         // 예측이 아니라 "지금 관측된 추세"에 반응(방향 강제 없이 MAINTAIN 톤 — 잘못된 방향 위험 없음).
         if (ctx.driftRising && ctx.judgment == ZoneJudgment.IN) {
-            return guard(p.driftWarn + cadenceTip(ctx) + heatTip(ctx))
+            val base = if (ctx.latePacing) p.latePace else p.driftWarn
+            return guard(base + cadenceTip(ctx) + heatTip(ctx)) // heatTip = 더위+드리프트 결합(더위 페이싱 강화)
         }
         val lines = when (intentOf(ctx.judgment)) {
             CoachIntent.SPEED_UP -> if (downhill) listOf(p.upDownhill) else p.up
@@ -175,6 +184,9 @@ class RuleCoach(personaKey: String = "default") : Coach {
                 heat = " 더우니 무리하지 말고 수분 챙겨요.",
                 driftWarn = "심박이 서서히 오르고 있어요. 지금 페이스에 여유를 두고 리듬을 지켜봐요.",
                 milestone = "Zone 2 {min}분째 완벽 유지예요! 이 리듬 그대로 가요.",
+                warmupCue = "출발이 좋아요. 초반엔 천천히 올려서 몸을 데워요.",
+                latePace = "후반이에요. 끝까지 Zone 2로 마치려면 지금 살짝 여유를 둬요.",
+                recovery = "좋아요, 심박이 잘 내려가고 있어요. 편하게 회복해요.",
             ),
             "spartan" to Phrases(
                 upDownhill = "내리막이다. 더 밀어서 심박을 Zone 2로 올려.",
@@ -196,6 +208,9 @@ class RuleCoach(personaKey: String = "default") : Coach {
                 heat = " 덥다. 무리하지 말고 수분 챙겨.",
                 driftWarn = "심박이 슬슬 오른다. 지금 페이스에 여유 두고 리듬 지켜.",
                 milestone = "Zone 2 {min}분 유지. 잘하고 있다. 그대로 간다.",
+                warmupCue = "초반이다. 천천히 올려 몸부터 데워.",
+                latePace = "후반이다. 끝까지 유지하려면 지금 여유 둬.",
+                recovery = "좋다. 심박 잘 내려간다. 편하게 회복해.",
             ),
             "friend" to Phrases(
                 upDownhill = "내리막이야! 조금만 더 밀어서 심박을 Zone 2로 올려보자.",
@@ -217,6 +232,9 @@ class RuleCoach(personaKey: String = "default") : Coach {
                 heat = " 덥다, 무리하지 말고 물 꼭 챙겨!",
                 driftWarn = "심박이 슬슬 올라오네. 지금 페이스에 여유 두고 리듬 지켜보자.",
                 milestone = "Zone 2 {min}분째야! 완전 잘하고 있어. 이대로 가자.",
+                warmupCue = "출발 좋아! 초반엔 천천히 올려서 몸 데우자.",
+                latePace = "이제 후반이야. 끝까지 Zone 2로 가려면 살짝 여유 두자.",
+                recovery = "좋아, 심박 잘 내려간다. 편하게 회복하자.",
             ),
             "calm" to Phrases(
                 upDownhill = "내리막 구간입니다. 조금 더 밀어 심박을 Zone 2로 올려주십시오.",
@@ -238,6 +256,9 @@ class RuleCoach(personaKey: String = "default") : Coach {
                 heat = " 기온이 높습니다. 무리하지 마시고 수분을 섭취하십시오.",
                 driftWarn = "심박이 서서히 상승하고 있습니다. 현재 페이스에 여유를 두고 리듬을 지켜보십시오.",
                 milestone = "Zone 2를 {min}분째 유지하고 있습니다. 아주 좋습니다. 현재 리듬을 지켜주십시오.",
+                warmupCue = "출발이 좋습니다. 초반에는 천천히 올려 몸을 데워주십시오.",
+                latePace = "후반부입니다. 끝까지 Zone 2로 마치려면 지금 여유를 두시기 바랍니다.",
+                recovery = "좋습니다. 심박이 잘 내려가고 있습니다. 편안하게 회복하십시오.",
             ),
         )
     }
