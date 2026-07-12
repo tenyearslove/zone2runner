@@ -191,7 +191,9 @@ class AnalysisEngine(private val metrics: List<AnalysisMetric>) {
 
 **2차 추가 구현(2026-07-13)**: 리포트 — 오늘 컨디션(EF vs 개인 baseline), 초과 원인 분해(오르막/페이스/드리프트), 효율 곡선 산점도(이번 vs 직전), 기간 요약(최근 7/30일). 코칭 — 워밍업 큐, 후반 페이싱, 회복 구간 인지, 더위+드리프트 결합. 순수로직(SessionAnalytics.exitCauses / SessionTrends.condition·period)+테스트.
 
-**남은 백로그(미구현)**: 코칭 "패턴 학습 예방"(같은 오르막서 반복 이탈 시 사전 경고 — 세션 간 경사-이탈 이력 학습 필요). 실데이터 대기(HRR 노력종료/게이트 상수 튜닝, 실주행 정확도 검증).
+**3차 추가(2026-07-13)**: 코칭 "패턴 학습 예방" 구현 — 오르막 초과 비율 EWMA 학습(LearnedZone.uphillTendency, 種類B), 다음 세션 오르막 진입 시 경향>0.4면 구간당 1회 사전 큐. LlmCoach가 특수 코칭(격려/인지/예방)은 RuleCoach로 우회(방향 render 부적절).
+
+**남은 것(실데이터 대기만)**: HRR 노력종료 감지/게이트 상수(HR_SLOPE_BAND 등) 필드 튜닝, 실주행 정확도 검증. 리포트/코칭 백로그는 전부 구현 완료.
 
 ---
 
