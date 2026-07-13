@@ -107,7 +107,11 @@ object SessionAnalytics {
         return ExitCauses(above.toInt(), pct(up), pct(fast), pct(late), pct(other), note)
     }
 
-    /** 워밍업 품질 — 초반 심박 상승. 안정심박대(중반 평균) 도달까지 시간. 급상승이면 abrupt. */
+    /** 유의한 워밍업 상승 최소폭(bpm, 種類C — spec-025 §9-1). 이보다 덜 오르면 램프가 없다고 본다. */
+    private const val WARMUP_MIN_RISE = 8
+
+    /** 워밍업 품질 — 초반 심박 상승. 안정심박대(중반 평균) 도달까지 시간. 급상승이면 abrupt.
+     *  심박이 유의하게 오르지 않았으면(이미 높게 시작했거나 하강) 워밍업 램프가 없으므로 null 반환(오도 방지). */
     fun warmup(r: RunReport): Warmup? {
         val s = r.series.filter { valid(it) }
         if (s.size < 20) return null
@@ -117,7 +121,12 @@ object SessionAnalytics {
         if (mid.isEmpty()) return null
         val plateau = Math.round(mid.map { it.hr }.average()).toInt()
         val startHr = s.first().hr
+        // 워밍업 = 낮은 출발 → 안정대로 '오르는' 구간. 유의한 상승이 없으면(내려갔거나 이미 높게 시작)
+        // 분해가 무의미 → 생략. 그래야 "내려갔는데 올랐다"거나 "도달 0초" 같은 오도 문구가 안 나온다.
+        // (시뮬은 존 안에서 시작하기도 해서 이 경우가 흔하다.)
+        if (plateau - startHr < WARMUP_MIN_RISE) return null
         val reach = s.firstOrNull { it.hr >= plateau - 5 }?.tSec ?: return null
+        if (reach <= 0) return null // 시작부터 안정대면 램프가 없음
         // 급상승: 안정대 도달 90초 이내 + 초반 상승폭이 큼(種類C: 90초/15bpm 선언)
         val abrupt = reach < 90 && (plateau - startHr) >= 15
         return Warmup(reach, startHr, plateau, abrupt)

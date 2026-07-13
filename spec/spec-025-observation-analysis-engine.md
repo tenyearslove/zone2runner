@@ -223,7 +223,7 @@ CLAUDE.md "★ 근거는 반드시 문서에 남긴다" 준수 — §9 코칭/�
 | 세션 비교 "비슷" 밴드 | Zone2 3%p / EF 0.03 / 드리프트 1.5%p / 서브맥시멀 2bpm / 케이던스 3spm | 그 이하 차이는 SIMILAR 판정 | SessionCompare |
 | 컨디션 밴드 | EF비 ≥1.03 좋음 / ≤0.97 나쁨 (직전 6세션 중앙값, 최소 3) | 그날 컨디션(種類B baseline 위 임계) | SessionTrends.condition |
 | 스파크라인 길이 | 최근 12세션 | 추세 표시 범위 | SessionTrends |
-| 워밍업 급상승 | 도달<90s & 상승≥15bpm (세션≥300s, 중반 120~360s 평균, plateau−5 도달) | abrupt 워밍업 판정 | SessionAnalytics.warmup |
+| 워밍업 램프/급상승 | 유의 상승 ≥8bpm이라야 카드 표시(`WARMUP_MIN_RISE`, 없으면 생략), 급상승=도달<90s & 상승≥15bpm (세션≥300s, 중반 120~360s 평균, plateau−5 도달) | 램프 유무 + abrupt 판정 | SessionAnalytics.warmup |
 | 초과 원인 분해 | 오르막 slope>2% / 빠름 pace<중앙×0.92 / 후반 t>dur×0.6 (초과<20s 생략, ≥50% 오르막이면 조언) | 초과 시간 귀인 | SessionAnalytics.exitCauses |
 
 **경사 추정 입력(SlopeEstimator — GAP/오르막 판정 재료, 種類 C)**

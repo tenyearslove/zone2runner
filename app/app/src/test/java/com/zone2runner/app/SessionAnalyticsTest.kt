@@ -55,6 +55,15 @@ class SessionAnalyticsTest {
         assertTrue(w.reachSec < 90)
     }
 
+    @Test fun warmup_noRise_returnsNull() {
+        // 심박이 오르지 않고 오히려 내려가는 세션(시뮬이 존 안에서 시작) — 워밍업 카드는 생략돼야 한다
+        // (버그: 136→128인데 "0초에 걸쳐 완만히 올랐어요"가 나오던 문제)
+        val s = ArrayList<SeriesPoint>()
+        var t = 0
+        for (i in 0 until 160) { s += SeriesPoint(t, 136 - (i / 40), 6.0, 1, 0.0); t += 3 } // 136에서 ~133으로 완만 하강
+        assertNull("상승 없으면 워밍업 null", SessionAnalytics.warmup(rep(s)))
+    }
+
     @Test fun exitCauses_uphillDominant() {
         val s = ArrayList<SeriesPoint>()
         var t = 0
