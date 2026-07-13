@@ -39,7 +39,7 @@
 | FR1 프로필 + 초기 경계 | 강건성(데이터 폴백) | ProfileStore(프로필 관리, spec-009), Tanaka HRmax prior, 초기 계산법(안정심박 알면 Karvonen 아니면 %HRmax), Zone2Prior(adr-012). 관측 갱신·말하기 테스트로 경계 맞추기·tier 승격=FR4 |
 | FR2 수집/판정 | 강건성, 수행효율성 | Health Services HR 수집(adr-008/009), ZoneJudge(규칙 판정, adr-013), OutlierGuard/히스테리시스 |
 | FR3 분석 엔진 | 설명용이성, 수행효율성 | AnalysisEngine(파생지표 도출, adr-024) — 드리프트 회귀/서브맥시멀 HR/HRR/Minetti GAP/케이던스 σ, 노이즈 구간 게이팅, 개인 k·σ 임계 |
-| FR4 개인화 | 기능적응성 | Personalization(온라인 Bayesian 경계 갱신, adr-004/016/spec-004), 말하기 테스트 3단계(문헌 정본 TT+/±/−, spec-016), 최대·안정심박 프로필 갱신(adr-012), 계산법 tier 승격 |
+| FR4 개인화 | 기능적응성 | Personalization(온라인 Bayesian 경계 갱신, adr-004/016/spec-004), 말하기 테스트 3단계(문헌 정본 TT+/±/−, spec-016), 최대/안정심박 프로필 갱신(adr-012), 계산법 tier 승격 |
 | FR5 코칭/안전 | 제어가능성 | RuleCoach/LlmCoach + FR3 엔진 사실(드리프트/GAP/케이던스) + DirectionGuard(출력 가드레일, adr-002/spec-005), Nano 미가용/위반 시 템플릿 폴백, SafetyGuard(위험 심박 규칙 권고, LLM 우회, spec-008) |
 | FR6 리포트/설명 | 설명용이성 | ReportActivity(FR3 엔진 파생지표 그래프, spec-007), 설명 서비스(spec-023: 세션 스토리/판정 왜/드리프트 인과, 종료 1회 생성·저장) |
 | 전 파이프라인 검증 | 테스트가능성 | RunSource 추상화 + VirtualRunner 폐루프(spec-019/022) |
