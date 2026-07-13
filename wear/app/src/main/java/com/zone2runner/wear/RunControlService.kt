@@ -33,12 +33,19 @@ class RunControlService : WearableListenerService() {
             if (!TalkTestActivity.active) {
                 try {
                     startActivity(Intent(this, TalkTestActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-                } catch (t: Throwable) { /* BG 액티비티 제한 시 이번 설문은 건너뜀(놓쳐도 무해, 폰이 다시 판단) */ }
+                } catch (t: Throwable) {
+                    // BG 액티비티 시작 제한(앱 비포그라운드 시) → 풀스크린 알림으로 설문 표시(시뮬 미러 등)
+                    postTalkNotification()
+                }
             }
             return
         }
-        // 폰에서 답함 → 워치에 열린 설문 닫기(중복 응답 방지)
-        if (event.path == RunLink.PATH_TALK_DONE) { TalkTestActivity.closeCurrent(); return }
+        // 폰에서 답함 → 워치에 열린 설문 닫기(중복 응답 방지) + 풀스크린 알림 폴백도 취소
+        if (event.path == RunLink.PATH_TALK_DONE) {
+            TalkTestActivity.closeCurrent()
+            getSystemService(NotificationManager::class.java).cancel(NOTIF_TALK_ID)
+            return
+        }
         android.util.Log.i("RunControl", "recv ${event.path} state=${RunBus.state}")
         when (event.path) {
             RunLink.PATH_START -> {
@@ -74,11 +81,12 @@ class RunControlService : WearableListenerService() {
                             .putExtra(WearRunActivity.EXTRA_MIRROR, true)
                             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                     )
-                } catch (t: Throwable) { postLaunchNotification() }
+                } catch (t: Throwable) { postLaunchNotification(mirror = true) }
             }
             RunLink.PATH_STOP -> {
                 // 실센서면 RunService 종료, 미러면 RunBus만 IDLE로(서비스 없음)
                 TalkTestActivity.closeCurrent() // 세션 종료 시 열려 있던 설문도 닫기
+                getSystemService(NotificationManager::class.java).cancel(NOTIF_TALK_ID) // 알림 폴백도 취소
                 if (RunBus.state != RunState.IDLE) { RunBus.state = RunState.IDLE; RunBus.notifyUi() }
                 startService(
                     Intent(this, RunService::class.java)
@@ -89,16 +97,18 @@ class RunControlService : WearableListenerService() {
         }
     }
 
-    private fun postLaunchNotification() {
+    private fun postLaunchNotification(mirror: Boolean = false) {
         val mgr = getSystemService(NotificationManager::class.java)
         if (mgr.getNotificationChannel(CHANNEL) == null) {
             mgr.createNotificationChannel(
                 NotificationChannel(CHANNEL, "러닝 시작", NotificationManager.IMPORTANCE_HIGH)
             )
         }
+        // 미러(시뮬)면 탭 시에도 미러 모드로 열려야 한다(실센서 러닝 화면과 혼동 방지).
+        val intent = Intent(this, WearRunActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        if (mirror) intent.putExtra(WearRunActivity.EXTRA_MIRROR, true)
         val pi = PendingIntent.getActivity(
-            this, 0, Intent(this, WearRunActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         val n: Notification = NotificationCompat.Builder(this, CHANNEL)
             .setContentTitle("폰에서 러닝 시작됨")
@@ -112,8 +122,39 @@ class RunControlService : WearableListenerService() {
         mgr.notify(NOTIF_ID, n)
     }
 
+    /**
+     * 토크테스트 설문을 풀스크린 알림으로 표시(BG 액티비티 시작이 막혔을 때 폴백).
+     * 시뮬 미러처럼 워치 앱이 포그라운드가 아닐 때도 설문이 뜨게 한다. 30초 뒤 자동 소멸.
+     */
+    private fun postTalkNotification() {
+        val mgr = getSystemService(NotificationManager::class.java)
+        if (mgr.getNotificationChannel(TALK_CHANNEL) == null) {
+            mgr.createNotificationChannel(
+                NotificationChannel(TALK_CHANNEL, "말하기 테스트", NotificationManager.IMPORTANCE_HIGH)
+            )
+        }
+        val pi = PendingIntent.getActivity(
+            this, 1, Intent(this, TalkTestActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        val n: Notification = NotificationCompat.Builder(this, TALK_CHANNEL)
+            .setContentTitle("대화 되나요?")
+            .setContentText("탭하여 지금 강도 답하기")
+            .setSmallIcon(android.R.drawable.ic_menu_mylocation)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_REMINDER)
+            .setFullScreenIntent(pi, true)
+            .setContentIntent(pi)
+            .setAutoCancel(true)
+            .setTimeoutAfter(30_000L)
+            .build()
+        mgr.notify(NOTIF_TALK_ID, n)
+    }
+
     private companion object {
         const val CHANNEL = "run_control"
         const val NOTIF_ID = 2002
+        const val TALK_CHANNEL = "talk_test"
+        const val NOTIF_TALK_ID = 2003
     }
 }
