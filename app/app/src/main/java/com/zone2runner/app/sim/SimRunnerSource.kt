@@ -145,11 +145,9 @@ class SimRunnerSource(
                     lastTalk = t
                     val d = hrObs - uAbs + (runner.talkBias + gauss(runner.talkNoise)) * runner.hrr
                     val st = when {
-                        d < -16 -> TalkState.VERY_COMFORTABLE
                         d < -6 -> TalkState.COMFORTABLE
                         d <= 6 -> TalkState.BORDERLINE
-                        d <= 16 -> TalkState.HARD
-                        else -> TalkState.VERY_HARD
+                        else -> TalkState.HARD
                     }
                     onTalkTest?.invoke(st)
                 }

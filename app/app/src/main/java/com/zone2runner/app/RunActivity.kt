@@ -76,6 +76,7 @@ class RunActivity : AppCompatActivity() {
     private var vrSummary: TextView? = null
     // 워치는 항상 페어(실제도 항상 페어 → 시뮬도 동일, 2026-07-08 사용자 결정). 별도 연동 옵션 없음.
     private var talkDialog: android.app.AlertDialog? = null
+    private var suppressTalkResumeOnce = false // [안내]로 넘어갈 때 시뮬 재개를 1회 건너뜀(정지 유지)
     private var virtualRunner = com.zone2runner.app.domain.VirtualRunner.DEFAULT // 가상러너(자동 시나리오)
     private var runnerChip: TextView? = null
     private var paceLabel: TextView? = null
@@ -647,10 +648,8 @@ class RunActivity : AppCompatActivity() {
         val l = com.google.android.gms.wearable.MessageClient.OnMessageReceivedListener { e ->
             if (e.path.startsWith("/talk/")) {
                 val st = when (e.path.substringAfterLast('/')) {
-                    "very_comfortable" -> com.zone2runner.app.pipeline.TalkState.VERY_COMFORTABLE
                     "comfortable" -> com.zone2runner.app.pipeline.TalkState.COMFORTABLE
                     "hard" -> com.zone2runner.app.pipeline.TalkState.HARD
-                    "very_hard" -> com.zone2runner.app.pipeline.TalkState.VERY_HARD
                     else -> com.zone2runner.app.pipeline.TalkState.BORDERLINE
                 }
                 runOnUiThread {
@@ -796,7 +795,7 @@ class RunActivity : AppCompatActivity() {
             lastTalkAskSimSec = simSec
             lastTalkPromptWallMs = now
             RunLink.send(this, RunLink.PATH_TALK)
-            // 폰에도 5지선다 팝업(사용자 확정: 폰/워치 모두 팝업) — 고정 칩 UI는 제거됨.
+            // 폰에도 3지선다 팝업(사용자 확정: 폰/워치 모두 팝업) — 고정 칩 UI는 제거됨.
             // 시뮬 소스는 팝업 동안 시간 정지, 실센서는 무시(현실은 안 멈춤).
             showPhoneTalkDialog()
         }
@@ -809,11 +808,9 @@ class RunActivity : AppCompatActivity() {
     private fun showPhoneTalkDialog() {
         if (talkDialog?.isShowing == true) return
         val states = listOf(
-            "아주편함" to com.zone2runner.app.pipeline.TalkState.VERY_COMFORTABLE,
             "편함" to com.zone2runner.app.pipeline.TalkState.COMFORTABLE,
             "보통" to com.zone2runner.app.pipeline.TalkState.BORDERLINE,
             "벅참" to com.zone2runner.app.pipeline.TalkState.HARD,
-            "매우벅참" to com.zone2runner.app.pipeline.TalkState.VERY_HARD,
         )
         val d = android.app.AlertDialog.Builder(this)
             .setTitle("대화 되나요? (지금 강도)")
@@ -823,16 +820,39 @@ class RunActivity : AppCompatActivity() {
                 RunLink.send(this, RunLink.PATH_TALK_DONE) // 폰에서 답함 → 워치 설문도 닫기
                 Toast.makeText(this, "기록됨 · 개인 경계에 반영", Toast.LENGTH_SHORT).show()
             }
+            .setNeutralButton("안내") { _, _ ->
+                suppressTalkResumeOnce = true // 안내 보는 동안 시뮬 시간 계속 정지
+                showTalkGuideDialog()
+            }
             .setNegativeButton("건너뛰기", null)
             .create()
         d.setOnDismissListener {
             if (talkDialog === d) talkDialog = null
-            source?.setPaused(false) // 팝업 닫힘 → 시뮬 시간 재개
+            if (suppressTalkResumeOnce) suppressTalkResumeOnce = false else source?.setPaused(false) // 팝업 닫힘 → 시뮬 재개(안내로 넘어갈 땐 정지 유지)
         }
         d.show()
         talkDialog = d
         source?.setPaused(true) // 팝업 표시 중 시뮬 시간 정지(실센서 소스는 무시)
         hrView.postDelayed({ if (talkDialog === d) runCatching { d.dismiss() } }, 30_000L)
+    }
+
+    /** 말하기 테스트 [안내](spec-016 FR3) — 각 답이 "어떤 느낌일 때"인지 문헌 근거 설명. 읽는 동안 시뮬 정지 유지. */
+    private fun showTalkGuideDialog() {
+        val msg = "20~30초간 완전한 문장(좋아하는 노래 가사 등)을 소리 내 말해보고, 지금 느낌에 맞는 버튼을 누르세요.\n\n" +
+            "편함 — 완전한 문장을 자연스러운 곳에서만 숨쉬며 편하게 말할 수 있어요. 노래도 흥얼거릴 수 있어요. 아직 여유 있는 유산소 강도예요.\n\n" +
+            "보통 — 이제 문장 중간에 숨을 넣어야 하고, '네, 그런데…' 하고 살짝 벅차기 시작해요. 딱 목표 경계(Zone 2 상단)예요.\n\n" +
+            "벅참 — 완전한 문장이 어렵고 짧게 끊어서만, 한두 단어만 나와요. Zone 2보다 센 강도예요."
+        val g = android.app.AlertDialog.Builder(this)
+            .setTitle("말하기 테스트 안내")
+            .setMessage(msg)
+            .setPositiveButton("답하러 가기") { _, _ -> showPhoneTalkDialog() }
+            .setNegativeButton("닫기", null)
+            .create()
+        g.setOnDismissListener {
+            // '답하러 가기'로 talk 팝업이 다시 뜨면 시뮬 정지 유지, 아니면 재개
+            if (talkDialog == null) source?.setPaused(false)
+        }
+        g.show()
     }
 
     private fun render(s: LiveState) {

@@ -15,13 +15,13 @@ import androidx.activity.ComponentActivity
 
 /**
  * 토크테스트 전체화면 설문(별도 Activity) — 좁은 러닝 대시보드에 끼워넣지 않고 새 화면으로 덮는다.
- * 5단계 답 중 하나를 누르면 폰으로 전송(/talk/<state>) 후 닫힘. 30초 무응답이면 자동 닫힘.
+ * 문헌 정본 3단계(편함/보통/벅참, TT+/±/−) 답 중 하나를 누르면 폰으로 전송(/talk/<state>) 후 닫힘. 30초 무응답이면 자동 닫힘.
  * 러닝 세션은 RunService가 계속 소유하므로 이 화면이 떠 있어도 측정/누적은 지속(adr-009).
  * 답은 폰이 개인화(observeTalkTest)에 반영. 언제 띄울지는 폰이 판단해 /run/talk으로 명령(adr-023).
  *
- * 배치(사용자 요청: 달리며 스크롤 불가 → 5개 선택지가 한 화면에):
- * 원형 화면에 맞춰 제목 + [아주편함|편함] / [보통(가운데 크게)] / [벅참|매우벅참] 3행.
- * 강도별 색(파랑→초록→회색→주황→빨강)으로 글 안 읽고도 위치/색만으로 즉답 가능.
+ * 배치(사용자 요청: 달리며 스크롤 불가 → 3개 선택지가 한 화면에):
+ * 원형 화면에 맞춰 제목 + 1줄 힌트 + [편함] / [보통(가운데 크게)] / [벅참] 세로 3행.
+ * 강도별 색(초록→회색→빨강)으로 글 안 읽고도 위치/색만으로 즉답 가능. 화면이 좁아 [안내] 링크 대신 1줄 힌트.
  */
 class TalkTestActivity : ComponentActivity() {
 
@@ -61,6 +61,11 @@ class TalkTestActivity : ComponentActivity() {
         col.addView(TextView(this).apply {
             text = "대화 되나요?"; textSize = 15f; setTypeface(Typeface.DEFAULT_BOLD)
             setTextColor(C_TEXT); gravity = Gravity.CENTER
+        })
+        // 화면이 좁아 [안내] 팝업 대신 1줄 힌트로 기준을 준다(spec-016 FR4).
+        col.addView(TextView(this).apply {
+            text = "문장 중간 숨이 차면 '보통'"; textSize = 11f
+            setTextColor(C_HINT); gravity = Gravity.CENTER
             setPadding(0, 0, 0, dp(6))
         })
         fun row(vararg views: TextView) = LinearLayout(this).apply {
@@ -68,15 +73,9 @@ class TalkTestActivity : ComponentActivity() {
             views.forEach { addView(it) }
         }
         // 편함(위) → 벅참(아래) 순서 고정: 위쪽 = 여유, 아래쪽 = 힘듦으로 몸에 익게
-        col.addView(row(
-            answer("아주편함", "very_comfortable", C_BLUE),
-            answer("편함", "comfortable", C_GREEN),
-        ))
+        col.addView(row(answer("편함", "comfortable", C_GREEN, wide = true)))
         col.addView(row(answer("보통", "borderline", C_GRAY, wide = true)))
-        col.addView(row(
-            answer("벅참", "hard", C_AMBER),
-            answer("매우벅참", "very_hard", C_RED),
-        ))
+        col.addView(row(answer("벅참", "hard", C_RED, wide = true)))
         return col
     }
 
@@ -116,11 +115,10 @@ class TalkTestActivity : ComponentActivity() {
             current?.let { a -> a.runOnUiThread { runCatching { a.finish() } } }
         }
         private val C_TEXT = Color.parseColor("#E8EAED")
-        // 강도색: 존 팔레트와 같은 계열(파랑=여유 → 빨강=한계). "보통"만 중립 회색.
-        private val C_BLUE = Color.parseColor("#2E7CB8")
+        private val C_HINT = Color.parseColor("#9AA0A6")
+        // 강도색: 초록=여유 → 회색=경계 → 빨강=한계.
         private val C_GREEN = Color.parseColor("#1E9E45")
         private val C_GRAY = Color.parseColor("#3A3F4A")
-        private val C_AMBER = Color.parseColor("#C77400")
         private val C_RED = Color.parseColor("#C22A20")
     }
 }

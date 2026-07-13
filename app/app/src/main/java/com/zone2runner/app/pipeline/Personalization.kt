@@ -44,10 +44,10 @@ class Personalization(private val profile: Profile, priorUFrac: Double? = null) 
     /**
      * 토크 테스트 자가관측 → 개인 경계 관측 (arch/zone2-physiology-and-estimation §6, spec-016 Tier1).
      * 근거: "편하게 말할 수 있는 마지막 강도"의 HR ≈ VT1(1차 환기역치) ≈ LT1 부근.
-     * 디커플링 관측의 임계추출 편향을 보완하는 무비용 독립 채널. 5단계 척도(강도 오름차순 z 단조 감소):
-     *   BORDERLINE(말이 끊기기 시작 ≈ VT1) → 현재 지속 HR을 상한 직접 관측(가장 좁은 σ, 최고 확신).
-     *   COMFORTABLE/VERY_COMFORTABLE      → 상한이 현재보다 위(단측 증거). 멀수록 σ 확대(거리 불확실).
-     *   HARD/VERY_HARD                     → 상한이 현재보다 아래(단측 증거). 멀수록 σ 확대.
+     * 디커플링 관측의 임계추출 편향을 보완하는 무비용 독립 채널. 문헌 정본 3단계(TT+/±/−, 강도 오름차순 z 단조 감소):
+     *   BORDERLINE(문장 중간 숨 시작 ≈ VT1, TT±) → 현재 지속 HR을 상한 직접 관측(가장 좁은 σ, 최고 확신).
+     *   COMFORTABLE(완전한 문장 편함, TT+)        → 상한이 현재보다 위(단측 증거, 넓은 σ).
+     *   HARD(짧게만 말함, TT−)                    → 상한이 현재보다 아래(단측 증거, 넓은 σ).
      */
     var talkCount = 0
         private set
@@ -60,11 +60,9 @@ class Personalization(private val profile: Profile, priorUFrac: Double? = null) 
         //   보통  = 말이 끊기기 시작 ≈ 임계 → 현재 심박을 직접 관측(양방향, 점).
         // 이렇게 안 하면 '편한데 미달'(현재 < 경계)에서 편함이 경계를 끌어내리는 오류가 난다(사용자 지적).
         val (z, sd, side) = when (state) {
-            TalkState.VERY_COMFORTABLE -> Triple(currentHr + 10.0, 16.0, +1)
             TalkState.COMFORTABLE -> Triple(currentHr + 5.0, 14.0, +1)
             TalkState.BORDERLINE -> Triple(currentHr.toDouble(), 6.0, 0)
             TalkState.HARD -> Triple(currentHr - 5.0, 14.0, -1)
-            TalkState.VERY_HARD -> Triple(currentHr - 10.0, 16.0, -1)
         }
         talkCount++
         // 올려야 하는데 이미 경계가 위 / 내려야 하는데 이미 아래 → 새 정보 없음, 무변화
@@ -74,5 +72,5 @@ class Personalization(private val profile: Profile, priorUFrac: Double? = null) 
     }
 }
 
-/** 토크 테스트 응답(5단계 척도, spec-016). 강도 오름차순으로 나열. */
-enum class TalkState { VERY_COMFORTABLE, COMFORTABLE, BORDERLINE, HARD, VERY_HARD }
+/** 토크 테스트 응답(문헌 정본 3단계 TT+/±/−, spec-016). 강도 오름차순으로 나열. */
+enum class TalkState { COMFORTABLE, BORDERLINE, HARD }
