@@ -70,7 +70,7 @@ class RunActivity : AppCompatActivity() {
     private var manualSpm = 0 // 케이던스 0 = 정지에서 시작(사용자 피드백) — 올리면 달리기 시작
     private var manualStride = 1.00
     private var manualHrOffset = 0
-    private var manualSlope = 0.0 // 경사 % — 파이프라인 경사 입력(특징/예측/코칭) 테스트
+    private var manualSlope = 0.0 // 경사 % — 파이프라인 경사 입력(특징/코칭) 테스트
     private var manualTempC = 20.0 // 기온 ℃ — 더위 코칭 테스트(실측 조회 대신 입력값 주입)
     private var vrRows: LinearLayout? = null
     private var vrSummary: TextView? = null
@@ -682,7 +682,7 @@ class RunActivity : AppCompatActivity() {
         window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         source?.stop()
         val eng = engine ?: run { logger?.close(); logger = null; return }
-        // 세션 종료 시 개인 Zone2 경계 누적(adr-016): 개인화는 온라인 Bayesian이 전담한다.
+        // 세션 종료 시 개인 Zone2 경계 누적(adr-025): 개인화는 온라인 Bayesian이 전담한다.
         // 토크테스트(정답에 가장 가까운 라벨) + 디커플링으로 세션 중 갱신된 '최종 경계'를 저장 →
         // 다음 세션이 여기서 시작 → 실주행 말하기 테스트가 세션을 넘어 누적/수렴.
         val finalU = eng.currentUFrac()

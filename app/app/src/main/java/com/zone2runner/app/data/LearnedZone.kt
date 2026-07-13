@@ -5,8 +5,9 @@ import com.zone2runner.app.domain.Zone2Prior
 
 /**
  * 세션 누적 개인 Zone2 상단(uFrac) — 세션 종료 시 개인화(Personalization) 최종 경계를 직접 저장한다.
- * 값은 이미 Personalization 안에서 prior + 토크테스트 + 디커플링이 융합/스무딩된 결과이므로
- * 여기서 추가 평활은 하지 않는다(adr-004/adr-016). 다음 세션의 prior로 사용.
+ * 값은 이미 Personalization 안에서 prior + 말하기 테스트가 융합/스무딩된 결과이므로
+ * 여기서 추가 평활은 하지 않는다(adr-004/adr-025). 다음 세션의 prior로 사용.
+ * (디커플링 자동갱신은 Conconi 편향으로 제거됨, 2026-07-13 — spec-004/FR4.)
  * 미학습이면 null → 공식 prior(Zone2Prior) 사용.
  *
  * spec-020: 활성 프로필별 네임스페이스 + 세션별 uFrac 이력(시각화) + 누적 말하기 관측 수.

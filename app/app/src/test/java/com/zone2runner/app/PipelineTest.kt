@@ -25,23 +25,14 @@ class PipelineTest {
         assertNull(OutlierGuard.clean(300, null))
     }
 
-    @Test fun featureExtractor_warmupThenExtractsSevenFeatures() {
+    @Test fun featureExtractor_dHrPerSec_trendAndGuards() {
         val fx = FeatureExtractor()
-        val profile = Profile.default(35, 58)
-        // 200초 공급(HR 서서히 상승, 페이스 일정)
-        for (t in 0 until 200) {
-            val hr = 120.0 + t * 0.1
-            fx.add(hr, 6.0, 170, 0.0)
-        }
-        assertTrue("warmup 완료여야 함", fx.warmupDone())
-        // t=150은 (150-120)%5==0 이므로 특징 반환
-        val feat = fx.extractAt(150, profile, uEst = 0.70, lEst = 0.60)
-        assertNotNull("stride 지점에서 특징이 나와야 함", feat)
-        assertEquals(7, feat!!.size)
-        // hr_norm_u(=hrFrac-uEst) < hr_norm_l(=hrFrac-lEst) (uEst>lEst)
-        assertTrue(feat[0] < feat[1])
-        // stride 아닌 지점은 null
-        assertNull(fx.extractAt(151, profile, 0.70, 0.60))
+        // 60초 공급(HR 0.1 bpm/s 상승, 페이스 일정)
+        for (t in 0 until 60) fx.add(120.0 + t * 0.1, 6.0, 170, 0.0)
+        // t=40: dHR = (hr[40]-hr[10])/30 = (124.0-121.0)/30 = 0.1 bpm/s
+        assertEquals(0.1, fx.dHrPerSecAt(40)!!, 1e-6)
+        // 버퍼 부족(t<30) → null
+        assertNull(fx.dHrPerSecAt(10))
     }
 
     @Test fun personalization_movesTowardObservationAndStaysBounded() {

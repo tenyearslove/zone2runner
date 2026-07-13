@@ -13,7 +13,7 @@ import kotlinx.coroutines.launch
  * 수동 가상러너 시뮬 소스(spec-022) — 사용자가 케이던스/보폭을 슬라이더로 직접 조종하면
  * 가상러너가 그 속도로 달리고, 심박은 신체 스펙 기반 생리 모델이 자동 계산한다:
  * 속도 = 케이던스 x 보폭 → 페이스 → 강도 역산 → 목표 심박 1차 지연(hrTau) 추종 +
- * 임계 초과 시 카디악 드리프트 + 최대심박 포화(ManualRunSource와 동일 방정식 계열, adr-020).
+ * 임계 초과 시 카디악 드리프트 + 최대심박 포화(ManualRunSource와 동일 방정식 계열 — 시뮬 전용 합성HR, 앱 예측 아님).
  * 심박 보정(hrOffsetBpm)은 관측 심박에 마지막에 가산 — 개인차/컨디션 재현용.
  * 평지 고정(조종 변수 효과만 관찰). 배속(delayMs)/슬라이더는 재생 중 변경 가능.
  */
@@ -39,7 +39,7 @@ class ManualVirtualRunnerSource(
     @Volatile var targetSpm: Int = 0            // 케이던스 0~200 (0 = 정지에서 시작, 사용자 피드백)
     @Volatile var targetStrideM: Double = 1.00  // 보폭 0.60~1.50m
     @Volatile var hrOffsetBpm: Int = 0          // 심박 보정 -20~+20
-    @Volatile var slopePct: Double = 0.0        // 경사 -10~+10% — 파이프라인 경사 입력(특징/예측/코칭) 테스트용
+    @Volatile var slopePct: Double = 0.0        // 경사 -10~+10% — 파이프라인 경사 입력(특징/코칭) 테스트용
 
     private var job: Job? = null
     private val rng = java.util.Random(seed)

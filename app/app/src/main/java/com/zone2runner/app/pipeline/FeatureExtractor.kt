@@ -1,13 +1,13 @@
 package com.zone2runner.app.pipeline
 
-import com.zone2runner.app.domain.Profile
 
 /**
- * 1Hz 시계열 특징 추출. 현재 소비처(adr-016):
+ * 1Hz 시계열 특징 추출. 현재 소비처:
  *   - smoothedHrAt: 지속 심박(60초 평균) → 규칙 판정(ZoneJudge)의 입력.
- *   - extractAt: 개인화 관측(디커플링)/표시용 지표(dHR 추세). [decoupling 임계 부근 지속HR을 관측 후보로]
+ *   - dHrPerSecAt: 심박 추세(bpm/s) → 대시보드 표시 + 회복 감지.
  *   - displayDriftAt: 사용자 표시용 드리프트(생리 지표).
  * 이상치 제거된 HR을 넣는다(OutlierGuard).
+ * (구 extractAt의 7-특징 벡터[디커플링 관측 등]는 개인화 디커플링 채널 제거로 함께 삭제 — 2026-07-13.)
  */
 class FeatureExtractor {
     companion object {
@@ -53,27 +53,10 @@ class FeatureExtractor {
         return if (m > 0) Math.round(m).toInt() else null
     }
 
-    /** t(현재 인덱스, =size-1)가 STRIDE 지점이면 특징 반환, 아니면 null. */
-    fun extractAt(t: Int, profile: Profile, uEst: Double, lEst: Double): DoubleArray? {
-        if (baseRatio.isNaN() || t < WARMUP_S || t >= hr.size) return null
-        if ((t - WARMUP_S) % STRIDE != 0) return null
-
-        val hrRecent = mean(hr, t - HRW, t)
-        val paceRecent = mean(pace, t - HRW, t)
-        val hrFrac = (hrRecent - profile.restingHr) / profile.hrr
-        val dHR = (hr[t] - hr[t - W]) / W
-        var rr = 0.0; var c = 0
-        for (i in (t - W) until t) { rr += hr[i] / pace[i]; c++ }
-        val decoupling = (rr / c) / baseRatio - 1.0
-        return doubleArrayOf(
-            hrFrac - uEst,      // hr_norm_u
-            hrFrac - lEst,      // hr_norm_l
-            dHR,
-            paceRecent,
-            spm[t].toDouble(),
-            decoupling,
-            slope[t],
-        )
+    /** 심박 추세(bpm/s) — 최근 W초 차분. 버퍼 부족(t<W) 시 null. 대시보드 표시 + 회복 감지용(도출값). */
+    fun dHrPerSecAt(t: Int): Double? {
+        if (t < W || t >= hr.size) return null
+        return (hr[t] - hr[t - W]) / W
     }
 
     private fun mean(a: List<Double>, from: Int, to: Int): Double {

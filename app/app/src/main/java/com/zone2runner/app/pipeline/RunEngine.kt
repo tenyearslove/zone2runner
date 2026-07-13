@@ -28,9 +28,10 @@ import kotlinx.coroutines.launch
 
 /**
  * 전체 러닝 파이프라인 오케스트레이터 (arch/architecture-overview, adr-013 역할 재분리).
- *   샘플 → 이상치 가드 → [판정 = 규칙(지속 심박 vs 개인화 경계 + 히스테리시스)]
- *        → 특징추출 → 개인화 갱신 → 코칭 → 세션 누적
- * 판정과 밴드가 같은 개인화 경계를 참조하므로 모순이 구조적으로 불가능(spec-014 FR1).
+ *   샘플 → 이상치 가드 → 안전 가드 → [판정 = 규칙(지속 심박 vs 개인화 경계 + 히스테리시스)]
+ *        → 관측 분석 엔진(FR3) → 코칭(반응형/격려/예방) → 세션 누적
+ * 판정과 밴드가 같은 개인화 경계를 참조하므로 모순이 구조적으로 불가능(adr-013).
+ * 개인화 경계는 말하기 테스트로만 갱신(디커플링 자동갱신은 Conconi 편향으로 제거, spec-004/FR4).
  * 시뮬레이터/실기기 공통. onSample을 1Hz로 호출.
  *
  * coachScope를 주면 코칭 생성(LLM ~2초)을 샘플 루프와 분리해 비동기로 돌린다 —
@@ -103,7 +104,7 @@ class RunEngine(
         personalization.observeTalkTest(hr, state)
     }
 
-    /** 현재 개인화 경계 uFrac — 세션 누적 저장(LearnedZone)용. 토크테스트+디커플링이 반영됨. */
+    /** 현재 개인화 경계 uFrac — 세션 누적 저장(LearnedZone)용. 말하기 테스트만 반영(디커플링 자동갱신 제거, 2026-07-13). */
     fun currentUFrac(): Double = personalization.boundary().uFrac
 
     /** 이번 세션에 토크테스트가 한 번이라도 반영됐는지(저장 판단/표시용). */
@@ -158,9 +159,8 @@ class RunEngine(
         // 이전엔 feat(워밍업 필요) 블록 안에 있어 2분 지나야 코칭이 시작되던 문제(실기기).
         maybeCoach(s)
 
-        // 특징(대시보드 표시용) — 판정에는 사용하지 않음. 드리프트/심박 추세 표시만.
-        val feat = extractor.extractAt(s.tSec, profile, b.uFrac, b.lFrac)
-        if (feat != null) lastFeat = feat
+        // 심박 추세(bpm/s) — 대시보드 표시 + 회복 감지용(도출값). 판정엔 사용 안 함.
+        lastDHr = extractor.dHrPerSecAt(s.tSec)
         // 존 체류 시간(초 단위 누적) + Zone 2 연속 유지 스트릭(마일스톤 격려용)
         when (judgment) {
             ZoneJudgment.BELOW -> { belowSec++; zone2StreakSec = 0 }
@@ -185,7 +185,7 @@ class RunEngine(
             series += SeriesPoint(s.tSec, clean, s.paceMinKm, judgment?.index ?: -1, s.slopePct)
         }
 
-        // 경계 갱신 = 말하기 테스트만(FR4/adr-016). 디커플링 자동 관측은 Conconi 편향으로 경계를 왜곡해
+        // 경계 갱신 = 말하기 테스트만(FR4/adr-025). 디커플링 자동 관측은 Conconi 편향으로 경계를 왜곡해
         // 제거함(spec-004 PoC, FR4 "디커플링은 표시용으로만") — 표시 드리프트는 displayDriftAt로 별개 유지.
         return liveState(s)
     }
@@ -307,7 +307,7 @@ class RunEngine(
 
     /** 회복 인지(FR5): 심박이 빠르게 하강(bpm/s < -0.3) 중이면 "잘 회복 중" 인지. 90초 스로틀. */
     private suspend fun maybeRecoveryCoach(s: Sample) {
-        val d = lastFeat?.getOrNull(2) ?: return // bpm/s(음수=하강)
+        val d = lastDHr ?: return // bpm/s(음수=하강)
         if (d > -0.3) return
         if (s.tSec - lastRecoverySec < 90 || s.tSec - lastCoachSec < cadence.minGapSec) return
         lastRecoverySec = s.tSec
@@ -360,7 +360,7 @@ class RunEngine(
 
     private var coachJob: Job? = null
     private var lastCoachText = ""
-    private var lastFeat: DoubleArray? = null
+    private var lastDHr: Double? = null
 
     private fun liveState(s: Sample) = LiveState(
         elapsedSec = elapsed,
@@ -375,7 +375,7 @@ class RunEngine(
         slopePct = s.slopePct,
         spm = s.spm,
         decoupling = extractor.displayDriftAt(s.tSec), // 표시용(HR/속도 기반) — 특징 feat[5]와 별개
-        dHrPerSec = lastFeat?.get(2),
+        dHrPerSec = lastDHr,
         driftSlope = driftSlope,
         driftRising = driftRising,
         gapPaceMinKm = gapPace,
