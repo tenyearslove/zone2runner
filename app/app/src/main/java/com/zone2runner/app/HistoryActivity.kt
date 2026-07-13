@@ -85,9 +85,17 @@ class HistoryActivity : AppCompatActivity() {
             } ?: Toast.makeText(this, "세션을 열 수 없어요", Toast.LENGTH_SHORT).show()
         }
         c.setOnLongClickListener {
-            SessionStore.delete(this, s.id)
-            Toast.makeText(this, "삭제됨", Toast.LENGTH_SHORT).show()
-            setContentView((buildUi()).withSystemBarInsets()); true
+            androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("기록 삭제")
+                .setMessage("이 러닝 기록을 삭제할까요? 되돌릴 수 없어요.")
+                .setPositiveButton("삭제") { _, _ ->
+                    SessionStore.delete(this, s.id)
+                    Toast.makeText(this, "삭제됨", Toast.LENGTH_SHORT).show()
+                    setContentView((buildUi()).withSystemBarInsets())
+                }
+                .setNegativeButton("취소", null)
+                .show()
+            true
         }
         return c
     }
