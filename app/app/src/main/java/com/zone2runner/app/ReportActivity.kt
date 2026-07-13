@@ -62,10 +62,12 @@ class ReportActivity : AppCompatActivity() {
         // 이전 세션 대비 향상/악화(FR6, spec-025) — 데이터를 세션 간으로 활용
         buildCompareCard(r)?.let { col.addView(it) }
 
-        // 세션 간 추세 + 개인 기록(누적 데이터 활용)
-        val history = com.zone2runner.app.data.SessionStore.allReports(this).let { h ->
-            if (h.none { it.id == r.id }) h + r else h
-        }
+        // 세션 간 추세 + 개인 기록 — ★이 세션 시점까지의 이력만(리포트마다 다른 추세). 이후 세션은 제외.
+        val curStart = r.startedAtEpochMs.takeIf { it > 0 } ?: Long.MAX_VALUE
+        val history = com.zone2runner.app.data.SessionStore.allReports(this)
+            .filter { it.startedAtEpochMs <= curStart && it.id != r.id }
+            .let { it + r } // 현재 세션을 마지막에 포함(저장 여부 무관)
+            .sortedBy { it.startedAtEpochMs }
         prevReport = history.filter {
             it.id != r.id && it.startedAtEpochMs in 1 until (r.startedAtEpochMs.takeIf { s -> s > 0 } ?: Long.MAX_VALUE)
         }.maxByOrNull { it.startedAtEpochMs }

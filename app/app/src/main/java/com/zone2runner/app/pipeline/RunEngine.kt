@@ -92,8 +92,6 @@ class RunEngine(
     // 코칭/개인화 타이밍
     private var lastCoachSec = -999
     private var lastJudgmentForCoach: ZoneJudgment? = null
-    private var lastPersonalizeSec = 0
-    private val obsCandidates = ArrayList<Double>() // decoupling 임계 부근 지속HR(bpm)
 
     private var sustainedHr = -1       // 최근 지속 심박(코칭 컨텍스트용)
     private var coachLoBpm = 0
@@ -160,15 +158,9 @@ class RunEngine(
         // 이전엔 feat(워밍업 필요) 블록 안에 있어 2분 지나야 코칭이 시작되던 문제(실기기).
         maybeCoach(s)
 
-        // 특징(표시/개인화 관측용) — 판정에는 사용하지 않음
+        // 특징(대시보드 표시용) — 판정에는 사용하지 않음. 드리프트/심박 추세 표시만.
         val feat = extractor.extractAt(s.tSec, profile, b.uFrac, b.lFrac)
-        if (feat != null) {
-            lastFeat = feat // 대시보드 표시용(드리프트/심박 추세)
-            // 개인화 관측 후보: decoupling(=feat[5]) 임계 부근의 지속 HR
-            val hrFrac = feat[0] + b.uFrac
-            val hrRecent = profile.restingHr + hrFrac * profile.hrr
-            if (feat[5] in 0.03..0.10) obsCandidates += hrRecent
-        }
+        if (feat != null) lastFeat = feat
         // 존 체류 시간(초 단위 누적) + Zone 2 연속 유지 스트릭(마일스톤 격려용)
         when (judgment) {
             ZoneJudgment.BELOW -> { belowSec++; zone2StreakSec = 0 }
@@ -193,13 +185,8 @@ class RunEngine(
             series += SeriesPoint(s.tSec, clean, s.paceMinKm, judgment?.index ?: -1, s.slopePct)
         }
 
-        // 개인화 갱신(5분마다) — 디커플링(드리프트) 관측. 편향(Conconi)이 있어 약한 신호로만 반영(obsSd 큼).
-        // 주 라벨은 토크테스트(사용자 입력, adr-016). 디커플링은 사용자 입력 없이도 경계를 미세 조정하는 보조.
-        if (s.tSec - lastPersonalizeSec >= 300 && obsCandidates.isNotEmpty()) {
-            personalization.update(median(obsCandidates), obsSd = 20.0) // 약한 관측(토크테스트 sd6~14보다 훨씬 약)
-            obsCandidates.clear()
-            lastPersonalizeSec = s.tSec
-        }
+        // 경계 갱신 = 말하기 테스트만(FR4/adr-016). 디커플링 자동 관측은 Conconi 편향으로 경계를 왜곡해
+        // 제거함(spec-004 PoC, FR4 "디커플링은 표시용으로만") — 표시 드리프트는 displayDriftAt로 별개 유지.
         return liveState(s)
     }
 
@@ -423,10 +410,5 @@ class RunEngine(
             analysisLines = lines,
             submaxHr = submax,
         )
-    }
-
-    private fun median(a: List<Double>): Double {
-        val s = a.sorted(); val n = s.size
-        return if (n % 2 == 1) s[n / 2] else (s[n / 2 - 1] + s[n / 2]) / 2
     }
 }
