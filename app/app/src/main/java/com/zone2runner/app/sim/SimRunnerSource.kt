@@ -75,7 +75,7 @@ class SimRunnerSource(
             val restingHr = runner.restingHr + runner.dayCondition * -2.0 // 컨디션 좋으면 RHR 약간 낮음
             val targetEffortBase = ((uAbs - restingHr) / runner.hrr).coerceIn(0.35, 0.85)
             var effort = targetEffortBase + (1 - runner.pacingDiscipline) * 0.12
-            var hr = restingHr + effort * runner.hrr
+            var hr = restingHr // 안정심박에서 시작 → 1차 지연(hrLagSec)으로 목표까지 서서히 램프업(현실적 워밍업)
             var drift = 0.0
             val route = RouteWalk(37.5665, 126.9780, rng) // 직선+코너 경로(원형 랜덤워크 대체)
             var lastTalk = -999

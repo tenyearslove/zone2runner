@@ -42,7 +42,7 @@ class ManualRunSource(
 
     override fun start(scope: CoroutineScope, onSample: suspend (Sample) -> Unit, onComplete: suspend () -> Unit) {
         job = scope.launch {
-            var hr = runner.resting + 0.45 * runner.hrr // 가벼운 시작 강도
+            var hr = runner.resting.toDouble() // 안정심박에서 시작 → hrTau 지연으로 서서히 램프업(현실적 워밍업)
             var drift = 0.0
             val route = RouteWalk(37.5665, 126.9780, rng) // 직선+코너 경로(원형 랜덤워크 대체)
             val uAbs = runner.resting + runner.uFrac * runner.hrr

@@ -48,7 +48,7 @@ class ManualVirtualRunnerSource(
 
     override fun start(scope: CoroutineScope, onSample: suspend (Sample) -> Unit, onComplete: suspend () -> Unit) {
         job = scope.launch {
-            var hr = body.restingHr + 0.45 * body.hrr // 가벼운 시작 강도
+            var hr = body.restingHr.toDouble() // 안정심박에서 시작 → HR_TAU 지연으로 서서히 램프업(현실적 워밍업)
             var drift = 0.0
             val route = RouteWalk(37.5665, 126.9780, rng) // 직선+코너 경로(원형 랜덤워크 대체)
             val uAbs = 0.70 * body.maxHr // 진짜 임계 근사(%HRmax 70%) — 드리프트 발동 기준으로만 사용

@@ -102,7 +102,7 @@ class RunSimulator(seed: Long = 42L) {
         val hr = DoubleArray(n)
         val chosen = DoubleArray(n) // 자기조절 반영된 실제 수행 강도(페이스 계산용)
         chosen[0] = effort[0]
-        hr[0] = r.resting + (effort[0] + 0.012 * slope[0]).coerceIn(0.3, 1.05) * r.hrr
+        hr[0] = r.resting.toDouble() // 안정심박에서 시작 → hrTau 지연으로 서서히 램프업(현실적 워밍업)
         var drift = 0.0
         var ease = 0.0
         for (i in 1 until n) {
