@@ -77,6 +77,7 @@ zone2runner/
 ├── wear/             # Galaxy Watch Wear OS 앱
 ├── shared/           # 공유 도메인 모델
 ├── framework/        # ★인증 강의 프레임워크 정본(불변) + 과제 규정
+├── guide/            # 사용자용 앱 이해 안내서(측정/계산/표시 전 항목, 중학생 수준)
 ├── spec/             # 기능 명세
 ├── arch/             # ADR 문서
 ├── report/archive/   # (리포트는 설계 안정화 후 착수 — 현재 archive 보존)
