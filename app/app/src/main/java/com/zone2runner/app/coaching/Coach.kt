@@ -26,6 +26,7 @@ data class CoachContext(
     val latePacing: Boolean = false,    // 세션 후반 드리프트 → 끝까지 유지하려면 여유
     val recovering: Boolean = false,    // 심박 급강하(회복 구간) → 잘 회복 중 인지
     val uphillWarn: Boolean = false,    // 오르막 초과 경향 학습 → 오르막 진입 시 사전 예방(패턴 학습)
+    val jointProtect: Boolean = false,  // 내리막 관절 보호(spec-026) — 관절 위험군 내리막 시 Zone2보다 우선, 미달 오코칭 대체
 ) {
     /** 기온 밴드. 더위만 코칭 맥락에 반영(생리적으로 Zone2 드리프트에 영향). 방향은 아님. */
     val heat: HeatBand
@@ -120,6 +121,7 @@ class RuleCoach(personaKey: String = "default") : Coach {
         val milestone: String, // "{min}" 치환
         val warmupCue: String, val latePace: String, val recovery: String,
         val uphillWarn: String,
+        val jointCue: String, // 내리막 관절 보호(spec-026) — 방향 아님, 보폭/케이던스/착지 안내
     )
 
     override suspend fun say(ctx: CoachContext): String {
@@ -129,6 +131,8 @@ class RuleCoach(personaKey: String = "default") : Coach {
         if (ctx.milestoneMin > 0) {
             return guard(p.milestone.replace("{min}", ctx.milestoneMin.toString()))
         }
+        // 내리막 관절 보호(spec-026): 관절 위험군 내리막 → Zone2 방향보다 우선. 방향 아님(보폭/케이던스/착지).
+        if (ctx.jointProtect) return guard(p.jointCue + heatTip(ctx))
         // 패턴 학습 예방(FR5): 오르막서 자주 초과하던 사람 → 오르막 진입 시 미리 안내(방향 아님).
         if (ctx.uphillWarn) return guard(p.uphillWarn + heatTip(ctx))
         // 회복 구간 인지(FR5): 심박이 빠르게 내려가는 중 — 잘 회복하고 있음을 알림.
@@ -192,6 +196,7 @@ class RuleCoach(personaKey: String = "default") : Coach {
                 latePace = "후반이에요. 끝까지 Zone 2로 마치려면 지금 살짝 여유를 둬요.",
                 recovery = "좋아요, 심박이 잘 내려가고 있어요. 편하게 회복해요.",
                 uphillWarn = "오르막이 시작돼요. 여기서 심박이 잘 오르니 미리 페이스를 살짝 늦춰 두세요.",
+                jointCue = "내리막이에요. 무릎을 위해 보폭을 줄이고 발걸음을 자주 디뎌 착지를 부드럽게, 통제하며 내려가요.",
             ),
             "spartan" to Phrases(
                 upDownhill = "내리막이다. 더 밀어서 심박을 Zone 2로 올려.",
@@ -217,6 +222,7 @@ class RuleCoach(personaKey: String = "default") : Coach {
                 latePace = "후반이다. 끝까지 유지하려면 지금 여유 둬.",
                 recovery = "좋다. 심박 잘 내려간다. 편하게 회복해.",
                 uphillWarn = "오르막 시작이다. 여기서 심박 잘 튄다. 미리 페이스 늦춰.",
+                jointCue = "내리막이다. 무릎 아낀다. 보폭 줄이고 발 자주, 착지 부드럽게 통제해.",
             ),
             "friend" to Phrases(
                 upDownhill = "내리막이야! 조금만 더 밀어서 심박을 Zone 2로 올려보자.",
@@ -242,6 +248,7 @@ class RuleCoach(personaKey: String = "default") : Coach {
                 latePace = "이제 후반이야. 끝까지 Zone 2로 가려면 살짝 여유 두자.",
                 recovery = "좋아, 심박 잘 내려간다. 편하게 회복하자.",
                 uphillWarn = "오르막 시작이야. 여기서 심박 잘 올라. 미리 페이스 살짝 늦추자.",
+                jointCue = "내리막이야! 무릎 아끼자. 보폭 줄이고 발 자주 디뎌서 사뿐히 내려가자.",
             ),
             "calm" to Phrases(
                 upDownhill = "내리막 구간입니다. 조금 더 밀어 심박을 Zone 2로 올려주십시오.",
@@ -267,6 +274,7 @@ class RuleCoach(personaKey: String = "default") : Coach {
                 latePace = "후반부입니다. 끝까지 Zone 2로 마치려면 지금 여유를 두시기 바랍니다.",
                 recovery = "좋습니다. 심박이 잘 내려가고 있습니다. 편안하게 회복하십시오.",
                 uphillWarn = "오르막이 시작됩니다. 이 구간에서 심박이 잘 오르니 미리 페이스를 조금 늦춰주십시오.",
+                jointCue = "내리막 구간입니다. 관절 보호를 위해 보폭을 줄이고 발걸음을 자주 디뎌 착지를 부드럽게 통제하십시오.",
             ),
         )
     }

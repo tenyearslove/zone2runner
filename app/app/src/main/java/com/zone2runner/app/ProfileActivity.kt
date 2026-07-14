@@ -50,6 +50,7 @@ class ProfileActivity : AppCompatActivity() {
     private lateinit var fitnessChips: ChipRow
     private lateinit var freqChips: ChipRow
     private var bodyTouched = false // 사용자가 체형을 직접 고르면 BMI 자동 제안이 덮어쓰지 않음
+    private var jointCautionOn = false // 무릎/관절 주의(spec-026)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,6 +62,7 @@ class ProfileActivity : AppCompatActivity() {
 
     private fun buildUi(): View {
         val p = ProfileStore.load(this)
+        jointCautionOn = p.jointCaution
         val col = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL; setBackgroundColor(Palette.BG)
             setPadding(dpi(18), dpi(24), dpi(18), dpi(28))
@@ -114,6 +116,20 @@ class ProfileActivity : AppCompatActivity() {
             })
         }))
         col.addView(card("주간 운동 빈도", freqChips.view))
+
+        col.addView(card("관절 보호", LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            addView(android.widget.CheckBox(this@ProfileActivity).apply {
+                text = "무릎/관절 주의 — 내리막에서 관절 보호를 우선"
+                setTextColor(Palette.TEXT)
+                isChecked = jointCautionOn
+                setOnCheckedChangeListener { _, on -> jointCautionOn = on }
+            })
+            addView(TextView(this@ProfileActivity).apply {
+                text = "켜면 내리막에서 '속도 올리기' 대신 보폭/케이던스/착지 안내를 우선합니다. 과체중군은 자동 적용돼요."
+                textSize = 11f; setTextColor(Palette.MUTED); setPadding(0, dpi(4), 0, 0)
+            })
+        }))
 
         preview = TextView(this).apply { textSize = 13f; setTextColor(Palette.ACCENT) }
         col.addView(card("초기 Zone 2 미리보기", preview))
@@ -357,6 +373,7 @@ class ProfileActivity : AppCompatActivity() {
             this, age, rhr, override,
             heightCm = p.heightCm, weightKg = p.weightKg,
             bodyType = p.bodyType, fitnessLevel = p.fitnessLevel, weeklyFreq = p.weeklyFreq,
+            jointCaution = jointCautionOn,
         )
         Toast.makeText(this, "저장되었습니다", Toast.LENGTH_SHORT).show()
         finish()

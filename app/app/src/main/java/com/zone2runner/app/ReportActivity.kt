@@ -222,6 +222,7 @@ class ReportActivity : AppCompatActivity() {
         buildSplitsCard(r)?.let { col.addView(it) }
         buildGradeCard(r)?.let { col.addView(it) }
         buildWarmupCard(r)?.let { col.addView(it) }
+        buildDownhillCard(r)?.let { col.addView(it) }
         buildExitCauseCard(r)?.let { col.addView(it) }
         buildScatterCard(r)?.let { col.addView(it) }
     }
@@ -390,6 +391,17 @@ class ReportActivity : AppCompatActivity() {
         return card("워밍업", TextView(this).apply { text = note; textSize = 13f; setTextColor(C_TEXT); setLineSpacing(dp(2).toFloat(), 1f) })
     }
 
+    /** 내리막 습관(spec-026, 관측 種類A) — 내리막 vs 평지 페이스 비교. */
+    private fun buildDownhillCard(r: RunReport): android.view.View? {
+        val b = com.zone2runner.app.analysis.SessionAnalytics.downhillBehavior(r) ?: return null
+        val note = when {
+            b.slowerPct >= 3 -> "내리막에서 평지보다 평균 ${b.slowerPct}% 느리게 뛰었어요. 관절을 아끼는 조심스러운 내리막이에요."
+            b.slowerPct <= -3 -> "내리막에서 평지보다 평균 ${-b.slowerPct}% 빠르게 뛰었어요. 내리막 속도를 통제하면 관절 부담을 줄일 수 있어요."
+            else -> "내리막과 평지의 페이스가 비슷했어요."
+        }
+        return card("내리막 습관", TextView(this).apply { text = note; textSize = 13f; setTextColor(C_TEXT); setLineSpacing(dp(2).toFloat(), 1f) })
+    }
+
     private fun aerobicAssessment(r: RunReport): String {
         val z2 = r.zone2Pct
         val drift = r.cardiacDriftPct
@@ -523,6 +535,7 @@ class ReportActivity : AppCompatActivity() {
             "구간 분석" to "1km마다 평균 심박/페이스/경사보정 페이스(GAP)를 끊어 봐요. GAP = 오르막과 내리막을 감안해 '평지였다면 이 페이스'로 환산한 값이라, 언덕 때문에 느려진 걸 벌주지 않아요.",
             "경사 구간 분해" to "오르막/평지/내리막에서 각각 얼마나 뛰었고 그때 심박이 어땠는지 나눠 봐요. 같은 페이스라도 오르막은 심박 비용이 커요.",
             "워밍업" to "초반에 심박이 안정 강도까지 올라간 과정을 봐요. 너무 급하게 올렸으면(급상승) 다음엔 천천히 올리라고 알려줘요. 심박이 오르지 않은 세션이면 이 카드는 생략돼요.",
+            "내리막 습관" to "내리막(경사 −4% 이하)에서 평지 대비 평균 페이스를 비교한 관측이에요. 무릎/관절 보호로 내리막을 천천히 뛰면 여기에 '느리게'로 나타나요. 이건 실제 관측이라 경사보정 페이스(GAP, 대사 기준)와는 별개예요.",
             "심박 추이" to "세션 내내 심박이 어떻게 변했는지 선으로 봐요. 초록 밴드가 목표 Zone 2 구간이라, 선이 밴드 안에 오래 머물수록 좋아요.",
             "페이스 추이" to "세션 내내 페이스(1km에 걸린 시간)가 어떻게 변했는지 봐요. 값이 낮을수록 빠른 거예요.",
         )

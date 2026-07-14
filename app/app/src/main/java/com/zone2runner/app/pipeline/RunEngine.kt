@@ -168,6 +168,11 @@ class RunEngine(
         // 반응형 코칭(FR5): 관측된 드리프트 상승에 선제 대응(예측 대체)
         maybeReactiveCoach(s)
 
+        // 내리막 관절 보호(spec-026): 안전 다음, Zone2 앞 우선. 관절 위험군 내리막 → 아래 maybeCoach의 미달 코칭 억제.
+        downhillSec = if (s.slopePct <= DOWNHILL_GRADE) downhillSec + 1 else 0
+        jointDownhillActive = jointRisk && downhillSec >= DOWNHILL_HOLD_SEC
+        if (jointDownhillActive) maybeJointCoach(s)
+
         // 코칭: 판정만 있으면 동작(120초 동역학 워밍업과 무관 — HR 들어오면 수십 초부터 코칭 시작).
         // 이전엔 feat(워밍업 필요) 블록 안에 있어 2분 지나야 코칭이 시작되던 문제(실기기).
         maybeCoach(s)
@@ -262,6 +267,7 @@ class RunEngine(
 
     private suspend fun maybeCoach(s: Sample) {
         val j = judgment ?: return
+        if (jointDownhillActive && j == ZoneJudgment.BELOW) return // spec-026: 관절 보호 내리막에서 미달 "속도 올려" 억제(관절 큐가 대체)
         val changed = j != lastJudgmentForCoach
         // 존 밖(미달/초과)에 계속 머물면 60초마다 재코칭 — 판정 변화만 기다리면
         // 초과가 지속될 때 코칭이 영영 침묵한다(실기기 시뮬 관찰)
@@ -306,6 +312,14 @@ class RunEngine(
     private var wasUphill = false
     private var uphillWarnedSeg = false
 
+    // 내리막 관절 보호(spec-026) — 관절 위험군 = 프로필 토글 또는 과체중/비만(BMI≥25 = bodyType≥4)
+    private val jointRisk = profile.jointCaution || profile.bodyType >= 4
+    private var downhillSec = 0
+    private var jointDownhillActive = false
+    private var lastJointSec = -9999
+    private val DOWNHILL_GRADE = -4.0 // 확실한 내리막(±2% 데드밴드 밖, 種類C — spec-026)
+    private val DOWNHILL_HOLD_SEC = 8  // 지속 내리막 최소(種類C)
+
     /** 이번 세션 오르막 구간에서 초과한 비율(0~1). 오르막이 충분치 않으면 -1(저장 스킵). */
     fun uphillExitRatio(): Double = if (uphillSec >= 30) uphillAboveSec.toDouble() / uphillSec else -1.0
 
@@ -328,6 +342,14 @@ class RunEngine(
         fireCoach(s, judgment ?: ZoneJudgment.IN, warmup = true)
     }
 
+    /** 내리막 관절 보호 큐(spec-026): 관절 위험군 내리막에서 Zone2보다 우선, 미달 오코칭 대체. 코칭 간격/재발 억제 준수. */
+    private suspend fun maybeJointCoach(s: Sample) {
+        if (s.tSec - lastCoachSec < cadence.minGapSec) return
+        if (s.tSec - lastJointSec < cadence.overdueSec) return // 같은 내리막 반복 억제
+        lastJointSec = s.tSec
+        fireCoach(s, judgment ?: ZoneJudgment.IN, jointProtect = true)
+    }
+
     /** 회복 인지(FR5): 심박이 빠르게 하강(bpm/s < -0.3) 중이면 "잘 회복 중" 인지. 90초 스로틀. */
     private suspend fun maybeRecoveryCoach(s: Sample) {
         val d = lastDHr ?: return // bpm/s(음수=하강)
@@ -340,16 +362,16 @@ class RunEngine(
     private suspend fun fireCoach(
         s: Sample, j: ZoneJudgment, reactive: Boolean = false, milestoneMin: Int = 0,
         warmup: Boolean = false, latePacing: Boolean = false, recovering: Boolean = false,
-        uphillWarn: Boolean = false,
+        uphillWarn: Boolean = false, jointProtect: Boolean = false,
     ) {
         val scope = coachScope
         if (scope != null && coachJob?.isActive == true) return // 이전 생성이 아직 진행 중이면 건너뜀
         lastCoachSec = s.tSec
-        val special = milestoneMin > 0 || warmup || recovering || uphillWarn
+        val special = milestoneMin > 0 || warmup || recovering || uphillWarn || jointProtect
         if (!special) lastJudgmentForCoach = j
         val reason = when {
             milestoneMin > 0 -> "마일스톤"; recovering -> "회복"; warmup -> "워밍업"
-            uphillWarn -> "오르막예방"; latePacing -> "후반"; reactive -> "드리프트↑"; else -> reasonOf(j)
+            uphillWarn -> "오르막예방"; jointProtect -> "관절보호"; latePacing -> "후반"; reactive -> "드리프트↑"; else -> reasonOf(j)
         }
         val ctx = CoachContext(
             j, s.slopePct, s.paceMinKm, s.tSec, spm = s.spm,
@@ -357,6 +379,7 @@ class RunEngine(
             tempC = ambientTempC,
             driftRising = reactive, gapPaceMinKm = gapPace, milestoneMin = milestoneMin,
             warmup = warmup, latePacing = latePacing, recovering = recovering, uphillWarn = uphillWarn,
+            jointProtect = jointProtect,
         )
         if (scope == null) {
             recordCoaching(s.tSec, coach.say(ctx), 0L, reason)

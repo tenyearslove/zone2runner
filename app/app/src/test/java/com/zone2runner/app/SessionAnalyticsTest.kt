@@ -64,6 +64,17 @@ class SessionAnalyticsTest {
         assertNull("상승 없으면 워밍업 null", SessionAnalytics.warmup(rep(s)))
     }
 
+    @Test fun downhillBehavior_slowerOnDownhill_positivePct() {
+        // spec-026: 내리막(경사 −6%)에서 평지보다 느리게 뛰면 slowerPct 양수(관절 보호 습관 관측)
+        val s = ArrayList<SeriesPoint>()
+        var t = 0
+        for (i in 0 until 60) { s += SeriesPoint(t, 140, 6.0, 1, 0.0); t += 1 }   // 평지 페이스 6.0
+        for (i in 0 until 60) { s += SeriesPoint(t, 135, 7.0, 1, -6.0); t += 1 }  // 내리막 페이스 7.0(더 느림)
+        val b = SessionAnalytics.downhillBehavior(rep(s))
+        assertNotNull(b)
+        assertTrue("내리막이 더 느림(양수): ${b!!.slowerPct}", b.slowerPct > 0)
+    }
+
     @Test fun exitCauses_uphillDominant() {
         val s = ArrayList<SeriesPoint>()
         var t = 0

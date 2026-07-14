@@ -21,6 +21,7 @@ object ProfileStore {
     private const val K_BODY = "body_type"
     private const val K_FITNESS = "fitness_level"
     private const val K_FREQ = "weekly_freq"
+    private const val K_JOINT = "joint_caution" // spec-026 무릎/관절 주의(하위호환: 없으면 false)
 
     // 활성 프로필별 네임스페이스(spec-020). 기본 프로필은 접미사 없어 기존 데이터 그대로.
     private fun prefs(ctx: Context) = ctx.getSharedPreferences(Profiles.prefName(ctx, PREF), Context.MODE_PRIVATE)
@@ -50,6 +51,7 @@ object ProfileStore {
             fitnessLevel = fitness,
             weeklyFreq = freq,
             rhrEstimated = rhrUnknown,
+            jointCaution = p.getBoolean(K_JOINT, false),
         )
     }
 
@@ -58,6 +60,7 @@ object ProfileStore {
         ctx: Context, age: Int, restingHr: Int, maxHrOverride: Int,
         heightCm: Int = 170, weightKg: Int = 70,
         bodyType: Int = 3, fitnessLevel: Int = 3, weeklyFreq: Int = 3,
+        jointCaution: Boolean = false,
     ) {
         prefs(ctx).edit()
             .putInt(K_AGE, age)
@@ -68,6 +71,7 @@ object ProfileStore {
             .putInt(K_BODY, bodyType.coerceIn(1, 5))
             .putInt(K_FITNESS, fitnessLevel.coerceIn(1, 5))
             .putInt(K_FREQ, weeklyFreq.coerceIn(1, 5))
+            .putBoolean(K_JOINT, jointCaution)
             .putBoolean(K_SET, true)
             .apply()
     }

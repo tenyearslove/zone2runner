@@ -19,6 +19,7 @@ data class Profile(
     val fitnessLevel: Int = 3,  // 1 입문 ~ 5 엘리트
     val weeklyFreq: Int = 3,    // 1 거의 안 함 ~ 5 거의 매일
     val rhrEstimated: Boolean = false, // RHR 모름 → factor 기반 추정치 사용 중(spec-013)
+    val jointCaution: Boolean = false, // 무릎/관절 주의(spec-026) — 내리막 관절 보호 코칭 옵트인
 ) {
     val hrr: Double get() = (maxHr - restingHr).toDouble()
     companion object {

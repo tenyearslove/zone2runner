@@ -15,6 +15,7 @@ object SessionAnalytics {
     data class Split(val km: Int, val avgHr: Int, val avgPaceMinKm: Double, val avgGapMinKm: Double)
     data class GradeBand(val label: String, val sec: Int, val avgHr: Int, val avgGapMinKm: Double)
     data class Warmup(val reachSec: Int, val startHr: Int, val plateauHr: Int, val abrupt: Boolean)
+    data class DownhillBehavior(val slowerPct: Int, val downSec: Int) // 내리막이 평지보다 몇 % 느렸나(양수=느림)
     data class ExitCauses(
         val aboveSec: Int, val uphillPct: Int, val fastPacePct: Int, val latePct: Int, val otherPct: Int,
         val note: String,
@@ -130,5 +131,22 @@ object SessionAnalytics {
         // 급상승: 안정대 도달 90초 이내 + 초반 상승폭이 큼(種類C: 90초/15bpm 선언)
         val abrupt = reach < 90 && (plateau - startHr) >= 15
         return Warmup(reach, startHr, plateau, abrupt)
+    }
+
+    /**
+     * 내리막 습관(관측, 種類 A, spec-026) — 내리막(경사≤−4%) 평균 페이스 vs 평지(±2%) 평균 페이스 비교.
+     * 양수 slowerPct = 내리막에서 더 느리게 뜀(관절 보호로 조심스러운 내리막). GAP는 건드리지 않는다(대사 축).
+     * 표본 부족(각 10 미만) 시 null.
+     */
+    fun downhillBehavior(r: RunReport): DownhillBehavior? {
+        val s = r.series.filter { valid(it) }
+        val down = s.filter { it.slopePct <= -4.0 }
+        val flat = s.filter { it.slopePct in -2.0..2.0 }
+        if (down.size < 10 || flat.size < 10) return null
+        val downPace = down.map { it.paceMinKm }.average()
+        val flatPace = flat.map { it.paceMinKm }.average()
+        if (flatPace <= 0.0) return null
+        val slowerPct = Math.round((downPace / flatPace - 1.0) * 100).toInt() // +면 내리막이 더 느림
+        return DownhillBehavior(slowerPct, down.size)
     }
 }

@@ -76,7 +76,7 @@ class LlmCoach(
 
     override suspend fun say(ctx: CoachContext): String {
         // 격려/인지/예방 코칭(마일스톤/워밍업/회복/오르막 예방)은 방향이 없어 LLM 방향 표현이 부적절 → 규칙 문구.
-        if (ctx.milestoneMin > 0 || ctx.warmup || ctx.recovering || ctx.uphillWarn) {
+        if (ctx.milestoneMin > 0 || ctx.warmup || ctx.recovering || ctx.uphillWarn || ctx.jointProtect) {
             lastPath = "rule(특수 코칭)"; return fallback.say(ctx)
         }
         // 1순위(adr-026): 규칙이 확정한 문장의 '톤'만 Nano로 재작성(내용=규칙이라 방향 잠금이 더 강함).
