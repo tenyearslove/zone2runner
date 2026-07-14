@@ -57,7 +57,7 @@
 - **바깥 경계(입출력)를 똑같이 고정하고, 안쪽 구조만 다르게 본다.**
   - 입력: 관측 신호(1Hz 심박/페이스/케이던스/경사) + 시스템이 내린 결정(판정/경계/코칭).
   - 출력: ① 그 결정의 설명("왜 이렇게 판단/코칭했나"), ② 각 수치의 출처, ③ 사용자가 반박할 지점(HITL).
-- 다이어그램의 상자는 **강의 AI System 아키텍처 블록**(입력/출력 가드레일, 추론 서비스, 설명 서비스, HITL/HOTL, Data Lake, Retraining)에 매핑한다. `«component»`는 그 상자가 아키텍처의 어떤 블록인지 붙인 **주석**이다.
+- 다이어그램에서 **파란/회색 상자 = 실제 기능 블록**(무엇을 하는가)이다. **노란 상자(`«component»`)는 컴포넌트가 아니라 note(주석)** 로, 점선으로 연결된 기능 블록이 강의 **AI System 아키텍처의 어느 컴포넌트**(입력/출력 가드레일, 추론 서비스, 설명 서비스, HITL/HOTL, Data Lake, Retraining)에 해당하는지 매핑해 붙인 것이다.
 - 품질(QA) 평가는 그림이 아니라 **결정 표의 장점/단점 칸**에서 한다(대비가 극명한 2개씩).
 
 ---
@@ -69,27 +69,28 @@
 ```mermaid
 flowchart TD
     subgraph OP["AI Operation Subsystem"]
-      A["센서 입력 1Hz<br/>심박/페이스/케이던스/경사"] --> IG["입력 가드레일<br/>OutlierGuard 40~220, staleMs"]
-      IG --> INF["추론 서비스 (투명)<br/>판정=지속심박 vs 경계(규칙)<br/>경계=베이지안(prior μ0 + 불확실도 σ)"]
-      INF --> OG["출력 가드레일<br/>DirectionGuard(방향 잠금) / SafetyGuard"]
-      OG --> EXP["설명 서비스<br/>실제 계산을 그대로 재생(replay)<br/>판정 왜 / 수치 출처 / 코칭 사유"]
-      EXP --> UI["Operation UI<br/>사유 태그 + 종류 A/B/C 출처 + 터치 설명 팝업"]
-      LLM["LLM = verbalizer<br/>확정 사실을 자연어로만"] -. "표현만(이유생성 아님)" .-> EXP
+      A["센서 입력 1Hz<br/>심박/페이스/케이던스/경사"] --> IG["이상값/신선도 걸러내기<br/>40~220 밖 기각, 오래된 값 무시"]
+      IG --> INF["존 판정 + 경계 학습<br/>판정=지속심박 vs 경계(규칙)<br/>경계=베이지안(사전값 μ0 + 불확실도 σ)"]
+      INF --> OG["방향/안전 검사<br/>DirectionGuard(방향 잠금) / SafetyGuard"]
+      OG --> EXP["결정 근거 재생<br/>실제 계산을 그대로 되읽음<br/>판정 왜 / 수치 출처 / 코칭 사유"]
+      EXP --> UI["화면 표시<br/>사유 태그 + 출처(A/B/C) + 터치 설명 팝업"]
+      LLM["문장으로 표현<br/>확정 사실을 자연어로만"] -. "표현만(이유생성 아님)" .-> EXP
     end
-    TALK["말하기 테스트 = HITL 라벨"] -. "경계 관측" .-> INF
-    UI -. "사용자 반박/수정 (HITL)" .-> TALK
-    INF -->|"세션 관측"| DL[("Data Lake<br/>LearnedZone / SessionStore")]
-    DL -. "Retraining(온라인+세션간 수렴)" .-> INF
-    N1["«component» 입력 가드레일"] -.- IG
-    N2["«component» 추론 서비스<br/>해석가능 모델(규칙+베이지안)"] -.- INF
-    N3["«component» 출력 가드레일"] -.- OG
-    N4["«component» 설명 서비스<br/>결정과 같은 로직의 재생 → 충실"] -.- EXP
-    N5["«component» HITL 제어<br/>사용자가 라벨/반박"] -.- TALK
-    N6["«component» Retraining 루프<br/>기능적응성"] -.- DL
-    classDef comp fill:#fff9c4,stroke:#c0a000,color:#333
+    TALK["말하기 테스트<br/>사용자가 다는 라벨"] -. "경계 관측" .-> INF
+    UI -. "반박/수정" .-> TALK
+    INF -->|"세션 관측"| DL[("세션 저장<br/>LearnedZone / SessionStore")]
+    DL -. "온라인+세션간 수렴" .-> INF
+    %% 노란 상자 = 컴포넌트가 아니라 note(주석): 연결된 기능 블록을 강의 AI System 아키텍처 블록에 매핑
+    nIG["«component» 입력 가드레일"] -.- IG
+    nINF["«component» 추론 서비스<br/>해석가능 모델(규칙+베이지안)"] -.- INF
+    nOG["«component» 출력 가드레일"] -.- OG
+    nEXP["«component» 설명 서비스"] -.- EXP
+    nTALK["«component» HITL 제어"] -.- TALK
+    nDL["«component» Data Lake + Retraining 루프"] -.- DL
+    classDef note fill:#fff9c4,stroke:#c0a000,color:#333,stroke-dasharray:4 3
     classDef core fill:#bbdefb,stroke:#1565c0,color:#111
     classDef io fill:#eeeeee,stroke:#888,color:#111
-    class N1,N2,N3,N4,N5,N6 comp
+    class nIG,nINF,nOG,nEXP,nTALK,nDL note
     class INF,EXP core
     class A,UI io
 ```
@@ -134,24 +135,25 @@ flowchart TD
 flowchart TD
     subgraph OP["AI Operation Subsystem"]
       A["센서 입력 1Hz"] --> PRE["전처리/정규화"]
-      PRE --> MODEL["추론 서비스 (블랙박스)<br/>학습된 NN/부스팅 — 결정 직접 출력"]
+      PRE --> MODEL["결정 산출<br/>학습된 블랙박스(NN/부스팅)가 결정 직접 출력"]
       MODEL --> DEC["결정(판정/코칭)"]
-      DEC --> POST["설명 서비스 (사후)<br/>SHAP/LIME 기여도 or LLM 이유생성"]
-      POST --> UI["Operation UI<br/>attribution 숫자 or LLM 서사(근사)"]
+      DEC --> POST["사후 근거 생성<br/>SHAP/LIME 기여도 or LLM 이유생성"]
+      POST --> UI["화면 표시<br/>attribution 숫자 or LLM 서사(근사)"]
     end
     subgraph DEV["AI Development Subsystem"]
-      DATA[("Data Lake<br/>공개 데이터/세션 이력")] --> MC["Model Construction<br/>오프라인 학습"]
-      MC --> REG[("Model Registry")]
+      DATA[("공개/세션 데이터")] --> MC["오프라인 학습"]
+      MC --> REG[("모델 저장")]
     end
     REG -. "배포" .-> MODEL
-    H["30~60초 뒤 실제 심박/라벨"] -. "온라인 미세조정" .-> MODEL
-    N1["«component» 추론 서비스<br/>학습된 블랙박스 모델(사후 해석 필요)"] -.- MODEL
-    N2["«component» 설명 서비스(사후)<br/>원모델의 근사 — 충실도 별도 보장 필요"] -.- POST
-    N3["«component» 모델 구성/레지스트리<br/>오프라인 학습 파이프라인 필요"] -.- MC
-    classDef comp fill:#fff9c4,stroke:#c0a000,color:#333
+    H["실제 도착값/라벨"] -. "온라인 미세조정" .-> MODEL
+    %% 노란 상자 = 컴포넌트가 아니라 note(주석): 연결된 기능 블록의 AI System 아키텍처 매핑
+    nMODEL["«component» 추론 서비스<br/>학습된 블랙박스(사후 해석 필요)"] -.- MODEL
+    nPOST["«component» 설명 서비스(사후)<br/>원모델의 근사"] -.- POST
+    nMC["«component» 모델 구성 + Model Registry<br/>오프라인 학습 파이프라인"] -.- MC
+    classDef note fill:#fff9c4,stroke:#c0a000,color:#333,stroke-dasharray:4 3
     classDef core fill:#bbdefb,stroke:#1565c0,color:#111
     classDef io fill:#eeeeee,stroke:#888,color:#111
-    class N1,N2,N3 comp
+    class nMODEL,nPOST,nMC note
     class MODEL,POST core
     class A,UI io
 ```
