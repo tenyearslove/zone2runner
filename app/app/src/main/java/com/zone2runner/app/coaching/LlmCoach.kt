@@ -24,6 +24,7 @@ class LlmCoach(
     override val name = "llm"
 
     private val client by lazy { Generation.getClient() }
+    private val rewriter = NanoRewriter(context, personaKey) // 규칙 문장 톤 재작성(adr-026, 1순위). 미가용 시 Prompt 폴백.
     private var checked = false
     private var available = false
     private var usedLlmOnce = false
@@ -78,6 +79,17 @@ class LlmCoach(
         if (ctx.milestoneMin > 0 || ctx.warmup || ctx.recovering || ctx.uphillWarn) {
             lastPath = "rule(특수 코칭)"; return fallback.say(ctx)
         }
+        // 1순위(adr-026): 규칙이 확정한 문장의 '톤'만 Nano로 재작성(내용=규칙이라 방향 잠금이 더 강함).
+        val ruleLine = fallback.say(ctx)
+        val toned = rewriter.rewrite(ruleLine)
+        if (toned != ruleLine) {
+            val g = guard(toned)
+            if (g != null && DirectionGuard.ok(intentOf(ctx.judgment), g)) {
+                usedLlmOnce = true; lastPrompt = ruleLine; lastPath = "llm(톤 재작성)"; return g
+            }
+            if (g != null) directionRejects++ // 재작성이 방향을 흐리면 아래 Prompt/규칙으로 폴백
+        }
+        // 2순위(폴백): 기존 Prompt 자유 표현 경로
         val prompt = buildPrompt(ctx)
         lastPrompt = prompt // 디버그 노출: 실제 LLM 호출 여부와 무관하게 "이 프롬프트를 쓴다"를 보여준다
         if (!ensureReady()) { lastPath = "rule(LLM 미가용)"; return fallback.say(ctx) }

@@ -3,6 +3,7 @@
 > **⚠ 예측 de-scope (2026-07-10, adr-024)**: FR3 심박 예측 드롭. 예측 관련 항목(FR3 "곧 초과(예측)" 태그, FR6 "예측 개인화 τ/드리프트 요약")은 **de-scope** — 각각 드리프트↑ 반응 태그, 경계 Bayesian(μ/σ) 요약으로 대체. 설명 서비스 골격(세션 스토리/판정 왜/드리프트 인과)은 유효. 앱 코드 미변경. 본문 미수정.
 
 - 상태: 구현 완료(FR1~FR6). 빌드/테스트 통과, 폰 설치
+- **2026-07-14 갱신(adr-026)**: 세션 스토리를 **1순위 = Nano Summarization으로 실제 사실(SessionExplainer.article) 불릿 요약**(없는 숫자 안 만듦)으로 생성. 미가용/입력 과소/실패 시 기존 Prompt freeform → 규칙 facts 폴백. 구현 = `coaching/NanoSummarizer.kt`, `SessionExplainer.article`, `RunActivity` 세션 종료.
 - 관련: report-007(QA 척추, 설명용이성=정체성), 강의 AI System 아키텍처의 "설명 서비스(Explanation Service)",
   spec-020(개인화 시각화/설명), adr-002(코칭 무결성), adr-020(예측 분해), adr-013(규칙 판정)
 

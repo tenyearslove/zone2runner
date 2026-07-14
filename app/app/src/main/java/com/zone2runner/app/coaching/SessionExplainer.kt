@@ -40,6 +40,12 @@ object SessionExplainer {
         return sb.toString().trim()
     }
 
+    /** 요약(Nano Summarization, adr-026) 입력용 확장 사실 텍스트 = facts + 분석 지표 라인. 실제 도출값만 담는다. */
+    fun article(r: RunReport): String = buildString {
+        append(facts(r))
+        r.analysisLines.forEach { if (it.isNotBlank()) { append(" "); append(it) } }
+    }
+
     /** LLM 프롬프트: 위 팩트를 주고 쉬운 말로 풀게 한다(사실 변경/추가 금지). */
     fun prompt(r: RunReport): String =
         "다음은 러닝 앱의 이번 세션 사실입니다:\n" +

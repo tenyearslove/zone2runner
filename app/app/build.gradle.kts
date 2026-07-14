@@ -33,6 +33,8 @@ dependencies {
     implementation("com.google.android.gms:play-services-location:21.3.0") // 실기기 GPS
     implementation("com.google.android.gms:play-services-wearable:19.0.0") // 워치 DataLayer HR 수신
     implementation("com.google.mlkit:genai-prompt:1.0.0-beta2") // 온디바이스 LLM 코칭(Gemini Nano, adr-007)
+    implementation("com.google.mlkit:genai-rewriting:1.0.0-beta1") // 코칭 문장 톤 재작성(Gemini Nano, adr-026)
+    implementation("com.google.mlkit:genai-summarization:1.0.0-beta1") // 세션 리포트 요약(Gemini Nano, adr-026)
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.json:json:20240303") // org.json JVM 구현(단위 테스트에서 실제 파싱)

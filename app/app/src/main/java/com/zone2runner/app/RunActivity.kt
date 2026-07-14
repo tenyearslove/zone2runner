@@ -718,7 +718,12 @@ class RunActivity : AppCompatActivity() {
         // 사후 세션 스토리(FR2): LLM 가용 시 자연어 풀이로 저장된 규칙 폴백을 덮어쓴다(1회, 이후 재호출 없음).
         ReportHolder.last?.id?.let { savedId ->
             lifecycleScope.launch {
-                val out = runCatching {
+                // 1순위(adr-026): 실제 사실을 Nano Summarization으로 불릿 요약(없는 숫자 안 만듦). 미가용/실패 시 Prompt 자유 풀이 폴백.
+                val summary = runCatching {
+                    com.zone2runner.app.coaching.NanoSummarizer(this@RunActivity)
+                        .summarize(com.zone2runner.app.coaching.SessionExplainer.article(report))
+                }.getOrNull()
+                val out = summary ?: runCatching {
                     com.zone2runner.app.coaching.LlmCoach(this@RunActivity)
                         .freeform(com.zone2runner.app.coaching.SessionExplainer.prompt(report))
                 }.getOrNull()
