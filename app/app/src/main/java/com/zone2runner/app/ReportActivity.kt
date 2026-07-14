@@ -438,6 +438,7 @@ class ReportActivity : AppCompatActivity() {
 
     // ---- UI helpers ----
     private fun card(title: String, content: android.view.View): LinearLayout {
+        val info = infoFor(title)
         return LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             background = GradientDrawable().apply {
@@ -445,9 +446,32 @@ class ReportActivity : AppCompatActivity() {
             }
             setPadding(dp(16), dp(12), dp(16), dp(14))
             layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply { topMargin = dp(10) }
-            addView(TextView(this@ReportActivity).apply { text = title; textSize = 12f; setTextColor(C_MUTED); setPadding(0, 0, 0, dp(8)) })
+            addView(TextView(this@ReportActivity).apply {
+                text = if (info != null) "$title   ⓘ 설명" else title
+                textSize = 12f
+                setTextColor(if (info != null) C_GREEN else C_MUTED)
+                setPadding(0, 0, 0, dp(8))
+                if (info != null) {
+                    isClickable = true
+                    setOnClickListener { showInfoDialog(title, info) }
+                }
+            })
             addView(content)
         }
+    }
+
+    /** 카드 제목으로 설명문을 찾음(동적 접미사는 접두 매칭). 설명용이성 QA — 각 지표를 터치하면 설명 팝업. */
+    private fun infoFor(title: String): String? {
+        for ((k, v) in METRIC_INFO) if (title.startsWith(k)) return v
+        return null
+    }
+
+    private fun showInfoDialog(title: String, body: String) {
+        android.app.AlertDialog.Builder(this)
+            .setTitle(title)
+            .setMessage(body)
+            .setPositiveButton("확인", null)
+            .show()
     }
 
     private fun statRow(a: Pair<String, String>, b: Pair<String, String>): LinearLayout {
@@ -481,5 +505,26 @@ class ReportActivity : AppCompatActivity() {
         val C_BLUE = Palette.BLUE
         val C_GREEN = Palette.ACCENT
         val C_AMBER = Palette.AMBER
+
+        // 지표 설명(설명용이성 QA) — 카드 제목(접두)으로 매칭, 터치 시 팝업. 중학생 눈높이, 내부용어 금지.
+        val METRIC_INFO = linkedMapOf(
+            "요약" to "이번 러닝의 기본 숫자예요. 거리/시간은 총량, 평균/최대 심박은 세션 내내의 평균과 최고, 평균 페이스는 1km에 걸린 평균 시간(작을수록 빠름)이에요. Zone 2 비율은 전체 시간 중 목표 유산소 구간(Zone 2)에 머문 비율(%)로, 이 앱의 핵심 성적표예요.",
+            "존 체류 분포" to "심박 강도를 Z1~Z5로 나눠 각 구간에 머문 시간을 보여줘요. 목표인 Zone 2(초록)에 오래 머물수록 유산소 기초 체력 훈련이 잘 된 거예요.",
+            "개인 Zone 2 상단 학습" to "말하기 테스트로 그동안 배운 '내 Zone 2 상한'이 어디로 수렴했는지 보여줘요. 세션이 쌓일수록 남의 공식이 아니라 내 몸에 맞는 경계로 또렷해져요.",
+            "유산소 분석" to "효율(EF)과 심혈관 드리프트를 봐요.\n\n- 효율(EF) = 심박 1회당 나아간 거리. 높을수록 같은 심박으로 더 빨리 간다는 뜻(유산소 개선). 코칭계에서 널리 쓰는 개념이라, 남과 비교가 아니라 내 세션끼리 추세로 봐요.\n- 심혈관 드리프트 = 후반에 같은 페이스인데 심박이 얼마나 더 올랐나(%). 낮을수록 좋고, 크면 피로/더위/탈수 신호예요.",
+            "관측 분석 지표" to "이번 세션에서 관측만으로 뽑은 파생 지표들이에요(드리프트 기울기/서브맥시멀 심박/심박 회복/케이던스 안정성 등). 미래를 예측한 게 아니라, 실제로 잰 값을 다각도로 분석한 근거 있는 숫자예요.",
+            "이전 세션 대비" to "직전 세션과 비교해 무엇이 나아지고 나빠졌는지 봐요. 페이스에 덜 휘둘리는 지표(효율/드리프트/Zone2 비율/서브맥시멀 심박)로 공정하게 비교해요. 조금의 차이는 '비슷'으로 봐요.",
+            "오늘 컨디션" to "오늘 효율(EF)을 내 평소(직전 몇 세션의 중앙값)와 비교해요. 평소보다 높으면 컨디션 좋은 날, 낮으면 피로/더위/수면부족 신호일 수 있어요.",
+            "기간 요약" to "최근 7일/30일 동안의 세션 수, Zone 2 시간, 총거리, 평균 효율을 모아 보여줘요. 꾸준함을 한눈에 보는 카드예요.",
+            "초과 원인 분해" to "Zone 2를 넘어선 시간이 왜 생겼는지 쪼개요 — 오르막 때문인지, 페이스가 빨라서인지, 후반 드리프트인지. 오르막이 원인이면 '오르막 전에 미리 늦추기'를 권해요.",
+            "효율 곡선" to "심박과 페이스의 관계를 점으로 흩뿌려, 이번 세션과 직전 세션을 겹쳐 봐요. 같은 심박에서 더 빠른 쪽(점이 위/왼쪽)이 더 효율적인 날이에요.",
+            "세션 추세" to "최근 여러 세션의 효율/서브맥시멀 심박/드리프트/Zone2 비율이 어느 방향으로 가는지 작은 꺾은선(스파크라인)으로 보여줘요. 데이터가 쌓일수록 가치가 커지는 카드예요.",
+            "개인 기록" to "지금까지 세션 중 최고 기록들이에요(최고 효율/최장 거리/최장 Zone 2 시간/최저 드리프트/최저 서브맥시멀 심박). 이번에 갱신하면 배지가 떠요.",
+            "구간 분석" to "1km마다 평균 심박/페이스/경사보정 페이스(GAP)를 끊어 봐요. GAP = 오르막과 내리막을 감안해 '평지였다면 이 페이스'로 환산한 값이라, 언덕 때문에 느려진 걸 벌주지 않아요.",
+            "경사 구간 분해" to "오르막/평지/내리막에서 각각 얼마나 뛰었고 그때 심박이 어땠는지 나눠 봐요. 같은 페이스라도 오르막은 심박 비용이 커요.",
+            "워밍업" to "초반에 심박이 안정 강도까지 올라간 과정을 봐요. 너무 급하게 올렸으면(급상승) 다음엔 천천히 올리라고 알려줘요. 심박이 오르지 않은 세션이면 이 카드는 생략돼요.",
+            "심박 추이" to "세션 내내 심박이 어떻게 변했는지 선으로 봐요. 초록 밴드가 목표 Zone 2 구간이라, 선이 밴드 안에 오래 머물수록 좋아요.",
+            "페이스 추이" to "세션 내내 페이스(1km에 걸린 시간)가 어떻게 변했는지 봐요. 값이 낮을수록 빠른 거예요.",
+        )
     }
 }
