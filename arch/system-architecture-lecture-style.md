@@ -106,7 +106,7 @@ flowchart TB
 | HITL / HOTL 제어 | 말하기 테스트 라벨 / 코칭 무시/규칙 감독 | 있음 |
 | Data Lake | SessionStore/LearnedZone(소형 개인) | 축소 |
 | Model Construction(오프라인 학습) | **없음 → 온라인 개인화(베이지안/k×σ)로 대체** | 대체 |
-| Model Artifact / ML Metadata | 개인 파라미터 / 값 출처 태그·uFrac 이력 | 있음(소형) |
+| Model Artifact / ML Metadata | 개인 파라미터 / 값 출처 태그 + uFrac 이력 | 있음(소형) |
 | 모델 테스팅 | **오프라인 없음 → 시뮬 폐루프(VirtualRunner)로 검증** | 대체 |
 | 모델 등록/승격 | **없음(온라인 파라미터)** | 없음 |
 | Model Registry / Container Registry | LearnedZone+AICore Nano / APK | 있음 |
