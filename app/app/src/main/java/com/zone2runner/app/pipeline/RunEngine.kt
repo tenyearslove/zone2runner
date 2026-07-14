@@ -46,6 +46,7 @@ class RunEngine(
     private val cadence: CoachCadence = CoachCadence.DEFAULT, // 코칭 빈도(spec-021)
     priorDriftFloor: Triple<Double, Double, Int>? = null,    // 드리프트 개인 노이즈플로어 누적(LearnedZone, spec-025 §4)
     private val priorUphillTendency: Double? = null,         // 오르막 초과 경향 학습값(패턴 학습 예방, spec-025)
+    private val useGpsDistance: Boolean = false,             // 실기기(GPS)=점간 직선거리로 총거리(페이스 적분 오차 방지). 시뮬/무GPS=false→페이스 적분.
 ) {
     private val extractor = FeatureExtractor()
     private val personalization = Personalization(profile, priorUFrac)
@@ -77,6 +78,8 @@ class RunEngine(
     // 누적
     private var elapsed = 0
     private var distanceM = 0.0
+    private var prevLat = Double.NaN   // GPS 점간거리용 직전 유효 좌표
+    private var prevLon = Double.NaN
     private var hrSum = 0L
     private var hrCount = 0
     private var maxHr = 0
@@ -136,8 +139,18 @@ class RunEngine(
         // 누적 지표
         hrSum += clean; hrCount++; if (clean > maxHr) maxHr = clean
         if (s.spm > 0) { spmSum += s.spm; spmCount++ }
-        val mps = MPS_PER_MIN_KM / s.paceMinKm.coerceAtLeast(0.1)
-        distanceM += mps
+        // 총거리: 실기기(GPS)는 점간 직선거리(Haversine — 페이스 적분의 누적 오차 방지), 시뮬/무GPS는 페이스 적분.
+        val paceStep = MPS_PER_MIN_KM / s.paceMinKm.coerceAtLeast(0.1)
+        val stepM = if (useGpsDistance && s.lat.isFinite() && s.lon.isFinite() && prevLat.isFinite() && prevLon.isFinite()) {
+            val d = haversineM(prevLat, prevLon, s.lat, s.lon)
+            when {                       // RunService와 동일 게이트: 지터<0.5m=0, 튐>40m=페이스로 폴백
+                d < 0.5 -> 0.0
+                d > 40.0 -> paceStep
+                else -> d
+            }
+        } else paceStep
+        distanceM += stepM
+        if (s.lat.isFinite() && s.lon.isFinite()) { prevLat = s.lat; prevLon = s.lon }
         extractor.add(clean.toDouble(), s.paceMinKm, s.spm, s.slopePct)
         signals.add(s.tSec, clean.toDouble(), s.paceMinKm, s.spm, s.slopePct)
 
@@ -210,6 +223,16 @@ class RunEngine(
     /** 드리프트 개인 노이즈플로어 상태 [mean, var, count] — 세션 종료 저장(LearnedZone.setDriftFloor)용. */
     fun driftFloorState(): Triple<Double, Double, Int> =
         Triple(driftFloor.meanRaw(), driftFloor.varRaw(), driftFloor.count)
+
+    /** 두 위경도 사이 대원 거리(m) — Haversine. */
+    private fun haversineM(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
+        val r = 6_371_000.0
+        val dLat = Math.toRadians(lat2 - lat1)
+        val dLon = Math.toRadians(lon2 - lon1)
+        val h = Math.sin(dLat / 2).let { it * it } +
+            Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) * Math.sin(dLon / 2).let { it * it }
+        return 2 * r * Math.asin(Math.min(1.0, Math.sqrt(h)))
+    }
 
     private var stationarySec = 0
     private var wasStationary = false

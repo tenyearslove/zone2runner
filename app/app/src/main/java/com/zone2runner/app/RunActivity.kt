@@ -526,6 +526,7 @@ class RunActivity : AppCompatActivity() {
             cadence = settings.cadence, // spec-021
             priorDriftFloor = com.zone2runner.app.data.LearnedZone.driftFloor(this), // 드리프트 개인 플로어 누적(spec-025)
             priorUphillTendency = com.zone2runner.app.data.LearnedZone.uphillTendency(this), // 오르막 초과 경향(패턴 학습 예방)
+            useGpsDistance = (mode == MODE_LIVE), // 실기기만 GPS 점간거리로 총거리(시뮬은 페이스 적분 유지)
         )
         engine = eng
         startedAt = System.currentTimeMillis()
