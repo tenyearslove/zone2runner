@@ -4,9 +4,25 @@
 
 > **새 세션에서 이어가는 법**: Claude에게 "HANDOFF.md 읽고 이어가자"라고 하면 된다.
 
-최종 갱신: 2026-07-13 (가이드 정비 + 토크테스트 3단계 전환 + 상수 근거 감사 + 시뮬/리포트 버그 수정) / 2026-07-13 (리포트/코칭 데이터 최대활용 강화) / 2026-07-10 (FR3 분석엔진 완전 구현 + 문서 대수선 + FR 대재정립)
+최종 갱신: 2026-07-14 (가이드 심화 + 리포트 지표 설명팝업 + GPS거리 + Nano Rewriting/Summarization + 내리막 관절코칭 + 설명용이성 DP 설계문서) / 2026-07-13 (가이드 정비 + 토크테스트 3단계 + 상수 근거 감사 + 버그수정) / 2026-07-10 (FR3 분석엔진 + 문서 대수선 + FR 대재정립)
 
-> **★★★★★★ 2026-07-13 (이어짐) — 사용자 가이드(guide/) 정비 + 토크테스트 3단계 전환 + 상수 근거 감사 + 시뮬/리포트 버그 수정 [여기서 이어가기]**
+> **★★★★★★ 2026-07-14 — 가이드 심화 + Nano 과제형 API 채택 + 내리막 관절코칭 + DP(설명용이성) 설계문서 [여기서 이어가기]**
+>
+> **맥락**: 가이드(00~05)를 사용자가 읽으며 질문/피드백 → 심화. 이어 앱 기능 3건(리포트 설명팝업/GPS거리/Nano API/관절코칭) + **인증 과제 DP 재정의**(NN 없는 지금 무엇을 AI 설계로 제시할지)로 확장. 전부 커밋·푸시, 앱 기능은 실기기 설치 완료.
+>
+> - **가이드 02 심화(사용자 질문 반영)**: 베이즈 "섞는 비율은 마법상수 아님" 증명(pull 검산) + spec-016에 σ 6/14 크기 근거. prior/σ0을 통계 개념으로 풀이 + **ASCII 수평막대**로 Zone2 경계 시각화(HTML/CSS는 GitHub이 지워서 코드블록 ASCII 사용). 말하기 테스트 편함/보통/벅참 평이화(표준편차=빗나갈 폭, 작을수록 확신). 히스테리시스(왜 60초평균 대신 순간+히스테리시스)/거리오차/EF(조 프릴 개념, 코칭관례) 설명.
+> - **리포트 지표 설명 팝업(설명용이성 QA)**: ReportActivity `card()`에 제목별 설명맵(METRIC_INFO 16개) + ⓘ 터치→AlertDialog. EF도 코칭관례임 정직 명시.
+> - **GPS 총거리 개선**: 실기기(mode==LIVE)는 **GPS 점간 Haversine**로 총거리(RunEngine, 게이트 0.5~40m), 시뮬은 페이스 적분 유지. 페이스 적분 누적오차 해소(사용자 지적).
+> - **★ Gemini Nano 과제형 API 채택(adr-026)**: 리서치(`arch/research-gemini-nano-ondevice-capabilities.md`) → **Rewriting**(코칭 문장 톤만 재작성, 내용=규칙) + **Summarization**(리포트 사실 요약). `NanoRewriter`/`NanoSummarizer`(genai-rewriting/summarization 1.0.0-beta1, AAR로 API 검증), LlmCoach 1순위=톤재작성→Prompt→규칙 폴백, 리포트 스토리 1순위=요약. 가용성 체크+무손상 폴백. 구조화출력은 온디바이스 미출시라 감시.
+> - **★ 내리막 관절 보호 코칭(spec-026, Approved/Implemented)**: 사용자 리뷰(무릎/고체중 내리막 관절부담)에서. **GAP(Minetti)은 대사 축이라 불변**, 관절은 별도 코칭 축(정직). 핵심수정=관절위험군(프로필 jointCaution 토글 또는 bodyType≥4) 내리막서 "속도 올려(미달)" 억제→관절보호 큐. 우선순위 안전>관절>Zone2. Profile.jointCaution/ProfileStore/ProfileActivity 토글, RunEngine(내리막≤−4%/8초, maybeJointCoach), RuleCoach 4페르소나 jointCue, CoachContext.jointProtect, LlmCoach 우회. 리포트 "내리막 습관" 카드(SessionAnalytics.downhillBehavior 種類A). 관절부하 수치는 안 만듦(힘센서 없음). 테스트 그린.
+> - **★★ 인증 과제 DP 재정의(회고)**: NN 없고 자체 AI 없는 지금 "무엇을 AI 설계로 제시하나" → **답: AI 설계=AI 시스템 설계(가드레일/HITL·HOTL/설명/적응 루프)이지 NN 아님. adr-025('AI≠NN')가 우리 논지.** DP 후보 3개(①경계추정 베이지안 vs 사전학습NN / ②관측분석 vs 예측 / ③약한 LLM 거버넌스). 사용자 선택=**①후보 유지 + 설명용이성 DP 먼저 + 제어가능성 DP**.
+> - **★ 설명용이성 DP 설계문서 작성**: 리서치(`arch/research-explainability-dp-intrinsic-vs-posthoc.md`, Rudin 2019/충실도) → **`arch/dp-explainability-intrinsic-vs-posthoc.md`**(report-006 형식: 문제정의 P1~P7 + 2안 mermaid[AI System 블록 매핑] + 결정표 + QA별점 + 근거). 결정축=**충실도(fidelity)**: 설계 A(intrinsic/glass-box+provenance, LLM=verbalizer) vs 설계 B(블랙박스+post-hoc). **리포트는 아직 이르니(CLAUDE.md) arch에 DP 설계문서로 보존.**
+>   - **★ 사용자 피드백 2건 반영(중요, 메모리 저장)**: (a) **객관적 목소리** — 심사자는 우리 여정 모름 → "우리가 걸어온 과정/안 간 길/adr번호/구현됨" 서술 금지, 비채택안 깎아내리는 표현("속이 안 보임" 등) 금지, "조건 다르면 2안 우선 가능" 공정성 명시. (b) **다이어그램 «component»=note(주석)이지 컴포넌트 노드 아님** — 파란박스=기능, 노란 «component»=AI System 블록 매핑 note(dashed). → `memory/feedback-dp-doc-objective-voice.md`.
+> - **★ 남은 것(다음)**: **제어가능성 DP**(약한 LLM 거버넌스)를 같은 형식(객관목소리+note분리)으로 작성. DP-①(경계추정)도 후보. 실기기 필드검증(σ/게이트/Nano 실동작). 리포트 정식착수는 설계 안정화 후.
+>
+> --- (이하 이전 기록) ---
+
+> **★★★★★★ 2026-07-13 (이어짐) — 사용자 가이드(guide/) 정비 + 토크테스트 3단계 전환 + 상수 근거 감사 + 시뮬/리포트 버그 수정**
 >
 > **맥락**: 위 "데이터 최대활용" 강화 후, 사용자가 (a) 앱을 스스로 이해하려 사용자 안내서를 요청 → guide/ 신설·정비, (b) 그 과정에서 토크테스트/상수 근거를 파고들어 여러 개선/버그 수정으로 이어짐. 전부 커밋·푸시·실기기 설치 완료.
 >
