@@ -1,5 +1,4 @@
 @startuml
-!pragma layout smetana
 title Zone2Runner — 시스템 컨텍스트 (Context)
 skinparam defaultFontName "AppleGothic"
 skinparam componentStyle rectangle

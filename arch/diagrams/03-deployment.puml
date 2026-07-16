@@ -1,5 +1,4 @@
 @startuml
-!pragma layout smetana
 title Zone2Runner — 배포 (Deployment)
 skinparam defaultFontName "AppleGothic"
 skinparam shadowing false

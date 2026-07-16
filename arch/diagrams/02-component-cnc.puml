@@ -1,5 +1,4 @@
 @startuml
-!pragma layout smetana
 title Zone2Runner — 컴포넌트-커넥터(C&C) 뷰 / 강의 AI System 아키텍처 매핑
 skinparam defaultFontName "AppleGothic"
 skinparam componentStyle rectangle
