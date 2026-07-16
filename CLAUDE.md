@@ -61,6 +61,8 @@ Android + Galaxy Watch 기반 Zone 2 운동 코칭 앱.
 | Framework | `framework/` | ★인증 강의 프레임워크 정본(불변). 강의 지식은 여기에만, spec/arch는 참조 |
 | Spec   | `spec/spec-{nnn}-{title}.md`     | 기능 명세 |
 | ADR    | `arch/adr-{nnn}-{title}.md`      | 아키텍처 결정 기록 |
+| DP     | `arch/dp/dp-{NN}-{qa}/` (폴더)    | 설계 문제(문제+2안 비교+결정) 묶음. 규칙/인덱스 = `arch/dp/README.md`. 채택안(1안)=일반 아키텍처 참조, 폴더엔 카운터(2안)+DP문서만. 도식=`images/` |
+| 일반 아키텍처 도식 | `arch/diagrams/` | 우리 실제 시스템 C&C/컨텍스트/배포(PlantUML). DP 전용 도식은 여기 두지 않음 |
 | Archive | `spec/archive/`, `arch/archive/`, `report/archive/` | 탈락/대체 문서(역사 기록, 각 README에 탈락 사유표) |
 
 - **Report는 지금 쓰지 않는다**: 리포트(발표·보고 원고)는 설계가 안정된 뒤 착수하는 최종 산출물이다. 방향이 계속 바뀌는 현 단계에선 미리 쓰면 정합이 깨진다 → **기존 report는 `report/archive/`에 보존**하고, 설계 안정화 후 정본(spec/arch/framework)에서 새로 뽑는다.

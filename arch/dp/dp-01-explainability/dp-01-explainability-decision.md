@@ -4,7 +4,7 @@
 > **[설계 문제 정의] → [설계안 결정 표: 구조(다이어그램) / 장점(QA 별점) / 단점(QA 별점) / Trade Off] → [설계 결정 및 근거]**.
 > 이 분야를 전혀 모르는 사람도 읽고 이해할 수 있게 쓴다. 이 문서는 **설명용이성 DP 하나에만** 집중한다.
 >
-> **상태**: v2 (2026-07-16). 확정 아키텍처 다이어그램(`arch/diagrams/`)을 반영. 리서치 노트(`arch/research-explainability-dp-intrinsic-vs-posthoc.md`) 근거.
+> **상태**: v2 (2026-07-16). 확정 아키텍처 다이어그램(`arch/diagrams/`)을 반영. 리서치 노트(`dp-01-explainability-research.md`) 근거.
 > 리포트는 설계 안정화 후 착수(CLAUDE.md) — 이 문서는 그 재료가 될 **DP 설계문서**로 arch에 둔다.
 
 ---
@@ -57,7 +57,7 @@
 - **바깥 경계(입출력)를 똑같이 고정하고, 안쪽 구조만 다르게 본다.**
   - 입력: 관측 신호(1Hz 심박/페이스/케이던스/경사) + 시스템이 내린 결정(판정/경계/코칭).
   - 출력: ① 그 결정의 설명("왜 이렇게 판단/코칭했나"), ② 각 수치의 출처, ③ 사용자가 정정할 지점(HITL 라벨).
-- **다이어그램 읽는 법**(두 안 공통, `arch/diagrams/`): 각 블록 **상단의 «...»** = 그 블록이 강의 **AI System 아키텍처의 어느 컴포넌트 유형**인지(입력/출력 가드레일, 모델 서빙, 설명 서비스, Retraining 등). **색 = 컴포넌트 성격**(범례 참조: 가드레일=주황, 모델 서빙=파랑(투명)/회색(블랙박스), 설명=초록, 운영=보라, 저장=회청, 개발/학습=코랄, 외부=노랑). 실선=데이터 흐름, 점선=제어(HITL/HOTL/LLM 서빙/적응).
+- **다이어그램 읽는 법**(두 안 공통 표기법): 각 블록 **상단의 «...»** = 그 블록이 강의 **AI System 아키텍처의 어느 컴포넌트 유형**인지(입력/출력 가드레일, 모델 서빙, 설명 서비스, Retraining 등). **색 = 컴포넌트 성격**(범례 참조: 가드레일=주황, 모델 서빙=파랑(투명)/회색(블랙박스), 설명=초록, 운영=보라, 저장=회청, 개발/학습=코랄, 외부=노랑). 실선=데이터 흐름, 점선=제어(HITL/HOTL/LLM 서빙/적응).
 - 품질(QA) 평가는 그림이 아니라 **결정 표의 장점/단점 칸**에서 한다(대비가 극명한 2개씩).
 
 ---
@@ -66,9 +66,9 @@
 
 **한 줄 개념**: 결정 과정을 **투명하게** 만들어서, 설명이 그 과정의 **재생**이 되게 한다. 판정은 규칙, 경계는 눈에 보이는 베이지안(사전값+불확실도), 모든 수치는 출처가 선언돼 있고(종류 A 도출 / B 학습 / C 설계선택), **LLM은 이미 확정된 사실을 말로만 옮긴다**(이유를 지어내지 않는다).
 
-![1안 — 규칙/통계 기반 개인화 아키텍처](diagrams/02b-component-cnc-simple.png)
+![1안 — 규칙/통계 기반 개인화 아키텍처](../../diagrams/02b-component-cnc-simple.png)
 
-> 상세 컴포넌트 뷰 = `arch/diagrams/02-component-cnc.png`, 컴포넌트 서술 = `arch/component-catalog.md`.
+> 채택안(1안)은 이 시스템의 실제 아키텍처이므로 일반 도식을 참조한다. 상세 컴포넌트 뷰 = `arch/diagrams/02-component-cnc.png`, 컴포넌트 서술 = `arch/component-catalog.md`.
 
 **핵심 — 설명 서비스가 "재생"이다**: 설명이 별도 추정 모듈이 아니라, **추론이 실제로 쓴 그 로직/수치를 그대로 되읽는다.** 예: "지속심박 128이 하한 132보다 낮아 미달, 그런데 내리막+관절주의라 관절 보호를 우선했어요." 여기 나오는 128/132는 판정이 실제로 쓴 값 그 자체다 → **설명과 결정 사이에 간극이 없다(충실).**
 
@@ -106,9 +106,9 @@
 
 **한 줄 개념**: 오프라인에서 대량 학습한 **블랙박스 모델**이 결정을 직접 산출하고, 설명은 **결정이 난 뒤 별도로** 생성한다 — 특징 기여도 분석(SHAP/LIME)이나 LLM 이유생성으로. 이는 산업계에서 가장 널리 쓰이는 주류 접근이다(웨어러블 데이터 XAI 연구의 88%가 post-hoc). 지어낸 비교 대상이 아니라 **동등하게 진지한 대안**이며, 조건이 다른 문제(고차원 원신호, 참값 확보 가능)에서는 이쪽이 우선될 수 있다.
 
-![2안 — 사전학습 블랙박스 아키텍처](diagrams/04b-counter-component-cnc-simple.png)
+![2안 — 사전학습 블랙박스 아키텍처](images/dp-01-explainability-counter-simple.png)
 
-> 상세 컴포넌트 뷰 = `arch/diagrams/04-counter-component-cnc.png`, 컴포넌트 서술 = `arch/component-catalog-counter.md`.
+> 카운터(2안)는 이 DP 전용 가정 설계다. 상세 컴포넌트 뷰 = `images/dp-01-explainability-counter-detailed.png`, 컴포넌트 서술 = `dp-01-explainability-counter-catalog.md`.
 
 **요지**: 학습된 모델이 결정을 내리고, 그 결정의 근거를 **사후에 별도 기법으로 근사해** 제시하는 방식. 설명은 자연스럽고 그럴듯하지만, 그것이 모델의 실제 계산과 일치하는지는 별도로 보장되지 않는다(모델 내부 로직이 다수 파라미터에 분산돼 결정 경로를 직접 대응시키기 어렵기 때문). 그림 오른쪽의 **오프라인 대량 학습 파이프라인**(데이터셋 구축 → Data Lake → Model Construction → 테스팅 → Model Registry → 배포)이 이 안의 핵심 구성이며, 1안에는 이 부분이 개인 적응으로 축소돼 있다.
 
@@ -189,7 +189,7 @@
 - LLM 자기설명 충실도/컨패뷸레이션(arXiv:2506.09277 / 2605.27879).
 - 웨어러블 데이터 XAI 체계적 리뷰(JMIR 2024, post-hoc 88%/충실도 검증 부족).
 - DARPA XAI("appropriately trust"). provenance/lineage as trust(Techstrong).
-> 리서치 원본/링크 = `arch/research-explainability-dp-intrinsic-vs-posthoc.md`.
+> 리서치 원본/링크 = `dp-01-explainability-research.md`.
 
 ## 부록 B. 용어 한 줄 사전
 - **충실도(fidelity/faithfulness)**: 설명이 시스템의 *진짜* 이유를 반영하는 정도. **그럴듯함(plausibility)** 과 다르다 — 그럴듯한데 안 충실할 수 있고, 그게 가장 위험하다.
@@ -199,4 +199,4 @@
 - **verbalizer vs rationalizer**: LLM이 *확정 사실을 표현*(verbalize, 1안 방식) vs *이유를 지어냄*(rationalize, 위험).
 - **SHAP/LIME**: 블랙박스의 각 특징 기여도를 사후 근사하는 대표적 post-hoc 기법.
 
-> 관련 문서: `arch/research-explainability-dp-intrinsic-vs-posthoc.md`(리서치), `arch/component-catalog.md`/`arch/component-catalog-counter.md`(컴포넌트 서술), `arch/diagrams/`(도식), `spec/spec-002`(QA), `arch/adr-025`(AI≠NN), `framework/ai-system-and-quality.md`(AI System 아키텍처).
+> 관련 문서: `dp-01-explainability-research.md`(리서치), `arch/component-catalog.md`(1안=우리 시스템)/`dp-01-explainability-counter-catalog.md`(2안 카운터), `arch/diagrams/`(1안 도식)/`images/`(2안 도식), `spec/spec-002`(QA), `arch/adr-025`(AI≠NN), `framework/ai-system-and-quality.md`(AI System 아키텍처).

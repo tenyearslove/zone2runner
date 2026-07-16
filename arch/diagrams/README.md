@@ -14,8 +14,8 @@
 
 ![Context](01-context.png)
 
-## 2. 규칙/통계 기반 개인화 아키텍처 (설계 A: 채택안) — C&C (상세 + 축약 쌍)
-내부 컴포넌트를 강의 AI System 서비스별로 묶고, 커넥터를 타입 구분. 각 블록 상단 `«...»`가 강의 표준 컴포넌트 유형.
+## 2. 규칙/통계 기반 개인화 아키텍처 — C&C (상세 + 축약 쌍)
+우리 시스템의 메인 컴포넌트-커넥터 뷰(설명용이성 DP에서는 채택안=1안으로도 쓰인다). 내부 컴포넌트를 강의 AI System 서비스별로 묶고, 커넥터를 타입 구분. 각 블록 상단 `«...»`가 강의 표준 컴포넌트 유형.
 **항상 상세본과 PPT용 축약본을 쌍으로 유지**한다.
 
 ### 2a. 상세본 (전 컴포넌트)
@@ -29,15 +29,9 @@
 
 ![Deployment](03-deployment.png)
 
-## 4. 사전학습 블랙박스 아키텍처 (설계 B: 카운터) — C&C (상세 + 축약 쌍)
-설명용이성 DP의 **대안**을 우리와 **같은 표기법**으로. 최대 대비 = 블랙박스 모델 서빙 + 사후 설명 + **오프라인 대량 학습 파이프라인**(우리는 운영 안 개인 적응으로 축소). 컴포넌트 서술 = `arch/component-catalog-counter.md`.
-
-### 4a. 상세본
-![Counter C&C 상세](04-counter-component-cnc.png)
-
-### 4b. 축약본 (PPT용)
-![Counter C&C 축약](04b-counter-component-cnc-simple.png)
+> 이 폴더 = **일반 시스템 아키텍처**(우리 실제 시스템) 전용. 컨텍스트(01) / 우리 C&C(02, 02b) / 배포(03).
+> **DP 전용 도식**(카운터 등 가정 설계)은 여기 두지 않고 각 DP 폴더 `arch/dp/dp-{NN}-{qa}/images/`에 둔다 — 예: 설명용이성 DP의 카운터 = `arch/dp/dp-01-explainability/images/`.
 
 ---
 
-> 관련: `arch/component-catalog.md`(컴포넌트 식별+디스크립션), `framework/ai-system-and-quality.md §1-3`(강의 표준 아키텍처).
+> 관련: `arch/component-catalog.md`(컴포넌트 식별+디스크립션), `arch/dp/`(DP 설계문서), `framework/ai-system-and-quality.md §1-3`(강의 표준 아키텍처).

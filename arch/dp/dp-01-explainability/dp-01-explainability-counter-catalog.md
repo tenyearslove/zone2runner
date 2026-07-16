@@ -1,7 +1,7 @@
 # 사전학습 블랙박스 아키텍처 컴포넌트 카탈로그 (설계 B)
 
 - **상태**: 검토용 v1 (2026-07-16). 설명용이성 DP의 **대안(설계 B)** 아키텍처를 우리 것과 **같은 방식**으로 식별/서술한다. 이는 우리가 구현한 게 아니라, 공정 비교를 위한 **가정 설계**(산업계 주류 방식)다.
-- **도식**: `arch/diagrams/04-counter-component-cnc.png`(상세) + `04b-counter-component-cnc-simple.png`(축약).
+- **도식**: `images/dp-01-explainability-counter-detailed.png`(상세) + `images/dp-01-explainability-counter-simple.png`(축약).
 - **핵심 대비(우리 vs 카운터)**: 우리는 학습이 운영 안 **개인 적응(세션마다 갱신)**으로 축소됐지만, 카운터는 **오프라인 대량 학습 파이프라인**을 갖고, 모델 서빙이 **불투명(블랙박스)**이며, 설명이 결정과 분리된 **사후 근사**다.
 
 ---
@@ -53,4 +53,4 @@
 | 출력 가드레일 | 방향 잠금+안전(구조 내) | 사후 값 제한(결과 범위만 자름) |
 | 제어가능성 | 정정 지점 명확 | 결정 불투명, 정정 지점 모호 |
 
-> 관련: `arch/component-catalog.md`(우리 아키텍처), `arch/dp-explainability-intrinsic-vs-posthoc.md`(DP 비교), `arch/diagrams/`(도식).
+> 관련: `../../component-catalog.md`(우리 아키텍처=1안), `dp-01-explainability-decision.md`(DP 비교), `images/`(카운터 도식).

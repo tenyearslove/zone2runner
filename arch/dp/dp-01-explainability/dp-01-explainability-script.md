@@ -1,6 +1,6 @@
 # DP1 (1안) 발표 대본 — "규칙/통계 기반 개인화 아키텍처"를 아주 쉽게
 
-> 용도: 설명용이성 DP의 채택안(1안)을 그림(`arch/diagrams/02b-component-cnc-simple.png`)을 띄워놓고 말로 설명하는 대본.
+> 용도: 설명용이성 DP의 채택안(1안)을 그림(`../../diagrams/02b-component-cnc-simple.png`)을 띄워놓고 말로 설명하는 대본.
 > 원칙: 용어 하나하나 풀어서, 각 컴포넌트가 무슨 일을 하는지 쉽게. 처음 듣는 사람도 이해할 수 있게.
 > 🎙️ = 그대로 읽는 말. (풀이) = 어려운 말 설명. 상태: 초안 v1 (2026-07-16).
 
@@ -115,4 +115,4 @@
 
 덕분에 설명이 틀릴 수 없고, 사용자가 믿고 따를 수 있으며, 폰 혼자서도 가볍게 돕니다."
 
-> 관련: `arch/dp-explainability-intrinsic-vs-posthoc.md`(DP 본문), `arch/diagrams/02b-component-cnc-simple.png`(그림), `arch/component-catalog.md`(컴포넌트 상세).
+> 관련: `dp-01-explainability-decision.md`(DP 본문), `../../diagrams/02b-component-cnc-simple.png`(그림), `../../component-catalog.md`(컴포넌트 상세).
