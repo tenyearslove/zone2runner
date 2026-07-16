@@ -14,10 +14,15 @@
 
 ![Context](01-context.png)
 
-## 2. 컴포넌트-커넥터 (C&C) 뷰 — 메인
+## 2. 컴포넌트-커넥터 (C&C) 뷰 — 메인 (상세 + 축약 쌍)
 내부 컴포넌트를 강의 AI System 서비스별로 묶고, 커넥터를 타입 구분. 각 블록 상단 `«...»`가 강의 표준 컴포넌트 유형.
+**항상 상세본과 PPT용 축약본을 쌍으로 유지**한다.
 
-![Component C&C](02-component-cnc.png)
+### 2a. 상세본 (전 컴포넌트)
+![Component C&C 상세](02-component-cnc.png)
+
+### 2b. 축약본 (PPT용 — 모델 서빙 4역할을 한 블록으로, 저장/로그 세부 생략)
+![Component C&C 축약](02b-component-cnc-simple.png)
 
 ## 3. 배포 (Deployment)
 폰 / 워치 / AICore 노드에 컴포넌트 배치.

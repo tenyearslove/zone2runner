@@ -1,0 +1,40 @@
+@startuml
+title Zone2Runner — 컴포넌트-커넥터(C&C) 축약 / PPT용
+skinparam defaultFontName "AppleGothic"
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam linetype ortho
+
+actor "사용자" as User
+component "센서\nHR / GPS / 케이던스" as Sensors
+component "Gemini Nano\n(AICore)" as Nano
+
+package "AI Operation Subsystem" {
+  package "추론 서비스 (Inference)" as INF {
+    component "OutlierGuard" <<입력 가드레일>> as IG
+    component "모델 서빙\n규칙 판정 + 베이지안 경계\n+ 관측 분석 엔진 + 온디바이스 LLM" <<모델 서빙>> as SERVE
+    component "DirectionGuard / SafetyGuard" <<출력 가드레일>> as OG
+    IG --> SERVE
+    SERVE --> OG
+  }
+  component "설명 서비스\nSessionExplainer\n(값 출처 태그 A/B/C)" as EXP
+  component "운영 서비스\nOperation UI + HITL/HOTL" as OPS
+}
+
+package "AI Development (온라인으로 축소)" as DEV {
+  database "Data Lake\nSessionStore / LearnedZone" as DL
+  component "온라인 개인화\n(Retraining 대응)" <<Retraining>> as AD
+}
+
+Sensors --> IG
+OG --> OPS
+OG --> EXP
+EXP --> OPS
+User ..> OPS
+OPS ..> SERVE : HITL 라벨(말하기 테스트)
+Nano ..> SERVE : LLM 서빙
+OG --> DL
+DL --> AD
+AD ..> SERVE : 갱신 / 다음 세션 prior
+@enduml
