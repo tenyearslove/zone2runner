@@ -7,24 +7,24 @@ skinparam packageStyle rectangle
 skinparam linetype ortho
 
 actor "사용자" as User
-component "센서\nHR / GPS / 케이던스" as Sensors
-component "Gemini Nano\n(AICore)" as Nano
+component "센서\nHR / GPS / 케이던스" as Sensors #FFF9C4
+component "Gemini Nano\n(AICore)" as Nano #FFF9C4
 
 package "AI Operation Subsystem" {
   package "추론 서비스 (Inference)" as INF {
-    component "OutlierGuard" <<입력 가드레일>> as IG
-    component "모델 서빙\n규칙 판정 + 베이지안 경계\n+ 관측 분석 엔진 + 온디바이스 LLM" <<모델 서빙>> as SERVE
-    component "DirectionGuard / SafetyGuard" <<출력 가드레일>> as OG
+    component "OutlierGuard" <<입력 가드레일>> as IG #FFE0B2
+    component "모델 서빙\n규칙 판정 + 베이지안 경계\n+ 관측 분석 엔진 + 온디바이스 LLM" <<모델 서빙>> as SERVE #BBDEFB
+    component "DirectionGuard / SafetyGuard" <<출력 가드레일>> as OG #FFE0B2
     IG --> SERVE
     SERVE --> OG
   }
-  component "설명 서비스\nSessionExplainer\n모든 수치에 출처 표시(관측/학습/설계)" as EXP
-  component "운영 서비스\nOperation UI + HITL/HOTL" as OPS
+  component "설명 서비스\nSessionExplainer\n모든 수치에 출처 표시(관측/학습/설계)" as EXP #C8E6C9
+  component "운영 서비스\nOperation UI + HITL/HOTL" as OPS #E1BEE7
 }
 
 package "AI Development (개인 적응으로 축소)" as DEV {
-  database "Data Lake\nSessionStore / LearnedZone" as DL
-  component "개인 적응 학습\n(세션마다 갱신)" <<Retraining>> as AD
+  database "Data Lake\nSessionStore / LearnedZone" as DL #CFD8DC
+  component "개인 적응 학습\n(세션마다 갱신)" <<Retraining>> as AD #B2DFDB
 }
 
 Sensors --> IG
@@ -37,4 +37,15 @@ Nano ..> SERVE : LLM 서빙
 OG --> DL
 DL --> AD
 AD ..> SERVE : 갱신 / 다음 세션 prior
+
+legend right
+|= 색 |= 컴포넌트 성격 |
+|<#FFE0B2>| 가드레일 (입출력 통제) |
+|<#BBDEFB>| 모델 서빙 (투명 추론) |
+|<#C8E6C9>| 설명 서비스 |
+|<#E1BEE7>| 운영 서비스 (HITL/HOTL) |
+|<#CFD8DC>| 저장 (Data Lake) |
+|<#B2DFDB>| 개인 적응 (Retraining) |
+|<#FFF9C4>| 외부 (센서 / LLM) |
+endlegend
 @enduml
