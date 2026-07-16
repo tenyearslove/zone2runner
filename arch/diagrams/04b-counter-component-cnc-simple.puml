@@ -17,7 +17,7 @@ package "AI Operation Subsystem" {
     IG --> MODEL
     MODEL --> OG
   }
-  component "사후 설명기\nLLM이 이유를 사후 생성\n(결정의 근사)" as POST
+  component "사후 설명 서비스\nLLM이 결정 뒤 이유 생성\n(원결정의 근사)" as POST
   component "운영 서비스\nOperation UI + HITL/HOTL\n(결정 근거 불투명 → 수정 어려움)" as OPS
 }
 

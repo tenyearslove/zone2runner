@@ -41,8 +41,8 @@ package "AI Operation Subsystem" {
   }
 }
 
-package "AI Development Subsystem (온라인으로 축소)" as DEV {
-  component "온라인 개인화 갱신\n베이지안 / k×σ EWMA" <<Retraining: 온라인>> as ADAPT
+package "AI Development Subsystem (개인 적응으로 축소)" as DEV {
+  component "개인 적응 갱신\n베이지안 / k×σ EWMA" <<Retraining>> as ADAPT
   database "Data Lake\nSessionStore / LearnedZone" as DLAKE
   database "ML Metadata\n값 출처 태그 A/B/C" as META
   component "시뮬 폐루프 검증\nVirtualRunner" <<모델 테스팅>> as SIM
@@ -73,7 +73,7 @@ ENG ..> INF : 오케스트레이션
 Nano ..> COACH : LLM 서빙
 META ..> EGEN : 값 출처 제공
 
-' ===== 온라인 적응 루프 =====
+' ===== 개인 적응 루프 =====
 JUDGE --> DLAKE
 ANA --> DLAKE
 BND --> META

@@ -21,7 +21,7 @@ package "AI Operation Subsystem" {
   }
 
   package "설명 서비스 (사후 / post-hoc)" as EXP {
-    component "사후 설명기\nSHAP / LIME 기여도 또는 LLM 이유생성\n(원모델의 근사)" as POST
+    component "사후 설명 서비스\nLLM이 결정 뒤 이유 생성\n(원모델의 근사)" as POST
   }
 
   package "분석 서비스 (Analysis)" as ANASVC {
@@ -82,7 +82,7 @@ MART --> MTEST
 MTEST --> MPROM
 MPROM --> REG
 REG ..> MODEL : 배포
-H ..> ADAPTER : 온라인 미세조정
+H ..> ADAPTER : 개인 적응 미세조정
 MON ..> REEX : Retraining 트리거
 REEX --> DLAKE
 @enduml
