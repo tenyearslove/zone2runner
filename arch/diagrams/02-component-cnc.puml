@@ -16,7 +16,7 @@ package "AI Operation Subsystem" {
     component "OutlierGuard\n40~220 / 신선도 / 게이팅" <<입력 가드레일>> as IG
     component "FeatureExtractor\n지속심박 / 추세" <<데이터 준비>> as FE
     component "ZoneJudge\n미달 / 유지 / 초과" <<모델 서빙: 규칙>> as JUDGE
-    component "개인 경계 추정기\nPersonalization (베이지안 μ/σ)" <<모델 서빙: 해석가능·온라인학습>> as BND
+    component "개인 경계 추정기\nPersonalization (베이지안 μ/σ)" <<모델 서빙: 해석가능/개인적응>> as BND
     component "관측 분석 엔진\nAnalysisEngine (드리프트/GAP/…)" <<모델 서빙: 분석>> as ANA
     component "코칭 표현기\nRuleCoach + LlmCoach" <<모델 서빙: 온디바이스 LLM>> as COACH
     component "DirectionGuard / SafetyGuard" <<출력 가드레일>> as OG

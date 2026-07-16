@@ -15,7 +15,7 @@ package "AI Operation Subsystem" {
   package "추론 서비스 (Inference Service)" as INF {
     component "전처리 / 정규화\n최근 N초 이력 윈도우" <<데이터 준비>> as PRE
     component "이상값 필터" <<입력 가드레일>> as IG
-    component "블랙박스 결정 모델\n학습된 NN / 부스팅 — 판정·코칭 직접 출력" <<모델 서빙: 블랙박스>> as MODEL
+    component "블랙박스 결정 모델\n학습된 NN / 부스팅 — 판정/코칭 직접 출력" <<모델 서빙: 블랙박스>> as MODEL
     component "개인 어댑터\n사전학습 모델 미세조정" <<모델 서빙: 개인화>> as ADAPTER
     component "사후 클리핑\n(생리 모름 — 값 범위만 제한)" <<출력 가드레일>> as OG
   }
