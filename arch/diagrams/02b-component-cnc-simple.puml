@@ -1,5 +1,5 @@
 @startuml
-title Zone2Runner — 컴포넌트-커넥터(C&C) 축약 / PPT용
+title 화이트박스 (투명 설계) 아키텍처
 skinparam defaultFontName "AppleGothic"
 skinparam componentStyle rectangle
 skinparam shadowing false

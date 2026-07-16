@@ -1,5 +1,5 @@
 @startuml
-title 카운터 아키텍처 (블랙박스 + 사후 설명) — C&C 축약 / PPT용
+title 블랙박스 + 사후 설명 아키텍처
 skinparam defaultFontName "AppleGothic"
 skinparam componentStyle rectangle
 skinparam shadowing false
