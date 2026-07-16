@@ -32,8 +32,8 @@
 - **구현**: `pipeline/ZoneJudge.kt`, `domain/DisplayZone.kt`
 
 ### A5. 개인 경계 추정기 (Personalization + Zone2Prior)
-- **표준 매핑**: 모델 서빙(해석가능 모델, **온라인 학습**)
-- **책임**: 개인 Zone 2 상한을 베이지안으로 추정한다 — 프로필로 콜드스타트 prior(μ0, σ0)를 잡고(`Zone2Prior`), 말하기 테스트 라벨이 들어올 때마다 μ/σ를 온라인 갱신(`Personalization`). 참값 없이 그 사람 자리로 수렴하는 개인화의 핵심. NN 아님.
+- **표준 매핑**: 모델 서빙(해석가능 모델, **개인 적응**)
+- **책임**: 개인 Zone 2 상한을 베이지안으로 추정한다 — 프로필로 콜드스타트 prior(μ0, σ0)를 잡고(`Zone2Prior`), 말하기 테스트 라벨이 들어올 때마다 μ/σ를 세션마다 갱신(`Personalization`). 참값 없이 그 사람 자리로 수렴하는 개인화의 핵심. NN 아님.
 - **입력→출력**: 프로필 + 말하기 테스트 라벨 → 경계 μ/σ(불확실도 포함)
 - **구현**: `pipeline/Personalization.kt`, `domain/Zone2Prior.kt`, `domain/PersonalizationStatus.kt`
 
@@ -150,11 +150,11 @@
 
 ---
 
-## F. 개발/검증 (Development — 오프라인 학습 없음, 온라인/시뮬로 축소)
+## F. 개발/검증 (Development — 오프라인 학습 없음, 개인 적응/시뮬로 축소)
 
-### F1. 온라인 개인화 갱신 (Retraining 대응)
-- **표준 매핑**: Model Construction / Retraining (온라인)
-- **책임**: 표준의 "오프라인 대량 학습"이 우리에겐 없다. 대신 **운영 안에서 온라인으로** 경계 μ/σ를 베이지안 갱신하고 k×σ 노이즈플로어를 EWMA로 추정한다. 세션 관측/말하기 테스트가 곧 갱신 트리거.
+### F1. 개인 적응 갱신 (Retraining 대응)
+- **표준 매핑**: Model Construction / Retraining
+- **책임**: 표준의 "오프라인 대량 학습"이 우리에겐 없다. 대신 **운영 안에서 세션마다** 경계 μ/σ를 베이지안 갱신하고 k×σ 노이즈플로어를 EWMA로 추정한다. 세션 관측/말하기 테스트가 곧 갱신 트리거.
 - **입력→출력**: 관측/라벨 → 갱신된 개인 파라미터
 - **구현**: `Personalization.update()`, `NoiseFloor`(EWMA), `LearnedZone` 누적
 
@@ -169,7 +169,7 @@
 ## 요약 — 컴포넌트 수와 정체성
 
 - **추론 서비스 9 + 설명 2 + 분석 3 + 운영 3 + 저장 4 + 개발/검증 2 = 우리 시스템의 컴포넌트 뷰.**
-- 표준 대비 **Operation 쪽이 두껍고 Development(오프라인 학습/테스팅/승격)가 얇다** — 학습이 운영 안 온라인 개인화로 녹아 있는 게 우리 아키텍처의 정체성.
-- **가드레일(입력 A2 / 출력 A8) + 설명 서비스(B) + HITL/HOTL(D3) + 온라인 적응(F1)** 이 강의 표준의 AI 특화 요소와 그대로 대응한다.
+- 표준 대비 **Operation 쪽이 두껍고 Development(오프라인 학습/테스팅/승격)가 얇다** — 학습이 운영 안 개인 적응(세션마다 갱신)으로 녹아 있는 게 우리 아키텍처의 정체성.
+- **가드레일(입력 A2 / 출력 A8) + 설명 서비스(B) + HITL/HOTL(D3) + 개인 적응(F1)** 이 강의 표준의 AI 특화 요소와 그대로 대응한다.
 
 > 관련: `framework/ai-system-and-quality.md §1-3`, `arch/architecture-overview.md`(모듈 뷰), `arch/adr-025`(AI≠NN).
