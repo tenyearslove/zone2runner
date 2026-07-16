@@ -1,0 +1,28 @@
+@startuml
+!pragma layout smetana
+title Zone2Runner — 배포 (Deployment)
+skinparam defaultFontName "AppleGothic"
+skinparam shadowing false
+
+node "Galaxy Watch (Wear OS)" as WatchNode {
+  component "Wear 앱\n측정 / 존 게이지 / 토크 UI" as WearApp
+  component "Health Services\n심박 / 케이던스 센서" as HS
+}
+
+node "폰 (Android)" as PhoneNode {
+  component "Zone2Runner 앱\n추론 / 분석 / 코칭 / 설명" as PhoneApp
+  database "온디바이스 저장\nSessionStore / LearnedZone / ProfileStore" as Store
+}
+
+node "AICore (시스템 서비스)" as AICore {
+  component "Gemini Nano\nML Kit GenAI" as NanoModel
+}
+
+cloud "Open-Meteo API" as WeatherCloud
+
+HS --> WearApp
+WearApp <--> PhoneApp : Wearable Data Layer\n(/hr, /run, /talk)
+PhoneApp --> Store
+PhoneApp --> NanoModel : ML Kit GenAI (온디바이스)
+PhoneApp --> WeatherCloud : HTTPS (기온, 1회)
+@enduml

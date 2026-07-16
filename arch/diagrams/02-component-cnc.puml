@@ -1,0 +1,84 @@
+@startuml
+!pragma layout smetana
+title Zone2Runner — 컴포넌트-커넥터(C&C) 뷰 / 강의 AI System 아키텍처 매핑
+skinparam defaultFontName "AppleGothic"
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam linetype ortho
+
+actor "사용자" as User
+component "센서\nHR / GPS / 케이던스" as Sensors
+component "Gemini Nano\n(AICore)" as Nano
+
+package "AI Operation Subsystem" {
+
+  package "추론 서비스 (Inference Service)" as INF {
+    component "OutlierGuard\n40~220 / 신선도 / 게이팅" <<입력 가드레일>> as IG
+    component "FeatureExtractor\n지속심박 / 추세" <<데이터 준비>> as FE
+    component "ZoneJudge\n미달 / 유지 / 초과" <<모델 서빙: 규칙>> as JUDGE
+    component "개인 경계 추정기\nPersonalization (베이지안 μ/σ)" <<모델 서빙: 해석가능·온라인학습>> as BND
+    component "관측 분석 엔진\nAnalysisEngine (드리프트/GAP/…)" <<모델 서빙: 분석>> as ANA
+    component "코칭 표현기\nRuleCoach + LlmCoach" <<모델 서빙: 온디바이스 LLM>> as COACH
+    component "DirectionGuard / SafetyGuard" <<출력 가드레일>> as OG
+    database "Feature Store\nSignalWindow" as FS
+  }
+
+  component "RunEngine (오케스트레이터)" <<Inference Control>> as ENG
+
+  package "설명 서비스 (Explanation Service)" as EXP {
+    component "설명 생성기\nSessionExplainer" as EGEN
+    database "설명 결과\n세션 스토리" as ERES
+  }
+
+  package "분석 서비스 (Analysis Service)" as ANASVC {
+    database "서빙 로그\nRunLogger" as SLOG
+    component "지표 산출\nSessionAnalytics / Compare / Trends" as MCALC
+  }
+
+  package "운영 서비스 (Operation Service)" as OPSVC {
+    component "Operation UI\n대시보드 / 워치 / 리포트 / 터치 설명" as UI
+    component "HITL / HOTL 제어\n말하기 테스트 / 코칭 설정" as CTRL
+  }
+}
+
+package "AI Development Subsystem (온라인으로 축소)" as DEV {
+  component "온라인 개인화 갱신\n베이지안 / k×σ EWMA" <<Retraining: 온라인>> as ADAPT
+  database "Data Lake\nSessionStore / LearnedZone" as DLAKE
+  database "ML Metadata\n값 출처 태그 A/B/C" as META
+  component "시뮬 폐루프 검증\nVirtualRunner" <<모델 테스팅>> as SIM
+}
+
+' ===== 데이터 흐름 (실선) =====
+Sensors --> IG
+IG --> FE
+FE --> JUDGE
+FE --> ANA
+BND --> JUDGE
+JUDGE --> COACH
+ANA --> COACH
+COACH --> OG
+OG --> UI
+OG --> EGEN
+OG --> SLOG
+SLOG --> MCALC
+MCALC --> EGEN
+ERES <-- EGEN
+ERES --> UI
+FS .. ANA
+
+' ===== 제어 / HITL / HOTL (점선) =====
+User ..> CTRL
+CTRL ..> BND : HITL 라벨(말하기 테스트)
+ENG ..> INF : 오케스트레이션
+Nano ..> COACH : LLM 서빙
+META ..> EGEN : 값 출처 제공
+
+' ===== 온라인 적응 루프 =====
+JUDGE --> DLAKE
+ANA --> DLAKE
+BND --> META
+DLAKE --> ADAPT
+ADAPT ..> BND : 갱신 / 다음 세션 prior
+ADAPT --> META
+@enduml

@@ -1,0 +1,27 @@
+@startuml
+!pragma layout smetana
+title Zone2Runner — 시스템 컨텍스트 (Context)
+skinparam defaultFontName "AppleGothic"
+skinparam componentStyle rectangle
+skinparam shadowing false
+left to right direction
+
+actor "러너 (사용자)" as User
+
+rectangle "**Zone2Runner**\n폰 앱 + 워치 앱" as SYS #dbe9ff
+
+package "외부 시스템 / 센서" {
+  component "Galaxy Watch 센서\nHealth Services (심박/케이던스)" as Watch
+  component "폰 GPS\n(속도/고도/위치)" as GPS
+  component "Gemini Nano / AICore\n(온디바이스 LLM)" as Nano
+  component "Open-Meteo\n(날씨 API: 기온)" as Weather
+}
+
+User --> SYS : 말하기 테스트 응답 / 설정
+SYS --> User : 실시간 코칭 / 리포트 / 설명
+Watch --> SYS : 심박, 케이던스 (Data Layer)
+GPS --> SYS : 위치/속도/고도
+SYS --> Nano : 사실 → 문장 생성 요청 (ML Kit GenAI)
+Nano --> SYS : 코칭 문장 / 요약
+Weather --> SYS : 기온 (참고)
+@enduml
