@@ -20,6 +20,7 @@ class LlmCoach(
     private val personaKey: String = "default", // 말투(spec-024 FR3) — 문체만, 방향은 규칙 불변
     private val fallback: RuleCoach = RuleCoach(personaKey), // 폴백(첫 코칭 warmup 전 포함)도 같은 말투
     private val template: CoachPrompt = CoachPrompt.load(context), // 프롬프트 문구는 assets에서(코드 밖)
+    private val callLog: LlmCallLog? = null, // 프롬프트 프로비넌스/사용 기록 싱크(spec-027). null=기록 안 함
 ) : Coach {
     override val name = "llm"
 
@@ -47,15 +48,23 @@ class LlmCoach(
     /** 세션 시작 시 미리 호출해 checkStatus+warmup(최대 30초)을 첫 코칭 경로에서 빼낸다. */
     suspend fun prewarm() { ensureReady() }
 
-    /** 자유 설명 생성(코칭 외 용도 — 예: Zone2 계산 설명 팝업). 미가용/실패 시 null. */
-    suspend fun freeform(prompt: String): String? {
-        if (!ensureReady()) return null
+    /**
+     * 자유 설명 생성(코칭 외 용도 — 세션 스토리 폴백/개인화 설명/Zone2 계산 설명 팝업). 미가용/실패 시 null.
+     * purpose/tSec = 프로비넌스 기록용(spec-027). null 반환도 기록한다(폴백 사유 = 프로비넌스의 일부).
+     */
+    suspend fun freeform(prompt: String, purpose: String = "freeform", tSec: Int = -1): String? {
+        val t0 = System.currentTimeMillis()
+        fun log(engine: String, path: String, output: String) =
+            callLog?.record(tSec, purpose, engine, path, prompt, output, System.currentTimeMillis() - t0)
+        if (!ensureReady()) { log("rule", "rule(LLM 미가용)", ""); return null }
         return try {
             val res = withContext(Dispatchers.Default) {
                 withTimeout(8_000) { client.generateContent(prompt) }
             }
-            stripEmoji(res.candidates.firstOrNull()?.text ?: "").trim().ifBlank { null }
-        } catch (e: Throwable) { null }
+            val out = stripEmoji(res.candidates.firstOrNull()?.text ?: "").trim().ifBlank { null }
+            if (out == null) log("rule", "rule(빈 출력)", "") else log("nano-prompt", "llm(자유 생성)", out)
+            out
+        } catch (e: Throwable) { log("rule", "rule(오류/타임아웃)", ""); null }
     }
 
     // ML Kit 호출(checkStatus/warmup/generateContent)이 메인 스레드를 물지 않도록 Default로 격리
@@ -75,9 +84,23 @@ class LlmCoach(
     }
 
     override suspend fun say(ctx: CoachContext): String {
+        val t0 = System.currentTimeMillis()
+        val o = sayInner(ctx)
+        lastPath = o.path
+        lastPrompt = o.prompt
+        // 프로비넌스 기록(spec-027): 코칭 1문장 = 기록 1건(리포트 코칭 로그와 1:1 정렬). 규칙 폴백도 기록.
+        callLog?.record(ctx.elapsedSec, "coach", o.engine, o.path, o.prompt ?: "", o.text,
+            System.currentTimeMillis() - t0)
+        return o.text
+    }
+
+    /** say의 귀결 1건: 최종 문장 + 프로비넌스(엔진/경로/LLM 입력). */
+    private data class Outcome(val text: String, val engine: String, val path: String, val prompt: String?)
+
+    private suspend fun sayInner(ctx: CoachContext): Outcome {
         // 격려/인지/예방 코칭(마일스톤/워밍업/회복/오르막 예방)은 방향이 없어 LLM 방향 표현이 부적절 → 규칙 문구.
         if (ctx.milestoneMin > 0 || ctx.warmup || ctx.recovering || ctx.uphillWarn || ctx.jointProtect) {
-            lastPath = "rule(특수 코칭)"; return fallback.say(ctx)
+            return Outcome(fallback.say(ctx), "rule", "rule(특수 코칭)", null)
         }
         // 1순위(adr-026): 규칙이 확정한 문장의 '톤'만 Nano로 재작성(내용=규칙이라 방향 잠금이 더 강함).
         val ruleLine = fallback.say(ctx)
@@ -85,14 +108,14 @@ class LlmCoach(
         if (toned != ruleLine) {
             val g = guard(toned)
             if (g != null && DirectionGuard.ok(intentOf(ctx.judgment), g)) {
-                usedLlmOnce = true; lastPrompt = ruleLine; lastPath = "llm(톤 재작성)"; return g
+                usedLlmOnce = true
+                return Outcome(g, "nano-rewrite", "llm(톤 재작성)", ruleLine) // LLM 입력 = 규칙 원문
             }
             if (g != null) directionRejects++ // 재작성이 방향을 흐리면 아래 Prompt/규칙으로 폴백
         }
-        // 2순위(폴백): 기존 Prompt 자유 표현 경로
+        // 2순위(폴백): 기존 Prompt 자유 표현 경로. 프롬프트는 미가용이어도 채워 "이 프롬프트를 쓴다"를 남긴다.
         val prompt = buildPrompt(ctx)
-        lastPrompt = prompt // 디버그 노출: 실제 LLM 호출 여부와 무관하게 "이 프롬프트를 쓴다"를 보여준다
-        if (!ensureReady()) { lastPath = "rule(LLM 미가용)"; return fallback.say(ctx) }
+        if (!ensureReady()) return Outcome(fallback.say(ctx), "rule", "rule(LLM 미가용)", prompt)
         return try {
             val res = withContext(Dispatchers.Default) {
                 withTimeout(6_000) { client.generateContent(prompt) }
@@ -100,17 +123,16 @@ class LlmCoach(
             val text = res.candidates.firstOrNull()?.text
             val guarded = guard(text)
             when {
-                guarded == null -> { lastPath = "rule(빈 출력)"; fallback.say(ctx) }
+                guarded == null -> Outcome(fallback.say(ctx), "rule", "rule(빈 출력)", prompt)
                 !DirectionGuard.ok(intentOf(ctx.judgment), guarded) -> {
                     directionRejects++ // 방향 모순/무방향 문장 기각(adr-002 방향 잠금)
-                    lastPath = "rule(방향 기각: \"${guarded.take(24)}…\")"
-                    fallback.say(ctx)
+                    Outcome(fallback.say(ctx), "rule", "rule(방향 기각: \"${guarded.take(24)}…\")", prompt)
                 }
-                else -> { usedLlmOnce = true; lastPath = "llm"; guarded }
+                else -> { usedLlmOnce = true; Outcome(guarded, "nano-prompt", "llm", prompt) }
             }
         } catch (e: Throwable) {
-            lastPath = "rule(오류/타임아웃)"
-            fallback.say(ctx) // 포그라운드 제약(ErrorCode 30)/타임아웃 등 -> 규칙 폴백
+            // 포그라운드 제약(ErrorCode 30)/타임아웃 등 -> 규칙 폴백
+            Outcome(fallback.say(ctx), "rule", "rule(오류/타임아웃)", prompt)
         }
     }
 

@@ -78,8 +78,16 @@ class ReportActivity : AppCompatActivity() {
 
         // 사후 세션 스토리(spec-023 FR2): "이번 러닝에서 왜 이렇게 코칭했나". 세션 종료 시 1회 생성·저장.
         if (r.sessionStory.isNotBlank()) {
+            val storyCalls = r.llmCalls.filter { it.purpose == "story" }
             col.addView(card("이번 러닝 이야기", TextView(this).apply {
                 text = r.sessionStory; textSize = 14f; setTextColor(C_TEXT); setLineSpacing(dp(3).toFloat(), 1f)
+                // 프롬프트 프로비넌스(spec-027): 스토리 터치 → 생성 경로/프롬프트 팝업(저장본 조회, LLM 재호출 없음)
+                isClickable = true
+                setOnClickListener {
+                    if (storyCalls.isEmpty()) showInfoDialog("이 글이 어떻게 만들어졌나",
+                        "생성 기록이 없어요(구버전 세션이거나 규칙 문장 그대로예요). 규칙 생성 글은 코드가 실제 세션 수치로 만든 문장이라 LLM 프롬프트가 없습니다.")
+                    else showInfoDialog("이 글이 어떻게 만들어졌나", storyCalls.joinToString("\n\n────────\n\n") { provenanceText(it) })
+                }
             }))
         }
 
@@ -145,18 +153,93 @@ class ReportActivity : AppCompatActivity() {
             addView(mv, LinearLayout.LayoutParams(MATCH_PARENT, dp(240)))
         }))
 
-        // 코칭 로그
+        // 코칭 로그 — 각 문장 터치 시 프로비넌스(경로/프롬프트/지연) 팝업(spec-027 FR2, 코칭 1문장 = 기록 1건)
+        val coachCalls = r.llmCalls.filter { it.purpose == "coach" }
+        val aligned = coachCalls.isNotEmpty() && coachCalls.size == r.coachingLines.size
         val coachBox = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         if (r.coachingLines.isEmpty()) {
             coachBox.addView(TextView(this).apply { text = "코칭 없음"; setTextColor(C_MUTED); textSize = 12f })
         } else {
-            r.coachingLines.takeLast(12).forEach {
-                coachBox.addView(TextView(this).apply { text = it; setTextColor(C_TEXT); textSize = 12f; setPadding(0, dp(2), 0, dp(2)) })
+            val shown = r.coachingLines.takeLast(12)
+            val offset = r.coachingLines.size - shown.size
+            shown.forEachIndexed { i, lineText ->
+                coachBox.addView(TextView(this).apply {
+                    text = lineText; setTextColor(C_TEXT); textSize = 12f; setPadding(0, dp(2), 0, dp(2))
+                    if (aligned) {
+                        isClickable = true
+                        setOnClickListener {
+                            showInfoDialog("이 문장이 어떻게 만들어졌나", provenanceText(coachCalls[offset + i]))
+                        }
+                    }
+                })
             }
+            coachBox.addView(TextView(this).apply {
+                text = if (aligned) "문장을 터치하면 생성 경로와 프롬프트를 볼 수 있어요."
+                else "이 세션에는 프롬프트 기록이 없어요(기록 기능 이전 세션)."
+                setTextColor(C_MUTED); textSize = 10f; setPadding(0, dp(6), 0, 0)
+            })
         }
         col.addView(card("코칭 로그 (규칙 방향 + 표현)", coachBox))
 
+        // LLM 사용 텔레메트리(spec-027 FR4) — 앱이 실제 관측한 값만(지연/카운트/문자 수/앱 PSS)
+        buildLlmUsageCard(r)?.let { col.addView(it) }
+
         return ScrollView(this).apply { setBackgroundColor(C_BG); addView(col) }
+    }
+
+    /** LLM 호출 1건의 프로비넌스를 사람이 읽는 텍스트로(spec-027). 저장본만 사용 — LLM 재호출 없음. */
+    private fun provenanceText(c: com.zone2runner.app.domain.LlmCallRecord): String {
+        val engineLabel = when (c.engine) {
+            "nano-rewrite" -> "Gemini Nano 톤 재작성(Rewriting)"
+            "nano-prompt" -> "Gemini Nano 자유 생성(Prompt)"
+            "nano-summarize" -> "Gemini Nano 사실 요약(Summarization)"
+            else -> "규칙(코드) — LLM 미사용"
+        }
+        val head = buildString {
+            if (c.tSec >= 0) append("[%02d:%02d] ".format(c.tSec / 60, c.tSec % 60))
+            append("경로: ${c.path}\n생성: $engineLabel")
+            if (c.engine != "rule") append("\n지연: ${c.tookMs}ms")
+        }
+        val promptPart = when {
+            c.prompt.isBlank() -> "\n\n규칙(코드)이 실제 관측값으로 만든 문장이라 LLM 프롬프트가 없습니다."
+            c.engine == "rule" -> "\n\nLLM에 시도한 입력(결과는 규칙 폴백):\n${c.prompt}"
+            c.engine == "nano-rewrite" -> "\n\nLLM에 준 입력(규칙이 확정한 원문 — 톤만 재작성):\n${c.prompt}"
+            else -> "\n\nLLM에 준 프롬프트 전문:\n${c.prompt}"
+        }
+        val outPart = if (c.output.isNotBlank() && c.engine != "rule") "\n\n채택된 출력:\n${c.output}" else ""
+        return head + promptPart + outPart
+    }
+
+    /** "LLM 사용" 카드: 호출/채택 대 폴백/지연/입출력 크기/앱 PSS. AICore(별도 프로세스) 자원은 표시하지 않음(정직). */
+    private fun buildLlmUsageCard(r: RunReport): LinearLayout? {
+        val calls = r.llmCalls
+        if (calls.isEmpty()) return null
+        val llm = calls.filter { it.engine != "rule" }
+        val rule = calls.filter { it.engine == "rule" }
+        val purposeLabel = mapOf(
+            "coach" to "실시간 코칭", "story" to "세션 스토리",
+            "personalization" to "개인화 설명", "zone2-explain" to "Zone2 설명 팝업")
+        val byPurpose = calls.groupBy { it.purpose }.entries.joinToString("\n") { (p, l) ->
+            val ok = l.count { it.engine != "rule" }
+            "- ${purposeLabel[p] ?: p}: ${l.size}회 (LLM 채택 $ok / 규칙 ${l.size - ok})"
+        }
+        val fallbackWhy = rule.groupBy { it.path }.entries.sortedByDescending { it.value.size }
+            .joinToString("\n") { (path, l) -> "- $path: ${l.size}회" }
+        val body = buildString {
+            append("총 ${calls.size}회 호출 — LLM 채택 ${llm.size} / 규칙 ${rule.size}\n\n")
+            append("용도별\n$byPurpose\n")
+            if (llm.isNotEmpty()) {
+                append("\nLLM 지연: 평균 ${llm.sumOf { it.tookMs } / llm.size}ms / 최대 ${llm.maxOf { it.tookMs }}ms\n")
+                append("입출력 크기: 프롬프트 ${llm.sumOf { it.prompt.length }}자 / 출력 ${llm.sumOf { it.output.length }}자\n")
+            }
+            if (rule.isNotEmpty()) append("\n규칙 경로 사유\n$fallbackWhy\n")
+            calls.lastOrNull { it.appPssKb > 0 }?.let {
+                append("\n앱 메모리(PSS): %.1f MB (마지막 호출 직후, 앱 프로세스만)".format(it.appPssKb / 1024.0))
+            }
+        }
+        return card("LLM 사용", TextView(this).apply {
+            text = body.trim(); textSize = 12f; setTextColor(C_TEXT); setLineSpacing(dp(2).toFloat(), 1f)
+        })
     }
 
     /** 유산소 존 분석 섹션: HR 추이(Zone2 밴드 음영) + 페이스 추이 + 존 타임라인 + 드리프트/평가. */
@@ -536,6 +619,8 @@ class ReportActivity : AppCompatActivity() {
             "경사 구간 분해" to "오르막/평지/내리막에서 각각 얼마나 뛰었고 그때 심박이 어땠는지 나눠 봐요. 같은 페이스라도 오르막은 심박 비용이 커요.",
             "워밍업" to "초반에 심박이 안정 강도까지 올라간 과정을 봐요. 너무 급하게 올렸으면(급상승) 다음엔 천천히 올리라고 알려줘요. 심박이 오르지 않은 세션이면 이 카드는 생략돼요.",
             "내리막 습관" to "내리막(경사 −4% 이하)에서 평지 대비 평균 페이스를 비교한 관측이에요. 무릎/관절 보호로 내리막을 천천히 뛰면 여기에 '느리게'로 나타나요. 이건 실제 관측이라 경사보정 페이스(GAP, 대사 기준)와는 별개예요.",
+            "LLM 사용" to "이번 세션에서 AI(온디바이스 LLM, Gemini Nano)를 얼마나 썼는지의 실제 관측 기록이에요. 호출 수/채택 대 규칙 폴백/걸린 시간/주고받은 글자 수를 세요. 정직한 한계: Nano는 안드로이드 시스템(AICore)이라는 별도 프로그램 안에서 돌아가서, 그쪽의 CPU/메모리 사용량은 우리 앱이 잴 수 없어요 — 그래서 잴 수 있는 것(걸린 시간, 우리 앱 메모리)만 보여줘요. 없는 숫자는 만들지 않아요.",
+            "코칭 로그" to "세션 중 나온 코칭 문장들이에요. 각 문장을 터치하면 그 문장이 어떻게 만들어졌는지 — 규칙이 정한 방향, LLM에 준 프롬프트(입력), 어떤 경로(LLM 채택/규칙 폴백)로 나왔는지 — 를 볼 수 있어요.",
             "심박 추이" to "세션 내내 심박이 어떻게 변했는지 선으로 봐요. 초록 밴드가 목표 Zone 2 구간이라, 선이 밴드 안에 오래 머물수록 좋아요.",
             "페이스 추이" to "세션 내내 페이스(1km에 걸린 시간)가 어떻게 변했는지 봐요. 값이 낮을수록 빠른 거예요.",
         )

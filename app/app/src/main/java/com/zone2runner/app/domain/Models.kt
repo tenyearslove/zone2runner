@@ -96,6 +96,22 @@ data class SeriesPoint(
     val slopePct: Double = 0.0, // 경사 %(오르막 +) — 구간/경사 분해용(구버전 세션=0)
 )
 
+/**
+ * LLM 호출 1건의 프로비넌스 기록(spec-027). LLM이 만든 모든 문장에 대해
+ * "무엇을 넣었고(prompt) 어떤 경로로 나왔나(engine/path)"를 생성 시점에 남긴다 — dp-01 provenance의 텍스트 확장.
+ * 규칙 폴백으로 끝난 호출도 기록한다(폴백 사유 = 프로비넌스의 일부).
+ */
+data class LlmCallRecord(
+    val tSec: Int,          // 세션 경과 초(세션 종료 후 생성분 = durationSec)
+    val purpose: String,    // coach | story | personalization | zone2-explain
+    val engine: String,     // nano-rewrite | nano-prompt | nano-summarize | rule
+    val path: String,       // 상세 경로/폴백 사유 — 예: "llm(톤 재작성)", "rule(방향 기각)"
+    val prompt: String,     // LLM에 실제로 준 입력(재작성=규칙 원문, 요약=article). 규칙 경로면 ""
+    val output: String,     // 최종 채택 출력(출력 가드 통과 후)
+    val tookMs: Long,       // 호출 벽시계 지연
+    val appPssKb: Int = -1, // 호출 직후 앱 프로세스 PSS(KB). Nano는 AICore 별도 프로세스라 앱 것만 관측 가능. -1=미측정
+)
+
 /** 세션 종료 리포트. */
 data class RunReport(
     val durationSec: Int,
@@ -123,6 +139,7 @@ data class RunReport(
     // 관측 분석 엔진(FR3, spec-025) 세션종료 산출 — FR6 리포트 표시/FR4 추세
     val analysisLines: List<String> = emptyList(), // 지표별 요약 문구(드리프트/서브맥시멀/HRR/케이던스)
     val submaxHr: Double? = null,          // 대표 서브맥시멀 HR@고정페이스(세션 간 체력 추세)
+    val llmCalls: List<LlmCallRecord> = emptyList(), // LLM 호출 프로비넌스/텔레메트리(spec-027). 구버전 세션=빈 리스트
 ) {
     /** 평균 보폭(m) = 총거리 / 총걸음수(케이던스 적분 근사). 케이던스 미상이면 null. */
     val avgStrideM: Double?

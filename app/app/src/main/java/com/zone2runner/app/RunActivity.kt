@@ -97,6 +97,8 @@ class RunActivity : AppCompatActivity() {
     private var source: RunSource? = null
     private var engine: RunEngine? = null
     private var coach: LlmCoach? = null
+    // LLM 프롬프트 프로비넌스/사용 기록(spec-027) — 세션 단위. 앱 프로세스 PSS만 관측(Nano는 AICore 별도 프로세스).
+    private var llmLog: com.zone2runner.app.coaching.LlmCallLog? = null
     private var logger: RunLogger? = null
     private var watchProvider: WatchHrProvider? = null
     private var line: Polyline? = null
@@ -459,7 +461,7 @@ class RunActivity : AppCompatActivity() {
             val prompt = "러닝 코치입니다. 사용자의 Zone 2 심박 구간이 $lo~$hi bpm(최대심박 ${p.maxHr}의 ${loPct}~${hiPct}%)으로 계산됐습니다. " +
                 "Zone 2는 최대심박 60~70%의 유산소 기초 강도입니다. 지금 값 출처: $src. " +
                 "왜 이 범위인지, 그리고 실제로 뛰며 편함/보통/벅참 버튼을 누르면 개인에 맞게 보정된다는 점을 3~4문장으로 쉽게 설명하세요. 따옴표/이모지 없이."
-            val llm = c.freeform(prompt)
+            val llm = c.freeform(prompt, purpose = "zone2-explain") // 세션 중이면 프로비넌스 기록(spec-027)
             if (llm != null && dialog.isShowing) {
                 dialog.setMessage(llm + "\n\n─ 계산 근거 ─\n" + ruleText)
             }
@@ -515,7 +517,11 @@ class RunActivity : AppCompatActivity() {
 
         val profile = ProfileStore.load(this).also { this.profile = it }
         tempFetched = false
-        val c = LlmCoach(this, personaKey = settings.personaKey) // 미가용 기기에선 내부적으로 RuleCoach 폴백. 말투=spec-024
+        // 프로비넌스/텔레메트리 수집기(spec-027): 이 세션의 모든 LLM 호출이 여기 기록됨 → 리포트에 영속화.
+        val lg = com.zone2runner.app.coaching.LlmCallLog(
+            pssKb = { runCatching { android.os.Debug.getPss().toInt() }.getOrDefault(-1) })
+        llmLog = lg
+        val c = LlmCoach(this, personaKey = settings.personaKey, callLog = lg) // 미가용 기기에선 내부적으로 RuleCoach 폴백. 말투=spec-024
         coach = c
         lifecycleScope.launch { c.prewarm() } // checkStatus+warmup을 첫 코칭 전에 미리
         // coachScope 전달 → 코칭 생성(LLM ~2초)이 샘플 루프/렌더를 멈추지 않음
@@ -578,11 +584,12 @@ class RunActivity : AppCompatActivity() {
                 .put("type", "rule"))
         }
         eng.onCoachingRecorded = { tSec, lineText, tookMs ->
-            log.event("coach") { put("t", tSec); put("text", lineText); put("tookMs", tookMs) }
-            // 프롬프트 투명성(시뮬/목): 이 문장이 나온 프롬프트와 경로(llm/폴백 사유) 표시
+            log.event("coach") { put("t", tSec); put("text", lineText); put("tookMs", tookMs); put("path", c.lastPath) }
+            // 프롬프트 투명성(시뮬/목): 이 문장이 나온 프롬프트/경로 + 세션 누적 사용량(spec-027 실시간 텔레메트리)
+            val usage = "LLM ${lg.llmCount()}회 / 규칙 ${lg.fallbackCount()}회 / LLM 평균 ${lg.avgMs()}ms"
             promptView?.text = c.lastPrompt?.let { p ->
-                "경로 ${c.lastPath} · ${tookMs}ms\n프롬프트: $p"
-            } ?: ""
+                "$usage\n경로 ${c.lastPath} · ${tookMs}ms\n프롬프트: $p"
+            } ?: usage
         }
 
         running = true; finished = false
@@ -698,7 +705,11 @@ class RunActivity : AppCompatActivity() {
             coachSource = coach?.sessionSource() ?: "rule",
         )
         // 사후 세션 스토리(spec-023 FR2): 규칙 팩트를 먼저 저장(폴백 보장) → 아래에서 LLM 풀이로 덮어씀.
-        val report = base.copy(sessionStory = com.zone2runner.app.coaching.SessionExplainer.facts(base))
+        // llmCalls = 이 세션의 프로비넌스 스냅샷(spec-027). 스토리/개인화 설명분은 비동기 완료 시 updateLlmCalls로 갱신.
+        val report = base.copy(
+            sessionStory = com.zone2runner.app.coaching.SessionExplainer.facts(base),
+            llmCalls = llmLog?.snapshot() ?: emptyList(),
+        )
         if (report.durationSec < 5) { // 데이터 너무 적으면 저장 생략
             logger?.event("end") { put("saved", false); put("durationSec", report.durationSec) }
             logger?.close(); logger = null
@@ -719,15 +730,24 @@ class RunActivity : AppCompatActivity() {
         ReportHolder.last?.id?.let { savedId ->
             lifecycleScope.launch {
                 // 1순위(adr-026): 실제 사실을 Nano Summarization으로 불릿 요약(없는 숫자 안 만듦). 미가용/실패 시 Prompt 자유 풀이 폴백.
+                val article = com.zone2runner.app.coaching.SessionExplainer.article(report)
+                val t0 = System.currentTimeMillis()
                 val summary = runCatching {
-                    com.zone2runner.app.coaching.NanoSummarizer(this@RunActivity)
-                        .summarize(com.zone2runner.app.coaching.SessionExplainer.article(report))
+                    com.zone2runner.app.coaching.NanoSummarizer(this@RunActivity).summarize(article)
                 }.getOrNull()
+                // 프로비넌스(spec-027): 요약 시도 기록(성공=nano-summarize, 실패=폴백 사유). LLM 입력 = article 전문.
+                llmLog?.record(report.durationSec, "story",
+                    if (summary != null) "nano-summarize" else "rule",
+                    if (summary != null) "llm(사실 요약)" else "rule(요약 미가용/실패)",
+                    article, summary ?: "", System.currentTimeMillis() - t0)
                 val out = summary ?: runCatching {
-                    com.zone2runner.app.coaching.LlmCoach(this@RunActivity)
-                        .freeform(com.zone2runner.app.coaching.SessionExplainer.prompt(report))
+                    (coach ?: com.zone2runner.app.coaching.LlmCoach(this@RunActivity, callLog = llmLog))
+                        .freeform(com.zone2runner.app.coaching.SessionExplainer.prompt(report),
+                            purpose = "story", tSec = report.durationSec)
                 }.getOrNull()
                 if (!out.isNullOrBlank()) SessionStore.updateStory(this@RunActivity, savedId, out)
+                // 비동기 생성분(스토리)까지 포함한 누적 스냅샷으로 세션 JSON 갱신
+                llmLog?.let { SessionStore.updateLlmCalls(this@RunActivity, savedId, it.snapshot()) }
             }
         }
         render(LiveState(elapsedSec = report.durationSec, hr = report.avgHr, smoothedHr = report.avgHr,
@@ -751,14 +771,22 @@ class RunActivity : AppCompatActivity() {
             sigmaBpm = com.zone2runner.app.data.LearnedZone.sigmaBpm(this),
             uFracHistory = com.zone2runner.app.data.LearnedZone.history(this),
         )
-        // 규칙 팩트를 먼저 저장(폴백 보장) → LLM 가용 시 자연어 풀이로 덮어쓴다.
-        com.zone2runner.app.data.LearnedZone.setExplanation(this, com.zone2runner.app.coaching.PersonalizationExplainer.facts(status))
+        // 규칙 팩트를 먼저 저장(폴백 보장) → LLM 가용 시 자연어 풀이로 덮어쓴다. 프로비넌스도 함께(spec-027).
+        com.zone2runner.app.data.LearnedZone.setExplanation(
+            this, com.zone2runner.app.coaching.PersonalizationExplainer.facts(status),
+            prompt = null, path = "rule(규칙 생성)")
+        val savedId = ReportHolder.last?.id
+        val durationSec = ReportHolder.last?.durationSec ?: 0
         lifecycleScope.launch {
+            val prompt = com.zone2runner.app.coaching.PersonalizationExplainer.prompt(status)
             val out = runCatching {
-                com.zone2runner.app.coaching.LlmCoach(this@RunActivity)
-                    .freeform(com.zone2runner.app.coaching.PersonalizationExplainer.prompt(status))
+                (coach ?: com.zone2runner.app.coaching.LlmCoach(this@RunActivity, callLog = llmLog))
+                    .freeform(prompt, purpose = "personalization", tSec = durationSec)
             }.getOrNull()
-            if (!out.isNullOrBlank()) com.zone2runner.app.data.LearnedZone.setExplanation(this@RunActivity, out)
+            if (!out.isNullOrBlank()) com.zone2runner.app.data.LearnedZone.setExplanation(
+                this@RunActivity, out, prompt = prompt, path = "llm(자유 생성)")
+            // 비동기 생성분(개인화 설명)까지 포함한 누적 스냅샷으로 세션 JSON 갱신
+            if (savedId != null) llmLog?.let { SessionStore.updateLlmCalls(this@RunActivity, savedId, it.snapshot()) }
         }
     }
 

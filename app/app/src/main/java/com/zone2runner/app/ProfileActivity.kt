@@ -290,9 +290,24 @@ class ProfileActivity : AppCompatActivity() {
         addView(TextView(this@ProfileActivity).apply {
             text = com.zone2runner.app.data.LearnedZone.explanation(this@ProfileActivity) ?: PersonalizationExplainer.facts(s)
             textSize = 12f; setTextColor(Palette.TEXT); setPadding(0, dpi(8), 0, 0)
+            // 프롬프트 프로비넌스(spec-027): 설명 터치 → 이 글이 어떻게 생성됐는지(경로/프롬프트) 팝업.
+            isClickable = true
+            setOnClickListener {
+                val path = com.zone2runner.app.data.LearnedZone.explanationPath(this@ProfileActivity)
+                val prompt = com.zone2runner.app.data.LearnedZone.explanationPrompt(this@ProfileActivity)
+                val body = when {
+                    path == null -> "생성 기록이 없는 설명이에요(구버전 저장분). 다음 러닝 종료 시 새로 생성되며 기록이 남습니다."
+                    prompt == null -> "생성 경로: $path\n\n규칙(코드)이 실제 학습 상태에서 그대로 만든 문장이라 LLM 프롬프트가 없습니다."
+                    else -> "생성 경로: $path\n\nLLM(Gemini Nano)에 준 프롬프트 전문:\n\n$prompt"
+                }
+                android.app.AlertDialog.Builder(this@ProfileActivity)
+                    .setTitle("이 설명이 어떻게 만들어졌나").setMessage(body)
+                    .setPositiveButton("확인", null).show()
+            }
         })
         addView(TextView(this@ProfileActivity).apply {
-            text = "AI 설명은 러닝 종료 시 자동 생성됩니다."; textSize = 10f; setTextColor(Palette.MUTED)
+            text = "AI 설명은 러닝 종료 시 자동 생성됩니다. 설명을 터치하면 생성 프롬프트를 볼 수 있어요."
+            textSize = 10f; setTextColor(Palette.MUTED)
             setPadding(0, dpi(4), 0, 0)
         })
     }

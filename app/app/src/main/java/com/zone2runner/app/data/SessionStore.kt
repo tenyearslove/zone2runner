@@ -61,6 +61,15 @@ object SessionStore {
         save(ctx, r.copy(sessionStory = story))
     }
 
+    /**
+     * LLM 호출 기록을 최신 누적 스냅샷으로 교체(spec-027). 스토리/개인화 설명이 세션 저장 후
+     * 비동기로 생성되므로, 각 생성 완료 시 전체 스냅샷을 다시 쓴다(스냅샷=누적이라 마지막 쓰기가 전체 포함).
+     */
+    fun updateLlmCalls(ctx: Context, id: String, calls: List<com.zone2runner.app.domain.LlmCallRecord>) {
+        val r = load(ctx, id) ?: return
+        save(ctx, r.copy(llmCalls = calls))
+    }
+
     // ---- 직렬화 ----
 
     internal fun toJson(r: RunReport): JSONObject {
@@ -87,6 +96,15 @@ object SessionStore {
         if (r.submaxHr != null) o.put("submaxHr", r.submaxHr)
         if (r.analysisLines.isNotEmpty()) o.put("analysisLines", JSONArray(r.analysisLines))
         o.put("coachingLines", JSONArray(r.coachingLines))
+        if (r.llmCalls.isNotEmpty()) { // LLM 프로비넌스/텔레메트리(spec-027)
+            val lc = JSONArray()
+            for (c in r.llmCalls) {
+                lc.put(JSONObject()
+                    .put("t", c.tSec).put("purpose", c.purpose).put("engine", c.engine).put("path", c.path)
+                    .put("prompt", c.prompt).put("output", c.output).put("ms", c.tookMs).put("pss", c.appPssKb))
+            }
+            o.put("llmCalls", lc)
+        }
         val tr = JSONArray()
         for (t in r.track) {
             tr.put(JSONArray().put(t.lat).put(t.lon).put(t.judgment?.index ?: -1))
@@ -152,6 +170,16 @@ object SessionStore {
             sessionStory = o.optString("sessionStory", ""),
             submaxHr = if (o.has("submaxHr")) o.optDouble("submaxHr") else null,
             analysisLines = o.optJSONArray("analysisLines")?.let { a -> List(a.length()) { a.getString(it) } } ?: emptyList(),
+            llmCalls = o.optJSONArray("llmCalls")?.let { a ->
+                List(a.length()) {
+                    val c = a.getJSONObject(it)
+                    com.zone2runner.app.domain.LlmCallRecord(
+                        tSec = c.optInt("t"), purpose = c.optString("purpose"), engine = c.optString("engine"),
+                        path = c.optString("path"), prompt = c.optString("prompt"), output = c.optString("output"),
+                        tookMs = c.optLong("ms"), appPssKb = c.optInt("pss", -1),
+                    )
+                }
+            } ?: emptyList(),
         )
     }
 }

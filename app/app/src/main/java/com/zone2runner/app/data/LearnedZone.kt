@@ -20,6 +20,8 @@ object LearnedZone {
     private const val KEY_TALK = "talk_obs"   // 누적 말하기 테스트 관측 수
     private const val KEY_SIGMA = "sigma_bpm" // 최근 세션 종료 시 개인화 불확실성 σ(bpm)
     private const val KEY_EXPLAIN = "explain" // 세션 종료 시 1회 생성한 개인화 설명(이후 재사용, LLM 재호출 없음) spec-023
+    private const val KEY_EXPLAIN_PROMPT = "explain_prompt" // 설명 생성에 쓴 LLM 프롬프트(프로비넌스, spec-027). 규칙 생성이면 없음
+    private const val KEY_EXPLAIN_PATH = "explain_path"     // 설명 생성 경로 — "llm(자유 생성)" / "rule(규칙 생성)"
     // 분석 엔진 드리프트 개인 노이즈플로어(種類B, spec-025 §4) — 세션 간 누적 EWMA 상태
     private const val KEY_DF_MEAN = "drift_floor_mean"
     private const val KEY_DF_VAR = "drift_floor_var"
@@ -33,7 +35,20 @@ object LearnedZone {
 
     /** 세션 종료 시 저장된 개인화 설명(LLM 풀이 또는 규칙 폴백). 없으면 null → 프로필은 규칙 팩트 표시. */
     fun explanation(ctx: Context): String? = prefs(ctx).getString(KEY_EXPLAIN, null)?.takeIf { it.isNotBlank() }
-    fun setExplanation(ctx: Context, text: String) = prefs(ctx).edit().putString(KEY_EXPLAIN, text).apply()
+
+    /** 설명과 생성 프로비넌스(프롬프트/경로)를 함께 저장(spec-027) — 프로필에서 "이 글이 어떻게 나왔나" 조회용. */
+    fun setExplanation(ctx: Context, text: String, prompt: String? = null, path: String? = null) =
+        prefs(ctx).edit().putString(KEY_EXPLAIN, text)
+            .putString(KEY_EXPLAIN_PROMPT, prompt ?: "")
+            .putString(KEY_EXPLAIN_PATH, path ?: "").apply()
+
+    /** 개인화 설명의 생성 프롬프트(LLM 사용 시). 규칙 생성/구버전이면 null. */
+    fun explanationPrompt(ctx: Context): String? =
+        prefs(ctx).getString(KEY_EXPLAIN_PROMPT, null)?.takeIf { it.isNotBlank() }
+
+    /** 개인화 설명의 생성 경로. 구버전 저장분이면 null. */
+    fun explanationPath(ctx: Context): String? =
+        prefs(ctx).getString(KEY_EXPLAIN_PATH, null)?.takeIf { it.isNotBlank() }
 
     /** 누적된 개인 uFrac. 학습 이력 없으면 null. */
     fun uFrac(ctx: Context): Double? {

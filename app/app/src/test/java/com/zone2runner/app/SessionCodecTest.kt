@@ -1,6 +1,7 @@
 package com.zone2runner.app
 
 import com.zone2runner.app.data.SessionStore
+import com.zone2runner.app.domain.LlmCallRecord
 import com.zone2runner.app.domain.RunReport
 import com.zone2runner.app.domain.SeriesPoint
 import com.zone2runner.app.domain.TrackPoint
@@ -37,6 +38,14 @@ class SessionCodecTest {
             id = "s1700000000000",
             startedAtEpochMs = 1700000000000L,
             usedModel = true, coachSource = "llm", sourceMode = "live",
+            llmCalls = listOf( // 프롬프트 프로비넌스(spec-027)
+                LlmCallRecord(30, "coach", "nano-rewrite", "llm(톤 재작성)",
+                    "좋아요 유지", "좋습니다, 이 페이스 유지해요", 812L, 154321),
+                LlmCallRecord(190, "coach", "rule", "rule(방향 기각: \"...\")",
+                    "러닝 코치입니다. 초과 상태를 알리세요.", "조금 늦춰요", 1430L, -1),
+                LlmCallRecord(1234, "story", "nano-summarize", "llm(사실 요약)",
+                    "이번 세션 사실 텍스트…", "- 요약 불릿", 2200L, 160000),
+            ),
         )
 
         val restored = SessionStore.fromJson(SessionStore.toJson(original))
@@ -62,5 +71,20 @@ class SessionCodecTest {
         // zone2Pct 파생값 재계산 일치
         assertEquals(original.zone2Pct, restored.zone2Pct)
         assertTrue(restored.zone2Pct in 0..100)
+        // LLM 프로비넌스(spec-027) 무손실 왕복
+        assertEquals(original.llmCalls, restored.llmCalls)
+    }
+
+    /** 구버전 세션 JSON(llmCalls 없음)이 정상 로드된다(spec-027 AC-5 하위호환). */
+    @Test fun fromJson_withoutLlmCalls_backCompat() {
+        val legacy = RunReport(
+            durationSec = 60, distanceM = 200.0, avgHr = 120, maxHr = 130,
+            belowSec = 10, inSec = 40, aboveSec = 10, avgPaceMinKm = 6.0,
+            coachingLines = listOf("[00:30] 유지"), track = emptyList(),
+            uEstStartFrac = 0.7, uEstEndFrac = 0.7, restingHr = 60, maxHrProfile = 180,
+        )
+        val json = SessionStore.toJson(legacy) // llmCalls 비면 키 자체를 안 씀 = 구버전과 동일 형태
+        assertTrue(!json.has("llmCalls"))
+        assertEquals(emptyList<LlmCallRecord>(), SessionStore.fromJson(json).llmCalls)
     }
 }
