@@ -1,5 +1,5 @@
 @startuml
-title 카운터 아키텍처 (블랙박스 + 사후 설명) — C&C 상세
+title 사전학습 블랙박스 아키텍처 — C&C 상세
 skinparam defaultFontName "AppleGothic"
 skinparam componentStyle rectangle
 skinparam shadowing false
@@ -7,55 +7,55 @@ skinparam packageStyle rectangle
 skinparam linetype ortho
 
 actor "사용자" as User
-component "센서\nHR / GPS / 케이던스" as Sensors
-component "실제 도착값 / 라벨" as H
+component "센서\nHR / GPS / 케이던스" as Sensors #FFF9C4
+component "실제 도착값 / 라벨" as H #FFF9C4
 
 package "AI Operation Subsystem" {
 
   package "추론 서비스 (Inference Service)" as INF {
-    component "전처리 / 정규화\n최근 N초 이력 윈도우" <<데이터 준비>> as PRE
-    component "이상값 필터" <<입력 가드레일>> as IG
-    component "블랙박스 결정 모델\n학습된 NN / 부스팅 — 판정/코칭 직접 출력" <<모델 서빙: 블랙박스>> as MODEL
-    component "개인 어댑터\n사전학습 모델 미세조정" <<모델 서빙: 개인화>> as ADAPTER
-    component "사후 클리핑\n(생리 모름 — 값 범위만 제한)" <<출력 가드레일>> as OG
+    component "전처리 / 정규화\n최근 N초 이력 윈도우" <<데이터 준비>> as PRE #E1F5FE
+    component "이상값 필터" <<입력 가드레일>> as IG #FFE0B2
+    component "블랙박스 결정 모델\n학습된 NN / 부스팅 — 판정/코칭 직접 출력" <<모델 서빙: 블랙박스>> as MODEL #90A4AE
+    component "개인 어댑터\n사전학습 모델 미세조정" <<모델 서빙: 개인화>> as ADAPTER #B0BEC5
+    component "사후 값 제한\n(결과 범위만 자름)" <<출력 가드레일>> as OG #FFE0B2
   }
 
   package "설명 서비스 (사후 / post-hoc)" as EXP {
-    component "사후 설명 서비스\nLLM이 결정 뒤 이유 생성\n(원모델의 근사)" as POST
+    component "사후 설명 서비스\nLLM이 결정 뒤 이유 생성\n(원모델의 근사)" as POST #C8E6C9
   }
 
   package "분석 서비스 (Analysis)" as ANASVC {
-    database "서빙 로그" as SLOG
-    component "모니터링 지표" as MON
+    database "서빙 로그" as SLOG #CFD8DC
+    component "모니터링 지표" as MON #F8BBD0
   }
 
   package "운영 서비스 (Operation)" as OPSVC {
-    component "Operation UI\nattribution 숫자 / LLM 서사" as UI
-    component "HITL / HOTL 제어\n(불투명 결정 — 반박 지점 모호)" as CTRL
+    component "Operation UI\nattribution 숫자 / LLM 서사" as UI #E1BEE7
+    component "HITL / HOTL 제어\n(결정 불투명 — 수정 지점 모호)" as CTRL #E1BEE7
   }
 }
 
-package "AI Development Subsystem (완전판 — 오프라인 학습)" as DEV {
-  component "데이터셋 구축" as DSET
-  database "Data Lake\n공개데이터(FitRec 등) + 수집 세션" as DLAKE
-  component "재학습 데이터셋 추출" as REEX
+package "AI Development Subsystem (오프라인 대량 학습)" as DEV {
+  component "데이터셋 구축" as DSET #FFCCBC
+  database "Data Lake\n공개데이터(FitRec 등) + 수집 세션" as DLAKE #CFD8DC
+  component "재학습 데이터셋 추출" as REEX #FFCCBC
 
   package "Model Construction (오프라인 학습)" as MC {
-    component "데이터 준비" as MPREP
-    component "입력 가드레일" as MIG
-    component "모델 학습\n(대량 데이터, 오프라인)" <<모델 학습>> as TRAIN
-    component "출력 가드레일" as MOG
+    component "데이터 준비" as MPREP #E1F5FE
+    component "입력 가드레일" as MIG #FFE0B2
+    component "모델 학습\n(대량 데이터, 오프라인)" <<모델 학습>> as TRAIN #FFCCBC
+    component "출력 가드레일" as MOG #FFE0B2
     MPREP --> MIG
     MIG --> TRAIN
     TRAIN --> MOG
   }
-  database "Model Artifact" as MART
-  database "ML Metadata" as MMETA
-  component "모델 테스팅\n홀드아웃 테스트셋\n(우리 도메인엔 참값 없음)" <<모델 테스팅>> as MTEST
-  component "모델 등록 / 승격" as MPROM
+  database "Model Artifact" as MART #CFD8DC
+  database "ML Metadata" as MMETA #CFD8DC
+  component "모델 테스팅\n홀드아웃 테스트셋\n(우리 도메인엔 참값 없음)" <<모델 테스팅>> as MTEST #FFCCBC
+  component "모델 등록 / 승격" as MPROM #FFCCBC
 }
 
-component "Model Registry / Container Registry\n학습된 모델 아티팩트 + 패키지" as REG
+component "Model Registry / Container Registry\n학습된 모델 아티팩트 + 패키지" as REG #CFD8DC
 
 ' ===== 운영 데이터 흐름 =====
 Sensors --> PRE
@@ -85,4 +85,17 @@ REG ..> MODEL : 배포
 H ..> ADAPTER : 개인 적응 미세조정
 MON ..> REEX : Retraining 트리거
 REEX --> DLAKE
+
+legend right
+|= 색 |= 컴포넌트 성격 |
+|<#FFE0B2>| 가드레일 (입출력 통제) |
+|<#E1F5FE>| 데이터 준비 |
+|<#90A4AE>| 모델 서빙 (블랙박스) |
+|<#C8E6C9>| 사후 설명 서비스 |
+|<#F8BBD0>| 분석 서비스 (모니터링) |
+|<#E1BEE7>| 운영 서비스 (HITL/HOTL) |
+|<#CFD8DC>| 저장 (Data Lake / Registry) |
+|<#FFCCBC>| 모델 학습 / 테스팅 (개발) |
+|<#FFF9C4>| 외부 (센서 / 라벨) |
+endlegend
 @enduml

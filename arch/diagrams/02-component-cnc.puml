@@ -1,5 +1,5 @@
 @startuml
-title Zone2Runner — 컴포넌트-커넥터(C&C) 뷰 / 강의 AI System 아키텍처 매핑
+title 규칙/통계 기반 개인화 아키텍처 — C&C 상세
 skinparam defaultFontName "AppleGothic"
 skinparam componentStyle rectangle
 skinparam shadowing false
@@ -7,45 +7,45 @@ skinparam packageStyle rectangle
 skinparam linetype ortho
 
 actor "사용자" as User
-component "센서\nHR / GPS / 케이던스" as Sensors
-component "Gemini Nano\n(AICore)" as Nano
+component "센서\nHR / GPS / 케이던스" as Sensors #FFF9C4
+component "Gemini Nano\n(AICore)" as Nano #FFF9C4
 
 package "AI Operation Subsystem" {
 
   package "추론 서비스 (Inference Service)" as INF {
-    component "OutlierGuard\n40~220 / 신선도 / 게이팅" <<입력 가드레일>> as IG
-    component "FeatureExtractor\n지속심박 / 추세" <<데이터 준비>> as FE
-    component "ZoneJudge\n미달 / 유지 / 초과" <<모델 서빙: 규칙>> as JUDGE
-    component "개인 경계 추정기\nPersonalization (베이지안 μ/σ)" <<모델 서빙: 해석가능/개인적응>> as BND
-    component "관측 분석 엔진\nAnalysisEngine (드리프트/GAP/…)" <<모델 서빙: 분석>> as ANA
-    component "코칭 표현기\nRuleCoach + LlmCoach" <<모델 서빙: 온디바이스 LLM>> as COACH
-    component "DirectionGuard / SafetyGuard" <<출력 가드레일>> as OG
-    database "Feature Store\nSignalWindow" as FS
+    component "OutlierGuard\n40~220 / 신선도 / 게이팅" <<입력 가드레일>> as IG #FFE0B2
+    component "FeatureExtractor\n지속심박 / 추세" <<데이터 준비>> as FE #E1F5FE
+    component "ZoneJudge\n미달 / 유지 / 초과" <<모델 서빙: 규칙>> as JUDGE #BBDEFB
+    component "개인 경계 추정기\nPersonalization (베이지안 μ/σ)" <<모델 서빙: 해석가능/개인적응>> as BND #BBDEFB
+    component "관측 분석 엔진\nAnalysisEngine (드리프트/GAP/…)" <<모델 서빙: 분석>> as ANA #BBDEFB
+    component "코칭 표현기\nRuleCoach + LlmCoach" <<모델 서빙: 온디바이스 LLM>> as COACH #BBDEFB
+    component "DirectionGuard / SafetyGuard" <<출력 가드레일>> as OG #FFE0B2
+    database "Feature Store\nSignalWindow" as FS #CFD8DC
   }
 
-  component "RunEngine (오케스트레이터)" <<Inference Control>> as ENG
+  component "RunEngine (오케스트레이터)" <<Inference Control>> as ENG #C5CAE9
 
   package "설명 서비스 (Explanation Service)" as EXP {
-    component "설명 생성기\nSessionExplainer" as EGEN
-    database "설명 결과\n세션 스토리" as ERES
+    component "설명 생성기\nSessionExplainer" as EGEN #C8E6C9
+    database "설명 결과\n세션 스토리" as ERES #CFD8DC
   }
 
   package "분석 서비스 (Analysis Service)" as ANASVC {
-    database "서빙 로그\nRunLogger" as SLOG
-    component "지표 산출\nSessionAnalytics / Compare / Trends" as MCALC
+    database "서빙 로그\nRunLogger" as SLOG #CFD8DC
+    component "지표 산출\nSessionAnalytics / Compare / Trends" as MCALC #F8BBD0
   }
 
   package "운영 서비스 (Operation Service)" as OPSVC {
-    component "Operation UI\n대시보드 / 워치 / 리포트 / 터치 설명" as UI
-    component "HITL / HOTL 제어\n말하기 테스트 / 코칭 설정" as CTRL
+    component "Operation UI\n대시보드 / 워치 / 리포트 / 터치 설명" as UI #E1BEE7
+    component "HITL / HOTL 제어\n말하기 테스트 / 코칭 설정" as CTRL #E1BEE7
   }
 }
 
 package "AI Development Subsystem (개인 적응으로 축소)" as DEV {
-  component "개인 적응 갱신\n베이지안 / k×σ EWMA" <<Retraining>> as ADAPT
-  database "Data Lake\nSessionStore / LearnedZone" as DLAKE
-  database "ML Metadata\n값 출처 태그 A/B/C" as META
-  component "시뮬 폐루프 검증\nVirtualRunner" <<모델 테스팅>> as SIM
+  component "개인 적응 갱신\n베이지안 / k×σ EWMA" <<Retraining>> as ADAPT #B2DFDB
+  database "Data Lake\nSessionStore / LearnedZone" as DLAKE #CFD8DC
+  database "ML Metadata\n값 출처 태그 A/B/C" as META #CFD8DC
+  component "시뮬 폐루프 검증\nVirtualRunner" <<모델 테스팅>> as SIM #FFCCBC
 }
 
 ' ===== 데이터 흐름 (실선) =====
@@ -80,4 +80,19 @@ BND --> META
 DLAKE --> ADAPT
 ADAPT ..> BND : 갱신 / 다음 세션 prior
 ADAPT --> META
+
+legend right
+|= 색 |= 컴포넌트 성격 |
+|<#FFE0B2>| 가드레일 (입출력 통제) |
+|<#E1F5FE>| 데이터 준비 |
+|<#BBDEFB>| 모델 서빙 (규칙/해석가능/분석/LLM) |
+|<#C5CAE9>| 제어 (Inference Control) |
+|<#C8E6C9>| 설명 서비스 |
+|<#F8BBD0>| 분석 서비스 (모니터링) |
+|<#E1BEE7>| 운영 서비스 (HITL/HOTL) |
+|<#CFD8DC>| 저장 (Data Lake / Store) |
+|<#B2DFDB>| 개인 적응 (Retraining) |
+|<#FFCCBC>| 모델 테스팅 (시뮬 검증) |
+|<#FFF9C4>| 외부 (센서 / LLM) |
+endlegend
 @enduml
