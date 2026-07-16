@@ -29,6 +29,15 @@
 
 ![Deployment](03-deployment.png)
 
+## 4. 카운터 아키텍처 (설계 B: 블랙박스 + 사후 설명) — C&C (상세 + 축약 쌍)
+설명용이성 DP의 **대안**을 우리와 **같은 표기법**으로. 최대 대비 = 블랙박스 모델 서빙 + 사후 설명 + **완전판 오프라인 학습 파이프라인**(우리는 온라인으로 축소). 컴포넌트 서술 = `arch/component-catalog-counter.md`.
+
+### 4a. 상세본
+![Counter C&C 상세](04-counter-component-cnc.png)
+
+### 4b. 축약본 (PPT용)
+![Counter C&C 축약](04b-counter-component-cnc-simple.png)
+
 ---
 
 > 관련: `arch/component-catalog.md`(컴포넌트 식별+디스크립션), `framework/ai-system-and-quality.md §1-3`(강의 표준 아키텍처).

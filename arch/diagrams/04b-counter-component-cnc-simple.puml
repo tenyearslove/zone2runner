@@ -1,0 +1,39 @@
+@startuml
+title 카운터 아키텍처 (블랙박스 + 사후 설명) — C&C 축약 / PPT용
+skinparam defaultFontName "AppleGothic"
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam linetype ortho
+
+actor "사용자" as User
+component "센서\nHR / GPS / 케이던스" as Sensors
+
+package "AI Operation Subsystem" {
+  package "추론 서비스 (Inference)" as INF {
+    component "이상값 필터" <<입력 가드레일>> as IG
+    component "블랙박스 결정 모델\n학습된 NN/부스팅 (+개인 어댑터)\n판정·코칭 직접 출력" <<모델 서빙: 블랙박스>> as MODEL
+    component "사후 클리핑\n(생리 모름)" <<출력 가드레일>> as OG
+    IG --> MODEL
+    MODEL --> OG
+  }
+  component "사후 설명기\nSHAP / LIME or LLM 이유생성\n(원모델의 근사)" as POST
+  component "운영 서비스\nOperation UI + HITL/HOTL\n(불투명 — 반박 제한)" as OPS
+}
+
+package "AI Development (완전판 — 오프라인 학습)" as DEV {
+  database "Data Lake\n공개데이터 + 수집" as DL
+  component "오프라인 대량 학습\n+ 테스팅 + 등록/승격" <<모델 학습>> as TRAIN
+  component "Model Registry\n학습된 모델 아티팩트" as REG
+  DL --> TRAIN
+  TRAIN --> REG
+}
+
+Sensors --> IG
+OG --> OPS
+MODEL ..> POST : 결정 + 입력
+POST --> OPS
+User ..> OPS
+REG ..> MODEL : 배포
+OPS ..> MODEL : 미세조정 신호(약)
+@enduml
