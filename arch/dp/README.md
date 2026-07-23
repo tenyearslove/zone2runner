@@ -35,6 +35,6 @@ DP 폴더에는 **그 DP 전용 자산**(DP 본문/리서치/대본 + 카운터 
 | DP | QA(정체성) | 상태 | 결정(채택) | 폴더 |
 |----|-----------|------|-----------|------|
 | DP-01 | 설명용이성(Explainability) | v2 (2026-07-16) | 1안 = 규칙/통계 기반 개인화(intrinsic+provenance, LLM=verbalizer) | `dp-01-explainability/` |
-| DP-02 | 제어가능성(Controllability) | (예정) | — | (예정) |
+| DP-02 | 제어가능성(Controllability) | v1 (2026-07-23, 사용자 검토 대기) | 1안 = 규칙 확정 + LLM 표현 한정(구조적 격리 + 계층 가드레일 + 폴백 + HITL/HOTL/감사) | `dp-02-controllability/` |
 
 > 관련: `framework/ai-8-qa.md`(8대 QA), `framework/assignment/`(과제 규정 = QA 4개+ / AI 특화 2개+), `arch/diagrams/`(일반 아키텍처), `arch/component-catalog.md`(우리 컴포넌트).

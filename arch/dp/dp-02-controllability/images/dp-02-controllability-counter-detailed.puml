@@ -1,0 +1,59 @@
+@startuml
+title LLM 판단 위임 아키텍처 (상세)
+skinparam defaultFontName "AppleGothic"
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam linetype ortho
+
+actor "사용자" as User
+component "센서\nHR / GPS / 케이던스 / 고도" as Sensors #FFF9C4
+component "TTS 음성 출력" as TTS #FFF9C4
+
+package "AI Operation Subsystem" {
+  package "추론 서비스 (Inference)" as INF {
+    component "이상값 필터" <<입력 가드레일>> as IG #FFE0B2
+    component "컨텍스트 조립기\n관측+세션 상태를\n프롬프트 텍스트로 직렬화" as CTX #E1F5FE
+    component "LLM 판단+생성\n코칭 여부/방향/내용 직접 결정\n+ 이유 서술(요청 시)\n(온디바이스 소형 LLM)" <<모델 서빙: 판단 위임>> as LLM #90A4AE
+    component "재시도 / 응답 캐시\n(타임아웃/오류 시)" <<서빙 로직>> as RETRY #C5CAE9
+    component "사후 안전 필터\n금칙어 / 수치 범위 / 길이\n(방향 일치 검증 불가 - 기준값 없음)" <<출력 가드레일>> as OG #FFE0B2
+    IG --> CTX
+    CTX --> LLM
+    LLM --> RETRY
+    RETRY --> OG
+  }
+  component "시스템 프롬프트 저장소\n존 정의 / 안전 수칙 / 금지 사항\n(자연어 규정 = 통제의 주 수단)" as SP #CFD8DC
+  component "이유 서술 표시\nLLM이 함께 생성한 설명\n(실제 판단 근거인지 비보장)" as EXPL #C8E6C9
+  component "입출력 로그\n프롬프트/응답 기록\n(판단 근거는 모델 내부 - 상관 수준 감사)" as LOG #F8BBD0
+  component "운영 서비스\nOperation UI + 개입\n(개입 = 프롬프트 문구 수정, 효과 비보장)" as OPS #E1BEE7
+}
+
+Sensors --> IG
+SP ..> LLM : 규정(권고 - 지시 이행에 의존)
+LLM ..> EXPL : 이유 텍스트
+LLM ..> LOG : 입출력 기록
+OG --> TTS : 코칭 문장
+OG --> OPS
+EXPL --> OPS
+LOG --> OPS : 사후 열람
+User ..> OPS
+OPS ..> SP : 프롬프트 수정
+note bottom of RETRY
+  판단 주체가 LLM뿐이라
+  재시도 실패의 끝 = 침묵/지연
+  (갈아탈 판단 경로 없음)
+end note
+
+legend right
+|= 색 |= 컴포넌트 성격 |
+|<#FFE0B2>| 가드레일 (입출력 통제) |
+|<#E1F5FE>| 데이터 준비 |
+|<#90A4AE>| 모델 서빙 (판단 위임 - 블랙박스) |
+|<#C5CAE9>| 서빙 로직 (재시도/캐시) |
+|<#C8E6C9>| 설명 (비보장 이유 서술) |
+|<#F8BBD0>| 분석 (입출력 로그) |
+|<#E1BEE7>| 운영 서비스 (HITL/HOTL) |
+|<#CFD8DC>| 저장 (프롬프트 규정) |
+|<#FFF9C4>| 외부 (센서 / TTS) |
+endlegend
+@enduml

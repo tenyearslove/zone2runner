@@ -1,0 +1,43 @@
+@startuml
+title LLM 판단 위임 아키텍처
+skinparam defaultFontName "AppleGothic"
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam linetype ortho
+
+actor "사용자" as User
+component "센서\nHR / GPS / 케이던스" as Sensors #FFF9C4
+
+package "AI Operation Subsystem" {
+  component "이상값 필터" <<입력 가드레일>> as IG #FFE0B2
+  component "컨텍스트 조립기\n관측+세션 상태 → 프롬프트" as CTX #E1F5FE
+  component "시스템 프롬프트\n존/안전/금지 규정 서술\n(통제의 주 수단)" as SP #CFD8DC
+  component "LLM 판단+생성\n코칭 여부/방향/내용을 직접 결정\n(온디바이스 소형 LLM)" <<모델 서빙: 판단 위임>> as LLM #90A4AE
+  component "사후 안전 필터\n금칙어/수치 범위/길이만\n(방향 검증 불가 - 기준값 없음)" <<출력 가드레일>> as OG #FFE0B2
+  component "운영 서비스\nOperation UI\n(개입 = 프롬프트 문구 수정)" as OPS #E1BEE7
+  IG --> CTX
+  CTX --> LLM
+  SP ..> LLM : 규정(권고)
+  LLM --> OG
+}
+
+Sensors --> IG
+OG --> OPS : 코칭 문장 / TTS
+User ..> OPS
+OPS ..> SP : 프롬프트 수정(효과 비보장)
+note right of LLM
+  실패 시 대체 판단 주체 없음
+  (재시도 실패 = 침묵/지연)
+end note
+
+legend right
+|= 색 |= 컴포넌트 성격 |
+|<#FFE0B2>| 가드레일 (입출력 통제) |
+|<#E1F5FE>| 데이터 준비 |
+|<#90A4AE>| 모델 서빙 (판단 위임 - 블랙박스) |
+|<#E1BEE7>| 운영 서비스 (HITL/HOTL) |
+|<#CFD8DC>| 저장 (프롬프트 규정) |
+|<#FFF9C4>| 외부 (센서) |
+endlegend
+@enduml
