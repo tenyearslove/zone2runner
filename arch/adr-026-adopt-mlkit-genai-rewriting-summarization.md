@@ -1,6 +1,7 @@
 # ADR-026: ML Kit GenAI Rewriting/Summarization 채택 (코칭 톤 / 리포트 요약)
 
 - **상태**: Accepted
+- **부분 폐지(2026-07-23, adr-028)**: 코칭 경로의 Rewriting(톤 재작성 1순위)은 폐지 — 규칙 문장 세트를 전제하기 때문. Summarization(리포트 요약)은 유지.
 - **날짜**: 2026-07-14
 - **결정자**: 1인 설계
 

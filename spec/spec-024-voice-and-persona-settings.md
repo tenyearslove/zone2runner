@@ -1,6 +1,7 @@
 # Spec-024: 음성 코칭 보이스와 말투(페르소나) 설정
 
 - **상태**: Implemented (2026-07-08 — 사용자 지시로 문서화 직후 구현/설치. 단위 테스트: 페르소나 4건 포함 전건 통과. 실기기 AC-1/2는 다음 사용에서 확인)
+- **부분 개정(2026-07-23, spec-028)**: 페르소나는 LLM 프롬프트 파라미터(말투 한 단어)로만 적용. 폴백은 단어 수준 큐(중립)라 페르소나 문구 세트는 폐기됨.
 - **날짜**: 2026-07-08
 - **관련 ADR**: `arch/adr-002-llm-coaching-guardrails.md` (방향은 규칙, LLM은 표현), `arch/adr-007-ondevice-llm.md`
 - **관련 Spec**: `spec-021-app-settings.md` (설정 화면 — 본 기능이 항목 추가), `spec-005-llm-coaching-generation.md`

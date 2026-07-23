@@ -25,7 +25,6 @@ class LlmCoach(
     override val name = "llm"
 
     private val client by lazy { Generation.getClient() }
-    private val rewriter = NanoRewriter(context, personaKey) // 규칙 문장 톤 재작성(adr-026, 1순위). 미가용 시 Prompt 폴백.
     private var checked = false
     private var available = false
     private var usedLlmOnce = false
@@ -98,24 +97,13 @@ class LlmCoach(
     private data class Outcome(val text: String, val engine: String, val path: String, val prompt: String?)
 
     private suspend fun sayInner(ctx: CoachContext): Outcome {
-        // 격려/인지/예방 코칭(마일스톤/워밍업/회복/오르막 예방)은 방향이 없어 LLM 방향 표현이 부적절 → 규칙 문구.
-        if (ctx.milestoneMin > 0 || ctx.warmup || ctx.recovering || ctx.uphillWarn || ctx.jointProtect) {
-            return Outcome(fallback.say(ctx), "rule", "rule(특수 코칭)", null)
-        }
-        // 1순위(adr-026): 규칙이 확정한 문장의 '톤'만 Nano로 재작성(내용=규칙이라 방향 잠금이 더 강함).
-        val ruleLine = fallback.say(ctx)
-        val toned = rewriter.rewrite(ruleLine)
-        if (toned != ruleLine) {
-            val g = guard(toned)
-            if (g != null && DirectionGuard.ok(intentOf(ctx.judgment), g)) {
-                usedLlmOnce = true
-                return Outcome(g, "nano-rewrite", "llm(톤 재작성)", ruleLine) // LLM 입력 = 규칙 원문
-            }
-            if (g != null) directionRejects++ // 재작성이 방향을 흐리면 아래 Prompt/규칙으로 폴백
-        }
-        // 2순위(폴백): 기존 Prompt 자유 표현 경로. 프롬프트는 미가용이어도 채워 "이 프롬프트를 쓴다"를 남긴다.
-        val prompt = buildPrompt(ctx)
+        // spec-028/adr-028: 모든 코칭(방향+특수)이 LLM 직생성 1순위. 규칙은 판단/사실만 확정하고
+        // 언어는 LLM이 만든다. 폴백(RuleCoach)은 단어 수준 큐 — 미지원/실패/기각의 그 1회에만.
+        val prompt = buildPrompt(ctx) // 미가용이어도 채워 "이 프롬프트를 쓴다"를 감사 기록에 남긴다
         if (!ensureReady()) return Outcome(fallback.say(ctx), "rule", "rule(LLM 미가용)", prompt)
+        // 방향 검사 대상: 방향 코칭만. 특수 중 워밍업/오르막 예방/관절 보호는 가속 명령만 금지(spec-028 FR2).
+        val special = ctx.milestoneMin > 0 || ctx.warmup || ctx.recovering || ctx.uphillWarn || ctx.jointProtect
+        val upForbidden = ctx.warmup || ctx.uphillWarn || ctx.jointProtect
         return try {
             val res = withContext(Dispatchers.Default) {
                 withTimeout(6_000) { client.generateContent(prompt) }
@@ -124,14 +112,23 @@ class LlmCoach(
             val guarded = guard(text)
             when {
                 guarded == null -> Outcome(fallback.say(ctx), "rule", "rule(빈 출력)", prompt)
-                !DirectionGuard.ok(intentOf(ctx.judgment), guarded) -> {
+                // 숫자 무결성(언어 무관): 출력 숫자 ⊆ 입력 사실 숫자 — 없는 숫자 금지의 기계 검증
+                !NumberGuard.ok(NumberGuard.allowedOf(ctx), guarded) -> {
+                    directionRejects++
+                    Outcome(fallback.say(ctx), "rule", "rule(숫자 기각: \"${guarded.take(24)}…\")", prompt)
+                }
+                special && upForbidden && DirectionGuard.containsUpCommand(guarded) -> {
+                    directionRejects++
+                    Outcome(fallback.say(ctx), "rule", "rule(방향 기각: \"${guarded.take(24)}…\")", prompt)
+                }
+                !special && !DirectionGuard.ok(intentOf(ctx.judgment), guarded) -> {
                     directionRejects++ // 방향 모순/무방향 문장 기각(adr-002 방향 잠금)
                     Outcome(fallback.say(ctx), "rule", "rule(방향 기각: \"${guarded.take(24)}…\")", prompt)
                 }
                 else -> { usedLlmOnce = true; Outcome(guarded, "nano-prompt", "llm", prompt) }
             }
         } catch (e: Throwable) {
-            // 포그라운드 제약(ErrorCode 30)/타임아웃 등 -> 규칙 폴백
+            // 포그라운드 제약(ErrorCode 30)/타임아웃 등 -> 단어 큐 폴백
             Outcome(fallback.say(ctx), "rule", "rule(오류/타임아웃)", prompt)
         }
     }

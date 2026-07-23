@@ -6,8 +6,6 @@ import com.google.mlkit.genai.common.DownloadStatus
 import com.google.mlkit.genai.common.FeatureStatus
 import com.google.mlkit.genai.common.GenAiException
 import com.google.mlkit.genai.prompt.Generation
-import com.google.mlkit.genai.rewriting.RewriterOptions
-import com.google.mlkit.genai.rewriting.Rewriting
 import com.google.mlkit.genai.summarization.Summarization
 import com.google.mlkit.genai.summarization.SummarizerOptions
 import java.util.concurrent.TimeUnit
@@ -19,29 +17,20 @@ import kotlinx.coroutines.withContext
 /**
  * Gemini Nano 기능 모델의 상태 확인/다운로드 단일 책임 모듈(adr-027, SRP).
  * 다운로드는 세션 밖(홈/설정)에서만 트리거하고, 사용 시점 정책(AVAILABLE만 사용,
- * 아니면 무손상 폴백 — adr-026)은 LlmCoach/NanoRewriter/NanoSummarizer에 그대로 둔다.
- * 다운로드 중에도 코칭은 규칙으로 무중단(강건성 불변).
+ * 아니면 단어 큐 폴백 — adr-028)은 LlmCoach/NanoSummarizer에 그대로 둔다.
+ * 다운로드 중에도 코칭은 폴백으로 무중단(강건성 불변).
  */
 class NanoModelManager(private val context: Context) {
 
-    /** 앱이 쓰는 Nano 기능 3종. 각 기능 모델은 AICore가 기능 단위로 관리한다. */
+    /** 앱이 쓰는 Nano 기능 2종(adr-028: 코칭 경로 Rewriting 폐지). AICore가 기능 단위로 관리. */
     enum class Feature(val label: String) {
-        REWRITE("코칭 톤 재작성"),
+        PROMPT("코칭 문장/설명 생성"),
         SUMMARIZE("리포트 요약"),
-        PROMPT("자유 표현/설명"),
     }
 
     enum class State { AVAILABLE, DOWNLOADABLE, DOWNLOADING, UNAVAILABLE }
 
-    // 상태/다운로드 전용 클라이언트(옵션 값은 기능 식별용 — 다운로드는 기능 단위라 톤/타입 무관)
-    private val rewriter by lazy {
-        Rewriting.getClient(
-            RewriterOptions.builder(context)
-                .setOutputType(RewriterOptions.OutputType.FRIENDLY)
-                .setLanguage(RewriterOptions.Language.KOREAN)
-                .build()
-        )
-    }
+    // 상태/다운로드 전용 클라이언트(옵션 값은 기능 식별용 — 다운로드는 기능 단위라 타입 무관)
     private val summarizer by lazy {
         Summarization.getClient(
             SummarizerOptions.builder(context)
@@ -57,7 +46,6 @@ class NanoModelManager(private val context: Context) {
     suspend fun status(f: Feature): State = withContext(Dispatchers.IO) {
         runCatching {
             val code = when (f) {
-                Feature.REWRITE -> rewriter.checkFeatureStatus().get(6, TimeUnit.SECONDS)
                 Feature.SUMMARIZE -> summarizer.checkFeatureStatus().get(6, TimeUnit.SECONDS)
                 Feature.PROMPT -> prompt.checkStatus()
             }
@@ -87,7 +75,6 @@ class NanoModelManager(private val context: Context) {
                     }
                     ok
                 }
-                Feature.REWRITE -> callbackDownload(onProgress) { cb -> rewriter.downloadFeature(cb) }
                 Feature.SUMMARIZE -> callbackDownload(onProgress) { cb -> summarizer.downloadFeature(cb) }
             }
         }.getOrDefault(false)

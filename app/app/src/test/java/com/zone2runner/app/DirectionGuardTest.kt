@@ -63,19 +63,19 @@ class DirectionGuardTest {
         assertEquals(com.zone2runner.app.coaching.CadenceBand.HIGH, ctx(195).cadence)  // >190
     }
 
-    @Test fun ruleCoach_appendsCadenceTip_andStaysDirectionSafe() = kotlinx.coroutines.runBlocking {
+    @Test fun ruleCoach_wordLevelCue_noAppendedTips(): Unit = kotlinx.coroutines.runBlocking {
+        // spec-028 FR3: 폴백은 단어 수준 큐 — 케이던스/더위 절을 조합하지 않는다(문장 조합 소멸).
         val coach = com.zone2runner.app.coaching.RuleCoach()
         val low = coach.say(com.zone2runner.app.coaching.CoachContext(
             com.zone2runner.app.domain.ZoneJudgment.ABOVE, 0.0, 6.5, 300, spm = 150))
-        assertTrue("저케이던스 팁 포함: $low", low.contains("발걸음"))
-        // 팁이 붙어도 방향 가드는 통과해야 함(케이던스 절 제외 판정)
+        assertTrue("팁 없이 방향 큐만: $low", !low.contains("발걸음"))
         assertTrue(DirectionGuard.ok(CoachIntent.SLOW_DOWN, low))
-        val ok = coach.say(com.zone2runner.app.coaching.CoachContext(
-            com.zone2runner.app.domain.ZoneJudgment.IN, 0.0, 6.5, 300, spm = 175))
-        assertTrue("정상 케이던스면 팁 없음: $ok", !ok.contains("발걸음"))
+        val hot = coach.say(com.zone2runner.app.coaching.CoachContext(
+            com.zone2runner.app.domain.ZoneJudgment.IN, 0.0, 6.5, 300, tempC = 31.0))
+        assertTrue("더위 절도 조합 안 함: $hot", !hot.contains("수분"))
     }
 
-    // ---- RuleCoach 전 문구는 자기 의도에서 반드시 통과 ----
+    // ---- 대표 코칭 문장(과거 실측 LLM 출력 스타일)은 자기 의도에서 반드시 통과 ----
 
     @Test fun ruleCoachLines_passTheirOwnIntent() {
         val speedUp = listOf(
