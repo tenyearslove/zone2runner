@@ -366,6 +366,7 @@ class RunEngine(
     ) {
         val scope = coachScope
         if (scope != null && coachJob?.isActive == true) return // 이전 생성이 아직 진행 중이면 건너뜀
+        val prevCoachSec = lastCoachSec // 보류(빈 문장) 시 슬롯 반환용 — 다음 틱에 바로 재시도
         lastCoachSec = s.tSec
         val special = milestoneMin > 0 || warmup || recovering || uphillWarn || jointProtect
         if (!special) lastJudgmentForCoach = j
@@ -382,12 +383,15 @@ class RunEngine(
             jointProtect = jointProtect,
         )
         if (scope == null) {
-            recordCoaching(s.tSec, coach.say(ctx), 0L, reason)
+            val line = coach.say(ctx)
+            if (line.isBlank()) { lastCoachSec = prevCoachSec; return } // LLM 로딩 중 보류(spec-028)
+            recordCoaching(s.tSec, line, 0L, reason)
         } else {
             // coachScope는 메인 디스패처(lifecycleScope) 가정 — recordCoaching이 onSample과 같은 스레드에서 실행됨
             coachJob = scope.launch {
                 val t0 = System.currentTimeMillis()
                 val line = coach.say(ctx)
+                if (line.isBlank()) { lastCoachSec = prevCoachSec; return@launch } // 보류 — 코칭 라인/기록 없음
                 recordCoaching(ctx.elapsedSec, line, System.currentTimeMillis() - t0, reason)
             }
         }

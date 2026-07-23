@@ -542,7 +542,13 @@ class RunActivity : AppCompatActivity() {
         val c = LlmCoach(this, personaKey = settings.personaKey, callLog = lg) // 미가용 기기에선 내부적으로 RuleCoach 폴백. 말투=spec-024
         c.llmEnabled = simLlmEnabled // 시뮬 비교 토글 상태 반영(라이브는 항상 true)
         coach = c
-        lifecycleScope.launch { c.prewarm() } // checkStatus+warmup을 첫 코칭 전에 미리
+        // checkStatus+warmup을 첫 코칭 전에 미리. 준비 확정 전까지 코칭은 보류(spec-028 로딩 정책).
+        promptView?.text = "LLM 모델 준비 중… (준비 확정까지 코칭 보류)"
+        lifecycleScope.launch {
+            c.prewarm()
+            promptView?.text = if (c.isReady()) "LLM 준비 완료 — 코칭 시작"
+            else "LLM 미가용 — 단어 폴백으로 코칭"
+        }
         // coachScope 전달 → 코칭 생성(LLM ~2초)이 샘플 루프/렌더를 멈추지 않음
         val learnedPrior = com.zone2runner.app.data.LearnedZone.uFrac(this) // 세션 누적 학습값(있으면 prior)
         val eng = RunEngine(

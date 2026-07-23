@@ -4,6 +4,7 @@ import android.content.Context
 import com.google.mlkit.genai.common.FeatureStatus
 import com.google.mlkit.genai.prompt.Generation
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 
@@ -28,6 +29,16 @@ class LlmCoach(
     private var checked = false
     private var available = false
     private var usedLlmOnce = false
+
+    /** 준비 판정 완료 여부(가용/미가용 확정). false인 동안은 코칭 보류(스킵) — spec-028 로딩 정책. */
+    @Volatile private var resolved = false
+    private val warmKicked = java.util.concurrent.atomic.AtomicBoolean(false)
+    private val warmScope = kotlinx.coroutines.CoroutineScope(
+        Dispatchers.Default + kotlinx.coroutines.SupervisorJob())
+
+    /** 준비 완료 + 가용(시뮬 디버그 표시용). */
+    fun isReady(): Boolean = resolved && available
+    fun isResolved(): Boolean = resolved
 
     /** 방향 잠금 가드(DirectionGuard)가 LLM 문장을 기각한 횟수(필드 로그 end 이벤트용). */
     @Volatile var directionRejects = 0
@@ -73,14 +84,18 @@ class LlmCoach(
     private suspend fun ensureReady(): Boolean = withContext(Dispatchers.Default) {
         if (checked) return@withContext available
         checked = true
-        available = try {
-            val status = client.checkStatus()
-            if (status == FeatureStatus.AVAILABLE) {
-                runCatching { withTimeout(30_000) { client.warmup() } }
-                true
-            } else false // DOWNLOADABLE/DOWNLOADING/UNAVAILABLE -> 폴백(다운로드 트리거 안 함)
-        } catch (e: Throwable) {
-            false
+        try {
+            available = try {
+                val status = client.checkStatus()
+                if (status == FeatureStatus.AVAILABLE) {
+                    runCatching { withTimeout(30_000) { client.warmup() } }
+                    true
+                } else false // DOWNLOADABLE/DOWNLOADING/UNAVAILABLE -> 폴백(다운로드 트리거 안 함)
+            } catch (e: Throwable) {
+                false
+            }
+        } finally {
+            resolved = true // 가용/미가용 확정 — 이때부터 코칭 재개(LLM 또는 단어 폴백)
         }
         available
     }
@@ -91,8 +106,11 @@ class LlmCoach(
         lastPath = o.path
         lastPrompt = o.prompt
         // 프로비넌스 기록(spec-027): 코칭 1문장 = 기록 1건(리포트 코칭 로그와 1:1 정렬). 규칙 폴백도 기록.
-        callLog?.record(ctx.elapsedSec, "coach", o.engine, o.path, o.prompt ?: "", o.text,
-            System.currentTimeMillis() - t0)
+        // 보류(빈 문장)는 코칭 라인이 안 생기므로 기록도 남기지 않는다(1:1 정렬 유지).
+        if (o.text.isNotBlank()) {
+            callLog?.record(ctx.elapsedSec, "coach", o.engine, o.path, o.prompt ?: "", o.text,
+                System.currentTimeMillis() - t0)
+        }
         return o.text
     }
 
@@ -104,6 +122,12 @@ class LlmCoach(
         // 언어는 LLM이 만든다. 폴백(RuleCoach)은 단어 수준 큐 — 미지원/실패/기각의 그 1회에만.
         val prompt = buildPrompt(ctx) // 미가용이어도 채워 "이 프롬프트를 쓴다"를 감사 기록에 남긴다
         if (!llmEnabled) return Outcome(fallback.say(ctx), "rule", "rule(LLM 꺼짐)", prompt) // 수동 off(시뮬 토글)
+        // 모델 로딩(상태 확인+워밍업) 중에는 코칭 보류(빈 문장 = 스킵, 사용자 결정 2026-07-23):
+        // 로딩 중 폴백 문구를 내지 않고, 준비 확정 후 LLM(가용) 또는 단어 폴백(미가용)으로 재개.
+        if (!resolved) {
+            if (warmKicked.compareAndSet(false, true)) warmScope.launch { ensureReady() } // prewarm 미호출 대비
+            return Outcome("", "skip", "skip(모델 로딩 중)", prompt)
+        }
         if (!ensureReady()) return Outcome(fallback.say(ctx), "rule", "rule(LLM 미가용)", prompt)
         // 방향 검사 대상: 방향 코칭만. 특수 중 워밍업/오르막 예방/관절 보호는 가속 명령만 금지(spec-028 FR2).
         val special = ctx.milestoneMin > 0 || ctx.warmup || ctx.recovering || ctx.uphillWarn || ctx.jointProtect
