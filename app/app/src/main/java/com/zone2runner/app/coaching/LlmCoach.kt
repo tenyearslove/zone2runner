@@ -44,6 +44,9 @@ class LlmCoach(
     /** 이번 세션에서 실제로 LLM 문장을 한 번이라도 냈는지(리포트 coachSource 표기용). */
     fun sessionSource(): String = if (usedLlmOnce) "llm" else "rule"
 
+    /** 시뮬 실시간 비교 토글(spec-028 검증): false면 LLM을 건너뛰고 단어 폴백 — 다음 코칭부터 즉시 반영. */
+    @Volatile var llmEnabled: Boolean = true
+
     /** 세션 시작 시 미리 호출해 checkStatus+warmup(최대 30초)을 첫 코칭 경로에서 빼낸다. */
     suspend fun prewarm() { ensureReady() }
 
@@ -100,6 +103,7 @@ class LlmCoach(
         // spec-028/adr-028: 모든 코칭(방향+특수)이 LLM 직생성 1순위. 규칙은 판단/사실만 확정하고
         // 언어는 LLM이 만든다. 폴백(RuleCoach)은 단어 수준 큐 — 미지원/실패/기각의 그 1회에만.
         val prompt = buildPrompt(ctx) // 미가용이어도 채워 "이 프롬프트를 쓴다"를 감사 기록에 남긴다
+        if (!llmEnabled) return Outcome(fallback.say(ctx), "rule", "rule(LLM 꺼짐)", prompt) // 수동 off(시뮬 토글)
         if (!ensureReady()) return Outcome(fallback.say(ctx), "rule", "rule(LLM 미가용)", prompt)
         // 방향 검사 대상: 방향 코칭만. 특수 중 워밍업/오르막 예방/관절 보호는 가속 명령만 금지(spec-028 FR2).
         val special = ctx.milestoneMin > 0 || ctx.warmup || ctx.recovering || ctx.uphillWarn || ctx.jointProtect

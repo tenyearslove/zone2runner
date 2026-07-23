@@ -56,6 +56,7 @@ class RunActivity : AppCompatActivity() {
     private lateinit var coachView: TextView
     private lateinit var adviceView: TextView // 러닝 조언 표시(추후 분석 엔진용 자리, 현재 미사용)
     private var promptView: TextView? = null // LLM 프롬프트 노출(시뮬/목 모드만, null=라이브)
+    private var simLlmEnabled = true // 시뮬 LLM on/off 비교 토글(spec-028 검증) — 세션 시작 시 코치에 적용
     private var simDelayMs = 14L // 시뮬 재생 배속(샘플 간 ms): 14≈×70, 33≈×30, 100=×10, 1000=×1. 재생 중 변경 가능
     private val speedChips = LinkedHashMap<Long, TextView>()
 
@@ -393,6 +394,23 @@ class RunActivity : AppCompatActivity() {
 
         // LLM 프롬프트 투명성(시뮬/목 모드만) — 디버그 정보라 대시보드 맨 아래(사용자 요청)
         if (mode != MODE_LIVE) {
+            // LLM on/off 실시간 비교 토글(spec-028 검증): 끄면 다음 코칭부터 단어 폴백 경로.
+            // 감사 기록에는 "rule(LLM 꺼짐)"으로 남아 리포트에서도 구간 비교 가능.
+            dash.addView(LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = android.view.Gravity.CENTER_VERTICAL
+                setPadding(0, dp(8), 0, 0)
+                addView(TextView(this@RunActivity).apply {
+                    text = "LLM 코칭 (끄면 단어 폴백과 실시간 비교)"; textSize = 11f; setTextColor(C_MUTED)
+                }, LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f))
+                addView(android.widget.Switch(this@RunActivity).apply {
+                    isChecked = simLlmEnabled
+                    setOnCheckedChangeListener { _, on ->
+                        simLlmEnabled = on
+                        coach?.llmEnabled = on
+                    }
+                })
+            })
             promptView = TextView(this).apply {
                 text = ""; textSize = 10f; setTextColor(C_MUTED)
                 typeface = Typeface.MONOSPACE; setPadding(0, dp(8), 0, 0)
@@ -522,6 +540,7 @@ class RunActivity : AppCompatActivity() {
             pssKb = { runCatching { android.os.Debug.getPss().toInt() }.getOrDefault(-1) })
         llmLog = lg
         val c = LlmCoach(this, personaKey = settings.personaKey, callLog = lg) // 미가용 기기에선 내부적으로 RuleCoach 폴백. 말투=spec-024
+        c.llmEnabled = simLlmEnabled // 시뮬 비교 토글 상태 반영(라이브는 항상 true)
         coach = c
         lifecycleScope.launch { c.prewarm() } // checkStatus+warmup을 첫 코칭 전에 미리
         // coachScope 전달 → 코칭 생성(LLM ~2초)이 샘플 루프/렌더를 멈추지 않음
