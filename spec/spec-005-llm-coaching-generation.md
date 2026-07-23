@@ -45,7 +45,7 @@ On-device LLM(Gemini Nano)은 최초 1회 모델 다운로드가 필요하다(**
 
 - 앱 시작/코칭 준비 시 FeatureStatus 확인 후 분기:
   - **AVAILABLE**: 즉시 사용
-  - **DOWNLOADABLE / DOWNLOADING**: **다운로드 진행 화면** 표시 (진행률, Wi-Fi 권장, 앱 포그라운드 유지 안내)
+  - **DOWNLOADABLE / DOWNLOADING**: **다운로드 진행 표시** — as-built(adr-027): 홈 화면 자동 다운로드 배너(진행률) + 설정 "AI 모델" 카드(기능별 상태/수동 다운로드). 다운로드는 세션 밖(홈/설정)에서만 트리거.
   - **UNAVAILABLE**: 폴백 경로 안내 (adr-007 Plan B 자체탑재 / Plan C 서버)
 - **Graceful degradation**: 다운로드 중에도 핵심 기능(HR 판정 + 규칙/템플릿 코칭)은 동작하고, LLM 준비 완료 시 자연스러운 코칭으로 승격한다. → 모델 다운로드가 운동을 막지 않는다.
 - 실패 시 재시도/나중에 정책, 셀룰러 데이터 다운로드 허용 여부는 사용자 설정.

@@ -9,6 +9,7 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.zone2runner.app.data.ProfileStore
 import com.zone2runner.app.data.SessionStore
 import com.zone2runner.app.domain.Profile
@@ -23,6 +24,7 @@ import com.zone2runner.app.ui.withSystemBarInsets
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlinx.coroutines.launch
 
 /**
  * 홈 — 앱 진입점. 프로필 요약 + Zone2 목표심박 + 최근 세션 + 시작/기록/프로필 이동.
@@ -40,7 +42,10 @@ class HomeActivity : AppCompatActivity() {
         }
     }
 
-    private companion object { var onboardingShown = false }
+    private companion object {
+        var onboardingShown = false
+        var nanoAutoStarted = false // 프로세스당 자동 다운로드 1회(onResume 재빌드 시 중복 시작 방지, adr-027)
+    }
 
     override fun onResume() {
         super.onResume()
@@ -62,6 +67,9 @@ class HomeActivity : AppCompatActivity() {
         })
         col.addView(title("Zone2Runner"))
         col.addView(subtitle("개인화 유산소(Zone 2) 러닝 코칭 · 온디바이스 AI"))
+
+        // AI 모델 준비 배너(adr-027): 미다운로드면 자동 다운로드 + 진행률. 준비 전에도 규칙 코칭은 무중단.
+        col.addView(nanoModelBanner())
 
         // 프로필 + 목표 심박 카드
         col.addView(card("내 프로필 / Zone 2 목표", profileCard(profile)))
@@ -212,4 +220,81 @@ class HomeActivity : AppCompatActivity() {
 
     private fun cell() = LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f)
     private fun fmtDist(m: Double) = if (m < 1000) "${m.toInt()}m" else "%.2fkm".format(m / 1000)
+
+    // ---- AI 모델 준비 배너 (adr-027) ----
+
+    /**
+     * Nano 기능 모델 상태를 확인하고, 다운로드가 필요하면 자동으로 시작해 진행률을 보여준다.
+     * 전부 사용 가능이면 배너를 아예 숨긴다. 다운로드는 홈(세션 밖)에서만 트리거 —
+     * 러닝 중에는 기존 정책(AVAILABLE만 사용, 아니면 규칙 폴백) 그대로.
+     */
+    private fun nanoModelBanner(): View {
+        val statusView = TextView(this).apply {
+            textSize = 12f; setTextColor(Palette.TEXT)
+        }
+        val bar = android.widget.ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal).apply {
+            isIndeterminate = true; max = 1000; visibility = View.GONE
+        }
+        val inner = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            addView(statusView)
+            addView(bar, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply { topMargin = dpi(8) })
+        }
+        val box = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL; visibility = View.GONE
+            addView(card("AI 코칭 모델 (Gemini Nano)", inner))
+        }
+
+        lifecycleScope.launch {
+            val mgr = com.zone2runner.app.coaching.NanoModelManager(this@HomeActivity)
+            val states = mgr.statusAll()
+            if (states.values.all { it == com.zone2runner.app.coaching.NanoModelManager.State.AVAILABLE }) return@launch
+            box.visibility = View.VISIBLE
+
+            val downloadable = states.filterValues {
+                it == com.zone2runner.app.coaching.NanoModelManager.State.DOWNLOADABLE
+            }.keys.toList()
+            if (downloadable.isEmpty() || nanoAutoStarted) {
+                // 이미 다른 화면에서 진행 중이거나 미지원 — 상태만 요약 표시
+                statusView.text = summaryOf(states) + "\n미준비 상태에서도 코칭은 규칙 문구로 정상 동작해요."
+                if (states.values.any { it == com.zone2runner.app.coaching.NanoModelManager.State.DOWNLOADING }) {
+                    bar.visibility = View.VISIBLE; bar.isIndeterminate = true
+                }
+                return@launch
+            }
+
+            nanoAutoStarted = true
+            bar.visibility = View.VISIBLE
+            var failed = 0
+            for (f in downloadable) {
+                statusView.text = "${f.label} 모델 다운로드 중… (준비 전에도 코칭은 규칙으로 동작해요)"
+                bar.isIndeterminate = true
+                val ok = mgr.download(f) { done, total ->
+                    runOnUiThread {
+                        if (total > 0) {
+                            bar.isIndeterminate = false
+                            bar.progress = (done * 1000 / total).toInt().coerceIn(0, 1000)
+                            statusView.text = "${f.label} 모델 다운로드 중… %d / %d MB".format(
+                                done / (1024 * 1024), total / (1024 * 1024))
+                        }
+                    }
+                }
+                if (!ok) failed++
+            }
+            val after = mgr.statusAll()
+            bar.visibility = View.GONE
+            statusView.text = if (after.values.all { it == com.zone2runner.app.coaching.NanoModelManager.State.AVAILABLE }) {
+                "AI 코칭 모델 준비 완료 — 다음 러닝부터 Nano 표현이 적용됩니다."
+            } else {
+                (if (failed > 0) "일부 모델 다운로드에 실패했어요. 설정에서 다시 시도할 수 있어요.\n" else "") +
+                    summaryOf(after) + "\n미준비 상태에서도 코칭은 규칙 문구로 정상 동작해요."
+            }
+        }
+        return box
+    }
+
+    private fun summaryOf(states: Map<com.zone2runner.app.coaching.NanoModelManager.Feature, com.zone2runner.app.coaching.NanoModelManager.State>): String =
+        states.entries.joinToString(" / ") {
+            "${it.key.label}: ${com.zone2runner.app.coaching.NanoModelManager.stateLabel(it.value)}"
+        }
 }

@@ -12,6 +12,7 @@ import android.widget.ScrollView
 import android.widget.Switch
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.zone2runner.app.data.AppSettings
 import com.zone2runner.app.data.SettingsStore
 import com.zone2runner.app.ui.Palette
@@ -19,6 +20,7 @@ import com.zone2runner.app.ui.bigButton
 import com.zone2runner.app.ui.card
 import com.zone2runner.app.ui.dpi
 import com.zone2runner.app.ui.withSystemBarInsets
+import kotlinx.coroutines.launch
 
 /**
  * 앱 설정 화면(spec-021) — 코칭 빈도 5단계 + 음성/선제/더위/화면 환경설정.
@@ -124,6 +126,9 @@ class SettingsActivity : AppCompatActivity() {
                 s = s.copy(keepScreenOn = on); persist()
             },
         ))
+
+        // AI 모델 상태/다운로드 (adr-027)
+        col.addView(card("AI 모델 (Gemini Nano)", nanoSection()))
 
         col.addView(TextView(this).apply {
             text = "설정은 자동 저장되며 다음 러닝부터 적용됩니다."
@@ -274,6 +279,100 @@ class SettingsActivity : AppCompatActivity() {
             }
             restyle()
         }
+    }
+
+    // ---- AI 모델 상태/다운로드 (adr-027) ----
+
+    private val nanoStatusViews = HashMap<com.zone2runner.app.coaching.NanoModelManager.Feature, TextView>()
+    private var nanoDownloading = false
+
+    /**
+     * Nano 기능 3종의 상태(사용 가능/다운로드 필요/다운로드 중/미지원)를 보여주고
+     * 다운로드 필요 모델을 수동으로 받게 한다. 모델이 없어도 코칭은 규칙 문구로 정상 동작.
+     */
+    private fun nanoSection(): LinearLayout = LinearLayout(this).apply {
+        orientation = LinearLayout.VERTICAL
+        val mgrFeatures = com.zone2runner.app.coaching.NanoModelManager.Feature.entries
+        for (f in mgrFeatures) {
+            addView(LinearLayout(this@SettingsActivity).apply {
+                orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL
+                setPadding(0, dpi(4), 0, dpi(4))
+                addView(TextView(this@SettingsActivity).apply {
+                    text = f.label; textSize = 14f; setTextColor(Palette.TEXT)
+                }, LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f))
+                addView(TextView(this@SettingsActivity).apply {
+                    text = "확인 중…"; textSize = 12f; setTextColor(Palette.MUTED)
+                    nanoStatusViews[f] = this
+                })
+            })
+        }
+        addView(TextView(this@SettingsActivity).apply {
+            text = "모델이 없어도 코칭은 규칙 문구로 정상 동작해요. 다운로드하면 다음 러닝부터 Nano 표현이 적용됩니다."
+            textSize = 11f; setTextColor(Palette.MUTED); setPadding(0, dpi(8), 0, dpi(4))
+        })
+        addView(LinearLayout(this@SettingsActivity).apply {
+            orientation = LinearLayout.HORIZONTAL
+            addView(smallButton("상태 새로고침") { refreshNanoStatuses() },
+                LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f))
+            addView(smallButton("안 받은 모델 다운로드") { downloadMissingNanoModels() },
+                LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f).apply { marginStart = dpi(6) })
+        })
+        refreshNanoStatuses()
+    }
+
+    private fun setNanoStatus(f: com.zone2runner.app.coaching.NanoModelManager.Feature, text: String, ok: Boolean?) {
+        nanoStatusViews[f]?.apply {
+            this.text = text
+            setTextColor(when (ok) { true -> Palette.ACCENT; false -> Palette.AMBER; null -> Palette.MUTED })
+        }
+    }
+
+    private fun refreshNanoStatuses() {
+        lifecycleScope.launch {
+            val mgr = com.zone2runner.app.coaching.NanoModelManager(this@SettingsActivity)
+            for (f in com.zone2runner.app.coaching.NanoModelManager.Feature.entries) {
+                val st = mgr.status(f)
+                setNanoStatus(f, com.zone2runner.app.coaching.NanoModelManager.stateLabel(st),
+                    ok = when (st) {
+                        com.zone2runner.app.coaching.NanoModelManager.State.AVAILABLE -> true
+                        com.zone2runner.app.coaching.NanoModelManager.State.UNAVAILABLE -> null
+                        else -> false
+                    })
+            }
+        }
+    }
+
+    private fun downloadMissingNanoModels() {
+        if (nanoDownloading) return
+        nanoDownloading = true
+        lifecycleScope.launch {
+            val mgr = com.zone2runner.app.coaching.NanoModelManager(this@SettingsActivity)
+            var started = 0
+            for (f in com.zone2runner.app.coaching.NanoModelManager.Feature.entries) {
+                if (mgr.status(f) != com.zone2runner.app.coaching.NanoModelManager.State.DOWNLOADABLE) continue
+                started++
+                setNanoStatus(f, "다운로드 중…", ok = false)
+                val ok = mgr.download(f) { done, total ->
+                    runOnUiThread {
+                        if (total > 0) setNanoStatus(f, "다운로드 중… %d/%dMB".format(
+                            done / (1024 * 1024), total / (1024 * 1024)), ok = false)
+                    }
+                }
+                setNanoStatus(f, if (ok) "사용 가능" else "다운로드 실패 — 다시 시도", ok = ok)
+            }
+            if (started == 0) android.widget.Toast.makeText(this@SettingsActivity,
+                "다운로드가 필요한 모델이 없어요", android.widget.Toast.LENGTH_SHORT).show()
+            nanoDownloading = false
+        }
+    }
+
+    private fun smallButton(label: String, onClick: () -> Unit): TextView = TextView(this).apply {
+        text = label; textSize = 12f; gravity = Gravity.CENTER; setTextColor(Palette.TEXT)
+        setPadding(0, dpi(10), 0, dpi(10)); isClickable = true
+        background = GradientDrawable().apply {
+            setColor(Palette.BG); cornerRadius = dpi(10).toFloat(); setStroke(dpi(1), Palette.STROKE)
+        }
+        setOnClickListener { onClick() }
     }
 
     /** 라벨 + 스위치 한 줄. */
