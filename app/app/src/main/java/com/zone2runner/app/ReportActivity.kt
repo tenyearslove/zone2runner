@@ -200,6 +200,8 @@ class ReportActivity : AppCompatActivity() {
             append("경로: ${c.path}\n생성: $engineLabel")
             if (c.engine != "rule") append("\n지연: ${c.tookMs}ms")
         }
+        val factsPart = if (c.facts.isNotBlank())
+            "\n\n근거 데이터(이 순간의 관측):\n${c.facts.replace(" / ", "\n- ").let { "- $it" }}" else ""
         val promptPart = when {
             c.prompt.isBlank() -> "\n\n규칙(코드)이 실제 관측값으로 만든 문장이라 LLM 프롬프트가 없습니다."
             c.engine == "rule" -> "\n\nLLM에 시도한 입력(결과는 규칙 폴백):\n${c.prompt}"
@@ -207,7 +209,7 @@ class ReportActivity : AppCompatActivity() {
             else -> "\n\nLLM에 준 프롬프트 전문:\n${c.prompt}"
         }
         val outPart = if (c.output.isNotBlank() && c.engine != "rule") "\n\n채택된 출력:\n${c.output}" else ""
-        return head + promptPart + outPart
+        return head + factsPart + promptPart + outPart
     }
 
     /** "LLM 사용" 카드: 호출/채택 대 폴백/지연/입출력 크기/앱 PSS. AICore(별도 프로세스) 자원은 표시하지 않음(정직). */

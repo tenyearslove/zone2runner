@@ -40,7 +40,8 @@ class SessionCodecTest {
             usedModel = true, coachSource = "llm", sourceMode = "live",
             llmCalls = listOf( // 프롬프트 프로비넌스(spec-027)
                 LlmCallRecord(30, "coach", "nano-rewrite", "llm(톤 재작성)",
-                    "좋아요 유지", "좋습니다, 이 페이스 유지해요", 812L, 154321),
+                    "좋아요 유지", "좋습니다, 이 페이스 유지해요", 812L, 154321,
+                    facts = "판정 Zone 2 유지 (지속심박 128bpm, 개인 경계 117~132bpm) / 경사 0.0%"),
                 LlmCallRecord(190, "coach", "rule", "rule(방향 기각: \"...\")",
                     "러닝 코치입니다. 초과 상태를 알리세요.", "조금 늦춰요", 1430L, -1),
                 LlmCallRecord(1234, "story", "nano-summarize", "llm(사실 요약)",

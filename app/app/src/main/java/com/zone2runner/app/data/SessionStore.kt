@@ -101,7 +101,8 @@ object SessionStore {
             for (c in r.llmCalls) {
                 lc.put(JSONObject()
                     .put("t", c.tSec).put("purpose", c.purpose).put("engine", c.engine).put("path", c.path)
-                    .put("prompt", c.prompt).put("output", c.output).put("ms", c.tookMs).put("pss", c.appPssKb))
+                    .put("prompt", c.prompt).put("output", c.output).put("ms", c.tookMs).put("pss", c.appPssKb)
+                    .put("facts", c.facts))
             }
             o.put("llmCalls", lc)
         }
@@ -177,6 +178,7 @@ object SessionStore {
                         tSec = c.optInt("t"), purpose = c.optString("purpose"), engine = c.optString("engine"),
                         path = c.optString("path"), prompt = c.optString("prompt"), output = c.optString("output"),
                         tookMs = c.optLong("ms"), appPssKb = c.optInt("pss", -1),
+                        facts = c.optString("facts", ""),
                     )
                 }
             } ?: emptyList(),

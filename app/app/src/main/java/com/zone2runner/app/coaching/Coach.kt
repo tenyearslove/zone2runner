@@ -128,6 +128,40 @@ object NumberGuard {
 }
 
 /**
+ * 코칭 근거 데이터 요약(spec-027 확장, 2026-07-24 사용자 요청) — "이 코칭이 왜 나왔나"의
+ * 관측 스냅샷. 리포트 프로비넌스 팝업에서 프롬프트와 함께 표시된다. 전부 실제 관측/도출값.
+ */
+object CoachEvidence {
+    fun of(ctx: CoachContext): String {
+        val parts = ArrayList<String>()
+        parts += buildString {
+            append("판정 ").append(ctx.judgment.label)
+            if (ctx.currentHr > 0 && ctx.hiBpm > ctx.loBpm)
+                append(" (지속심박 ${ctx.currentHr}bpm, 개인 경계 ${ctx.loBpm}~${ctx.hiBpm}bpm)")
+        }
+        parts += "경과 %d:%02d".format(ctx.elapsedSec / 60, ctx.elapsedSec % 60)
+        parts += "경사 %.1f%%".format(ctx.slopePct) +
+            when { ctx.slopePct > 2 -> " (오르막)"; ctx.slopePct < -2 -> " (내리막)"; else -> "" }
+        if (ctx.paceMinKm in 0.1..30.0)
+            parts += "페이스 %d'%02d\"/km".format(ctx.paceMinKm.toInt(), ((ctx.paceMinKm % 1) * 60).toInt())
+        ctx.gapPaceMinKm?.let { if (it in 0.1..30.0)
+            parts += "경사보정 %d'%02d\"/km".format(it.toInt(), ((it % 1) * 60).toInt()) }
+        if (ctx.spm > 0) parts += "케이던스 ${ctx.spm}spm"
+        ctx.tempC?.let { parts += "기온 ${it.toInt()}도" }
+        val triggers = ArrayList<String>()
+        if (ctx.milestoneMin > 0) triggers += "Zone 2 연속 ${ctx.milestoneMin}분 달성"
+        if (ctx.warmup) triggers += "초반 심박 급상승(워밍업)"
+        if (ctx.recovering) triggers += "심박 하강 중(회복)"
+        if (ctx.uphillWarn) triggers += "오르막 진입(개인 초과 경향 학습)"
+        if (ctx.jointProtect) triggers += "내리막 관절 보호(프로필)"
+        if (ctx.driftRising) triggers += "드리프트 상승 관측"
+        if (ctx.latePacing) triggers += "세션 후반"
+        if (triggers.isNotEmpty()) parts += "트리거: " + triggers.joinToString(", ")
+        return parts.joinToString(" / ")
+    }
+}
+
+/**
  * 폴백 코치 — 단어 수준 큐(spec-028 FR3, adr-028). 문장을 조합하지 않는다.
  * LLM 미지원 단말이거나 해당 호출이 실패/기각된 그 1회에만 나간다(지원 단말에서
  * 상시화되면 결함 — spec-027 감사 기록으로 검출). 페르소나는 LLM 전용이라 여기선 중립.

@@ -110,6 +110,7 @@ data class LlmCallRecord(
     val output: String,     // 최종 채택 출력(출력 가드 통과 후)
     val tookMs: Long,       // 호출 벽시계 지연
     val appPssKb: Int = -1, // 호출 직후 앱 프로세스 PSS(KB). Nano는 AICore 별도 프로세스라 앱 것만 관측 가능. -1=미측정
+    val facts: String = "", // 이 코칭의 근거 관측 요약(판정/심박/경계/경사/트리거 — CoachEvidence). 구버전=""
 )
 
 /** 세션 종료 리포트. */

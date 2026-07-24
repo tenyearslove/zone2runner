@@ -109,7 +109,7 @@ class LlmCoach(
         // 보류(빈 문장)는 코칭 라인이 안 생기므로 기록도 남기지 않는다(1:1 정렬 유지).
         if (o.text.isNotBlank()) {
             callLog?.record(ctx.elapsedSec, "coach", o.engine, o.path, o.prompt ?: "", o.text,
-                System.currentTimeMillis() - t0)
+                System.currentTimeMillis() - t0, facts = CoachEvidence.of(ctx))
         }
         return o.text
     }

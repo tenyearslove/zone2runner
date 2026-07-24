@@ -19,10 +19,10 @@ class LlmCallLog(private val pssKb: () -> Int = { -1 }) {
     @Synchronized
     fun record(
         tSec: Int, purpose: String, engine: String, path: String,
-        prompt: String, output: String, tookMs: Long,
+        prompt: String, output: String, tookMs: Long, facts: String = "",
     ) {
         val pss = runCatching { pssKb() }.getOrDefault(-1)
-        records.add(LlmCallRecord(tSec, purpose, engine, path, prompt, output, tookMs, pss))
+        records.add(LlmCallRecord(tSec, purpose, engine, path, prompt, output, tookMs, pss, facts))
     }
 
     /** 지금까지의 기록 사본(누적 스냅샷). 영속화(SessionStore)용. */
