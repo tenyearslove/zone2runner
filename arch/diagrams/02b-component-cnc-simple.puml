@@ -14,7 +14,7 @@ package "AI Operation Subsystem" {
   package "추론 서비스 (Inference)" as INF {
     component "OutlierGuard" <<입력 가드레일>> as IG #FFE0B2
     component "모델 서빙\n규칙 판정 + 베이지안 경계\n+ 관측 분석 엔진 + 온디바이스 LLM" <<모델 서빙>> as SERVE #BBDEFB
-    component "DirectionGuard / SafetyGuard" <<출력 가드레일>> as OG #FFE0B2
+    component "DirectionGuard / NumberGuard\n/ SafetyGuard" <<출력 가드레일>> as OG #FFE0B2
     IG --> SERVE
     SERVE --> OG
   }

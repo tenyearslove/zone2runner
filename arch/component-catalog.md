@@ -43,17 +43,22 @@
 - **입력→출력**: 신호창 + 프로필 → 파생지표(값/기울기/SE/R²/추세)
 - **구현**: `analysis/AnalysisEngine.kt`, `analysis/AnalysisMetric.kt`, `analysis/{DriftSlope,GapMinetti,CadenceStability,SubmaxHr,Hrr}Metric.kt`, `analysis/NoiseFloor.kt`, `analysis/LinearRegression.kt`, `analysis/AnalysisConfig.kt`
 
-### A7. 코칭 표현기 (RuleCoach + LlmCoach + NanoRewriter/Summarizer)
+### A7. 코칭 표현기 (LlmCoach 직생성 + CoachPrompt + RuleCoach 단어 폴백 + NanoSummarizer)
 - **표준 매핑**: 모델 서빙(온디바이스 LLM) + 규칙
-- **책임**: **규칙(RuleCoach)이 코칭 방향과 사실을 확정**하고, **온디바이스 LLM(LlmCoach = Gemini Nano)은 그 사실을 문장으로 표현만** 한다. Nano의 Rewriting으로 톤(페르소나)을 입히고, 미가용/실패 시 규칙 문구로 폴백. 리포트 요약은 Summarization.
-- **입력→출력**: 판정/분석 사실 + 페르소나 → 코칭 문장(음성/텍스트)
-- **구현**: `coaching/Coach.kt`(RuleCoach/CoachContext/DirectionGuard), `coaching/LlmCoach.kt`, `coaching/NanoRewriter.kt`, `coaching/NanoSummarizer.kt`, `coaching/CoachPrompt.kt`, `pipeline/CoachCadence.kt`
+- **책임**: **규칙/분석 엔진이 방향과 사실 숫자를 확정**하면, **온디바이스 LLM(LlmCoach = Gemini Nano)이 간결 구조화 프롬프트(말투+사실+임무)로 문장을 직접 생성**한다(adr-028). 페르소나는 프롬프트 파라미터로만 적용. LLM 미지원/실패/기각 시 **RuleCoach가 단어 수준 큐**("속도 줄이기" 등)로 무중단 폴백. 모델 준비 확정 전에는 코칭 보류(무음). 리포트 요약은 NanoSummarizer(Summarization).
+- **입력→출력**: 판정/분석 사실 + 페르소나 → 코칭 문장(음성/텍스트) + 호출 기록(LlmCallLog)
+- **구현**: `coaching/LlmCoach.kt`, `coaching/CoachPrompt.kt`(+`assets/coach_prompt.json`), `coaching/Coach.kt`(RuleCoach/CoachContext/CoachEvidence), `coaching/NanoSummarizer.kt`, `pipeline/CoachCadence.kt`
 
-### A8. 출력 가드레일 (DirectionGuard + SafetyGuard)
+### A7-1. 모델 준비 관리자 (NanoModelManager)
+- **표준 매핑**: Model Registry 인접(모델 준비 상태/다운로드)
+- **책임**: Nano 기능 2종(문장 생성/요약)의 상태 확인과 다운로드(진행률). 다운로드는 세션 밖(홈 배너/설정 카드)에서만 트리거하고, 사용 시점 정책(AVAILABLE만 사용)은 불변(adr-027).
+- **구현**: `coaching/NanoModelManager.kt`, `HomeActivity`(배너), `SettingsActivity`(카드)
+
+### A8. 출력 가드레일 (형식 가드 + DirectionGuard + NumberGuard + SafetyGuard)
 - **표준 매핑**: 출력 가드레일
-- **책임**: LLM 문장이 규칙이 정한 방향과 모순되면 기각(`DirectionGuard`, 방향 잠금). 위험 고심박이 지속되면 LLM을 우회해 규칙이 즉시 감속 권고(`SafetyGuard`, 안전 최우선). 약한 LLM을 신뢰 가능하게 만드는 통제층.
-- **입력→출력**: LLM 문장 / 심박 → 통과 문장 or 폴백 / 안전 경고
-- **구현**: `coaching/Coach.kt`(DirectionGuard), `pipeline/SafetyGuard.kt`
+- **책임**: LLM 문장을 3중 검사한다 — 형식(길이/문장 수/이모지), 방향(`DirectionGuard` — 규칙 방향과 모순/무방향이면 기각, 특수 코칭은 가속 명령 금지), **숫자 무결성(`NumberGuard` — 출력의 모든 숫자가 입력 사실의 부분집합이 아니면 기각, 언어 무관)**. 기각 시 단어 폴백. 위험 고심박은 LLM을 우회해 규칙이 즉시 권고(`SafetyGuard`, 안전 최우선). 약한 LLM을 신뢰 가능하게 만드는 통제층.
+- **입력→출력**: LLM 문장 / 심박 → 통과 문장 or 단어 폴백 / 안전 경고
+- **구현**: `coaching/Coach.kt`(DirectionGuard/NumberGuard), `coaching/LlmCoach.kt`(형식 guard), `pipeline/SafetyGuard.kt`
 
 ### A9. 오케스트레이터 (RunEngine)
 - **표준 매핑**: Inference Control
@@ -73,9 +78,15 @@
 
 ### B2. 값 출처 메타데이터 (종류 A/B/C 태그) — 규율/횡단
 - **표준 매핑**: ML Metadata store (provenance/lineage)
-- **책임**: 표시/판정/코칭에 쓰는 모든 수치가 자기 출처(A 도출값 / B 학습값 / C 설계선택)를 갖게 하는 **전 컴포넌트 규율**("없는 숫자 금지"). 하나의 클래스가 아니라 설계 원칙이며, 설명 서비스가 이 태그를 읽어 근거를 만든다.
+- **책임**: 표시/판정/코칭에 쓰는 모든 수치가 자기 출처(A 도출값 / B 학습값 / C 설계선택)를 갖게 하는 **전 컴포넌트 규율**("없는 숫자 금지"). 설계 원칙이자, LLM 텍스트에 대해서는 B2-1로 구체 구현됨.
 - **입력→출력**: (모든 값에 부여) → 설명 서비스가 소비
 - **구현**: 원칙(CLAUDE.md) + 각 값의 근거가 spec/arch에 문서화(예: `analysis/AnalysisConfig.kt` 주석, spec-013/016/025)
+
+### B2-1. LLM 호출 프로비넌스 (LlmCallLog + CoachEvidence)
+- **표준 매핑**: ML Metadata store (provenance/lineage) — 텍스트 확장(spec-027)
+- **책임**: 모든 LLM 호출(코칭/스토리/개인화 설명)의 근거 관측 스냅샷(CoachEvidence: 판정/심박/경계/경사/트리거), 프롬프트, 생성 경로(채택/기각/폴백 사유), 지연을 기록하고 세션에 영속. 리포트에서 코칭 문장 터치로 문장 단위 추적, "LLM 사용" 카드로 사용량 감사(HOTL).
+- **입력→출력**: LLM 호출 1건 → LlmCallRecord → RunReport.llmCalls(JSON 영속)
+- **구현**: `coaching/LlmCallLog.kt`, `coaching/Coach.kt`(CoachEvidence), `domain/Models.kt`(LlmCallRecord), `ReportActivity`(프로비넌스 팝업/텔레메트리 카드)
 
 ---
 

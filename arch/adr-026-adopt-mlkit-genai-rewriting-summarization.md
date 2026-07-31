@@ -7,7 +7,7 @@
 
 ## 맥락
 
-우리는 이미 Gemini Nano(ML Kit GenAI **Prompt API**)로 코칭 문구를 표현한다(adr-007, adr-002: 규칙이 방향 확정, LLM은 표현만, DirectionGuard + 템플릿 폴백). 리서치(`arch/research-gemini-nano-ondevice-capabilities.md`)로 같은 온디바이스 Nano의 **과제형 API**(Rewriting/Summarization 등)를 확인했다. 두 가지가 우리 아키텍처에 잘 맞는다.
+우리는 이미 Gemini Nano(ML Kit GenAI **Prompt API**)로 코칭 문구를 표현한다(adr-007, adr-002: 규칙이 방향 확정, LLM은 표현만, DirectionGuard + 템플릿 폴백). 리서치(`arch/archive/research-gemini-nano-ondevice-capabilities.md`)로 같은 온디바이스 Nano의 **과제형 API**(Rewriting/Summarization 등)를 확인했다. 두 가지가 우리 아키텍처에 잘 맞는다.
 - **Rewriting**: 문장의 '톤'만 바꾼다 → "내용은 규칙, LLM은 표현만" 모델을 자유 프롬프트보다 **더 결정론적으로** 강화.
 - **Summarization**: 실제 도출 사실을 불릿 요약 → "세밀한 관측 리포트 + 없는 숫자 안 만듦" 제1원칙에 부합.
 둘 다 온디바이스(무클라우드), 한국어 지원, 세션 경계 배치/포그라운드로 사용 가능.
@@ -42,10 +42,10 @@
 ## 구현 (as-built)
 
 - **의존성**: `com.google.mlkit:genai-rewriting:1.0.0-beta1`, `genai-summarization:1.0.0-beta1`(common→beta3).
-- **`NanoRewriter`**(coaching): `Rewriting.getClient` + `checkFeatureStatus()`(AVAILABLE만, 다운로드 트리거 안 함) + `runInference`(bounded get 6s). 페르소나→톤 매핑(정직한 한계): 친절/다정→FRIENDLY, 차분→PROFESSIONAL, 스파르타→SHORTEN(근사), 그 외 REPHRASE. 미가용/실패/빈 결과 시 **원문 반환**.
+- ~~**`NanoRewriter`**(coaching)~~ (adr-028로 삭제됨 — 이하 역사 기록): `Rewriting.getClient` + `checkFeatureStatus()`(AVAILABLE만, 다운로드 트리거 안 함) + `runInference`(bounded get 6s). 페르소나→톤 매핑(정직한 한계): 친절/다정→FRIENDLY, 차분→PROFESSIONAL, 스파르타→SHORTEN(근사), 그 외 REPHRASE. 미가용/실패/빈 결과 시 **원문 반환**.
 - **`NanoSummarizer`**(report): `Summarization.getClient`(ARTICLE/THREE_BULLETS/KOREAN) + `runInference`(bounded get 15s). 입력=`SessionExplainer.article`(facts + 분석 지표, 실제 도출값만). 입력<200자/미가용/실패 시 **null → 폴백**.
 - **배선**:
-  - `LlmCoach.say`(방향성 코칭): **1순위 = 규칙 문장을 NanoRewriter로 톤 재작성** → guard + DirectionGuard 통과 시 채택. 실패 시 **2순위 = 기존 Prompt 경로**, 그다음 **규칙 문장**. 특수 코칭(마일스톤/워밍업/회복/오르막)은 종전대로 규칙.
+  - ~~`LlmCoach.say`: 1순위 = NanoRewriter 톤 재작성~~ → adr-028로 폐지. 현행 = LLM 직생성 1순위 + 단어 수준 폴백(spec-028).
   - 리포트 세션 스토리: **1순위 = NanoSummarizer 불릿 요약** → 실패 시 **기존 Prompt freeform** → 규칙 facts(항상 저장된 폴백).
 
 ## 결과
@@ -57,6 +57,6 @@
 - 검증: app 유닛테스트 그린 + `assembleDebug` 성공. 실기기 Nano 동작은 사용자 실주행 확인 대기.
 
 ## 관련 문서
-- 리서치: `arch/research-gemini-nano-ondevice-capabilities.md`
+- 리서치: `arch/archive/research-gemini-nano-ondevice-capabilities.md`
 - Spec: `spec/spec-005-llm-coaching-generation.md`(코칭), `spec/spec-023`(설명/리포트 스토리)
 - ADR: `arch/adr-007`(Nano 실기기 검증), `arch/adr-002`(방향 잠금/가드레일), `arch/adr-025`(AI≠NN, 표현=LLM)

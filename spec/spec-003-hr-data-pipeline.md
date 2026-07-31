@@ -11,7 +11,7 @@ Galaxy Watch 8이 수집한 실시간 심박수를 Galaxy S26 Ultra의 Zone 2 �
 ## 범위
 
 **포함**:
-- 심박 소스 추상화 인터페이스 (`HrSource`)
+- 심박 소스 추상화 인터페이스 (as-built 명칭: `RunSource` + `HrProvider` — sensor/RunSource.kt)
 - Watch→Phone 전송 (Wearable Data Layer)
 - 샘플링/버퍼링 (1~2초 주기)
 - 이상값 필터 (생리적 범위 40~220 bpm, QA3 강건성)
@@ -27,8 +27,8 @@ Galaxy Watch 8이 수집한 실시간 심박수를 Galaxy S26 Ultra의 Zone 2 �
 1. Watch: Sensor SDK가 심박을 1~2초 주기로 수집
 2. Watch: 샘플링 후 Wearable Data Layer로 Phone에 전송
 3. Phone: 수신 → 이상값 필터(40~220 밖은 기각) → 최근값 버퍼
-4. Phone: `HrSource` 인터페이스가 판정 파이프라인에 심박 스트림 공급
-5. 판정/개인화/코칭은 `HrSource`만 의존 (소스 종류 불문)
+4. Phone: `RunSource`/`HrProvider` 인터페이스가 판정 파이프라인에 심박 스트림 공급
+5. 판정/개인화/코칭은 `RunSource` 추상만 의존 (소스 종류 불문)
 
 ### 시뮬 소스 교체
 - 시뮬 소스(가상러너 재생/수동 러너 조종, spec-019/022)가 동일 소스 인터페이스로 합성 심박을 공급
@@ -42,7 +42,7 @@ Galaxy Watch 8이 수집한 실시간 심박수를 Galaxy S26 Ultra의 Zone 2 �
 **수신 유통기한 `staleMs` = 15000ms(種類 C)**: `WatchHrProvider`는 마지막 수신 HR/SPM을 붙잡아 두되, 15초 넘게 미수신이면 `-1`(무효) 반환(`WatchHrProvider.kt:21`). 근거: 워치 HR은 BT/Wi-Fi로 간헐 끊김이 잦아 이보다 짧으면 파이프라인이 자주 멈춘다(실기기 관찰). 이는 워치 자체 표시용 8초 신선도(spec-010)와 별개인 폰측 수신 관용치로, 필드 데이터로 조정. 워치→폰 전송 범위 게이트(HR 30~240, SPM 60~260)는 spec-001/§FR1 참조.
 
 ## 수락 기준 (AC)
-- [ ] AC-1: `HrSource` 인터페이스로 실센서/시뮬 소스를 코드 변경 없이 교체 가능
+- [x] AC-1: `RunSource` 인터페이스로 실센서/시뮬 소스를 코드 변경 없이 교체 가능
 - [ ] AC-2: 40~220 bpm 밖 입력은 100% 기각되고 다운스트림에 전달되지 않음 (QA3 강건성)
 - [ ] AC-3: 시뮬 소스만으로 판정~코칭 파이프라인이 끝까지 실행됨 (QA5 테스트가능성)
 - [ ] AC-4: Watch→Phone 전송 지연을 측정할 수 있음 (QA6 수행효율성 기여)

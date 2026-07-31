@@ -11,7 +11,7 @@
 
 폰 앱은 러닝 앱의 필수 요소인 두 가지 지도 화면을 필요로 한다.
 
-1. **실시간 지도**: 러닝 중 현재 위치를 추적해 이동 경로를 그려 보여준다 (MainActivity).
+1. **실시간 지도**: 러닝 중 현재 위치를 추적해 이동 경로를 그려 보여준다 (as-built: RunActivity).
 2. **결과 경로 지도**: 세션 종료 후 지나온 경로를 존(Zone) 색으로 구분한 폴리라인으로 표시한다 (ReportActivity, 미달/유지/초과 색 구분).
 
 이 두 요건을 위해 지도 렌더링 라이브러리를 정해야 한다. 이때 zone2runner는 상용화가 아니라 **AI 설계 교육과정 수료 프로젝트**라는 성격이 선택을 좌우한다. 핵심 산출물은 설계와 얇은 PoC이므로, 지도는 "요건을 충족하되 도입 마찰이 가장 적은" 선택이어야 한다. API 키 발급, 결제 계정 연결, 사용량 과금 같은 절차는 이 프로젝트의 본질과 무관한 마찰이다.
@@ -50,7 +50,7 @@
 교육 프로젝트 성격상 **키/과금 없이 바로 도입되는 osmdroid가 마찰이 가장 적으면서** 두 요건(실시간 지도, 결과 존 색 경로)을 모두 충족한다. 실제 구현에 다음과 같이 반영되어 있다.
 
 - `app/app/build.gradle.kts`: `org.osmdroid:osmdroid-android:6.1.18`
-- `MainActivity`: 라이브 지도 위치 추적 및 경로 표시
+- `RunActivity`: 라이브 지도 위치 추적 및 경로 표시 (구 MainActivity에서 이관)
 - `ReportActivity`: 존 색 폴리라인으로 결과 경로 표시
 
 ---
@@ -65,4 +65,4 @@
 
 ## 관련 문서
 - ADR: `arch/adr-008-wear-hr-collection-and-deployment.md` (위치/고도/경사 수집 — 경로 데이터의 출처)
-- 코드: `app/app/build.gradle.kts`, `app/app/src/main/java/com/zone2runner/app/MainActivity.kt`, `app/app/src/main/java/com/zone2runner/app/ReportActivity.kt`
+- 코드: `app/app/build.gradle.kts`, `app/app/src/main/java/com/zone2runner/app/RunActivity.kt`, `app/app/src/main/java/com/zone2runner/app/ReportActivity.kt`

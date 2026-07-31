@@ -5,7 +5,7 @@
 - **날짜**: 2026-07-01
 - **관련 ADR**: `arch/adr-002-ondevice-llm-coaching.md`
 
-> **2026-07-14 갱신(adr-026)**: 방향성 코칭 표현을 **1순위 = 규칙 문장의 톤만 Nano Rewriting으로 변형**(내용=규칙, 방향 잠금 강화)으로 전환. 실패/미가용 시 기존 Prompt 자유 표현 → 규칙 문장 폴백. 페르소나→톤 매핑(친절/다정→FRIENDLY, 차분→PROFESSIONAL, 스파르타→SHORTEN 근사). 구현 = `coaching/NanoRewriter.kt`, `LlmCoach.say`.
+> ~~**2026-07-14 갱신(adr-026)**: 1순위 = 규칙 문장의 톤만 Nano Rewriting으로 변형~~ → **2026-07-23 adr-028로 폐지**(NanoRewriter 삭제됨). 현행 표현 경로 = LLM 직생성 1순위 + 단어 수준 폴백 + 가드 3종(형식/방향/숫자) — 정본은 `spec-028`.
 
 ## 목표
 

@@ -1,6 +1,6 @@
 # Spec-016: 토크 테스트 — 문헌 정본 3단계 + 근거 기반 [안내] 가이드 (Tier 1) / 객관적 음성 타이밍(Tier 2 로드맵)
 
-- **상태**: Draft
+- **상태**: Implemented (3단계 전환/코드/테스트 반영 확인, 2026-07-31 전수감사)
 - **날짜**: 2026-07-13 (2026-07-05 5단계안 → 문헌 정합 3단계로 개정)
 - **관련 ADR**: `arch/adr-004-personalization-model-approach.md`(Bayesian 개인화), `arch/adr-016-ai-method-selection.md`(문제별 도구 선택)
 - **관련 Spec**: `spec/spec-004-zone2-personalization.md`(개인화), `arch/zone2-physiology-and-estimation.md §6`(토크테스트 근거)

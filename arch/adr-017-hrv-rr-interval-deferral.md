@@ -6,7 +6,7 @@
 
 ## 맥락
 
-Galaxy Watch8에서 HRV(심박변이도)의 원신호인 RR간격(= IBI, Inter-Beat Interval)을 앱으로 가져올 수 있는지 조사했다. 결론은 "기술적으로 가능하나 조건부"다. Samsung Health Sensor SDK가 Galaxy Watch4 이상(워치8 포함, Wear OS powered by Samsung)에서 IBI(1Hz, status 플래그 동반)를 제공하지만, 이를 쓰려면 (1) Wear OS 워치 앱 개발, (2) Samsung Partner Program 승인(package name/SHA-256 등록, 미승인 시 SDK_POLICY_ERROR)이 필요하다. 현재 우리 파이프라인은 모든 판정/개인화/역치 추정을 심박 절대값(bpm) + 페이스/케이던스/경사 위에서 수행하며(adr-016), RR간격은 쓰지 않는다.
+Galaxy Watch8에서 HRV(심박변이도)의 원신호인 RR간격(= IBI, Inter-Beat Interval)을 앱으로 가져올 수 있는지 조사했다. 결론은 "기술적으로 가능하나 조건부"다. Samsung Health Sensor SDK가 Galaxy Watch4 이상(워치8 포함, Wear OS powered by Samsung)에서 IBI(1Hz, status 플래그 동반)를 제공하지만, 이를 쓰려면 (1) Wear OS 워치 앱 개발, (2) Samsung Partner Program 승인(package name/SHA-256 등록, 미승인 시 SDK_POLICY_ERROR)이 필요하다. 현재 우리 파이프라인은 모든 판정/개인화/역치 추정을 심박 절대값(bpm) + 페이스/케이던스/경사 위에서 수행하며(adr-025, 구 adr-016은 archive), RR간격은 쓰지 않는다.
 
 이 조사 결과, HRV를 도입할지 여부를 결정한다.
 
@@ -24,7 +24,7 @@ Galaxy Watch8에서 HRV(심박변이도)의 원신호인 RR간격(= IBI, Inter-B
 | 지원 확실성 | 확실 | 확실(SDK 문서화됨) | 불확실(OEM 노출 보장 안 됨) |
 
 ### 대안 A: 미도입(현행 심박 절대값 유지)
-- 장점: 추가 개발/승인/계산 부담 0. 좋은 신호(HR)에 품질 나쁜 신호(달리는 중 RR)를 섞는 리스크 회피. 현 파이프라인(adr-016) 그대로.
+- 장점: 추가 개발/승인/계산 부담 0. 좋은 신호(HR)에 품질 나쁜 신호(달리는 중 RR)를 섞는 리스크 회피. 현 파이프라인(adr-025) 그대로.
 - 단점: 개인 Zone2 상단(LT1) 추정을 여전히 공식(%HRmax 0.70) + factor + HR-vs-페이스 회귀로만 근사 → 실측 생리 신호 부재.
 
 ### 대안 B: Samsung Health Sensor SDK IBI + DFA α1
@@ -40,12 +40,12 @@ Galaxy Watch8에서 HRV(심박변이도)의 원신호인 RR간격(= IBI, Inter-B
 
 ## 결과
 
-- 긍정: 현행 파이프라인(adr-016) 유지. 개발/승인/계산 리스크 회피. "왜 HRV를 안 쓰는가"에 대한 근거가 문서로 남음(AI≠NN 철학과 동일 맥락 — 도구/신호를 문제 특성에 맞춰 선택).
+- 긍정: 현행 파이프라인(adr-025) 유지. 개발/승인/계산 리스크 회피. "왜 HRV를 안 쓰는가"에 대한 근거가 문서로 남음(AI≠NN 철학과 동일 맥락 — 도구/신호를 문제 특성에 맞춰 선택).
 - 부정/비용: 개인 Zone2 상단 추정은 계속 공식+factor+HR 관측에만 의존(실측 생리 신호 부재). 대안 B의 잠재 이득은 실현 유예.
 - 이행: 코드 변경 없음. 재검토 선행 조건 = 워치8 실기기에서 IBI 수집 → status 필터 후 유효 RR 비율 측정(최소 spec 필요 시 `/spec`). 이 수치가 도입 가/부의 단일 판단 근거.
 
 ## 관련 문서
 
-- ADR: `arch/adr-016`(AI 방법 선택 — 문제별 도구, 본 결정과 동일 철학), `arch/adr-004`(Bayesian 개인화 — LT1 추정의 현행 경로), `arch/adr-012`(콜드스타트 prior)
+- ADR: `arch/adr-025`(AI 방법 선택 — NN 0개, 구 adr-016의 후속 정본), `arch/adr-004`(Bayesian 개인화 — LT1 추정의 현행 경로), `arch/adr-012`(콜드스타트 prior)
 - Spec: `spec/archive/spec-014`(심박 동역학 NN — adr-020 생리 ODE로 대체), `spec/spec-004`(개인화)
 - 참고: Samsung Health Sensor SDK(IBI 1Hz, Partner Program), Android Health Services(RMSSD), zone2-physiology-and-estimation.md(참값 부재/토크테스트=라벨)

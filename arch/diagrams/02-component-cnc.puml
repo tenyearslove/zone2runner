@@ -18,8 +18,8 @@ package "AI Operation Subsystem" {
     component "ZoneJudge\n미달 / 유지 / 초과" <<모델 서빙: 규칙>> as JUDGE #BBDEFB
     component "개인 경계 추정기\nPersonalization (베이지안 μ/σ)" <<모델 서빙: 해석가능/개인적응>> as BND #BBDEFB
     component "관측 분석 엔진\nAnalysisEngine (드리프트/GAP/…)" <<모델 서빙: 분석>> as ANA #BBDEFB
-    component "코칭 표현기\nRuleCoach + LlmCoach" <<모델 서빙: 온디바이스 LLM>> as COACH #BBDEFB
-    component "DirectionGuard / SafetyGuard" <<출력 가드레일>> as OG #FFE0B2
+    component "코칭 표현기\nLlmCoach(LLM 직생성)\n+ RuleCoach(단어 폴백)" <<모델 서빙: 온디바이스 LLM>> as COACH #BBDEFB
+    component "DirectionGuard / NumberGuard\n/ SafetyGuard" <<출력 가드레일>> as OG #FFE0B2
     database "Feature Store\nSignalWindow" as FS #CFD8DC
   }
 
@@ -44,7 +44,7 @@ package "AI Operation Subsystem" {
 package "AI Development Subsystem (개인 적응으로 축소)" as DEV {
   component "개인 적응 갱신\n베이지안 / k×σ EWMA" <<Retraining>> as ADAPT #B2DFDB
   database "Data Lake\nSessionStore / LearnedZone" as DLAKE #CFD8DC
-  database "ML Metadata\n값 출처 태그 A/B/C" as META #CFD8DC
+  database "ML Metadata\n값 출처 태그 A/B/C\n+ LLM 호출 기록(LlmCallLog)" as META #CFD8DC
   component "시뮬 폐루프 검증\nVirtualRunner" <<모델 테스팅>> as SIM #FFCCBC
 }
 
@@ -71,6 +71,9 @@ User ..> CTRL
 CTRL ..> BND : HITL 라벨(말하기 테스트)
 ENG ..> INF : 오케스트레이션
 Nano ..> COACH : LLM 서빙
+component "NanoModelManager\n모델 상태/다운로드(홈·설정)" as NMM #C5CAE9
+NMM ..> Nano : 상태 확인 / 다운로드
+COACH ..> META : 호출 기록(근거/프롬프트/경로)
 META ..> EGEN : 값 출처 제공
 
 ' ===== 개인 적응 루프 =====

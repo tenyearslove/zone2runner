@@ -1,11 +1,11 @@
 # Spec-020: 프로필 관리 + 개인화 진행 시각화 + 다중 프로필
 
-> **⚠ 예측 de-scope (2026-07-10, adr-024)**: FR3 심박 예측 드롭. 본 문서의 예측 관련 서술(LearnedDynamics/예측 보정 가중치/예측 학습수)은 **de-scope 대상** — 개인화 시각화는 경계 Bayesian(μ/σ 이동)으로 대체. 앱 코드 미변경. 현행 FR=spec-001, 정합 재작성은 안정화 후. 본문 미수정.
+> **⚠ 예측 de-scope (2026-07-10, adr-024 / 2026-07-31 갱신)**: FR3 심박 예측 드롭. 본 문서의 예측 관련 서술(LearnedDynamics/예측 보정 가중치/예측 학습수)은 **폐기됨** — 예측 코드는 spec-025 구현에서 실제로 완전 삭제됐다(LearnedDynamics 클래스 없음). 개인화 시각화는 경계 Bayesian(μ/σ 이동)으로 대체돼 그대로 구현됨(PersonalizationView/PersonalizationStatus). 프로필 관리(다중 프로필/전환/초기화)도 구현됨(Profiles/ProfileActivity).
 
 - **상태**: Draft
 - **날짜**: 2026-07-06
 - **관련 요구**: spec-001 FR1/FR5, spec-009(프로필), spec-013(factor prior), adr-004/016(개인화), `spec/archive/spec-018-online-prediction-correction.md`(예측 보정 — 폐기, adr-020으로 승계)
-- **구현 위치**: `app/` data/(Profiles/ProfileStore/LearnedZone/LearnedDynamics), domain/PersonalizationStatus, ui/PersonalizationView, ProfileActivity
+- **구현 위치**: `app/` data/(Profiles/ProfileStore/LearnedZone), domain/PersonalizationStatus, ui/PersonalizationView, ProfileActivity
 
 ## 배경과 목적
 
@@ -19,7 +19,7 @@
 
 ### FR1. 다중 프로필
 - 이름 붙인 프로필을 **여러 개** 만들고, 전환/삭제한다. 활성 프로필 하나가 앱 전체(홈/러닝)에 적용.
-- 각 프로필은 독립적으로: 신체 정보 + 개인화 학습 데이터(경계 이력/예측 보정 가중치/세션 수/관측 수)를 가진다.
+- 각 프로필은 독립적으로: 신체 정보 + 개인화 학습 데이터(경계 이력/세션 수/관측 수/드리프트 플로어/오르막 경향)를 가진다.
 - **무손실 하위 호환**: 기존 단일 프로필 사용자는 자동으로 "기본" 프로필이 된다(마이그레이션 없이 —
   기본 프로필은 기존 pref 키를 그대로 사용, 새 프로필만 접미사 네임스페이스).
 - 최소 1개 프로필은 항상 존재(마지막 프로필은 삭제 불가, 초기화만).
@@ -29,7 +29,7 @@
 
 ### FR3. 개인화 진행 시각화 (핵심)
 활성 프로필의 학습 상태를 한 카드에 시각적으로 보여준다:
-- **무엇을 기반으로**: 러닝 세션 수, 말하기 테스트 관측 횟수(주 라벨), 예측 보정 학습 횟수.
+- **무엇을 기반으로**: 러닝 세션 수, 말하기 테스트 관측 횟수(주 라벨).
 - **얼마나 진행**: 신뢰도 = 개인화 불확실성 σ(bpm, 작을수록 확신). "관측 없음/초기/학습 중/안정" 단계 라벨.
 - **기준값이 얼마나 이동(shift)**: **프로필 공식 초기값(prior) → 현재 학습된 경계**를 bpm으로 대비.
   - 수평 바에 Zone 2 밴드(초기)와 현재 밴드를 겹쳐 그리고, 상단 이동량(Δbpm, +/-)을 표시.
@@ -47,7 +47,7 @@
 - `Profiles`(레지스트리, pref "zone2_profiles"): 프로필 목록(id, name) + 활성 id.
   - 기본 프로필 id = `"default"` → 스토어 pref는 접미사 없음(기존 키 재사용 = 무손실).
   - 신규 프로필 id = `"p<epochMs>"` → 스토어 pref = `base + "_" + id`.
-- 프로필별 스토어(활성 id로 네임스페이스): ProfileStore(신체) / LearnedZone(경계) / LearnedDynamics(예측).
+- 프로필별 스토어(활성 id로 네임스페이스): ProfileStore(신체) / LearnedZone(경계·설명·드리프트 플로어·오르막 경향).
 - `LearnedZone` 확장: 세션별 uFrac **이력**(최근 N=50), 누적 **말하기 관측 수**, 세션 수, 최신 uFrac.
 - `PersonalizationStatus`(도메인 순수 데이터): 시각화 입력을 한 곳에 모은 값객체
   (초기 prior/현재 경계 bpm, 세션수, 관측수, 예측 학습수, σ, 이력).

@@ -68,7 +68,8 @@ Android + Galaxy Watch 기반 Zone 2 운동 코칭 앱.
 - **Report는 지금 쓰지 않는다**: 리포트(발표·보고 원고)는 설계가 안정된 뒤 착수하는 최종 산출물이다. 방향이 계속 바뀌는 현 단계에선 미리 쓰면 정합이 깨진다 → **기존 report는 `report/archive/`에 보존**하고, 설계 안정화 후 정본(spec/arch/framework)에서 새로 뽑는다.
 - **주제별 단일 정본**: 같은 내용을 여러 문서에 중복하지 않는다. FR/제약=spec-001, QA=spec-002, 강의 프레임워크=framework/, 시스템 아키텍처=arch/architecture-overview, 각 결정=해당 ADR.
 - Superseded/Rejected/Obsolete 문서는 archive 폴더로 이동하고 README 표를 갱신한다. `spec/`, `arch/` 최상위 = 현재 적용 중인 문서만
-- 번호는 3자리 (`001`, `002`, …)
+- 번호는 3자리 (`001`, `002`, …). 번호는 식별자로 불변(재부여 금지) — 전 문서 목록은 `spec/README.md`/`arch/README.md` 인덱스가 정본
+- 문서를 만들거나 archive로 옮기면 해당 인덱스(README)와 archive 사유표를 같이 갱신한다
 - 제목은 구체적으로 (❌ "데이터 설계" → ✅ "심박수 로컬 캐시 전략")
 - ADR은 반드시 2~3개 대안 비교 포함
 - `·` 기호 사용 금지. 열거는 `,` 또는 `/`, 강조는 `-` 사용

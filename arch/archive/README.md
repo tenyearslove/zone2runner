@@ -16,5 +16,8 @@
 | hr-prediction-multiscale-trend-design | 다중 시간대 추이 예측 설계안(미승인) | 예측 재설계 탐색안, 예측 드롭으로 무효 | adr-024 |
 | hr-prediction-쉬운설명 | 위 설계안의 쉬운 설명판 | 상동 | adr-024 |
 | adr-016 | AI 방법 선택 3-도구(NN 심박예측 / Bayesian 개인화 / 규칙 판정) | "NN=심박예측" 다리가 예측 드롭(adr-024)으로 소멸 → 자체 NN 0개로 재정립 | adr-025 (AI≠NN, NN 0개) |
+| adr-006 | 개인화 HR 회귀 NN 대안 비교(직접분류 MLP vs HR회귀) | 두 선택지(NN 계열) 모두 adr-025 "자체 NN 0개"로 사멸 | adr-013(판정=규칙) + adr-025 |
+| system-architecture-lecture-style | 강의 표준 매핑 mermaid 도식(확장판) | system-architecture-diagram + architecture-overview 매핑 절 + diagrams/ puml과 중복 | architecture-overview, diagrams/ |
+| research-gemini-nano-ondevice-capabilities | Nano 온디바이스 능력 리서치 노트 | 정보용 노트의 후속 결정이 전부 확정됨(코칭 Rewriting은 폐지) | adr-026/027/028 |
 
 현행 결정은 `arch/`, 탈락 명세는 `spec/archive/`, 탈락 보고서는 `report/archive/` 참조.

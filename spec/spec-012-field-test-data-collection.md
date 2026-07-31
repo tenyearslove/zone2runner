@@ -2,7 +2,7 @@
 
 - **상태**: Draft
 - **날짜**: 2026-07-03
-- **관련 요구**: spec-002 QA3 강건성/QA2 기능적응성/QA4 제어가능성(코칭 방향)/QA6 수행효율성, spec-003(파이프라인), spec-011(폰 앱), adr-009(백그라운드)
+- **관련 요구**: spec-002 QA3 강건성/QA2 기능적응성/QA4 제어가능성(코칭 방향)/QA6 수행효율성, spec-003(파이프라인), spec-029(폰 앱), adr-009(백그라운드)
 - **구현 위치**: `app/` `data/RunLogger.kt` + `RunActivity` 연동
 
 ## 목표
@@ -39,7 +39,7 @@ LLM 코칭 실기기 지연)을 측정하는 것이 목적이다.
 {"type":"s","t":123,"wall":...,"hrRaw":141,"hrClean":141,"watchAgeMs":850,
  "pace":6.2,"spm":167,"slope":1.2,"lat":37.56,"lon":126.97,"judg":1,"uEst":0.702}
 // e = 이벤트 (코칭/세션 종료/오류)
-{"type":"e","wall":...,"kind":"coach","text":"...","tookMs":2100}
+{"type":"e","wall":...,"kind":"coach","text":"...","tookMs":2100,"path":"llm"}  // path = 생성 경로/폴백 사유(spec-027)
 {"type":"e","wall":...,"kind":"end","summary":{"durationSec":1800,"savedId":"..."}}
 ```
 - `judg`: -1 판정없음 / 0 미달 / 1 유지 / 2 초과. `watchAgeMs`: 워치HR 마지막 수신 후 경과(라이브 모드만, 아니면 -1).

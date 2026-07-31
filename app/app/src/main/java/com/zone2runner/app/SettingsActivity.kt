@@ -287,7 +287,7 @@ class SettingsActivity : AppCompatActivity() {
     private var nanoDownloading = false
 
     /**
-     * Nano 기능 3종의 상태(사용 가능/다운로드 필요/다운로드 중/미지원)를 보여주고
+     * Nano 기능 2종(문장 생성/요약)의 상태(사용 가능/다운로드 필요/다운로드 중/미지원)를 보여주고
      * 다운로드 필요 모델을 수동으로 받게 한다. 모델이 없어도 코칭은 규칙 문구로 정상 동작.
      */
     private fun nanoSection(): LinearLayout = LinearLayout(this).apply {
