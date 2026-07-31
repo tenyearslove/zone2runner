@@ -96,3 +96,4 @@ ASR(Architecturally Significant Requirement) = 중요도 7 이상. QA1~QA6 모�
 - 일반 SW QA (QA5~QA6): 테스트가능성 / 수행효율성
 - 각 QA의 강의 정의/평가지표 6요소 시나리오 = `framework/ai-8-qa.md`
 - QA 달성 현황은 각 기능 spec/구현에서 관리(단일 정본 원칙 — 여기선 선정/정의만)
+- **검증 실측(2026-08-01)**: 본 표의 측정 항목을 실측하는 도구 = `app/app/src/test/.../QaMeasurementTest.kt`(6측정, 측정값 build/qa-measurements/에 기록), 검증 결과 표/지표 산출 근거 = `report/report-015-qa-verification.md` — 층위 ①(시뮬/테스트) 완료, 층위 ②(실기기: QA6 TTS 5초 등)는 실측 대기

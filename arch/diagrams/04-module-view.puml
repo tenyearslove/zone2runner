@@ -10,7 +10,7 @@ package "app (폰, com.zone2runner.app - 65파일 9패키지)" {
   component "(root) UI 진입\nHome/Run/Report/History\nProfile/Settings Activity\n+ RunControlService/RunLink" as ROOT #E1BEE7
   component "ui\n커스텀 뷰(게이지/차트/스파크라인)\n+ 공용 팔레트" as UI #E1BEE7
   component "pipeline\nRunEngine(오케스트레이터)\nZoneJudge/Personalization\nOutlierGuard/SafetyGuard\nFeatureExtractor/CoachCadence" as PIPE #BBDEFB
-  component "coaching\nRuleCoach/LlmCoach/CoachPrompt\nDirectionGuard/NumberGuard\nLlmCallLog/NanoModelManager\nSession·PersonalizationExplainer" as COACH #BBDEFB
+  component "coaching\nRuleCoach/LlmCoach/CoachPrompt\nDirectionGuard/NumberGuard\nLlmCallLog/NanoModelManager\nSession/PersonalizationExplainer" as COACH #BBDEFB
   component "analysis\nAnalysisEngine + 5지표\nLinearRegression/NoiseFloor\nSessionAnalytics" as ANA #BBDEFB
   component "sensor\nRunSource(인터페이스)\nLive/Simulated 소스\nWatchHrProvider/SlopeEstimator" as SENSOR #E1F5FE
   component "sim\nRunSimulator/VirtualRunner 소스\nManual/RouteWalk\n(RunSource 구현)" as SIM #FFAB91
@@ -21,7 +21,7 @@ package "app (폰, com.zone2runner.app - 65파일 9패키지)" {
 package "wear (워치, com.zone2runner.wear - 9파일 1패키지)" {
   component "뷰\nWearRunActivity(게이지)\nTalkTestActivity(3지선다)" as WVIEW #E1BEE7
   component "서비스\nRunService(포그라운드 측정)\nRunControlService(원격 제어)" as WSVC #BBDEFB
-  component "링크/공유\nRunLink·HrForwarder(경로)\nRunBus(공유 상태)/HrZone" as WLINK #E1F5FE
+  component "링크/공유\nRunLink/HrForwarder(경로)\nRunBus(공유 상태)/HrZone" as WLINK #E1F5FE
 }
 
 ROOT --> PIPE

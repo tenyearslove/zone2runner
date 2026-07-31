@@ -16,14 +16,15 @@
 | 015 | `report-015-qa-verification.md` | 04 검증 | 품질속성 검증 표(실측) + QA별 지표 산출 근거/측정 기준 + 검증 결과 상세 |
 | 016 | `report-016-conclusion.md` | 05 결론 | 주요 성과 / 향후 계획 |
 | 017 | `report-017-appendix.md` | Appendix | 부록 조립 인덱스 + Use Case/Context/Module/C&C/Deployment 해설 |
+| 018 | `report-018-intro-and-requirements.md` | 01+02 | 과제 소개(배경/필요성/개요) + 요구사항(FR/제약/QA 선정) |
 
 - **도식 정본**: `arch/diagrams/`(일반 아키텍처), `arch/dp/dp-*/images/`(DP 카운터).
 - **검증 실측 도구**: `app/app/src/test/.../QaMeasurementTest.kt` (측정값 재현).
-- **HTML 렌더(Artifact)**: DP1~5 + 최종 아키텍처 + Appendix 뷰 + 구현·검증·결론 — URL은 HANDOFF 참조.
+- **HTML 렌더(Artifact)**: DP1~5 + 최종 아키텍처 + Appendix 뷰 + 구현/검증/결론 — URL은 HANDOFF 참조.
 
-## 남은 원고(예정)
+## 남은 작업(예정)
 
-- 01 과제 소개 / 02 요구사항 파트 (spec-001/002를 슬라이드 원고로 표현)
 - 스크린샷 캡처(실기기) 후 report-014 이미지 교체, QA6 실기기 실측 반영
+- 검토 피드백 반영 후 최종 PPT 조립
 
 > 보존 문서 = `archive/` (사유표 = `archive/README.md`).

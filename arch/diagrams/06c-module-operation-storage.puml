@@ -35,7 +35,7 @@ E4 .. CORE : Nano 준비 상태
 
 legend right
 |= 색 |= 성격 |
-|<#E1BEE7>| 운영 서비스 (UI/인프라/HITL·HOTL) |
+|<#E1BEE7>| 운영 서비스 (UI/인프라/HITL/HOTL) |
 |<#CFD8DC>| 저장 (Data Lake / Artifact / Registry) |
 |<#BBDEFB>| 추론/설명/분석 (다른 모듈) |
 endlegend

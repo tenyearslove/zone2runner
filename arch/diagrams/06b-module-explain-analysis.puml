@@ -11,7 +11,7 @@ database "저장 (모듈 E)\nSessionStore(세션 이력) / LearnedZone" as STORE
 
 package "설명 서비스 (Explanation Service)" {
   component "B1. 설명 생성기\nSessionExplainer + PersonalizationExplainer\n규칙 팩트 우선 저장 → LLM 자연어 풀이(사실 불변)\n세션 종료 1회 생성/저장(재열람 = 재호출 없음)" <<설명 서비스>> as B1 #C8E6C9
-  component "B2-1. LLM 호출 프로비넌스\nLlmCallLog + CoachEvidence\n근거 관측/프롬프트/경로(채택·기각·폴백)/지연 기록\n→ 리포트 문장 터치 추적 + LLM 사용 카드(HOTL 감사)" <<ML Metadata: provenance>> as B21 #C8E6C9
+  component "B2-1. LLM 호출 프로비넌스\nLlmCallLog + CoachEvidence\n근거 관측/프롬프트/경로(채택/기각/폴백)/지연 기록\n→ 리포트 문장 터치 추적 + LLM 사용 카드(HOTL 감사)" <<ML Metadata: provenance>> as B21 #C8E6C9
   note right of B21
     B2. 값 출처 규율(종류 A/B/C)
     모든 수치가 자기 출처를 가짐
@@ -22,7 +22,7 @@ package "설명 서비스 (Explanation Service)" {
 
 package "분석 서비스 (Analysis Service)" {
   component "C1. 세션 내 분석기\nSessionAnalytics (순수 함수)\nkm 구간 splits(경사보정) / 경사 분해\n워밍업 품질 / 초과 원인 / 내리막 습관" <<분석 서비스>> as C1 #C8E6C9
-  component "C2. 세션 간 비교/추세\nSessionCompare + SessionTrends\n직전 대비 향상·악화 / 스파크라인\n개인 기록(PR) / 컨디션 / 기간 요약" <<분석 서비스: 모니터링>> as C2 #C8E6C9
+  component "C2. 세션 간 비교/추세\nSessionCompare + SessionTrends\n직전 대비 향상/악화 / 스파크라인\n개인 기록(PR) / 컨디션 / 기간 요약" <<분석 서비스: 모니터링>> as C2 #C8E6C9
   component "C3. 세션 로거\nRunLogger (서빙 로그)\n이벤트/신호/코칭 경로 기록" <<서빙 로그>> as C3 #CFD8DC
 }
 
