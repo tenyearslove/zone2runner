@@ -11,10 +11,10 @@
 
 **(그림: `arch/diagrams/06-final-architecture.png`)**
 
-**읽는 법**: 시스템 전체를 강의 AI System 아키텍처의 표준 컴포넌트로 묶은 거시 뷰다. 색이 곧 강의 표준 매핑이고, 각 블록이 다음 페이지의 모듈 상세 한 장씩에 대응한다.
+**읽는 법**: 시스템 전체를 강의 AI System 아키텍처의 표준 컴포넌트로 묶은 거시 뷰다. 블록의 색은 강의 표준 컴포넌트와의 대응을 나타내고, 각 블록은 다음 페이지의 모듈 상세 한 장씩에 대응한다.
 
 - **AI Operation Subsystem** (실제로 돌아가며 사용자를 상대하는 부분)
-  - **추론 서비스(모듈 A)**: 입력 가드레일 → 특징 준비 → 존 판정(규칙) + 개인 경계(베이지안) + 관측 분석(통계) → LLM 코칭 표현 → 출력 가드레일 3종 + 안전. 오케스트레이터(RunEngine)가 매초 이 순서를 구동한다.
+  - **추론 서비스(모듈 A)**: 입력 가드레일과 특징 준비를 거친 신호를 규칙 존 판정, 베이지안 개인 경계, 통계 관측 분석이 받아 판단을 만들고, LLM이 문장으로 표현한 뒤 출력 가드레일 3종과 안전 확인을 통과한다. 오케스트레이터(RunEngine)가 매초 이 순서를 구동한다.
   - **설명 서비스(모듈 B)**: 판단에 실제로 쓴 사실로 세션 스토리/개인화 설명을 만들고, 모든 LLM 호출의 근거/프롬프트/경로를 기록한다(프로비넌스).
   - **분석 서비스(모듈 C)**: 세션 안(구간/경사/워밍업)과 세션 사이(비교/추세/기록)를 분석해 리포트 카드를 만든다.
   - **운영 서비스(모듈 D)**: 화면/음성 UI와 폰-워치 인프라, 그리고 사람의 개입 통로 — 루프 안(말하기 테스트)과 루프 위(설정/감사).
@@ -69,7 +69,7 @@
 | Appendix 페이지 | 도식 | 요지 |
 |---|---|---|
 | Use Case | `arch/diagrams/05-usecase.png` | 러너의 사용 사례 10종 + 개발/검증자의 시뮬 실행. 러닝 중 말하기 테스트가 코칭 흐름에 포함(include)되고, 리포트에서 설명/근거 열람으로 확장(extend) |
-| Context View | `arch/diagrams/01-context.png` | 시스템 경계: 외부 = Health Services/GPS/Gemini Nano(AICore)/Open-Meteo. LLM 왕복에 "가드 3종 통과 시 채택" 명시, 모델 다운로드 경로와 시뮬 입력(검증용) 포함 |
+| Context View | `arch/diagrams/01-context.png` | 시스템 경계: 외부 5종 = Health Services/GPS/Gemini Nano(AICore)/Open-Meteo/OSM 지도 타일 서버. LLM 왕복에 "가드 3종 통과 시 채택" 명시, 모델 다운로드 경로와 시뮬 입력(검증용) 포함 |
 | Module View | `arch/diagrams/04-module-view.png` | 코드 패키지 의존: domain이 리프(의존 0), 결정 로직(pipeline/coaching/analysis)이 안드로이드 미의존 순수 모듈 → 단위 테스트 152개가 기기 없이 실행. sim은 sensor의 RunSource 인터페이스를 구현(DIP) |
 | C&C View | `arch/diagrams/02-component-cnc.png`(상세) / `02b-component-cnc-simple.png`(축약) | 실행 시 컴포넌트와 커넥터 — DP1~DP5의 채택안 도식이 바로 이 뷰 |
 | Deployment View | `arch/diagrams/03-deployment.png` | 워치(측정/표시 + 포그라운드 서비스) ↔ 폰(판정/분석/개인화/코칭 + 저장 5종, 전체 경로 7종) ↔ AICore(별도 프로세스, 계측 한계 명시) ↔ Open-Meteo(기온 1회) |
