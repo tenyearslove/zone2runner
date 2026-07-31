@@ -1,0 +1,42 @@
+@startuml
+title 최종 Architecture 모듈 D+E — 운영 서비스 + 저장 (Data Lake / Registry 대응)
+skinparam defaultFontName "Malgun Gothic"
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam linetype ortho
+
+actor "사용자 (러너)" as User
+component "추론/설명/분석 (모듈 A/B/C)" as CORE #BBDEFB
+
+package "운영 서비스 (Operation Service)" {
+  component "D1. 대시보드/리포트 UI\n폰: 홈/러닝 대시보드/리포트/이력/프로필/설정\n워치: 존 게이지/러닝 화면\n지표 ⓘ 설명 팝업 + 코칭 프로비넌스 팝업" <<Operation UI>> as D1 #E1BEE7
+  component "D2. 인프라/세션 제어\nRunControlService(포그라운드)\nRunLink/RunBus(폰-워치 데이터 계층)\nHR/존/토크/미러 동기화" <<Infrastructure Control>> as D2 #E1BEE7
+  component "D3. HITL / HOTL 제어\nHITL: 말하기 테스트(워치 3칩/폰 팝업) → 경계 교정\nHOTL: 코칭 빈도/음성/말투/더위/관절 설정\n+ 일시정지/종료 + LLM 사용 감사" <<HITL / HOTL Control>> as D3 #E1BEE7
+}
+
+package "저장 (Data Lake / Registry 대응)" {
+  database "E1. 학습값 저장\nLearnedZone (Model Artifact)\n경계 μ/σ 이력 / 드리프트 플로어\n오르막 경향 / 개인화 설명" as E1 #CFD8DC
+  database "E2. 세션 저장\nSessionStore (Data Lake)\n리포트/시계열/분석 라인\n스토리/LLM 호출 기록" as E2 #CFD8DC
+  database "E3. 프로필/설정 저장\nProfileStore + Profiles + AppSettings\n다중 프로필 네임스페이스" as E3 #CFD8DC
+  component "E4. 공유 레지스트리 대응\n개인 파라미터(LearnedZone)\n+ Nano 모델(AICore, 시스템 제공)\n+ APK(폰/워치) - 경량" <<Model / Container Registry>> as E4 #CFD8DC
+}
+
+User ..> D1
+User ..> D3 : 말하기 테스트 답\n설정 조정
+CORE --> D1 : LiveState / 리포트 / 설명
+D3 ..> CORE : HITL 라벨 / HOTL 설정
+D2 <..> D1 : 세션 수명
+CORE --> E2 : RunReport 저장
+CORE <-- E1 : 다음 세션 prior
+CORE <-- E3 : 프로필/설정
+E4 .. E1
+E4 .. CORE : Nano 준비 상태
+
+legend right
+|= 색 |= 성격 |
+|<#E1BEE7>| 운영 서비스 (UI/인프라/HITL·HOTL) |
+|<#CFD8DC>| 저장 (Data Lake / Artifact / Registry) |
+|<#BBDEFB>| 추론/설명/분석 (다른 모듈) |
+endlegend
+@enduml

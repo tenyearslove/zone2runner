@@ -1,27 +1,36 @@
 @startuml
 title Zone2Runner — 배포 (Deployment)
-skinparam defaultFontName "AppleGothic"
+skinparam defaultFontName "Malgun Gothic"
 skinparam shadowing false
 
 node "Galaxy Watch (Wear OS)" as WatchNode {
-  component "Wear 앱\n측정 / 존 게이지 / 토크 UI" as WearApp
+  component "Wear 앱 UI\n표시(폰 확정 존 렌더)\n토크테스트 3지선다" as WearApp
+  component "RunService\n(포그라운드 - 화면 꺼져도 측정)\n+ RunControlService(원격 제어)" as WearSvc
   component "Health Services\n심박 / 케이던스 센서" as HS
 }
 
 node "폰 (Android)" as PhoneNode {
-  component "Zone2Runner 앱\n추론 / 분석 / 코칭 / 설명" as PhoneApp
-  database "온디바이스 저장\nSessionStore / LearnedZone / ProfileStore" as Store
+  component "Zone2Runner 앱\n판정(규칙) / 관측 분석 / 개인화(Bayesian)\n코칭·설명(LLM + 가드 3종)" as PhoneApp
+  component "RunControlService\n(워치발 원격 시작/정지,\n풀스크린 알림 폴백)" as PhoneSvc
+  database "온디바이스 저장\nSessionStore(세션+llmCalls 프로비넌스)\nLearnedZone / ProfileStore·Profiles\nSettingsStore / RunLogger(JSONL)" as Store
 }
 
-node "AICore (시스템 서비스)" as AICore {
-  component "Gemini Nano\nML Kit GenAI" as NanoModel
+node "AICore (별도 시스템 프로세스)" as AICore {
+  component "Gemini Nano\nML Kit GenAI 기능 2종\n(문장 생성 / 요약)" as NanoModel
 }
 
 cloud "Open-Meteo API" as WeatherCloud
 
-HS --> WearApp
-WearApp <--> PhoneApp : Wearable Data Layer\n(/hr, /run, /talk)
+HS --> WearSvc
+WearSvc --> WearApp
+WearSvc <--> PhoneApp : Wearable Data Layer\n워치→폰: /hr, /spm, /talk/<state>\n폰→워치: /run/start·stop·mirror·live·talk
+PhoneSvc ..> PhoneApp : 원격 시작(알림 경유)
 PhoneApp --> Store
-PhoneApp --> NanoModel : ML Kit GenAI (온디바이스)
-PhoneApp --> WeatherCloud : HTTPS (기온, 1회)
+PhoneApp --> NanoModel : 문장 생성/요약 요청\n(AVAILABLE일 때만)
+PhoneApp --> NanoModel : 상태 조회 / 모델 다운로드\n(진행률, 세션 밖에서만)
+PhoneApp --> WeatherCloud : HTTPS (기온, 세션당 1회)
+note bottom of AICore
+  별도 프로세스라 앱에서 CPU/메모리 계측 불가
+  → 앱은 호출 지연/경로/앱 PSS만 정직하게 기록
+end note
 @enduml

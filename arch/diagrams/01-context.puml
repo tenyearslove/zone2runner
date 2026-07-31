@@ -1,26 +1,29 @@
 @startuml
 title Zone2Runner — 시스템 컨텍스트 (Context)
-skinparam defaultFontName "AppleGothic"
+skinparam defaultFontName "Malgun Gothic"
 skinparam componentStyle rectangle
 skinparam shadowing false
 left to right direction
 
 actor "러너 (사용자)" as User
+actor "개발자/검증자\n(시뮬 입력)" as Dev #line.dashed
 
-rectangle "**Zone2Runner**\n폰 앱 + 워치 앱" as SYS #dbe9ff
+rectangle "**Zone2Runner**\n폰 앱(판정/분석/개인화/코칭 주체)\n+ 워치 앱(측정/표시)" as SYS #dbe9ff
 
 package "외부 시스템 / 센서" {
-  component "Galaxy Watch 센서\nHealth Services (심박/케이던스)" as Watch
+  component "Health Services (워치)\n심박 / 케이던스 센서 API" as HS
   component "폰 GPS\n(속도/고도/위치)" as GPS
-  component "Gemini Nano / AICore\n(온디바이스 LLM)" as Nano
-  component "Open-Meteo\n(날씨 API: 기온)" as Weather
+  component "Gemini Nano / AICore\n(온디바이스 LLM, 별도 프로세스)" as Nano
+  component "Open-Meteo\n(날씨 API: 기온 참고)" as Weather
 }
 
-User --> SYS : 말하기 테스트 응답 / 설정
-SYS --> User : 실시간 코칭 / 리포트 / 설명
-Watch --> SYS : 심박, 케이던스 (Data Layer)
+User --> SYS : 말하기 테스트 응답(HITL)\n설정/일시정지(HOTL)
+SYS --> User : 실시간 존/코칭(음성)\n리포트 / 설명 / 생성 근거(프로비넌스)
+HS --> SYS : 심박, 케이던스
 GPS --> SYS : 위치/속도/고도
-SYS --> Nano : 사실 → 문장 생성 요청 (ML Kit GenAI)
-Nano --> SYS : 코칭 문장 / 요약
+SYS --> Nano : 규칙이 확정한 사실 + 임무\n(문장 생성 요청, ML Kit GenAI)
+Nano --> SYS : 코칭 문장/요약\n(가드 3종 통과 시 채택, 아니면 단어 폴백)
+SYS --> Nano : 기능 모델 상태 조회 /\n다운로드(진행률, 세션 밖에서만)
 Weather --> SYS : 기온 (참고)
+Dev ..> SYS : 시뮬 입력(가상 러너/수동)\nRunSource 교체 - 검증용
 @enduml

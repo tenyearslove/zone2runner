@@ -1,0 +1,68 @@
+@startuml
+title 최종 Architecture (Module View) — 코드 패키지 의존 구조
+skinparam defaultFontName "Malgun Gothic"
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam linetype ortho
+
+package "app (폰, com.zone2runner.app - 65파일 9패키지)" {
+  component "(root) UI 진입\nHome/Run/Report/History\nProfile/Settings Activity\n+ RunControlService/RunLink" as ROOT #E1BEE7
+  component "ui\n커스텀 뷰(게이지/차트/스파크라인)\n+ 공용 팔레트" as UI #E1BEE7
+  component "pipeline\nRunEngine(오케스트레이터)\nZoneJudge/Personalization\nOutlierGuard/SafetyGuard\nFeatureExtractor/CoachCadence" as PIPE #BBDEFB
+  component "coaching\nRuleCoach/LlmCoach/CoachPrompt\nDirectionGuard/NumberGuard\nLlmCallLog/NanoModelManager\nSession·PersonalizationExplainer" as COACH #BBDEFB
+  component "analysis\nAnalysisEngine + 5지표\nLinearRegression/NoiseFloor\nSessionAnalytics" as ANA #BBDEFB
+  component "sensor\nRunSource(인터페이스)\nLive/Simulated 소스\nWatchHrProvider/SlopeEstimator" as SENSOR #E1F5FE
+  component "sim\nRunSimulator/VirtualRunner 소스\nManual/RouteWalk\n(RunSource 구현)" as SIM #FFAB91
+  component "data\nSessionStore/LearnedZone\nProfileStore/AppSettings\nRunLogger/WeatherProbe" as DATA #CFD8DC
+  component "domain\n순수 모델(리프)\nProfile/Sample/RunReport\nZone2Prior/DisplayZone\nSessionCompare/Trends/VirtualRunner" as DOM #C8E6C9
+}
+
+package "wear (워치, com.zone2runner.wear - 9파일 1패키지)" {
+  component "뷰\nWearRunActivity(게이지)\nTalkTestActivity(3지선다)" as WVIEW #E1BEE7
+  component "서비스\nRunService(포그라운드 측정)\nRunControlService(원격 제어)" as WSVC #BBDEFB
+  component "링크/공유\nRunLink·HrForwarder(경로)\nRunBus(공유 상태)/HrZone" as WLINK #E1F5FE
+}
+
+ROOT --> PIPE
+ROOT --> COACH
+ROOT --> ANA
+ROOT --> SENSOR
+ROOT --> SIM
+ROOT --> DATA
+ROOT --> DOM
+ROOT --> UI
+UI --> DOM
+PIPE --> ANA
+PIPE --> COACH
+PIPE --> DOM
+ANA --> DOM
+COACH --> DOM
+DATA --> DOM
+DATA ..> PIPE : 약한 의존\n(설정→코칭 빈도)
+SENSOR --> DOM
+SIM --> SENSOR : RunSource 구현
+SIM --> DOM
+SIM ..> PIPE : TalkState
+
+WVIEW --> WSVC
+WVIEW --> WLINK
+WSVC --> WLINK
+ROOT <..> WSVC : Wearable Data Layer\n(프로세스 간 - 코드 의존 아님)
+
+note bottom of DOM
+  domain = 리프(의존 없음, 안드로이드 미의존)
+  pipeline/coaching/analysis/domain/sim이
+  순수 JVM 모듈 → 단위 테스트 152개가 기기 없이 실행
+end note
+
+legend right
+|= 색 |= 성격 |
+|<#E1BEE7>| UI / 진입 계층 |
+|<#BBDEFB>| 결정 로직 (판정/코칭/분석) |
+|<#C8E6C9>| 순수 도메인 (리프) |
+|<#E1F5FE>| 입력 추상화 / 링크 |
+|<#FFAB91>| 시뮬 (검증 도구) |
+|<#CFD8DC>| 영속 (저장) |
+endlegend
+@enduml

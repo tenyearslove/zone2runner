@@ -1,0 +1,54 @@
+@startuml
+title 최종 Architecture 모듈 A — 추론 서비스 (Inference Service)
+skinparam defaultFontName "Malgun Gothic"
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam linetype ortho
+
+component "워치 HR/케이던스 + 폰 GPS" as Sensors #FFF9C4
+component "Gemini Nano (AICore)" as Nano #FFF9C4
+
+package "추론 서비스 (Inference Service)" {
+  component "A1. 신호 소스\nRunSource (DIP 경계)\n실센서/시뮬 교체 지점\n→ 1Hz 통합 Sample" as A1 #E1F5FE
+  component "A2. 입력 가드레일\nOutlierGuard\n생리범위(40~220) 기각\n신선도(15초) 초과 무효" <<입력 가드레일>> as A2 #FFE0B2
+  component "A3. 특징 준비\nFeatureExtractor + SignalWindow\n지속심박(60초) / 추세 / 신호창\n(경량 Feature Store)" as A3 #E1F5FE
+  component "A4. 존 판정기\nZoneJudge / DisplayZoneJudge\n규칙 비교 + 히스테리시스\n(결정론 - 판정이 곧 설명)" <<모델 서빙: 규칙>> as A4 #BBDEFB
+  component "A5. 개인 경계 추정기\nPersonalization + Zone2Prior\n베이지안 μ/σ (콜드스타트 prior\n+ 말하기 테스트 라벨 갱신)" <<모델 서빙: 개인 적응>> as A5 #BBDEFB
+  component "A6. 관측 분석 엔진\nAnalysisEngine + 5지표 + NoiseFloor\n드리프트/GAP/케이던스σ/서브맥스/HRR\n(지표 레지스트리 = OCP, k·σ 판단선)" <<모델 서빙: 분석>> as A6 #BBDEFB
+  component "A7. 코칭 표현기\nLlmCoach 직생성 + CoachPrompt\n+ RuleCoach 단어 폴백 + NanoSummarizer\n(규칙이 방향/사실 확정, LLM은 문장만)" <<모델 서빙: 온디바이스 LLM>> as A7 #BBDEFB
+  component "A8. 출력 가드레일\n형식 가드 + DirectionGuard\n+ NumberGuard(숫자 무결성)\n+ SafetyGuard(LLM 미경유)" <<출력 가드레일>> as A8 #FFE0B2
+  component "A9. 오케스트레이터\nRunEngine (Inference Control)\n매 틱 구동 + 누적 지표 + 리포트 생성" <<Inference Control>> as A9 #E1BEE7
+
+  A1 --> A2
+  A2 --> A3
+  A3 --> A4
+  A3 --> A6
+  A5 ..> A4 : 경계 μ
+  A4 --> A7 : 판정/방향
+  A6 --> A7 : 분석 사실
+  A7 --> A8
+  A9 ..> A1
+  A9 ..> A4
+  A9 ..> A6
+  A9 ..> A7
+}
+
+component "A7-1. 모델 준비 관리자\nNanoModelManager\n상태 확인/다운로드(세션 밖)" as A71 #FFAB91
+
+Sensors --> A1
+Nano ..> A7 : 문장 생성(표현만)
+A71 ..> A7 : AVAILABLE 확인
+A8 --> [운영 서비스 (모듈 D)] : 통과 문장 / 단어 폴백 / 안전 경고
+A5 <.. [운영 서비스 (모듈 D)] : HITL 라벨(말하기 테스트)
+
+legend right
+|= 색 |= 성격 |
+|<#FFE0B2>| 가드레일 (입출력 통제) |
+|<#E1F5FE>| 데이터 수집/준비 |
+|<#BBDEFB>| 모델 서빙 (규칙/베이지안/분석/LLM) |
+|<#E1BEE7>| 추론 제어 |
+|<#FFAB91>| 모델 준비 (Registry 인접) |
+|<#FFF9C4>| 외부 |
+endlegend
+@enduml

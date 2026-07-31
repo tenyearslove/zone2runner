@@ -1,0 +1,40 @@
+@startuml
+title Use Case — Zone2Runner
+skinparam defaultFontName "Malgun Gothic"
+skinparam shadowing false
+skinparam usecaseBackgroundColor #EAF1F9
+skinparam actorStyle awesome
+left to right direction
+
+actor "러너 (사용자)" as Runner
+actor "개발자/검증자" as Dev
+
+rectangle "Zone2Runner (폰 + 워치)" {
+  usecase "프로필 등록/수정\n(나이/안정심박/신체/관절 주의)" as UC1
+  usecase "러닝 세션 시작/일시정지/종료\n(폰 또는 워치에서)" as UC2
+  usecase "실시간 존 확인\n(폰 대시보드 / 워치 게이지)" as UC3
+  usecase "음성 코칭 수신\n(존 이탈/워밍업/더위/관절 등)" as UC4
+  usecase "말하기 테스트 응답\n(편함/보통/벅참 → 경계 정정)" as UC5
+  usecase "세션 리포트 열람\n(구간/추세/기록 카드 + 러닝 이야기)" as UC6
+  usecase "지표 설명 보기\n(ⓘ 팝업 + 코칭 문장 근거 추적)" as UC7
+  usecase "코칭 방식 조정\n(빈도/음성/말투/더위/관절 토글)" as UC8
+  usecase "AI 모델 준비\n(Nano 다운로드/상태 확인)" as UC9
+  usecase "이력/추세 확인\n(세션 목록 + 기간 요약)" as UC10
+  usecase "시뮬 세션 실행\n(가상 러너/수동 조작 검증)" as UC11
+}
+
+Runner --> UC1
+Runner --> UC2
+Runner --> UC3
+Runner --> UC4
+Runner --> UC5
+Runner --> UC6
+Runner --> UC7
+Runner --> UC8
+Runner --> UC9
+Runner --> UC10
+Dev --> UC11
+UC4 ..> UC5 : 세션 중 주기 질문 <<include>>
+UC6 ..> UC7 : 카드에서 진입 <<extend>>
+UC2 ..> UC9 : 모델 미준비 시 안내 <<extend>>
+@enduml
