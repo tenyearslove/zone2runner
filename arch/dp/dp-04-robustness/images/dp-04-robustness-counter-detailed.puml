@@ -1,0 +1,46 @@
+@startuml
+title 즉시 반응 판정 아키텍처 (상세)
+skinparam defaultFontName "Malgun Gothic"
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam linetype ortho
+
+actor "사용자" as User
+component "센서\nHR / GPS / 케이던스\n(스파이크/튐/두절 포함)" as Sensors #FFF9C4
+
+package "AI Operation Subsystem" {
+  component "이동평균 평활기\n최근 N초 평균\nN = 전역 고정(모든 사용자 동일)\n범위/유효기간 검사 없음" as MA #E1F5FE
+  component "마지막 값 유지기\n두절 시 직전 값 재사용\n(유효기간 판단 없음)" as HOLD #E1F5FE
+  component "순간값 존 판정기\n평활값 vs 경계 즉시 비교\n문턱 1개 (히스테리시스 없음)" <<모델 서빙>> as JUDGE #BBDEFB
+  component "코칭 트리거\n판정 변화 = 즉시 지시\n표시와 지시가 같은 값 공유" as COACH #BBDEFB
+  component "표시 갱신기\n존 게이지/그래프" as DISP #BBDEFB
+  component "운영 서비스\nOperation UI + TTS" as OPS #E1BEE7
+  MA --> JUDGE
+  HOLD ..> MA : 두절 시 대체
+  JUDGE --> COACH
+  JUDGE --> DISP
+  COACH --> OPS : 행동 지시
+  DISP --> OPS : 존 표시
+}
+
+Sensors --> MA
+User ..> OPS
+note right of MA
+  창 N의 상충:
+  길면 스파이크 억제 but 둔감
+  짧으면 반응 빠름 but 스파이크 통과
+end note
+note right of JUDGE
+  경계 근처 깜빡임(번복) 억제 장치 없음
+  개인 노이즈 차이 대응 없음(전역 N)
+end note
+
+legend right
+|= 색 |= 컴포넌트 성격 |
+|<#E1F5FE>| 데이터 준비 (평활/유지) |
+|<#BBDEFB>| 모델 서빙 (순간값 판정/직결) |
+|<#E1BEE7>| 운영 서비스 |
+|<#FFF9C4>| 외부 (센서) |
+endlegend
+@enduml

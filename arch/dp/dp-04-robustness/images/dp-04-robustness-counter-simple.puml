@@ -1,0 +1,42 @@
+@startuml
+title 즉시 반응 판정 아키텍처
+skinparam defaultFontName "Malgun Gothic"
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam linetype ortho
+
+actor "사용자" as User
+component "센서\nHR / GPS / 케이던스\n(스파이크/튐/두절 포함)" as Sensors #FFF9C4
+
+package "AI Operation Subsystem" {
+  component "이동평균 평활기\n최근 N초 평균 (유일한 방어층)\n범위/유효기간 검사 없음" as MA #E1F5FE
+  component "순간값 존 판정기\n평활값 vs 경계 즉시 비교\n(문턱 1개 - 히스테리시스 없음)" <<모델 서빙>> as JUDGE #BBDEFB
+  component "코칭 트리거 (판정 직결)\n판정 변화 = 즉시 지시\n(지속 조건 없음)" as COACH #BBDEFB
+  component "운영 서비스\nOperation UI + TTS" as OPS #E1BEE7
+  MA --> JUDGE
+  JUDGE --> COACH
+  JUDGE --> OPS : 존 표시
+  COACH --> OPS : 행동 지시
+}
+
+Sensors --> MA
+User ..> OPS
+note right of JUDGE
+  경계 근처 = 판정 번복(깜빡임)
+  평활이 놓친 스파이크 =
+  표시/지시로 직행
+end note
+note right of MA
+  두절 시 마지막 값 유지
+  (낡은 값 판정 지속)
+end note
+
+legend right
+|= 색 |= 컴포넌트 성격 |
+|<#E1F5FE>| 데이터 준비 (평활 1층) |
+|<#BBDEFB>| 모델 서빙 (순간값 판정/직결) |
+|<#E1BEE7>| 운영 서비스 |
+|<#FFF9C4>| 외부 (센서) |
+endlegend
+@enduml
