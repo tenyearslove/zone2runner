@@ -53,7 +53,7 @@ ROOT <..> WSVC : Wearable Data Layer\n(프로세스 간 - 코드 의존 아님)
 note bottom of DOM
   domain = 리프(의존 없음, 안드로이드 미의존)
   pipeline/coaching/analysis/domain/sim이
-  순수 JVM 모듈 → 단위 테스트 152개가 기기 없이 실행
+  순수 JVM 모듈 → 단위 테스트 153개가 기기 없이 실행
 end note
 
 legend right

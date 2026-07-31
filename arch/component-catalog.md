@@ -122,7 +122,7 @@
 
 ### D2. 인프라/세션 제어 (RunService + RunControlService + RunLink/RunBus)
 - **표준 매핑**: Infrastructure Control
-- **책임**: 포그라운드 서비스로 화면이 꺼져도 측정/코칭 지속, 폰-워치 원격 제어와 데이터 계층 통신(HR/존/토크/미러). 세션 수명/기기 간 동기화 관리.
+- **책임**: 포그라운드 서비스로 화면이 꺼져도 측정/코칭 지속, 폰-워치 원격 제어와 데이터 계층 통신(HR/존/말하기 테스트/미러). 세션 수명/기기 간 동기화 관리.
 - **입력→출력**: 시작/종료 명령 + 기기 간 메시지 → 서비스 수명/전송
 - **구현**: `RunControlService.kt`, `RunLink.kt`, wear `RunService.kt`/`RunControlService.kt`/`RunLink.kt`/`RunBus.kt`/`HrForwarder.kt`
 
@@ -130,7 +130,7 @@
 - **표준 매핑**: HITL / HOTL Control triggering
 - **책임**: 사람이 루프 안에서 라벨을 넣거나(HITL = 말하기 테스트 응답 → 경계 교정) 루프 위에서 감독/개입(HOTL = 코칭 무시, 코칭 빈도/음성 설정, 안전 상황에서 규칙이 대신 개입).
 - **입력→출력**: 사용자 응답/설정 → 개인화 라벨 / 코칭 통제
-- **구현**: `TalkTestActivity.kt`(워치), `RunActivity` 토크 팝업, `data/AppSettings.kt`, `SettingsActivity.kt`
+- **구현**: `TalkTestActivity.kt`(워치), `RunActivity` 말하기 테스트 팝업, `data/AppSettings.kt`, `SettingsActivity.kt`
 
 ---
 

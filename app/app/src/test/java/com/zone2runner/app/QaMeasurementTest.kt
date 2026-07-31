@@ -80,6 +80,58 @@ class QaMeasurementTest {
         assertTrue("한도: 세션당 이동 10bpm 이하", maxSessionMove <= 10.0)
     }
 
+    /**
+     * QA2 스윕 — 참임계 5종 × 시드 3종(단일 사례 일반화 방지) + 오답 라벨 10% 주입(주관 라벨 오류 내성).
+     * 심사 방어: "안착 1세션이 표본 배치의 산물 아닌가"에 분포로 답한다.
+     */
+    @Test fun qa2_sweep_and_wrongLabelInjection() {
+        val profile = Profile.default(35, 58)
+        fun runSessions(trueUpper: Double, seed: Long, flipProb: Double): Pair<Int, Double> {
+            val rnd = Random(seed)
+            var carry: Double? = null
+            var settle = -1
+            var lastErr = 0.0
+            repeat(8) { session ->
+                val p = Personalization(profile, carry)
+                for (off in listOf(-10, -4, 0, 4, 8)) {
+                    val hr = (trueUpper + off + rnd.nextGaussian() * 1.5).toInt()
+                    var state = when {
+                        hr < trueUpper - 4 -> TalkState.COMFORTABLE
+                        hr > trueUpper + 4 -> TalkState.HARD
+                        else -> TalkState.BORDERLINE
+                    }
+                    if (rnd.nextDouble() < flipProb) { // 오답: 정반대 느낌으로 응답
+                        state = if (state == TalkState.HARD) TalkState.COMFORTABLE else TalkState.HARD
+                    }
+                    p.observeTalkTest(hr, state)
+                }
+                lastErr = abs(p.muUpper - trueUpper)
+                if (settle < 0 && lastErr <= 3.0) settle = session + 1
+                carry = (p.muUpper - profile.restingHr) / profile.hrr
+            }
+            return Pair(if (settle < 0) 9 else settle, lastErr)
+        }
+        // (a) 참임계 135~147 × 시드 3종, 오답 없음
+        val settles = mutableListOf<Int>()
+        val finals = mutableListOf<Double>()
+        for (t in listOf(135.0, 138.0, 141.0, 144.0, 147.0)) for (s in listOf(42L, 7L, 13L)) {
+            val (st, fe) = runSessions(t, s, 0.0)
+            settles += st; finals += fe
+        }
+        val settleSorted = settles.sorted()
+        // (b) 기준 사례(141/시드42)에 오답 라벨 10% 주입
+        val (_, wrongFinal) = runSessions(141.0, 42L, 0.10)
+        record("qa2-sweep", listOf(
+            "참임계 135~147bpm(5종) x 시드 3종 = 15케이스, 오답 없음:",
+            "  안착(오차≤3bpm) 세션 = 중앙값 ${settleSorted[settleSorted.size / 2]}, 범위 ${settleSorted.first()}~${settleSorted.last()}",
+            "  8세션 후 최종 오차 = %.2f ~ %.2f bpm".format(finals.min(), finals.max()),
+            "오답 라벨 10%% 주입(참임계 141, 시드 42): 최종 오차 %.2f bpm (한도/확신 폭이 피해 제한)".format(wrongFinal)
+        ))
+        assertTrue("전 케이스 3세션 내 안착 (실측 최대 ${settleSorted.last()})", settleSorted.last() <= 3)
+        assertTrue("전 케이스 최종 오차 3bpm 이하 (실측 최대 ${"%.2f".format(finals.max())})", finals.max() <= 3.0)
+        assertTrue("오답 10% 주입에도 최종 오차 5bpm 이하 (실측 ${"%.2f".format(wrongFinal)})", wrongFinal <= 5.0)
+    }
+
     /** QA4 강건성 — 생리범위 밖 이상치 기각율 100% + 정상값 오탐 0. */
     @Test fun qa4_outlierRejection() {
         val rnd = Random(7)
@@ -90,34 +142,50 @@ class QaMeasurementTest {
         val rejectedValid = valid.count { !OutlierGuard.isValid(it) }
         record("qa4-outlier", listOf(
             "이상치 ${invalid.size}건 중 기각 ${rejectedInvalid}건 = 기각율 ${100 * rejectedInvalid / invalid.size}%",
-            "정상값 ${valid.size}건 중 오탐 기각 ${rejectedValid}건"
+            "정상값 ${valid.size}건 중 오탐 기각 ${rejectedValid}건",
+            "경계값 검사: 40/220 유효, 39/221 기각 (off-by-one 확인)",
+            "성격: 구조 보증의 회귀 확인 — 가드 제거/완화 실수를 잡는 테스트(통과 자체가 성능 주장 아님)"
         ))
         assertEquals("이상치 기각율 100%", invalid.size, rejectedInvalid)
         assertEquals("정상값 오탐 0", 0, rejectedValid)
+        // 경계값(off-by-one): 포함 경계는 유효, 바로 밖은 기각
+        assertTrue("경계 40 유효", OutlierGuard.isValid(40))
+        assertTrue("경계 220 유효", OutlierGuard.isValid(220))
+        assertTrue("39 기각", !OutlierGuard.isValid(39))
+        assertTrue("221 기각", !OutlierGuard.isValid(221))
     }
 
-    /** QA4 강건성 — 경계 근처 진동 입력에서 판정 번복(Flicker) 억제율. */
+    /**
+     * QA4 강건성 — 경계 근처 진동 입력에서 판정 번복(Flicker) 억제율.
+     * 신호 정의(정직): 경계값 + 정현 진폭 2bpm + 백색 노이즈 σ1.5bpm(표준편차 약 2bpm의 진동).
+     * 노이즈 크기는 설계 선택(종류 C) — 시드 5종 스윕으로 단일 시드 의존을 제거한다.
+     */
     @Test fun qa4_flickerSuppression_nearBoundary() {
         val lo = 132; val hi = 150; val maxHr = 190
-        val rnd = Random(3)
-        // 300초: 심박이 Z2/Z3 경계(hi=150) 주위 ±3bpm 안에서 진동(spec-002 QA4 "경계 근처 떨림")
-        val series = List(300) { t -> (hi + Math.sin(t / 5.0) * 2 + rnd.nextGaussian() * 1.5).toInt() }
-        var rawFlips = 0
-        var judgedFlips = 0
-        var lastRaw = DisplayZones.rawZone(series[0], lo, hi, maxHr)
-        val judge = DisplayZoneJudge()
-        var lastJudged = judge.judge(series[0], lo, hi, maxHr)
-        for (bpm in series.drop(1)) {
-            val raw = DisplayZones.rawZone(bpm, lo, hi, maxHr)
-            if (raw != lastRaw) rawFlips++
-            lastRaw = raw
-            val j = judge.judge(bpm, lo, hi, maxHr)
-            if (j != lastJudged) judgedFlips++
-            lastJudged = j
+        val suppressions = mutableListOf<Double>()
+        var firstRawFlips = 0; var firstJudgedFlips = 0
+        for (seed in listOf(3L, 7L, 11L, 21L, 42L)) {
+            val rnd = Random(seed)
+            val series = List(300) { t -> (hi + Math.sin(t / 5.0) * 2 + rnd.nextGaussian() * 1.5).toInt() }
+            var rawFlips = 0
+            var judgedFlips = 0
+            var lastRaw = DisplayZones.rawZone(series[0], lo, hi, maxHr)
+            val judge = DisplayZoneJudge()
+            var lastJudged = judge.judge(series[0], lo, hi, maxHr)
+            for (bpm in series.drop(1)) {
+                val raw = DisplayZones.rawZone(bpm, lo, hi, maxHr)
+                if (raw != lastRaw) rawFlips++
+                lastRaw = raw
+                val j = judge.judge(bpm, lo, hi, maxHr)
+                if (j != lastJudged) judgedFlips++
+                lastJudged = j
+            }
+            if (seed == 3L) { firstRawFlips = rawFlips; firstJudgedFlips = judgedFlips }
+            assertTrue("순간값 판정은 실제로 자주 번복(전제 성립, 20회 이상, 시드 $seed)", rawFlips >= 20)
+            suppressions += 100.0 * (rawFlips - judgedFlips) / rawFlips
         }
-        val suppression = 100.0 * (rawFlips - judgedFlips) / rawFlips
         // 반응 유지 확인: 진짜 존 이동(경계 훨씬 위로 점프)은 지연 없이 전환돼야 함
-        judge.reset()
+        val judge = DisplayZoneJudge()
         judge.judge(hi - 5, lo, hi, maxHr)
         val stepTicks = run {
             var ticks = 0
@@ -125,13 +193,13 @@ class QaMeasurementTest {
             ticks + 1
         }
         record("qa4-flicker", listOf(
-            "경계 ±3bpm 진동 300초: 순간값 판정 번복=${rawFlips}회, 히스테리시스 판정 번복=${judgedFlips}회",
-            "번복 억제율=%.1f%% (Flicker Rate %.3f→%.3f회/초)".format(
-                suppression, rawFlips / 300.0, judgedFlips / 300.0),
+            "경계 진동(정현 2bpm + 백색 σ1.5bpm) 300초, 시드 5종 스윕:",
+            "  대표(시드 3): 순간값 번복=${firstRawFlips}회, 히스테리시스 번복=${firstJudgedFlips}회 (%.3f→%.3f회/초)".format(
+                firstRawFlips / 300.0, firstJudgedFlips / 300.0),
+            "  번복 억제율 = %.1f%% ~ %.1f%% (5시드)".format(suppressions.min(), suppressions.max()),
             "반응 유지: 진짜 존 이동(+10bpm 점프)은 ${stepTicks}틱 만에 전환"
         ))
-        assertTrue("순간값 판정은 실제로 자주 번복(전제 성립, 20회 이상)", rawFlips >= 20)
-        assertTrue("히스테리시스가 번복 60% 이상 억제 (실측 ${"%.1f".format(suppression)}%)", suppression >= 60.0)
+        assertTrue("전 시드에서 번복 60% 이상 억제 (실측 최소 ${"%.1f".format(suppressions.min())}%)", suppressions.min() >= 60.0)
         assertTrue("진짜 이동은 2틱 이내 전환 (실측 ${stepTicks}틱)", stepTicks <= 2)
     }
 

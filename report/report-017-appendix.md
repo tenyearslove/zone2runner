@@ -58,7 +58,7 @@
 **(그림: `arch/diagrams/04-module-view.png`)**
 
 - 코드 정적 구조(패키지 의존): 폰 65파일 9패키지 + 워치 9파일 1패키지.
-- **읽는 포인트 3가지**: ① `domain`이 리프(의존 0, 안드로이드 미의존) — 순수 모델. ② 결정 로직(`pipeline`/`coaching`/`analysis`)이 전부 안드로이드 미의존 → **단위 테스트 152개가 기기 없이 실행**(테스트가능성의 구조적 근거). ③ `sim`이 `sensor`의 RunSource 인터페이스를 구현(의존성 역전) — 검증 입력이 운영과 같은 경로로 흐른다.
+- **읽는 포인트 3가지**: ① `domain`이 리프(의존 0, 안드로이드 미의존) — 순수 모델. ② 결정 로직(`pipeline`/`coaching`/`analysis`)이 전부 안드로이드 미의존 → **단위 테스트 153개가 기기 없이 실행**(테스트가능성의 구조적 근거). ③ `sim`이 `sensor`의 RunSource 인터페이스를 구현(의존성 역전) — 검증 입력이 운영과 같은 경로로 흐른다.
 - 워치는 뷰(Activity 2 + ZoneGaugeView)/서비스(측정/원격제어)/링크(경로/공유 상태) 3그룹 — 폰과는 코드 의존이 아니라 Wearable Data Layer(프로세스 간)로만 연결.
 
 ## §6. Appendix. 최종 Architecture (C&C View)

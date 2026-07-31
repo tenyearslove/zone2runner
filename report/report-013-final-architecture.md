@@ -70,7 +70,7 @@
 |---|---|---|
 | Use Case | `arch/diagrams/05-usecase.png` | 러너의 사용 사례 10종 + 개발/검증자의 시뮬 실행. 러닝 중 말하기 테스트가 코칭 흐름에 포함(include)되고, 리포트에서 설명/근거 열람으로 확장(extend) |
 | Context View | `arch/diagrams/01-context.png` | 시스템 경계: 외부 5종 = Health Services/GPS/Gemini Nano(AICore)/Open-Meteo/OSM 지도 타일 서버. LLM 왕복에 "가드 3종 통과 시 채택" 명시, 모델 다운로드 경로와 시뮬 입력(검증용) 포함 |
-| Module View | `arch/diagrams/04-module-view.png` | 코드 패키지 의존: domain이 리프(의존 0), 결정 로직(pipeline/coaching/analysis)이 안드로이드 미의존 순수 모듈 → 단위 테스트 152개가 기기 없이 실행. sim은 sensor의 RunSource 인터페이스를 구현(DIP) |
+| Module View | `arch/diagrams/04-module-view.png` | 코드 패키지 의존: domain이 리프(의존 0), 결정 로직(pipeline/coaching/analysis)이 안드로이드 미의존 순수 모듈 → 단위 테스트 153개가 기기 없이 실행. sim은 sensor의 RunSource 인터페이스를 구현(DIP) |
 | C&C View | `arch/diagrams/02-component-cnc.png`(상세) / `02b-component-cnc-simple.png`(축약) | 실행 시 컴포넌트와 커넥터 — DP1~DP5의 채택안 도식이 바로 이 뷰 |
 | Deployment View | `arch/diagrams/03-deployment.png` | 워치(측정/표시 + 포그라운드 서비스) ↔ 폰(판정/분석/개인화/코칭 + 저장 5종, 전체 경로 7종) ↔ AICore(별도 프로세스, 계측 한계 명시) ↔ Open-Meteo(기온 1회) |
 
