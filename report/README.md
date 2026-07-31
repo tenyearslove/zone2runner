@@ -12,7 +12,7 @@
 | 011 | `report-011-dp04-robustness-decision.md` | 03 설계 | DP4 강건성 (3장 + Appendix) |
 | 012 | `report-012-dp05-testability-decision.md` | 03 설계 | DP5 테스트가능성 (3장 + Appendix) |
 | 013 | `report-013-final-architecture.md` | 03 설계 | 최종 Architecture (거시 1장 + 모듈 4장 + 뷰 안내) |
-| 014 | `report-014-implementation.md` | 04 구현 | 화면 8종 기능 소개 + 스크린샷 자리 19장 지정 |
+| 014 | `report-014-implementation.md` | 04 구현 | 화면 8종 기능 소개 + 스크린샷 자리 20장 지정 |
 | 015 | `report-015-qa-verification.md` | 04 검증 | 품질속성 검증 표(실측) + QA별 지표 산출 근거/측정 기준 + 검증 결과 상세 |
 | 016 | `report-016-conclusion.md` | 05 결론 | 주요 성과 / 향후 계획 |
 | 017 | `report-017-appendix.md` | Appendix | 부록 조립 인덱스 + Use Case/Context/Module/C&C/Deployment 해설 |

@@ -23,7 +23,7 @@ cloud "Open-Meteo API" as WeatherCloud
 
 HS --> WearSvc
 WearSvc --> WearApp
-WearSvc <--> PhoneApp : Wearable Data Layer\n워치→폰: /hr, /spm, /talk/<state>\n폰→워치: /run/start, stop, mirror, live, talk
+WearSvc <--> PhoneApp : Wearable Data Layer\n워치→폰: /hr, /spm, /talk/<state>\n폰→워치: /run/start, stop, mirror,\nmirrorhr, live, talk, talkdone
 PhoneSvc ..> PhoneApp : 원격 시작(알림 경유)
 PhoneApp --> Store
 PhoneApp --> NanoModel : 문장 생성/요약 요청\n(AVAILABLE일 때만)

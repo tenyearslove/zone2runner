@@ -1,6 +1,6 @@
 @startuml
 title 규칙/통계 기반 개인화 아키텍처 — C&C 상세
-skinparam defaultFontName "AppleGothic"
+skinparam defaultFontName "Malgun Gothic"
 skinparam componentStyle rectangle
 skinparam shadowing false
 skinparam packageStyle rectangle
@@ -71,7 +71,7 @@ User ..> CTRL
 CTRL ..> BND : HITL 라벨(말하기 테스트)
 ENG ..> INF : 오케스트레이션
 Nano ..> COACH : LLM 서빙
-component "NanoModelManager\n모델 상태/다운로드(홈·설정)" as NMM #C5CAE9
+component "NanoModelManager\n모델 상태/다운로드(홈/설정)" as NMM #C5CAE9
 NMM ..> Nano : 상태 확인 / 다운로드
 COACH ..> META : 호출 기록(근거/프롬프트/경로)
 META ..> EGEN : 값 출처 제공

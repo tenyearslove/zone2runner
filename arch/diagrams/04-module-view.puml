@@ -19,7 +19,7 @@ package "app (폰, com.zone2runner.app - 65파일 9패키지)" {
 }
 
 package "wear (워치, com.zone2runner.wear - 9파일 1패키지)" {
-  component "뷰\nWearRunActivity(게이지)\nTalkTestActivity(3지선다)" as WVIEW #E1BEE7
+  component "뷰\nWearRunActivity + ZoneGaugeView(게이지)\nTalkTestActivity(3지선다)" as WVIEW #E1BEE7
   component "서비스\nRunService(포그라운드 측정)\nRunControlService(원격 제어)" as WSVC #BBDEFB
   component "링크/공유\nRunLink/HrForwarder(경로)\nRunBus(공유 상태)/HrZone" as WLINK #E1F5FE
 }

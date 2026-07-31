@@ -4,13 +4,13 @@
 - **QA 정의 정본**: `framework/ai-8-qa.md`, `framework/ai-system-and-quality.md` (강의 AI 8대 QA)
 - **관련**: spec-001(FR/제약), arch/architecture-overview(AI System 아키텍처 매핑)
 
-> 이 문서가 **QA 선정의 단일 정본**이다. 강의 8대 QA 중 6개를 선정한 근거/제외 근거/시나리오/측정지표를 담는다.
+> 이 문서가 **QA 선정의 단일 정본**이다. 품질속성 6개(AI 특화 4 + 일반 2)를 선정한 근거/제외 근거/시나리오/측정지표를 담는다.
 
 ---
 
 ## 0. 선정 요약 (과제 규정 충족)
 
-강의 **AI 8대 QA** 중 6개 선정 = **AI 특화 4개 + 일반 SW 2개**.
+품질속성 **6개 선정 = AI 특화 4개 + 일반 SW 2개**. AI 특화 4개(QA1~QA4)는 강의 AI 8대 QA에서 선정. 일반 SW 2개 중 수행효율성은 8대에도 속하나 이 과제는 AI 특화 계상에서 보수적으로 제외하고, 테스트가능성은 8대 밖의 일반 SW QA다.
 
 | # | QA | 분류 | 역할 |
 |:--:|------|------|------|
@@ -96,4 +96,4 @@ ASR(Architecturally Significant Requirement) = 중요도 7 이상. QA1~QA6 모�
 - 일반 SW QA (QA5~QA6): 테스트가능성 / 수행효율성
 - 각 QA의 강의 정의/평가지표 6요소 시나리오 = `framework/ai-8-qa.md`
 - QA 달성 현황은 각 기능 spec/구현에서 관리(단일 정본 원칙 — 여기선 선정/정의만)
-- **검증 실측(2026-08-01)**: 본 표의 측정 항목을 실측하는 도구 = `app/app/src/test/.../QaMeasurementTest.kt`(6측정, 측정값 build/qa-measurements/에 기록), 검증 결과 표/지표 산출 근거 = `report/report-015-qa-verification.md` — 층위 ①(시뮬/테스트) 완료, 층위 ②(실기기: QA6 TTS 5초 등)는 실측 대기
+- **검증 실측(2026-08-01)**: 본 표의 측정 항목을 실측하는 도구 = `app/app/src/test/.../QaMeasurementTest.kt`(6측정, 측정값 app/app/build/qa-measurements/에 기록), 검증 결과 표/지표 산출 근거 = `report/report-015-qa-verification.md` — 층위 ①(시뮬/테스트) 완료, 층위 ②(실기기: QA6 TTS 5초 등)는 실측 대기

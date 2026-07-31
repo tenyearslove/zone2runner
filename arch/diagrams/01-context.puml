@@ -15,6 +15,7 @@ package "외부 시스템 / 센서" {
   component "폰 GPS\n(속도/고도/위치)" as GPS
   component "Gemini Nano / AICore\n(온디바이스 LLM, 별도 프로세스)" as Nano
   component "Open-Meteo\n(날씨 API: 기온 참고)" as Weather
+  component "OSM 타일 서버\n(지도 표시용 타일)" as Tiles
 }
 
 User --> SYS : 말하기 테스트 응답(HITL)\n설정/일시정지(HOTL)
@@ -25,5 +26,6 @@ SYS --> Nano : 규칙이 확정한 사실 + 임무\n(문장 생성 요청, ML Ki
 Nano --> SYS : 코칭 문장/요약\n(가드 3종 통과 시 채택, 아니면 단어 폴백)
 SYS --> Nano : 기능 모델 상태 조회 /\n다운로드(진행률, 세션 밖에서만)
 Weather --> SYS : 기온 (참고)
+Tiles --> SYS : 지도 타일 (표시용)
 Dev ..> SYS : 시뮬 입력(가상 러너/수동)\nRunSource 교체 - 검증용
 @enduml

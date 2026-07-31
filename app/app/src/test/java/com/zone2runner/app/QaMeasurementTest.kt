@@ -36,7 +36,7 @@ class QaMeasurementTest {
     /** QA2 기능적응성 — 참임계를 아는 라벨원으로 8세션 폐루프: 수렴 오차/안착/진동폭/세션당 이동 한도. */
     @Test fun qa2_boundaryConvergence_overSessions() {
         val profile = Profile.default(35, 58)
-        val trueUpper = 141.0 // 진짜 상한(bpm) — 공식 prior(~150)와 어긋난 러너
+        val trueUpper = 141.0 // 진짜 상한(bpm) — 공식 prior(~128, %HRmax 0.70×183)보다 12.9bpm 높은 러너
         val rnd = Random(42)
         var carryUFrac: Double? = null
         val errors = mutableListOf<Double>()

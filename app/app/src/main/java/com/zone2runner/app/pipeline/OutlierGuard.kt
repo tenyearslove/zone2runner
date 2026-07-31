@@ -1,7 +1,7 @@
 package com.zone2runner.app.pipeline
 
 /**
- * QA2 강건성: 생리 범위(40~220 bpm) 밖 HR을 이상치로 기각.
+ * QA4 강건성: 생리 범위(40~220 bpm) 밖 HR을 이상치로 기각.
  * spec-003 이상값 가드. 특징/판정 이전에 적용해 튀는 값이 파이프라인을 오염시키지 않게 한다.
  */
 object OutlierGuard {
