@@ -1,0 +1,47 @@
+@startuml
+title 실기기 결합 검증 아키텍처
+skinparam defaultFontName "Malgun Gothic"
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam linetype ortho
+
+actor "개발자 = 테스트 러너" as Dev
+component "실센서 (워치/폰)\nHealth Services / GPS" as Sensors #FFF9C4
+
+package "앱 (센서 직결)" {
+  component "센서 직결 파이프라인\n판정/개인화/코칭 로직이\n센서 API에 직접 연결" <<추론 서비스>> as PIPE #BBDEFB
+  component "운영 서비스\nOperation UI" as OPS #E1BEE7
+  PIPE --> OPS
+}
+
+package "검증 = 실주행 절차" {
+  component "테스트 계획\n코스/날씨로 시나리오 근사" as PLAN #FFAB91
+  component "실주행 수행\n실기기 착용, 실제 달리기\n(변경 1건 = 러닝 1회)" as RUN #FFAB91
+  component "로그 수집/수동 분석\n세션 기록 사후 검토" as LOG #FFAB91
+  PLAN --> RUN
+  RUN --> LOG
+}
+
+Sensors --> PIPE
+Dev ..> PLAN
+Dev ..> RUN
+LOG ..> PIPE : 수정 후 다시 실주행
+note right of RUN
+  같은 자극 재현 불가
+  위험/엣지 시나리오 주입 불가
+  자동화 불가
+end note
+note right of PIPE
+  센서 없이 실행 불가
+  (개발 머신 단위 테스트 불가)
+end note
+
+legend right
+|= 색 |= 컴포넌트 성격 |
+|<#BBDEFB>| 추론 서비스 (센서 직결) |
+|<#E1BEE7>| 운영 서비스 |
+|<#FFAB91>| 검증 절차 (실주행 수동) |
+|<#FFF9C4>| 외부 (실센서) |
+endlegend
+@enduml

@@ -1,0 +1,50 @@
+@startuml
+title 실기기 결합 검증 아키텍처 (상세)
+skinparam defaultFontName "Malgun Gothic"
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam linetype ortho
+
+actor "개발자 = 테스트 러너" as Dev
+component "실센서 (워치)\nHealth Services HR/케이던스" as WSensor #FFF9C4
+component "실센서 (폰)\nGPS 페이스/고도" as PSensor #FFF9C4
+
+package "앱 (센서 직결 - 로직/플랫폼 결합)" {
+  component "센서 수신부\n워치-폰 연동 포함" as RECV #BBDEFB
+  component "판정/개인화/분석/코칭\n앱 컴포넌트 안에서\n플랫폼 API와 함께 동작" <<추론 서비스>> as PIPE #BBDEFB
+  component "운영 서비스\nOperation UI + TTS" as OPS #E1BEE7
+  RECV --> PIPE
+  PIPE --> OPS
+}
+
+package "검증 = 실주행 절차 (수동)" {
+  component "테스트 계획\n검증 항목 정리\n코스/날씨로 시나리오 근사" as PLAN #FFAB91
+  component "실주행 수행\n실기기 착용, 실제 달리기\n실환경 충실도 100%" as RUN #FFAB91
+  component "로그 수집\n세션 기록 내려받기" as COLLECT #FFAB91
+  component "수동 분석\n기록 검토, 체감 판단\n(참임계 몰라 수렴은 체감)" as ANALYZE #FFAB91
+  PLAN --> RUN
+  RUN --> COLLECT
+  COLLECT --> ANALYZE
+}
+
+WSensor --> RECV
+PSensor --> RECV
+Dev ..> PLAN
+Dev ..> RUN
+ANALYZE ..> PIPE : 수정 → 다음 실주행에서 확인
+note right of RUN
+  변경 1건 검증 = 러닝 1회
+  같은 자극 두 번 불가(회귀 통계 비교)
+  위험 심박/두절 주입 불가(미검증 잔존)
+  개인화 수렴 확인 = 달력 수 주
+end note
+
+legend right
+|= 색 |= 컴포넌트 성격 |
+|<#BBDEFB>| 추론 서비스 (센서 직결) |
+|<#E1BEE7>| 운영 서비스 |
+|<#FFAB91>| 검증 절차 (실주행 수동) |
+|<#FFF9C4>| 외부 (실센서) |
+endlegend
+@enduml
