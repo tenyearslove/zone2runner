@@ -1,0 +1,122 @@
+<div class="deck">
+
+<div class="deck-head">
+  <h1>과제 소개 / 요구사항 분석 — 인증 보고서 "01" + "02" 파트</h1>
+  <p>배경/필요성 + 과제 개요 + FR/제약 + QA 선정 — 2026-08-01 v1 — 원고: <code>report/report-018</code>, 정본: <code>spec-001</code>/<code>spec-002</code></p>
+</div>
+
+<section class="slide" style="text-align:center; padding: 80px 44px;">
+  <p class="note" style="margin-bottom: 24px;">AI Specialist (설계) 인증과제</p>
+  <h2 style="font-size: 34px; font-weight: 800; margin: 0 0 10px;">Zone2Runner</h2>
+  <p style="font-size: 17px; font-weight: 650; margin: 0 0 6px;">개인화 유산소(Zone 2) 러닝 코칭 앱</p>
+  <p class="note" style="margin-bottom: 40px;">(AI 기능/품질 요구사항 포함)</p>
+  <p class="note">소속: [소속 사업부 / 부서 기입] &nbsp;|&nbsp; 이름: 성시원</p>
+</section>
+
+<section class="slide">
+  <div class="slide-head"><h2>목차</h2><span class="sec-no">0</span></div>
+  <div class="tbl"><table class="decide">
+    <thead><tr><th style="width:11em">장</th><th>내용</th></tr></thead>
+    <tbody>
+      <tr><td><strong>01. 과제 소개</strong></td><td>과제 배경과 필요성 / 과제 개요</td></tr>
+      <tr><td><strong>02. 요구사항 분석</strong></td><td>기능 요구사항 및 제약사항 / 품질 요구사항(QA 선정)</td></tr>
+      <tr><td><strong>03. 설계</strong></td><td>Architectural Decision(DP1~DP5) / 최종 Architecture</td></tr>
+      <tr><td><strong>04. 구현 및 검증</strong></td><td>구현(화면 8종) / 품질속성 검증(실측)</td></tr>
+      <tr><td><strong>05. 결론</strong></td><td>주요 성과 / 향후 계획</td></tr>
+      <tr><td><strong>Appendix</strong></td><td>지표 산출 근거, Use Case, Context, DP 상세, 아키텍처 3뷰, 검증 결과 상세</td></tr>
+    </tbody>
+  </table></div>
+  <div class="crumb"><b>과제 소개</b> <span>요구사항</span> <span>설계</span> <span>구현/검증</span> <span>결론</span></div>
+</section>
+
+<section class="slide">
+  <div class="slide-head"><h2>과제 소개 — 배경과 필요성</h2><span class="sec-no">1</span></div>
+  <h3 class="num"><span>■</span>과제 배경</h3>
+  <ul>
+    <li><strong>Zone 2 훈련의 확산</strong>: 대화가 가능한 낮은 강도를 오래 유지하는 유산소 기초 훈련이 일반 러너에게 널리 권장된다. 문제는 그 강도를 유지하기가 어렵다는 점이다 — 초보일수록 자기도 모르게 강도가 올라간다.</li>
+    <li><strong>개인차의 벽</strong>: Zone 2의 기준인 개인 심박 경계는 사람마다 다르다. 최대심박을 주는 나이 공식의 개인 오차가 ±10~15bpm에 이르고, 임계 비율의 개인차까지 겹치면 경계는 그 이상 어긋날 수 있다 — 존 폭이 프로필에 따라 약 12~18bpm이니, 경계가 10bpm 어긋나면 사실상 다른 운동이 된다.</li>
+    <li><strong>온디바이스 AI의 성숙</strong>: 폰 안의 소형 LLM(Gemini Nano)과 워치 센서 생태계로, 서버 없이 실시간 개인화 코칭이 가능해졌다.</li>
+  </ul>
+  <h3 class="num"><span>■</span>과제 필요성</h3>
+  <ul>
+    <li><strong>기존 러닝 앱의 한계</strong>: 대부분 존 표시까지만 한다 — 그 경계가 왜 그 값인지 설명하지 않고, 경계를 개인의 실제 반응으로 맞춰가는 루프가 없다.</li>
+    <li><strong>AI 코칭의 신뢰 문제</strong>: 운동 강도라는 "행동 지시"를 AI에 맡기려면 — 설명이 실제 판단과 일치하고, 어긋난 출력이 차단되고, 실패해도 기능이 이어지는 구조가 필요하다.</li>
+    <li>이 과제는 "더 똑똑한 모델"이 아니라 <strong>"믿고 따라도 되는 AI 코칭 시스템의 설계"</strong>를 다룬다.</li>
+  </ul>
+  <div class="crumb"><b>과제 소개</b> <span>요구사항</span> <span>설계</span> <span>구현/검증</span> <span>결론</span></div>
+</section>
+
+<section class="slide">
+  <div class="slide-head"><h2>과제 개요</h2><span class="sec-no">1</span></div>
+  <div class="tbl"><table class="decide">
+    <tbody>
+      <tr><th class="rowh">과제명</th><td><strong>Zone2Runner</strong> — 개인화 유산소(Zone 2) 러닝 코칭 앱. "당신의 Zone 2를 찾아 지켜주는 러너의 동반자"</td></tr>
+      <tr><th class="rowh">목표</th><td>갤럭시 워치의 심박을 실시간으로 보며, <strong>개인에게 맞춰진 Zone 2 경계</strong> 기준으로 판정하고, 온디바이스 AI가 <strong>근거 있는 음성 코칭</strong>과 <strong>설명 가능한 리포트</strong>를 제공한다</td></tr>
+      <tr><th class="rowh">구성</th><td>Android 폰 앱(판정/분석/개인화/코칭의 주체) + Wear OS 워치 앱(측정/표시) — 자체 서버 없음, 러닝/개인 데이터 비이탈</td></tr>
+      <tr><th class="rowh">AI 적용</th><td>판정=규칙, 개인화=온라인 베이지안(말하기 테스트 실라벨), 분석=관측 통계, 표현=온디바이스 LLM(가드 3종 통제)</td></tr>
+      <tr><th class="rowh">예상 효과</th><td>① 경계가 쓸수록 그 사람에게 수렴 ② 모든 판정/코칭에 추적 가능한 근거(신뢰) ③ 서버/구독 비용 0의 지속 가능 구조 ④ 시뮬 검증으로 참값 없는 문제의 품질 확보</td></tr>
+    </tbody>
+  </table></div>
+  <div class="crumb"><b>과제 소개</b> <span>요구사항</span> <span>설계</span> <span>구현/검증</span> <span>결론</span></div>
+</section>
+
+<section class="slide">
+  <div class="slide-head"><h2>기능 요구사항 및 제약사항</h2><span class="sec-no">2</span></div>
+  <div class="tbl"><table class="decide">
+    <thead><tr><th style="width:3.5em">ID</th><th style="width:15em">TITLE</th><th>Description</th><th style="width:3em">AI</th></tr></thead>
+    <tbody>
+      <tr><td>FR1</td><td>개인 프로필 관리 및 Zone 2 초기 경계 산정</td><td>프로필을 관리하고 콜드스타트 경계 산정 — 최대심박은 Tanaka 공식 prior, 안정심박이 있으면 Karvonen, 없으면 %HRmax. 적응은 FR4</td><td></td></tr>
+      <tr><td>FR2</td><td>실시간 심박 수집 및 존 판정</td><td>1초 주기 수집, 입력 가드레일/히스테리시스/두절 폴백으로 강건화해 규칙 판정. 이중 기준 — 표시=순간+히스테리시스(5존), 코칭/통계=60초 지속</td><td style="text-align:center">●</td></tr>
+      <tr><td>FR3</td><td>관측 데이터 분석 엔진</td><td>관측만으로 참값 없이 파생지표 도출(드리프트/서브맥시멀/HRR/경사보정 페이스/케이던스) — 예측은 검증 불가로 드롭</td><td style="text-align:center">●</td></tr>
+      <tr><td>FR4</td><td>개인화 적응</td><td>최대심박(위로만)/안정심박(아래로만)/Zone 2 상한(말하기 테스트 실라벨, 온라인 베이지안) — 공식 초기값에서 그 사람 자리로 수렴</td><td style="text-align:center">●</td></tr>
+      <tr><td>FR5</td><td>반응형 실시간 코칭 및 안전 가드</td><td>규칙+분석이 방향/사실 확정, LLM이 표현. 출력 가드레일(형식/방향/숫자) + 단어 폴백 무중단. 위험 심박은 LLM 미경유 즉시 권고</td><td style="text-align:center">●</td></tr>
+      <tr><td>FR6</td><td>세션 리포트 및 근거 설명</td><td>파생지표 그래프/카드 + "왜 이렇게 판정/코칭했는지" 설명(스토리/코칭 문장 근거 추적). LLM 표현은 종료 1회 생성/저장</td><td style="text-align:center">●</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">규정 충족: FR 6개(최소 4개 이상), AI 관련 FR 5개(FR2~FR6).</p>
+  <div class="tbl"><table class="decide">
+    <thead><tr><th style="width:3.5em">ID</th><th style="width:17em">제약</th><th>함의</th></tr></thead>
+    <tbody>
+      <tr><td>C01</td><td>운영 비용 0 (서버/추론 API 과금 불가)</td><td>온디바이스 추론/LLM 강제, 클라우드 배제 — 오프라인/프라이버시는 부수효과</td></tr>
+      <tr><td>C02</td><td>도메인에 맞는 대량 학습 데이터 확보 불가</td><td>공개 데이터셋은 모집단 평균이라 개인차를 못 풂 → 블랙박스 NN 대신 관측 분석 + 온라인 베이지안</td></tr>
+      <tr><td>C03</td><td>개인 참값(젖산/환기역치) 측정 불가</td><td>절대 정확도 대신 — 검증 가능한 실라벨, 판정 일관성, 시뮬 폐루프로 품질을 세움</td></tr>
+    </tbody>
+  </table></div>
+  <div class="crumb">과제 소개 <b>요구사항</b> <span>설계</span> <span>구현/검증</span> <span>결론</span></div>
+</section>
+
+<section class="slide">
+  <div class="slide-head"><h2>품질 요구사항 — QAW / Utility Tree를 통한 ASR 선정</h2><span class="sec-no">2</span></div>
+  <p class="note">QA는 6개를 선정했다. AI 특화 4개(설명용이성, 기능적응성, 제어가능성, 강건성)는 강의 AI 8대 QA에서 골랐다. 일반 SW 2개 중 테스트가능성은 8대 밖의 일반 QA이고, 수행효율성은 8대에도 속하나 AI 특화 계상에서는 보수적으로 제외했다. 규정(QA 4개 이상, AI 특화 2개 이상)을 충족한다.</p>
+  <div class="tbl"><table class="decide">
+    <thead><tr><th style="width:3.5em">ID</th><th style="width:9em">QA</th><th style="width:7em">분류</th><th>시나리오 요약 → [측정]</th><th style="width:4em">중요도</th><th style="width:4em">난이도</th></tr></thead>
+    <tbody>
+      <tr><td>QA1</td><td><strong>설명용이성</strong></td><td>AI ★정체성</td><td>판정/코칭/개인화의 "왜"를 실제 사실 근거로 → [지어낸 수치 0, 근거 기록 1:1, 동일 입력 설명 일치]</td><td style="text-align:center">9</td><td style="text-align:center">6</td></tr>
+      <tr><td>QA2</td><td><strong>기능적응성</strong></td><td>AI ★정체성</td><td>변화 감지→경계 적응→안정(실라벨, 온라인 베이지안) → [수렴 오차↓, 안착 세션 수, 진동폭]</td><td style="text-align:center">9</td><td style="text-align:center">8</td></tr>
+      <tr><td>QA3</td><td><strong>제어가능성</strong></td><td>AI</td><td>어긋난 LLM 출력 기각/폴백, 위험 시 규칙 직접 개입 → [방향위반 기각율 100%, 폴백 무중단, 이동 ≤10bpm]</td><td style="text-align:center">8</td><td style="text-align:center">6</td></tr>
+      <tr><td>QA4</td><td><strong>강건성</strong></td><td>AI</td><td>이상치/경계 떨림에도 판정 유지 → [이상치 기각율 100%, Flicker 억제, 판정 유지율]</td><td style="text-align:center">8</td><td style="text-align:center">5</td></tr>
+      <tr><td>QA5</td><td><strong>테스트가능성</strong></td><td>일반</td><td>참값 없는 문제를 폐루프 서로게이트로 검증 → [기기 없이 독립 실행 100%, 단위 테스트, 수렴 곡선]</td><td style="text-align:center">7</td><td style="text-align:center">6</td></tr>
+      <tr><td>QA6</td><td><strong>수행효율성</strong></td><td>일반</td><td>심박 변화를 지연 없이 반영 → [1주기 내 반영, 음성 5초 내, 코칭 중 멈춤 0]</td><td style="text-align:center">8</td><td style="text-align:center">6</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note"><strong>ASR 선정 기준</strong>: 중요도 7 이상을 ASR(Architecturally Significant Requirement)로 삼는다 — QA1~QA6 모두 7 이상이라 전부 ASR이다. 우선순위(중요도와 난이도 종합) = QA2 &gt; QA1 = QA6 &gt; QA3 &gt; QA4 &gt; QA5.</p>
+  <h3 class="num"><span>■</span>ASR → 담보 설계 매핑 (04 검증 파트와 왕복 연결)</h3>
+  <div class="tbl"><table class="decide">
+    <thead><tr><th style="width:11em">ASR</th><th>담보하는 설계</th><th style="width:8em">검증</th></tr></thead>
+    <tbody>
+      <tr><td>QA1 설명용이성</td><td>DP1 (투명 판정 + 프로비넌스)</td><td>검증 표 QA1</td></tr>
+      <tr><td>QA2 기능적응성</td><td>DP3 (온라인 베이지안 적응)</td><td>검증 표 QA2</td></tr>
+      <tr><td>QA3 제어가능성</td><td>DP2 (구조적 격리 + 가드 3종)</td><td>검증 표 QA3</td></tr>
+      <tr><td>QA4 강건성</td><td>DP4 (계층 방어 판정)</td><td>검증 표 QA4</td></tr>
+      <tr><td>QA5 테스트가능성</td><td>DP5 (소스 추상화 + 시뮬 계측)</td><td>검증 표 QA5</td></tr>
+      <tr><td>QA6 수행효율성</td><td>아키텍처 횡단 (1Hz 파이프라인 + 비동기 코칭 — 최종 아키텍처)</td><td>검증 표 QA6</td></tr>
+    </tbody>
+  </table></div>
+  <ul>
+    <li><strong>정체성 논지</strong>: 대량 데이터가 없어(C02) 블랙박스 NN을 버리고 분해 가능한 규칙/통계/베이지안으로 채웠다 — 그래서 설명용이성과 기능적응성이 정체성 QA다.</li>
+    <li><strong>의도적으로 뺀 QA와 그 이유</strong>: 기능정확성(참값 없어 절대 정확도 주장 불가 — 방향 정확성은 제어가능성에 흡수), 신뢰성(증거가 제어/강건과 중복), 프라이버시/공정성(단일 사용자 온디바이스라 구조적으로 이슈 약함).</li>
+  </ul>
+  <div class="crumb">과제 소개 <b>요구사항</b> <span>설계</span> <span>구현/검증</span> <span>결론</span></div>
+</section>
+
+</div>

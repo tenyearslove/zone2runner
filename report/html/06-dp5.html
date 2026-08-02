@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DP5 테스트가능성 — Zone2Runner 인증 보고서 설계 파트</title>
+<style>*,*::before,*::after{box-sizing:border-box}img{max-width:100%;height:auto}</style>
+<style>
+  :root {
+    --bg: #EEF1F5;
+    --slide: #FFFFFF;
+    --ink: #1F2A3A;
+    --muted: #64748B;
+    --line: #D8DEE7;
+    --accent: #1D5DA8;
+    --accent-soft: #EAF1F9;
+    --star: #E8A200;
+    --shadow: 0 2px 6px rgba(31,42,58,.08), 0 12px 32px rgba(31,42,58,.07);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141A22; --slide: #1D2530; --ink: #E7ECF3; --muted: #94A2B4;
+      --line: #34404F; --accent: #6AA5E8; --accent-soft: #24334A;
+      --star: #F0B429;
+      --shadow: 0 2px 6px rgba(0,0,0,.35), 0 12px 32px rgba(0,0,0,.3);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #141A22; --slide: #1D2530; --ink: #E7ECF3; --muted: #94A2B4;
+    --line: #34404F; --accent: #6AA5E8; --accent-soft: #24334A;
+    --star: #F0B429;
+    --shadow: 0 2px 6px rgba(0,0,0,.35), 0 12px 32px rgba(0,0,0,.3);
+  }
+  :root[data-theme="light"] {
+    --bg: #EEF1F5; --slide: #FFFFFF; --ink: #1F2A3A; --muted: #64748B;
+    --line: #D8DEE7; --accent: #1D5DA8; --accent-soft: #EAF1F9;
+    --star: #E8A200;
+    --shadow: 0 2px 6px rgba(31,42,58,.08), 0 12px 32px rgba(31,42,58,.07);
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", Pretendard, "Noto Sans KR", "Malgun Gothic", sans-serif;
+    line-height: 1.6;
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+  }
+  .deck {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 40px 20px 88px;
+    display: flex;
+    flex-direction: column;
+    gap: 36px;
+  }
+
+  .deck-head { padding: 8px 4px 0; }
+  .deck-head h1 { font-size: 20px; font-weight: 800; margin: 0 0 6px; letter-spacing: -0.01em; }
+  .deck-head p { margin: 0; font-size: 13px; color: var(--muted); }
+  .deck-head code {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12px;
+    background: var(--accent-soft); color: var(--accent);
+    padding: 1px 6px; border-radius: 4px;
+  }
+
+  section.slide {
+    background: var(--slide);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    box-shadow: var(--shadow);
+    padding: 34px 44px 18px;
+    position: relative;
+  }
+  @media (max-width: 640px) { section.slide { padding: 24px 18px 14px; } }
+
+  .slide-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    border-bottom: 3px solid var(--accent);
+    padding-bottom: 10px;
+    margin-bottom: 22px;
+    gap: 12px;
+  }
+  .slide-head h2 { font-size: 22px; font-weight: 800; margin: 0; letter-spacing: -0.01em; }
+  .slide-head .sec-no {
+    font-size: 34px; font-weight: 800; color: var(--accent);
+    opacity: .28; line-height: 1; font-variant-numeric: tabular-nums;
+  }
+
+  h3.num {
+    font-size: 16px; font-weight: 800; margin: 20px 0 10px;
+    color: var(--ink);
+  }
+  h3.num span { color: var(--accent); margin-right: 6px; }
+
+  ul { margin: 0 0 10px; padding-left: 20px; }
+  li { margin-bottom: 6px; }
+  ul ul { margin-top: 6px; }
+  ul ul li { margin-bottom: 4px; color: var(--ink); }
+  li::marker { color: var(--accent); }
+  strong { font-weight: 750; }
+  p { margin: 0 0 10px; }
+  .lead {
+    background: var(--accent-soft);
+    border-left: 3px solid var(--accent);
+    padding: 12px 16px;
+    border-radius: 0 6px 6px 0;
+    font-weight: 650;
+    margin: 0 0 16px;
+  }
+
+  .tbl { overflow-x: auto; margin: 4px 0 10px; }
+  table.decide {
+    border-collapse: collapse; width: 100%;
+    font-size: 13.5px; line-height: 1.55;
+    min-width: 640px;
+  }
+  table.decide th, table.decide td {
+    border: 1px solid var(--line);
+    padding: 10px 14px;
+    vertical-align: top;
+    text-align: left;
+  }
+  table.decide thead th {
+    background: var(--accent);
+    color: #FFFFFF;
+    font-size: 14.5px;
+    font-weight: 750;
+    text-align: center;
+  }
+  table.decide th.rowh {
+    background: var(--accent-soft);
+    color: var(--ink);
+    width: 5.5em;
+    text-align: center;
+    vertical-align: middle;
+    font-weight: 750;
+  }
+  .stars { color: var(--star); letter-spacing: 1.5px; white-space: nowrap; }
+  .win { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .pick-badge {
+    display: inline-block; font-size: 11px; font-weight: 800;
+    background: #FFFFFF; color: var(--accent);
+    border-radius: 999px; padding: 0 9px; margin-left: 8px; vertical-align: 1px;
+  }
+
+  .fig-frame {
+    border: 1px solid var(--line); border-radius: 4px;
+    background: #FFFFFF; padding: 6px; overflow-x: auto;
+  }
+  .fig-frame img { display: block; max-width: 100%; height: auto; margin: 0 auto; }
+
+  .crumb {
+    display: flex; justify-content: flex-end; gap: 18px;
+    font-size: 11.5px; color: var(--muted);
+    border-top: 1px solid var(--line);
+    margin-top: 24px; padding: 10px 2px 4px;
+  }
+  .crumb b { color: var(--accent); font-weight: 800; }
+
+  .note { font-size: 12.5px; color: var(--muted); }
+  a { color: var(--accent); }
+  a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+</style>
+</head>
+<body>
+<div class="deck">
+
+<div class="deck-head">
+  <h1>DP5. 테스트가능성 — 인증 보고서 "03. 설계 / Architectural Decision" 원고</h1>
+  <p>인증과제 샘플(씬스틸러) DP 형식 3장 + Appendix 1장 — 2026-07-31 v1 — 정본: <code>arch/dp/dp-05-testability/-decision.md</code>, 원고: <code>report/report-012</code></p>
+</div>
+
+<!-- ======================= 슬라이드 1 ======================= -->
+<section class="slide">
+  <div class="slide-head">
+    <h2>DP5. 설계 문제 정의</h2>
+    <span class="sec-no">3</span>
+  </div>
+
+  <h3 class="num"><span>1.</span>배경</h3>
+  <ul>
+    <li>이 시스템은 검증하기 어려운 조건을 여럿 겹쳐 갖고 있다. 진짜 Zone 2 경계의 <strong>정답지가 없고</strong>, 입력이 실제 달리기에서만 나와 <strong>같은 러닝을 두 번 뛸 수 없으며</strong>, 워치와 폰 두 기기가 결합돼 있다.</li>
+    <li>그런데 판정, 개인화, 코칭 로직은 개발 중에 계속 바뀐다. 바뀔 때마다 실제로 뛰어야 확인이 된다면 검증은 사실상 안 하게 된다.</li>
+    <li>그래서 <strong>실제로 뛰지 않고도 전 파이프라인을 반복 검증할 수 있는 구조</strong>를 고르는 것이 이 설계 결정이다.</li>
+  </ul>
+
+  <h3 class="num"><span>2.</span>문제점</h3>
+  <ul>
+    <li><strong>자극을 재현할 수 없다.</strong> 같은 심박 곡선을 두 번 만들 수 없으니 수정 전후를 같은 조건에서 비교할 수 없다.</li>
+    <li><strong>위험한 시나리오를 만들 수 없다.</strong> 위험 심박, 신호 두절 같은 중요한 상황은 실주행으로 만들기 어렵거나 위험하다.</li>
+    <li><strong>변경마다 실주행이면 검증이 생략된다.</strong> 변경 하나의 검증 비용이 러닝 한 번이면 자동화가 불가능하다.</li>
+    <li><strong>시뮬에는 함정이 있다.</strong> 시뮬을 만든 가정으로 시뮬을 채점하면 "정확하다"는 결론이 정의상 나온다. 시뮬의 역할 한계를 정직하게 그어야 한다.</li>
+  </ul>
+
+  <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
+</section>
+
+<!-- ======================= 슬라이드 2 ======================= -->
+<section class="slide">
+  <div class="slide-head">
+    <h2>DP5. 설계안 결정</h2>
+    <span class="sec-no">3</span>
+  </div>
+
+  <div class="tbl">
+  <table class="decide">
+    <thead>
+      <tr>
+        <th class="rowh" style="background:var(--accent-soft)"></th>
+        <th>(1안) 소스 추상화 + 폐루프 시뮬 계측 아키텍처<span class="pick-badge">채택</span></th>
+        <th>(2안) 실기기 결합 검증 아키텍처</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <th class="rowh">한 줄<br>소개</th>
+        <td class="win">입력 자리를 인터페이스로 만들어 실센서와 시뮬을 갈아끼우는 구조</td>
+        <td>센서를 직결하고 검증은 실기기 실주행으로 하는 구조</td>
+      </tr>
+      <tr>
+        <th class="rowh">구조</th>
+        <td class="win">
+          <div class="fig-frame"><img src="../../arch/diagrams/02b-component-cnc-simple.png" alt="1안 — 소스 추상화 + 폐루프 시뮬 계측 아키텍처 다이어그램"></div>
+          <p class="note" style="margin-top:8px">실센서, 가상 러너, 수동 시뮬이 같은 인터페이스로 파이프라인에 꽂힌다 — 뒤의 코드는 입력이 진짜인지 모른다. 진짜 경계값을 아는 가상 러너가 코칭에 반응하며(폐루프) 개인화 수렴을 분 단위에 채점하고, 판정/개인화/분석 로직은 순수 모듈이라 단위 테스트 153개가 자동으로 돈다. 위험 심박, 두절 같은 시나리오는 시뮬로 안전하게 주입한다</p>
+        </td>
+        <td>
+          <div class="fig-frame"><img src="../../arch/dp/dp-05-testability/images/dp-05-testability-counter-simple.png" alt="2안 — 실기기 결합 검증 아키텍처 다이어그램"></div>
+          <p class="note" style="margin-top:8px">추상화 계층 없이 센서 API가 로직에 직접 연결된다. 검증은 코스를 골라 실기기를 착용하고 실제로 달리며 확인하고, 세션 기록을 내려받아 수동으로 검토한다. 검증되는 것이 곧 실환경이다</p>
+        </td>
+      </tr>
+      <tr>
+        <th class="rowh">장점</th>
+        <td class="win">
+          <p>테스트가능성 <span class="stars">★★★★★</span><br><span class="note">같은 자극 반복 주입 + 자동 회귀 + 분 단위 수렴 검증</span></p>
+          <p>강건성 <span class="stars">★★★★</span><br><span class="note">위험/엣지 시나리오를 안전하게 주입해 방어 로직 검증</span></p>
+        </td>
+        <td>
+          <p>기능정확성 <span class="stars">★★★★</span><br><span class="note">실환경 충실도 — 센서 특성, 타이밍, OS 제약까지 실제 그대로</span></p>
+          <p>수행효율성 <span class="stars">★★★★</span><br><span class="note">시뮬 자산을 만들고 유지할 필요 없음</span></p>
+        </td>
+      </tr>
+      <tr>
+        <th class="rowh">단점</th>
+        <td class="win">
+          <p>기능정확성 <span class="stars">★★★★</span><br><span class="note">시뮬 통과가 실제 사람에 대한 정확도를 말하지 못함 — 실주행 검증 별도, 두 안 공통</span></p>
+          <p>수행효율성 <span class="stars">★★★★</span><br><span class="note">시뮬 자산도 만들고 유지해야 한다</span></p>
+        </td>
+        <td>
+          <p>테스트가능성 <span class="stars">★★</span><br><span class="note">재현도 자동화도 안 됨 — 변경 하나 검증이 러닝 한 번</span></p>
+          <p>강건성 <span class="stars">★★</span><br><span class="note">위험/엣지 시나리오를 검증 못 한 채 남는다</span></p>
+        </td>
+      </tr>
+      <tr>
+        <th class="rowh">Trade<br>Off</th>
+        <td class="win">재현, 자동화, 안전한 엣지 검증을 얻는다. 대신 시뮬의 결론을 "구조 검증"으로 정직하게 한정해야 하고, 실기기 확인이 사라지지는 않는다</td>
+        <td>실환경과의 간극이 아예 없다. 대신 재현과 자동화가 안 되고, 위험 시나리오는 미검증으로 남는다</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
+</section>
+
+<!-- ======================= 슬라이드 3 ======================= -->
+<section class="slide">
+  <div class="slide-head">
+    <h2>DP5. 설계결정 및 근거</h2>
+    <span class="sec-no">3</span>
+  </div>
+
+  <h3 class="num"><span>1.</span>최종 채택 구조</h3>
+  <p class="lead">후보 1: 소스 추상화 + 폐루프 시뮬 계측 아키텍처 채택</p>
+
+  <h3 class="num"><span>2.</span>채택 근거</h3>
+  <ul>
+    <li><strong>재현이 검증의 전제다.</strong> 수정 전후를 같은 자극으로 비교할 수 없으면 회귀를 잡을 수 없다. 1안은 시나리오 재생으로 이것을 얻는다.</li>
+    <li><strong>위험한 것일수록 시뮬로 검증해야 한다.</strong> 위험 심박에서 안전 규칙이 작동하는지를 실주행으로 확인하는 것은 위험하다. 시뮬 주입이 이 검증을 안전하게 만든다.</li>
+    <li><strong>변경 비용이 러닝 한 번이면 검증은 생략된다.</strong> 자동 회귀(몇 초)와 실주행(시간 단위)의 차이는, 로직이 계속 바뀌는 단계에서는 검증을 하느냐 마느냐의 차이다.</li>
+    <li><strong>수렴은 압축 시간으로만 확인된다.</strong> 개인화가 경계값으로 수렴하는지는 여러 세션에 걸친 동작이라 실측이면 수 주가 걸린다. 진짜 값을 아는 가상 러너의 폐루프가 이것을 분 단위로 만든다.</li>
+    <li><strong>자기 채점 함정을 구조로 피했다.</strong> 시뮬의 역할을 "구조 검증과 디버깅"으로 명시해, 시뮬 성적을 정확도 주장에 쓰는 함정을 설계 차원에서 차단했다. 실제 사람에 대한 정확도는 실주행 검증 계획으로 남긴다.</li>
+  </ul>
+
+  <h3 class="num"><span>3.</span>보완 계획</h3>
+  <ul>
+    <li><strong>단기</strong>: 가상 러너 시나리오(두절 패턴, 경계 근처 진동)를 강건성 지표 측정과 연동해 확장한다.</li>
+    <li><strong>장기</strong>: 실주행 데이터를 수집해 시뮬이 답하지 못하는 실제 정확도를 검증하고, 시뮬 가정과 실측의 차이를 기록해 시뮬의 신뢰 범위를 갱신한다.</li>
+  </ul>
+
+  <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
+</section>
+
+<!-- ======================= Appendix ======================= -->
+<section class="slide">
+  <div class="slide-head">
+    <h2>Appendix. DP5 상세 설계 내역</h2>
+    <span class="sec-no">A</span>
+  </div>
+
+  <h3 class="num"><span>A1.</span>문제점이 걸리는 품질 속성</h3>
+  <ul>
+    <li>같은 자극을 두 번 줄 수 없다 → 테스트가능성(재현 주입)</li>
+    <li>위험/엣지 시나리오를 실주행으로 못 만든다 → 테스트가능성, 강건성</li>
+    <li>변경마다 실주행 검증은 비용이 감당 불가 → 테스트가능성(자동 회귀)</li>
+    <li>정답지가 없어 "정확하다" 채점 불가 → 시뮬 역할을 구조 검증으로 한정</li>
+    <li>개인화 수렴 확인이 수 주 걸린다 → 테스트가능성(압축 시간 폐루프)</li>
+    <li>워치-폰 결합이라 단독 실행이 어렵다 → 테스트가능성(기기 의존 분리)</li>
+    <li>시뮬 자산도 만들고 유지해야 한다 → 수행효율성(비용의 정직한 인정)</li>
+  </ul>
+
+  <h3 class="num"><span>A2.</span>채택안의 검증 구조 4요소</h3>
+  <div class="tbl">
+  <table class="decide">
+    <thead>
+      <tr><th style="width:11em">요소</th><th>하는 일</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>1. 소스 추상화</strong></td><td>실센서/가상 러너/수동 시뮬이 같은 인터페이스로 꽂힌다 — 검증과 운영이 같은 코드 경로</td></tr>
+      <tr><td><strong>2. 폐루프 가상 러너</strong></td><td>진짜 경계값을 아는 러너가 코칭에 반응 — 수렴을 분 단위에 정량 채점</td></tr>
+      <tr><td><strong>3. 순수 로직 분리</strong></td><td>결정 로직이 기기 의존 없는 모듈 — 단위 테스트 153개 자동 회귀</td></tr>
+      <tr><td><strong>4. 시뮬 계측</strong></td><td>시나리오 주입(경사/더위/두절/위험 심박)과 상태 관찰, LLM 켬/끔 비교</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3 class="num"><span>A3.</span>QA 별점 종합</h3>
+  <div class="tbl">
+  <table class="decide">
+    <thead>
+      <tr><th>품질 속성</th><th>(1안) 소스 추상화 + 시뮬 계측</th><th>(2안) 실기기 결합 검증</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>테스트가능성</td><td style="text-align:center"><span class="stars">★★★★★</span></td><td style="text-align:center"><span class="stars">★★</span></td></tr>
+      <tr><td>강건성</td><td style="text-align:center"><span class="stars">★★★★</span></td><td style="text-align:center"><span class="stars">★★</span></td></tr>
+      <tr><td>기능적응성</td><td style="text-align:center"><span class="stars">★★★★★</span></td><td style="text-align:center"><span class="stars">★★★</span></td></tr>
+      <tr><td>설명용이성</td><td style="text-align:center"><span class="stars">★★★★</span></td><td style="text-align:center"><span class="stars">★★★</span></td></tr>
+      <tr><td>수행효율성</td><td style="text-align:center"><span class="stars">★★★★</span></td><td style="text-align:center"><span class="stars">★★★★</span></td></tr>
+      <tr><td>기능정확성</td><td style="text-align:center"><span class="stars">★★★★</span></td><td style="text-align:center"><span class="stars">★★★★</span> (실환경 충실)</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="note"><strong>평가의 조건</strong>: 별점은 이 DP의 결정 범위가 해당 QA에 미치는 영향을 이 과제 조건에서 평가한 것이라, 같은 QA 명칭이라도 DP마다 평가 대상 행위가 다르다(예: DP1의 기능적응성=규칙 밖 패턴 학습 능력, DP3의 기능적응성=경계 적응 지연). 이 별점은 1인 개발, 정답지 없음, 잦은 로직 변경, 위험 시나리오 포함이라는 이 과제 조건에서의 평가다. 두 안은 배타적이지 않다 — 1안에서도 실기기는 결합 확인과 최종 실주행 검증을 맡는다. 테스트 러너와 장비를 갖춘 조직이라면 실주행 비중이 커질 수 있다. 이 조건에서 2안이 우위인 축이 없는 것 자체가 결정의 이유다 — 조건이 바뀌면 우열이 뒤집힌다.</p>
+
+  <h3 class="num"><span>A4.</span>예상 질문</h3>
+  <ul>
+    <li>"시뮬로 통과한 게 무슨 의미가 있나?" → 시뮬이 답하는 것은 "로직이 설계대로 동작하는가"이지 "실제 사람에게 정확한가"가 아니다. 후자는 실주행 검증으로만 답해지며 그 계획이 별도로 있다. 이 한계를 설계 문서에 못 박았다.</li>
+    <li>"추상화 계층은 과한 설계 아닌가?" → 인터페이스 하나로, 자동 회귀 153개와 위험 시나리오 검증과 수 주짜리 수렴 확인의 분 단위 압축을 산다. 비용 대비 산 것이 크다.</li>
+  </ul>
+
+  <h3 class="num"><span>A5.</span>용어 대조(심사용)와 근거 문헌</h3>
+  <p class="note">입력 자리를 인터페이스로 = Ports and Adapters(헥사고날), 의존성 역전(DIP) / 실물을 대신하는 가짜 = test double / 출력이 입력에 되먹임 = closed loop / 수정 후 자동 재확인 = regression test / 시뮬과 실환경의 간극 = sim-to-real gap</p>
+  <p class="note">근거 문헌: ISO/IEC 25010(테스트가능성 정의) / Cockburn(포트와 어댑터) / Meszaros(테스트 대역) / 테스트 피라미드(Cohn, Fowler) / 이 저장소의 자체 이력(시뮬 자기 채점 함정을 직접 확인하고 시뮬 역할을 한정 — 실험 기록 §15-3)</p>
+  <p class="note">상세 = <code>arch/dp/dp-05-testability/</code> (decision / research / counter-catalog)</p>
+
+  <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
+</section>
+
+</div>
+
+
+</body>
+</html>

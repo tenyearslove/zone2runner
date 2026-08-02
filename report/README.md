@@ -20,7 +20,7 @@
 
 - **도식 정본**: `arch/diagrams/`(일반 아키텍처), `arch/dp/dp-*/images/`(DP 카운터).
 - **검증 실측 도구**: `app/app/src/test/.../QaMeasurementTest.kt` (측정값 재현).
-- **HTML 렌더(Artifact)**: DP1~5 + 최종 아키텍처 + Appendix 뷰 + 구현/검증/결론 — URL은 HANDOFF 참조.
+- **HTML 렌더**: `html/` — 위 원고를 슬라이드로 렌더한 덱 11종(통합본 포함)과 조립 스크립트. 브라우저로 바로 열린다. Artifact 배포 URL 표도 `html/README.md`에 있다.
 
 ## 남은 작업(예정)
 

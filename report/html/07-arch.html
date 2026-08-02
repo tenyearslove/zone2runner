@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>최종 Architecture — Zone2Runner 인증 보고서 설계 파트</title>
+<style>*,*::before,*::after{box-sizing:border-box}img{max-width:100%;height:auto}</style>
+<style>
+  :root {
+    --bg: #EEF1F5;
+    --slide: #FFFFFF;
+    --ink: #1F2A3A;
+    --muted: #64748B;
+    --line: #D8DEE7;
+    --accent: #1D5DA8;
+    --accent-soft: #EAF1F9;
+    --star: #E8A200;
+    --shadow: 0 2px 6px rgba(31,42,58,.08), 0 12px 32px rgba(31,42,58,.07);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141A22; --slide: #1D2530; --ink: #E7ECF3; --muted: #94A2B4;
+      --line: #34404F; --accent: #6AA5E8; --accent-soft: #24334A;
+      --star: #F0B429;
+      --shadow: 0 2px 6px rgba(0,0,0,.35), 0 12px 32px rgba(0,0,0,.3);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #141A22; --slide: #1D2530; --ink: #E7ECF3; --muted: #94A2B4;
+    --line: #34404F; --accent: #6AA5E8; --accent-soft: #24334A;
+    --star: #F0B429;
+    --shadow: 0 2px 6px rgba(0,0,0,.35), 0 12px 32px rgba(0,0,0,.3);
+  }
+  :root[data-theme="light"] {
+    --bg: #EEF1F5; --slide: #FFFFFF; --ink: #1F2A3A; --muted: #64748B;
+    --line: #D8DEE7; --accent: #1D5DA8; --accent-soft: #EAF1F9;
+    --star: #E8A200;
+    --shadow: 0 2px 6px rgba(31,42,58,.08), 0 12px 32px rgba(31,42,58,.07);
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", Pretendard, "Noto Sans KR", "Malgun Gothic", sans-serif;
+    line-height: 1.6;
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+  }
+  .deck {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 40px 20px 88px;
+    display: flex;
+    flex-direction: column;
+    gap: 36px;
+  }
+
+  .deck-head { padding: 8px 4px 0; }
+  .deck-head h1 { font-size: 20px; font-weight: 800; margin: 0 0 6px; letter-spacing: -0.01em; }
+  .deck-head p { margin: 0; font-size: 13px; color: var(--muted); }
+  .deck-head code {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12px;
+    background: var(--accent-soft); color: var(--accent);
+    padding: 1px 6px; border-radius: 4px;
+  }
+
+  section.slide {
+    background: var(--slide);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    box-shadow: var(--shadow);
+    padding: 34px 44px 18px;
+    position: relative;
+  }
+  @media (max-width: 640px) { section.slide { padding: 24px 18px 14px; } }
+
+  .slide-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    border-bottom: 3px solid var(--accent);
+    padding-bottom: 10px;
+    margin-bottom: 22px;
+    gap: 12px;
+  }
+  .slide-head h2 { font-size: 22px; font-weight: 800; margin: 0; letter-spacing: -0.01em; }
+  .slide-head .sec-no {
+    font-size: 34px; font-weight: 800; color: var(--accent);
+    opacity: .28; line-height: 1; font-variant-numeric: tabular-nums;
+  }
+
+  h3.num {
+    font-size: 16px; font-weight: 800; margin: 20px 0 10px;
+    color: var(--ink);
+  }
+  h3.num span { color: var(--accent); margin-right: 6px; }
+
+  ul { margin: 0 0 10px; padding-left: 20px; }
+  li { margin-bottom: 6px; }
+  ul ul { margin-top: 6px; }
+  ul ul li { margin-bottom: 4px; color: var(--ink); }
+  li::marker { color: var(--accent); }
+  strong { font-weight: 750; }
+  p { margin: 0 0 10px; }
+  .lead {
+    background: var(--accent-soft);
+    border-left: 3px solid var(--accent);
+    padding: 12px 16px;
+    border-radius: 0 6px 6px 0;
+    font-weight: 650;
+    margin: 0 0 16px;
+  }
+
+  .tbl { overflow-x: auto; margin: 4px 0 10px; }
+  table.decide {
+    border-collapse: collapse; width: 100%;
+    font-size: 13.5px; line-height: 1.55;
+    min-width: 640px;
+  }
+  table.decide th, table.decide td {
+    border: 1px solid var(--line);
+    padding: 10px 14px;
+    vertical-align: top;
+    text-align: left;
+  }
+  table.decide thead th {
+    background: var(--accent);
+    color: #FFFFFF;
+    font-size: 14.5px;
+    font-weight: 750;
+    text-align: center;
+  }
+  table.decide th.rowh {
+    background: var(--accent-soft);
+    color: var(--ink);
+    width: 5.5em;
+    text-align: center;
+    vertical-align: middle;
+    font-weight: 750;
+  }
+  .stars { color: var(--star); letter-spacing: 1.5px; white-space: nowrap; }
+  .win { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .pick-badge {
+    display: inline-block; font-size: 11px; font-weight: 800;
+    background: #FFFFFF; color: var(--accent);
+    border-radius: 999px; padding: 0 9px; margin-left: 8px; vertical-align: 1px;
+  }
+
+  .fig-frame {
+    border: 1px solid var(--line); border-radius: 4px;
+    background: #FFFFFF; padding: 6px; overflow-x: auto;
+  }
+  .fig-frame img { display: block; max-width: 100%; height: auto; margin: 0 auto; }
+
+  .crumb {
+    display: flex; justify-content: flex-end; gap: 18px;
+    font-size: 11.5px; color: var(--muted);
+    border-top: 1px solid var(--line);
+    margin-top: 24px; padding: 10px 2px 4px;
+  }
+  .crumb b { color: var(--accent); font-weight: 800; }
+
+  .note { font-size: 12.5px; color: var(--muted); }
+  a { color: var(--accent); }
+  a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+</style>
+</head>
+<body>
+<div class="deck">
+
+<div class="deck-head">
+  <h1>최종 Architecture — 인증 보고서 "03. 설계" 마무리 파트</h1>
+  <p>거시 1장 + 모듈별 4장 — 최종 구현 상태(as-built)를 강의 AI System 용어로 표현 — 2026-08-01 v1 — 원고: <code>report/report-013</code>, 도식: <code>arch/diagrams/06*</code></p>
+</div>
+
+<section class="slide">
+  <div class="slide-head"><h2>최종 Architecture (1/2) — 거시: 모듈 조립</h2><span class="sec-no">3</span></div>
+  <div class="fig-frame"><img src="../../arch/diagrams/06-final-architecture.png" alt="최종 아키텍처 거시 다이어그램"></div>
+  <h3 class="num"><span>■</span>강의 표준 용어 대응</h3>
+  <div class="tbl"><table class="decide">
+    <thead><tr><th>강의 AI System 컴포넌트</th><th>이 시스템의 구현</th><th style="width:5em">모듈</th></tr></thead>
+    <tbody>
+      <tr><td>입력 가드레일</td><td>OutlierGuard(생리범위/신선도) + 분석 게이팅</td><td>A2</td></tr>
+      <tr><td>모델 서빙</td><td>규칙 판정 + 베이지안 경계 + 관측 분석 엔진 + 온디바이스 LLM</td><td>A4~A7</td></tr>
+      <tr><td>출력 가드레일</td><td>형식 가드 + DirectionGuard + NumberGuard + SafetyGuard</td><td>A8</td></tr>
+      <tr><td>추론 제어</td><td>RunEngine(오케스트레이터)</td><td>A9</td></tr>
+      <tr><td>설명 서비스</td><td>세션/개인화 설명 생성 + LLM 프로비넌스</td><td>B</td></tr>
+      <tr><td>분석 서비스</td><td>세션 내/세션 간 분석 + 서빙 로그</td><td>C</td></tr>
+      <tr><td>운영 서비스 + HITL/HOTL</td><td>대시보드/리포트 UI + 말하기 테스트 + 설정/감사</td><td>D</td></tr>
+      <tr><td>Data Lake / Model Artifact</td><td>SessionStore(이력) / LearnedZone(개인 파라미터)</td><td>E</td></tr>
+      <tr><td>Model Construction / Retraining</td><td>개인 적응 갱신(세션마다 베이지안 + EWMA)</td><td>F1</td></tr>
+      <tr><td>모델 테스팅</td><td>시뮬 검증 도구(참임계 가상 러너 폐루프)</td><td>F2</td></tr>
+      <tr><td>Model Registry (인접)</td><td>NanoModelManager(모델 상태/다운로드) + AICore/APK</td><td>A7-1/E4</td></tr>
+    </tbody>
+  </table></div>
+  <p class="lead">정체성 한 줄: 표준 대비 운영 쪽이 두껍고 오프라인 학습 쪽이 얇다 — 학습이 운영 안의 개인 적응으로 녹아 있다.</p>
+  <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
+</section>
+
+<section class="slide">
+  <div class="slide-head"><h2>최종 Architecture (2/2) — 모듈 A: 추론 서비스</h2><span class="sec-no">3</span></div>
+  <div class="fig-frame"><img src="../../arch/diagrams/06a-module-inference.png" alt="모듈 A 추론 서비스 상세"></div>
+  <p class="note">입력에서 출력까지 9컴포넌트: 신호 소스(A1, 실센서/시뮬 교체 지점) → 입력 가드레일(A2) → 특징 준비(A3) → 존 판정(A4)/개인 경계(A5)/관측 분석(A6) → 코칭 표현(A7, 규칙이 확정한 사실로 LLM이 문장만) → 출력 가드레일 3종+안전(A8). 오케스트레이터(A9)가 매초 구동.</p>
+  <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
+</section>
+
+<section class="slide">
+  <div class="slide-head"><h2>모듈 B+C: 설명 + 분석 서비스</h2><span class="sec-no">3</span></div>
+  <div class="fig-frame"><img src="../../arch/diagrams/06b-module-explain-analysis.png" alt="모듈 B+C 설명 분석 상세"></div>
+  <p class="note">설명 생성기(B1)는 판단에 실제로 쓴 사실로 스토리/설명을 만들고(세션 종료 1회 생성/저장), 프로비넌스(B2-1)는 모든 LLM 호출의 근거/프롬프트/경로를 기록해 리포트에서 문장 단위 추적을 만든다. 분석(C)은 세션 내 구간/경사/워밍업과 세션 간 비교/추세/기록을 도출한다.</p>
+  <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
+</section>
+
+<section class="slide">
+  <div class="slide-head"><h2>모듈 D+E: 운영 서비스 + 저장</h2><span class="sec-no">3</span></div>
+  <div class="fig-frame"><img src="../../arch/diagrams/06c-module-operation-storage.png" alt="모듈 D+E 운영 저장 상세"></div>
+  <p class="note">운영(D)은 화면/음성 UI + 폰-워치 인프라 + 사람의 개입 통로(HITL=말하기 테스트, HOTL=설정/감사). 저장(E)은 Data Lake(세션 이력) + Model Artifact(개인 파라미터) + 프로필/설정 + Registry 대응(APK/AICore, 경량).</p>
+  <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
+</section>
+
+<section class="slide">
+  <div class="slide-head"><h2>모듈 F: 개인 적응 + 시뮬 검증 (AI Development 대응)</h2><span class="sec-no">3</span></div>
+  <div class="fig-frame"><img src="../../arch/diagrams/06d-module-adaptation-verification.png" alt="모듈 F 적응 검증 상세"></div>
+  <p class="note">표준의 오프라인 대량 학습이 없는 대신 — 개인 적응 갱신(F1)이 운영 안에서 세션마다 돌고(Retraining 대응), 시뮬 검증 도구(F2)가 참값 없는 조건의 검증을 맡으며(모델 테스팅 대응), 모델 준비 관리자(A7-1)가 Nano 상태/다운로드를 관리한다(Model Registry 인접).</p>
+
+  <h3 class="num"><span>■</span>DP 도식과의 관계 — 다섯 DP는 이 한 아키텍처의 다른 QA 단면</h3>
+  <div class="tbl"><table class="decide">
+    <thead><tr><th style="width:4em">DP</th><th style="width:8em">QA</th><th>이 아키텍처의 어느 단면인가</th><th style="width:13em">카운터(2안)</th></tr></thead>
+    <tbody>
+      <tr><td>DP1</td><td>설명용이성</td><td>투명 판정(A4/A5) + 설명 서비스(B) + 프로비넌스(B2-1)</td><td>사전학습 블랙박스 + 사후 설명</td></tr>
+      <tr><td>DP2</td><td>제어가능성</td><td>구조적 격리(A7) + 출력 가드 3종(A8) + 폴백 + HITL/HOTL(D3) + 감사</td><td>LLM 판단 위임</td></tr>
+      <tr><td>DP3</td><td>기능적응성</td><td>개인 경계 추정(A5) + 적응 루프(F1/E1) + 말하기 테스트(D3)</td><td>오프라인 재학습 개인화</td></tr>
+      <tr><td>DP4</td><td>강건성</td><td>입력 가드레일(A2) + 이중 기준 판정(A4) + 통계 평탄화(A6) + 소스 폴백(A1)</td><td>즉시 반응 판정</td></tr>
+      <tr><td>DP5</td><td>테스트가능성</td><td>소스 추상화(A1) + 시뮬 검증(F2) + 순수 로직 분리</td><td>실기기 결합 검증</td></tr>
+    </tbody>
+  </table></div>
+  <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
+</section>
+
+</div>
+
+
+</body>
+</html>

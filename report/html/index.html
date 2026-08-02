@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zone2Runner 인증 보고서 — 문서 인덱스</title>
+<style>*,*::before,*::after{box-sizing:border-box}img{max-width:100%;height:auto}</style>
+</head>
+<body>
+<style>
+  :root {
+    --bg: #EEF1F5; --slide: #FFFFFF; --ink: #1F2A3A; --muted: #64748B;
+    --line: #D8DEE7; --accent: #1D5DA8; --accent-soft: #EAF1F9;
+    --shadow: 0 2px 6px rgba(31,42,58,.08), 0 12px 32px rgba(31,42,58,.07);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #141A22; --slide: #1D2530; --ink: #E7ECF3; --muted: #94A2B4;
+      --line: #34404F; --accent: #6AA5E8; --accent-soft: #24334A;
+      --shadow: 0 2px 6px rgba(0,0,0,.35), 0 12px 32px rgba(0,0,0,.3); }
+  }
+  :root[data-theme="dark"] { --bg: #141A22; --slide: #1D2530; --ink: #E7ECF3; --muted: #94A2B4;
+    --line: #34404F; --accent: #6AA5E8; --accent-soft: #24334A;
+    --shadow: 0 2px 6px rgba(0,0,0,.35), 0 12px 32px rgba(0,0,0,.3); }
+  :root[data-theme="light"] { --bg: #EEF1F5; --slide: #FFFFFF; --ink: #1F2A3A; --muted: #64748B;
+    --line: #D8DEE7; --accent: #1D5DA8; --accent-soft: #EAF1F9;
+    --shadow: 0 2px 6px rgba(31,42,58,.08), 0 12px 32px rgba(31,42,58,.07); }
+  body { background: var(--bg); color: var(--ink); margin: 0; line-height: 1.6;
+    font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", Pretendard, "Noto Sans KR", "Malgun Gothic", sans-serif; }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 40px 20px 80px; }
+  h1 { font-size: 22px; font-weight: 800; margin: 0 0 4px; }
+  .sub { color: var(--muted); font-size: 13px; margin: 0 0 24px; }
+  h2 { font-size: 15px; font-weight: 800; margin: 26px 0 8px; color: var(--accent); }
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; background: var(--slide);
+    box-shadow: var(--shadow); border-radius: 6px; overflow: hidden; }
+  th, td { border: 1px solid var(--line); padding: 9px 12px; text-align: left; vertical-align: top; }
+  thead th { background: var(--accent); color: #fff; font-weight: 750; }
+  a { color: var(--accent); font-weight: 650; }
+  .muted { color: var(--muted); font-size: 12.5px; }
+  code { font-family: ui-monospace, Menlo, monospace; font-size: 12px; background: var(--accent-soft);
+    color: var(--accent); padding: 1px 5px; border-radius: 4px; }
+</style>
+
+<div class="wrap">
+  <h1>Zone2Runner — 인증 보고서 검수 인덱스</h1>
+  <p class="sub">보고서 전 파트의 HTML 렌더 한눈 목록 (2026-08-01 기준). 각 페이지의 md 정본은 저장소 <code>report/</code>, 도식은 <code>arch/diagrams/</code>.</p>
+
+  <h2>📕 한 번에 보기</h2>
+  <p><a href="https://claude.ai/code/artifact/82597934-14b2-49d5-80dd-f9b6dfc9c04e" style="font-size:15px">보고서 전문 통합본</a> — 과제소개부터 Appendix까지 전 파트 + 도식 16장을 한 페이지에(상단 목차 내비게이션 포함). 아래는 파트별 개별 덱.</p>
+
+  <h2>보고서 순서대로 (파트별)</h2>
+  <table>
+    <thead><tr><th style="width:12em">파트</th><th>HTML</th><th style="width:11em">md 정본</th></tr></thead>
+    <tbody>
+      <tr><td>01 과제 소개 + 02 요구사항</td><td><a href="https://claude.ai/code/artifact/9e41e1a3-4498-4a7f-88ac-2577cf39ae47">과제 소개 / 요구사항</a></td><td><code>report-018</code></td></tr>
+      <tr><td>03 설계 — DP1 설명용이성</td><td><a href="https://claude.ai/code/artifact/fba06e57-0273-428f-8829-43ed6c1c7c5b">DP1 덱</a></td><td><code>report-008</code></td></tr>
+      <tr><td>03 설계 — DP2 제어가능성</td><td><a href="https://claude.ai/code/artifact/782d02bb-b769-43c9-8ef6-a8496ac9e9b7">DP2 덱</a></td><td><code>report-009</code></td></tr>
+      <tr><td>03 설계 — DP3 기능적응성</td><td><a href="https://claude.ai/code/artifact/bb523471-9a76-4a95-aa4e-f116d0dc6e13">DP3 덱</a></td><td><code>report-010</code></td></tr>
+      <tr><td>03 설계 — DP4 강건성</td><td><a href="https://claude.ai/code/artifact/4bfb5619-0d1d-47ad-b838-30ebec0e0776">DP4 덱</a></td><td><code>report-011</code></td></tr>
+      <tr><td>03 설계 — DP5 테스트가능성</td><td><a href="https://claude.ai/code/artifact/b4d306e0-d274-46fe-9d74-5136cb1f3dba">DP5 덱</a></td><td><code>report-012</code></td></tr>
+      <tr><td>03 설계 — 최종 Architecture</td><td><a href="https://claude.ai/code/artifact/56da277d-24d0-4430-859c-5308c7ab8281">최종 아키텍처 덱</a> (거시 + 모듈 4장)</td><td><code>report-013</code></td></tr>
+      <tr><td>04 구현/검증 + 05 결론</td><td><a href="https://claude.ai/code/artifact/ded1a065-554f-4d59-a30e-071f1b076208">구현/검증/결론 덱</a> (스크린샷 자리 20장 + 실측 표)</td><td><code>report-014·015·016</code></td></tr>
+      <tr><td>Appendix — 뷰 5종(도식 6장)</td><td><a href="https://claude.ai/code/artifact/9e8ad40f-e2cd-4542-84e9-da8f44ba4dfc">Appendix 뷰 덱</a> (Use Case/Context/Module/C&amp;C 상세+축약/Deployment)</td><td><code>report-017</code></td></tr>
+    </tbody>
+  </table>
+
+  <h2>검증 실측 재현 방법</h2>
+  <p class="muted">검증 표의 모든 수치는 <code>app/app/src/test/.../QaMeasurementTest.kt</code> 실행으로 재산출된다 — <code>gradlew :app:test</code> (153테스트, 측정값은 <code>app/build/qa-measurements/</code>에 기록). 실기기 항목(QA6 TTS 5초, 스크린샷 20장)은 기기 연결 세션에서.</p>
+
+  <h2>남은 것</h2>
+  <p class="muted">① 실기기 스크린샷 20장 캡처(자리/조건은 구현 덱에 명시) ② QA6 실기기 실측 ③ 검토 피드백 반영 ④ 최종 PPT 조립.</p>
+</div>
+
+
+</body>
+</html>
