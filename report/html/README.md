@@ -16,7 +16,15 @@
 | `09-appendix.html` | Appendix 뷰 5종 | report-017 |
 | `full-report.html` | 전 파트 통합본(상단 고정 목차) | 위 전부 |
 
-`src/` = 조립 재료(본문 조각 + 공용 CSS `deck-style.html`). `build.ps1` = 조립 스크립트.
+`src/` = 조립 재료. 본문 조각과 공용 CSS(`deck-style.html`) 외에, 덱 목록과 제목과 도식 대응을 담은 `decks.json`, 통합본 상단 목차 `nav.html` 이 있다. `build.ps1` = 조립 스크립트.
+
+## 인코딩 — 전부 UTF-8, BOM 없음
+
+산출물 HTML, `src/` 의 모든 파일, `decks.json` 이 전부 **BOM 없는 UTF-8**이다. HTML은 `<meta charset="utf-8">` 를 달고 나가므로 브라우저가 로컬 파일로 열어도 한글이 깨지지 않는다.
+
+`build.ps1` 만 사정이 다르다. Windows PowerShell 5.1 은 BOM 없는 `.ps1` 을 시스템 ANSI 코드페이지로 읽어서, 스크립트 안에 한글이 있으면 파싱 단계에서 깨진다. 그래서 **스크립트 본문은 순수 ASCII로 두고, 한글은 전부 `decks.json` 과 `nav.html` 로 옮겼다.** 이 데이터 파일은 스크립트가 UTF-8로 명시해 읽는다(`[IO.File]::ReadAllText($path, [Text.Encoding]::UTF8)`). 결과적으로 BOM을 붙일 이유가 사라져서, 5.1과 PowerShell 7 어느 쪽에서도 그대로 돌아간다.
+
+덱 제목을 바꾸거나 목차 문구를 손볼 때는 `decks.json` / `nav.html` 을 고친다. **`build.ps1` 에는 한글을 넣지 않는다** — 넣는 순간 5.1에서 깨진다.
 
 ## 저장 형태 — 이미지는 링크, 필요할 때 심는다
 
@@ -40,7 +48,7 @@ powershell -File report/html/build.ps1 -Inline -OutDir C:\temp\zone2runner-deck
 2. `src/` 의 대응 본문을 같은 내용으로 고친다. 통합본은 `src/10-full-report-parts.html` 에 각 파트가 `id="part-*"` 앵커와 함께 이어져 있어, 개별 덱과 통합본 두 곳을 모두 고쳐야 한다.
 3. `build.ps1` 을 돌리고 결과를 커밋한다.
 
-도식 자리표시자는 두 가지다 — `{{IMG1}}` 처럼 이름을 직접 쓰는 방식(DP2~5, 아키텍처, Appendix)과 `<img data-img="키">` 방식(DP1, 통합본). 키와 PNG 경로의 대응은 `build.ps1` 의 `$IMAGES` 표에 있다.
+도식 자리표시자는 두 가지다 — `{{IMG1}}` 처럼 이름을 직접 쓰는 방식(DP2~5, 아키텍처, Appendix)과 `<img data-img="키">` 방식(DP1, 통합본). 키와 PNG 경로의 대응, 그리고 덱마다 어떤 자리표시자를 쓰는지는 `src/decks.json` 에 있다. 덱을 새로 추가할 때도 `decks.json` 에 항목 하나를 더하면 되고 스크립트는 손대지 않는다.
 
 ## Artifact 배포본
 

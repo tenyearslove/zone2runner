@@ -18,9 +18,9 @@
 >
 > - **산출물 11종 커밋**: `index / 01-intro / 02-dp1 ~ 06-dp5 / 07-arch / 08-impl / 09-appendix / full-report`. 도식은 상대경로(`../../arch/...`) 참조 = **합계 295KB**. clone 후 브라우저로 바로 열린다.
 > - **자체 완결(base64) 단일 파일은 커밋하지 않는다** — 같은 내용이 6.4MB이고 갱신마다 이력에 쌓인다. 필요할 때 `build.ps1 -Inline -OutDir <저장소 밖>` 로 뽑아 Artifact 에 올린다.
-> - **`report/html/src/`** = 본문 조각 11종 + 공용 CSS(`deck-style.html`). **`build.ps1`** = 조립(자리표시자 `{{IMG*}}` / `data-img` 두 방식, `$IMAGES` 표가 키→PNG 대응). 빌드는 결정적 — 도식 재렌더 후엔 다시 돌려 커밋.
+> - **`report/html/src/`** = 본문 조각 11종 + 공용 CSS(`deck-style.html`) + **`decks.json`**(덱 목록/제목/도식 대응) + `nav.html`(통합본 목차). **`build.ps1`** = 조립(자리표시자 `{{IMG*}}` / `data-img` 두 방식). 빌드는 결정적 — 도식 재렌더 후엔 다시 돌려 커밋.
 > - **이관 중 발견한 소스 드리프트 2건**(배포본이 최신이고 scratchpad 본문이 뒤처져 있었음) → 배포본 기준으로 소스 교정: ① 통합본 소스에 표지/목차 슬라이드 누락 ② impl 덱 QA4 각주(`O¹ᵇ` 표기). 교정 후 **11종 전부 배포본과 텍스트 완전 일치**(차이는 JS 이미지 맵 키 순서뿐).
-> - **주의**: PowerShell 5.1 은 BOM 없는 UTF-8 `.ps1` 을 ANSI 로 읽어 한글이 깨진다 — `build.ps1` 은 **BOM 포함 UTF-8**로 저장할 것.
+> - **인코딩은 전부 BOM 없는 UTF-8로 통일**: 산출물 HTML(+`<meta charset="utf-8">`), `src/` 전 파일, `decks.json`. PowerShell 5.1 이 BOM 없는 `.ps1` 을 ANSI 로 읽는 문제는 **`build.ps1` 을 순수 ASCII로 두고 한글을 `decks.json`/`nav.html` 로 분리**해 해결했다(스크립트가 UTF-8 명시해 읽음). 5.1/7 양쪽에서 동작하며 BOM 불필요. **`build.ps1` 에 한글을 넣지 말 것** — 넣으면 5.1에서 깨진다.
 > - 앞으로 원고를 고치면 **md 원고 + `src/` 본문**을 함께 고치고 빌드 → 커밋 → (필요시) `-Inline` 으로 Artifact 재배포.
 >
 > --- (이하 이전 기록) ---

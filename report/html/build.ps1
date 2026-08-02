@@ -1,15 +1,21 @@
-﻿<#
-  Zone2Runner 인증 보고서 HTML 덱 빌드
-  ------------------------------------
-  src/ 의 본문 조각 + deck-style.html + arch/ 의 PNG 도식을 조립해
-  브라우저에서 바로 열리는 완결 HTML(doctype/charset 포함)을 만든다.
+<#
+  Zone2Runner certification report - HTML deck builder.
 
-  기본(링크 모드)  : 이미지를 상대경로로 참조 — 파일이 작아 git 이력에 적합. 저장소 안에서 열면 그대로 보인다.
-  -Inline          : 이미지를 base64 로 심어 단일 파일로 만든다 — 저장소 밖으로 보내거나 Artifact 로 배포할 때.
+  Assembles src/ body fragments + deck-style.html + PNG diagrams under arch/
+  into complete HTML pages (doctype + charset) that open directly in a browser.
 
-  사용:
-    pwsh -File report/html/build.ps1              # 링크 모드, report/html/ 에 출력(커밋 대상)
-    pwsh -File report/html/build.ps1 -Inline -OutDir C:\temp\deck   # 자체 완결 단일 파일
+  Default (linked mode) : images referenced by relative path. Small files, readable
+                          diffs, and they render as long as they sit in the repo.
+  -Inline               : images embedded as base64, one self-contained file each.
+                          Use this to publish or to send a deck outside the repo.
+
+  Usage:
+    powershell -File report/html/build.ps1
+    powershell -File report/html/build.ps1 -Inline -OutDir C:\temp\zone2runner-deck
+
+  Encoding note: this script is pure ASCII on purpose, so it parses correctly under
+  both Windows PowerShell 5.1 and PowerShell 7 with no byte order mark. All Korean
+  text lives in src/decks.json and src/nav.html, which are read as UTF-8 explicitly.
 #>
 [CmdletBinding()]
 param(
@@ -19,69 +25,26 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $here = $PSScriptRoot
-$repo = Resolve-Path (Join-Path $here '..\..')
+$repo = (Resolve-Path (Join-Path $here '..\..')).Path
 if (-not $OutDir) { $OutDir = $here }
 New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
 
-# 출력 파일에서 저장소 루트까지의 상대 접두사 (링크 모드 전용).
-# 출력이 report/html 밖이면 링크가 깨지므로 그때는 -Inline 을 쓴다.
+# Relative prefix from an output file back to the repo root (linked mode only).
+# Outside report/html those links would break, so that combination is rejected.
 $prefix = '../../'
 $sameDir = ((Resolve-Path $OutDir).Path.TrimEnd('\') -eq $here.TrimEnd('\'))
 if (-not $Inline -and -not $sameDir) {
-  throw "링크 모드는 report/html 로만 출력할 수 있다(상대경로 기준). 다른 위치로 뽑으려면 -Inline 을 쓴다."
+  throw 'Linked mode can only write to report/html (relative image paths). Use -Inline for any other location.'
 }
 
-# ── 도식 키 → 저장소 상대경로 ────────────────────────────────────────────
-$IMAGES = [ordered]@{
-  'cnc-simple'  = 'arch/diagrams/02b-component-cnc-simple.png'
-  'cnc-detail'  = 'arch/diagrams/02-component-cnc.png'
-  'context'     = 'arch/diagrams/01-context.png'
-  'deployment'  = 'arch/diagrams/03-deployment.png'
-  'module-view' = 'arch/diagrams/04-module-view.png'
-  'usecase'     = 'arch/diagrams/05-usecase.png'
-  'macro'       = 'arch/diagrams/06-final-architecture.png'
-  'mod-a'       = 'arch/diagrams/06a-module-inference.png'
-  'mod-bc'      = 'arch/diagrams/06b-module-explain-analysis.png'
-  'mod-de'      = 'arch/diagrams/06c-module-operation-storage.png'
-  'mod-f'       = 'arch/diagrams/06d-module-adaptation-verification.png'
-  'dp1-counter' = 'arch/dp/dp-01-explainability/images/dp-01-explainability-counter-simple.png'
-  'dp2-counter' = 'arch/dp/dp-02-controllability/images/dp-02-controllability-counter-simple.png'
-  'dp3-counter' = 'arch/dp/dp-03-adaptability/images/dp-03-adaptability-counter-simple.png'
-  'dp4-counter' = 'arch/dp/dp-04-robustness/images/dp-04-robustness-counter-simple.png'
-  'dp5-counter' = 'arch/dp/dp-05-testability/images/dp-05-testability-counter-simple.png'
-}
+$utf8 = New-Object System.Text.UTF8Encoding($false)
+function Read-Utf8([string]$path) { return [IO.File]::ReadAllText($path, [Text.Encoding]::UTF8) }
 
-$b64cache = @{}
-function Get-B64([string]$key) {
-  if (-not $b64cache.ContainsKey($key)) {
-    $p = Join-Path $repo $IMAGES[$key]
-    if (-not (Test-Path $p)) { throw "도식 없음: $p" }
-    $b64cache[$key] = [Convert]::ToBase64String([IO.File]::ReadAllBytes($p))
-  }
-  return $b64cache[$key]
-}
+$cfg = Read-Utf8 (Join-Path $here 'src\decks.json') | ConvertFrom-Json
+$deckCss = Read-Utf8 (Join-Path $here 'src\deck-style.html')
+$navHtml = (Read-Utf8 (Join-Path $here 'src\nav.html')).TrimEnd("`r", "`n")
 
-# ── 덱 정의 ──────────────────────────────────────────────────────────────
-# src      : src/ 안의 본문 조각
-# deckCss  : 공용 deck-style.html 을 붙일지(인덱스는 자체 스타일)
-# ph       : {{NAME}} 자리표시자 → 도식 키
-# dataImg  : <img data-img="키"> 방식 사용
-# nav      : 통합본 상단 고정 목차
-$DECKS = @(
-  @{ out='index.html';       src='00-index.html';              title='Zone2Runner 인증 보고서 — 문서 인덱스'; deckCss=$false }
-  @{ out='01-intro.html';    src='01-intro.html';              title='과제 소개 / 요구사항 — Zone2Runner 인증 보고서'; deckCss=$true }
-  @{ out='02-dp1.html';      src='02-dp1.html';                title='DP1 설명용이성 — Zone2Runner 인증 보고서 설계 파트'; deckCss=$true; dataImg=$true }
-  @{ out='03-dp2.html';      src='03-dp2.html';                title='DP2 제어가능성 — Zone2Runner 인증 보고서 설계 파트'; deckCss=$true; ph=@{ 'IMG1'='cnc-simple'; 'IMG2'='dp2-counter' } }
-  @{ out='04-dp3.html';      src='04-dp3.html';                title='DP3 기능적응성 — Zone2Runner 인증 보고서 설계 파트'; deckCss=$true; ph=@{ 'IMG1'='cnc-simple'; 'IMG2'='dp3-counter' } }
-  @{ out='05-dp4.html';      src='05-dp4.html';                title='DP4 강건성 — Zone2Runner 인증 보고서 설계 파트'; deckCss=$true; ph=@{ 'IMG1'='cnc-simple'; 'IMG2'='dp4-counter' } }
-  @{ out='06-dp5.html';      src='06-dp5.html';                title='DP5 테스트가능성 — Zone2Runner 인증 보고서 설계 파트'; deckCss=$true; ph=@{ 'IMG1'='cnc-simple'; 'IMG2'='dp5-counter' } }
-  @{ out='07-arch.html';     src='07-arch.html';               title='최종 Architecture — Zone2Runner 인증 보고서 설계 파트'; deckCss=$true; ph=@{ 'IMG_MACRO'='macro'; 'IMG_A'='mod-a'; 'IMG_B'='mod-bc'; 'IMG_C'='mod-de'; 'IMG_D'='mod-f' } }
-  @{ out='08-impl.html';     src='08-impl.html';               title='구현 / 품질속성 검증 / 결론 — Zone2Runner 인증 보고서'; deckCss=$true }
-  @{ out='09-appendix.html'; src='09-appendix.html';           title='Appendix 뷰 — Use Case/Context/Module/C&C/Deployment'; deckCss=$true; ph=@{ 'IMG_UC'='usecase'; 'IMG_CTX'='context'; 'IMG_MOD'='module-view'; 'IMG_CNC'='cnc-simple'; 'IMG_CNC2'='cnc-detail'; 'IMG_DEP'='deployment' } }
-  @{ out='full-report.html'; src='10-full-report-parts.html';  title='Zone2Runner 인증 보고서 — 전문 (통합본)'; deckCss=$true; dataImg=$true; nav=$true }
-)
-
-$NAV_CSS = @'
+$navCss = @'
 <style>
   .topnav { position: sticky; top: 0; z-index: 50; background: var(--slide); border-bottom: 1px solid var(--line);
     box-shadow: var(--shadow); padding: 8px 14px; display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12.5px; }
@@ -92,52 +55,47 @@ $NAV_CSS = @'
 </style>
 '@
 
-$NAV_HTML = @'
-<nav class="topnav">
-  <span class="brand">Zone2Runner 보고서 전문</span>
-  <a href="#part-intro">01 소개/02 요구</a>
-  <a href="#part-dp1">DP1</a>
-  <a href="#part-dp2">DP2</a>
-  <a href="#part-dp3">DP3</a>
-  <a href="#part-dp4">DP4</a>
-  <a href="#part-dp5">DP5</a>
-  <a href="#part-arch">최종 아키텍처</a>
-  <a href="#part-impl">04 구현/검증 + 05 결론</a>
-  <a href="#part-appendix">Appendix</a>
-</nav>
-'@
+$b64cache = @{}
+function Get-B64([string]$key) {
+  if (-not $b64cache.ContainsKey($key)) {
+    $rel = $cfg.images.$key
+    if (-not $rel) { throw "Unknown image key: $key" }
+    $p = Join-Path $repo $rel
+    if (-not (Test-Path $p)) { throw "Diagram not found: $p" }
+    $b64cache[$key] = [Convert]::ToBase64String([IO.File]::ReadAllBytes($p))
+  }
+  return $b64cache[$key]
+}
 
-$deckCss = [IO.File]::ReadAllText((Join-Path $here 'src\deck-style.html'), [Text.Encoding]::UTF8)
-$utf8 = New-Object System.Text.UTF8Encoding($false)
-
-foreach ($d in $DECKS) {
-  $body = [IO.File]::ReadAllText((Join-Path $here ('src\' + $d.src)), [Text.Encoding]::UTF8)
+foreach ($d in $cfg.decks) {
+  $body = Read-Utf8 (Join-Path $here ('src\' + $d.src))
   $tail = ''
-  $used = @()
+  $count = 0
 
-  # (1) {{NAME}} 자리표시자
-  if ($d.ph) {
-    foreach ($name in $d.ph.Keys) {
-      $key = $d.ph[$name]
-      $used += $key
+  # (1) {{NAME}} placeholders inside a data URI, e.g. src="data:image/png;base64,{{IMG1}}"
+  if ($d.placeholders) {
+    foreach ($prop in $d.placeholders.PSObject.Properties) {
+      $key = $prop.Value
+      $count++
       if ($Inline) {
-        $body = $body.Replace('{{' + $name + '}}', (Get-B64 $key))
+        $body = $body.Replace('{{' + $prop.Name + '}}', (Get-B64 $key))
       } else {
-        $body = $body.Replace('data:image/png;base64,{{' + $name + '}}', ($prefix + $IMAGES[$key]))
+        $body = $body.Replace('data:image/png;base64,{{' + $prop.Name + '}}', ($prefix + $cfg.images.$key))
       }
     }
   }
 
-  # (2) <img data-img="키">
+  # (2) <img data-img="key"> - inline mode resolves through a shared JS map so a
+  #     diagram used on several slides is embedded once.
   if ($d.dataImg) {
     $keys = [regex]::Matches($body, 'data-img="([a-z0-9-]+)"') | ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique
-    $used += $keys
+    $count += $keys.Count
     if ($Inline) {
       $entries = foreach ($k in $keys) { '"' + $k + '":"data:image/png;base64,' + (Get-B64 $k) + '"' }
       $tail = '<script>const IMGS={' + ($entries -join ',') + '};document.querySelectorAll("img[data-img]").forEach(i=>{i.src=IMGS[i.dataset.img];});</script>'
     } else {
       foreach ($k in $keys) {
-        $body = $body.Replace('<img data-img="' + $k + '"', '<img src="' + $prefix + $IMAGES[$k] + '" data-img="' + $k + '"')
+        $body = $body.Replace('<img data-img="' + $k + '"', '<img src="' + $prefix + $cfg.images.$k + '" data-img="' + $k + '"')
       }
     }
   }
@@ -151,10 +109,10 @@ foreach ($d in $DECKS) {
   $head += ('<title>' + $d.title + '</title>')
   $head += '<style>*,*::before,*::after{box-sizing:border-box}img{max-width:100%;height:auto}</style>'
   if ($d.deckCss) { $head += $deckCss }
-  if ($d.nav) { $head += $NAV_CSS }
+  if ($d.nav) { $head += $navCss }
   $head += '</head>'
   $head += '<body>'
-  if ($d.nav) { $head += $NAV_HTML }
+  if ($d.nav) { $head += $navHtml }
 
   $html = ($head -join "`n") + "`n" + $body + "`n" + $tail + "`n</body>`n</html>`n"
   $path = Join-Path $OutDir $d.out
@@ -162,7 +120,7 @@ foreach ($d in $DECKS) {
 
   $mode = 'linked'
   if ($Inline) { $mode = 'inline' }
-  '{0,-20} {1,9:N0} KB  {2}  도식 {3}' -f $d.out, ((Get-Item $path).Length / 1KB), $mode, $used.Count
+  '{0,-20} {1,9:N0} KB  {2}  {3} diagram(s)' -f $d.out, ((Get-Item $path).Length / 1KB), $mode, $count
 }
 
-'완료: {0}' -f $OutDir
+'Done: {0}' -f $OutDir
