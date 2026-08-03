@@ -74,6 +74,18 @@
   }
   @media (max-width: 640px) { section.slide { padding: 24px 18px 14px; } }
 
+  .meas { color: var(--accent); font-weight: 600; }
+
+  /* 페이지 번호 — 각 슬라이드 하단 우측 (피드백 참조용) */
+  body { counter-reset: pageno; }
+  section.slide { counter-increment: pageno; }
+  section.slide::after {
+    content: "p. " counter(pageno);
+    position: absolute; right: 16px; bottom: 8px;
+    font-size: 11px; color: var(--muted);
+    font-variant-numeric: tabular-nums; letter-spacing: 0.02em;
+  }
+
   .slide-head {
     display: flex; align-items: baseline; justify-content: space-between;
     border-bottom: 3px solid var(--accent);

@@ -1,0 +1,39 @@
+@startuml
+title DP1 채택안 상세 — 설명이 지어내지지 않는 5단계 파이프라인
+skinparam defaultFontName "AppleGothic"
+skinparam shadowing false
+skinparam ArrowColor #5C6B62
+skinparam rectangle {
+  BorderColor #B7C3BA
+  roundCorner 12
+}
+
+rectangle "관측 신호\n심박 / 페이스 / 케이던스 / 경사" as OBS #FFF9C4
+
+rectangle "1. 사실 확정\n규칙·통계가 판정과 근거 숫자를 정한다\n(예: 심박 145 > 상한 132 → 초과)" as S1 #E8F0FE
+rectangle "2. 근거 기록\n각 수치의 출처(관측/학습/설계)와\n코칭의 근거 관측을 그 자리에서 저장" as S2 #EAF4EC
+rectangle "3. 표현 한정\nLLM은 확정된 사실을 문장으로만 바꾼다\n(이유를 새로 지어내지 않음)" as S3 #E8F0FE
+rectangle "4. 표현 검사\n나가는 문장의 형식·방향·숫자를\n규칙이 다시 검사 — 어긋나면 기각·폴백" as S4 #FFE9D6
+rectangle "5. 추적 열람\n리포트에서 문장을 누르면\n근거 관측과 생성 과정을 그대로 확인" as S5 #EAF4EC
+
+OBS --> S1
+S1 --> S2
+S2 --> S3
+S3 --> S4
+S4 --> S5
+
+note right of S3
+  LLM은 판단하지 않는다
+  = 지어낼 판단이 없다
+end note
+note right of S4
+  검사 통과 실패 시
+  단어 수준 기본 문구로 대체
+  (코칭 무중단)
+end note
+
+legend bottom
+  파랑=규칙/통계(사실) · 초록=기록/열람 · 주황=출력 검사 · 노랑=외부 관측
+  설명의 재료가 전부 1~2단계에서 확정되므로, 3~5단계는 그 사실을 벗어날 수 없다.
+endlegend
+@enduml

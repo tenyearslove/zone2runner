@@ -39,7 +39,7 @@
   </ul>
   <h3 class="num"><span>■</span>과제 필요성</h3>
   <ul>
-    <li><strong>기존 러닝 앱의 한계</strong>: 대부분 존 표시까지만 한다 — 그 경계가 왜 그 값인지 설명하지 않고, 경계를 개인의 실제 반응으로 맞춰가는 루프가 없다.</li>
+    <li><strong>기존 러닝 앱의 한계</strong>: 대부분 존 표시까지만 한다 — 그 경계가 왜 그 값인지 설명하지 않고, 개인의 실제 반응에 맞춰 경계를 조정해 가는 피드백 과정이 없다.</li>
     <li><strong>AI 코칭의 신뢰 문제</strong>: 운동 강도라는 "행동 지시"를 AI에 맡기려면 — 설명이 실제 판단과 일치하고, 어긋난 출력이 차단되고, 실패해도 기능이 이어지는 구조가 필요하다.</li>
     <li>이 과제는 "더 똑똑한 모델"이 아니라 <strong>"믿고 따라도 되는 AI 코칭 시스템의 설계"</strong>를 다룬다.</li>
   </ul>
@@ -54,7 +54,7 @@
       <tr><th class="rowh">목표</th><td>갤럭시 워치의 심박을 실시간으로 보며, <strong>개인에게 맞춰진 Zone 2 경계</strong> 기준으로 판정하고, 온디바이스 AI가 <strong>근거 있는 음성 코칭</strong>과 <strong>설명 가능한 리포트</strong>를 제공한다</td></tr>
       <tr><th class="rowh">구성</th><td>Android 폰 앱(판정/분석/개인화/코칭의 주체) + Wear OS 워치 앱(측정/표시) — 자체 서버 없음, 러닝/개인 데이터 비이탈</td></tr>
       <tr><th class="rowh">AI 적용</th><td>판정=규칙, 개인화=온라인 베이지안(말하기 테스트 실라벨), 분석=관측 통계, 표현=온디바이스 LLM(가드 3종 통제)</td></tr>
-      <tr><th class="rowh">예상 효과</th><td>① 경계가 쓸수록 그 사람에게 수렴 ② 모든 판정/코칭에 추적 가능한 근거(신뢰) ③ 서버/구독 비용 0의 지속 가능 구조 ④ 시뮬 검증으로 참값 없는 문제의 품질 확보</td></tr>
+      <tr><th class="rowh">예상 효과</th><td>① 쓸수록 경계가 그 사람 몸에 맞게 수렴한다 ② 모든 판정과 코칭에 추적 가능한 근거가 남아 신뢰할 수 있다 ③ 서버·구독 비용이 없어 지속 가능하다 ④ 참값(실험실에서만 잴 수 있는 정확한 정답)이 없는 문제를 시뮬레이션 폐루프로 검증한다</td></tr>
     </tbody>
   </table></div>
   <div class="crumb"><b>과제 소개</b> <span>요구사항</span> <span>설계</span> <span>구현/검증</span> <span>결론</span></div>
@@ -65,21 +65,21 @@
   <div class="tbl"><table class="decide">
     <thead><tr><th style="width:3.5em">ID</th><th style="width:15em">TITLE</th><th>Description</th><th style="width:3em">AI</th></tr></thead>
     <tbody>
-      <tr><td>FR1</td><td>개인 프로필 관리 및 Zone 2 초기 경계 산정</td><td>프로필을 관리하고 콜드스타트 경계 산정 — 최대심박은 Tanaka 공식 prior, 안정심박이 있으면 Karvonen, 없으면 %HRmax. 적응은 FR4</td><td></td></tr>
-      <tr><td>FR2</td><td>실시간 심박 수집 및 존 판정</td><td>1초 주기 수집, 입력 가드레일/히스테리시스/두절 폴백으로 강건화해 규칙 판정. 이중 기준 — 표시=순간+히스테리시스(5존), 코칭/통계=60초 지속</td><td style="text-align:center">●</td></tr>
-      <tr><td>FR3</td><td>관측 데이터 분석 엔진</td><td>관측만으로 참값 없이 파생지표 도출(드리프트/서브맥시멀/HRR/경사보정 페이스/케이던스) — 예측은 검증 불가로 드롭</td><td style="text-align:center">●</td></tr>
-      <tr><td>FR4</td><td>개인화 적응</td><td>최대심박(위로만)/안정심박(아래로만)/Zone 2 상한(말하기 테스트 실라벨, 온라인 베이지안) — 공식 초기값에서 그 사람 자리로 수렴</td><td style="text-align:center">●</td></tr>
-      <tr><td>FR5</td><td>반응형 실시간 코칭 및 안전 가드</td><td>규칙+분석이 방향/사실 확정, LLM이 표현. 출력 가드레일(형식/방향/숫자) + 단어 폴백 무중단. 위험 심박은 LLM 미경유 즉시 권고</td><td style="text-align:center">●</td></tr>
-      <tr><td>FR6</td><td>세션 리포트 및 근거 설명</td><td>파생지표 그래프/카드 + "왜 이렇게 판정/코칭했는지" 설명(스토리/코칭 문장 근거 추적). LLM 표현은 종료 1회 생성/저장</td><td style="text-align:center">●</td></tr>
+      <tr><td>FR1</td><td>개인 프로필 관리 및 Zone 2 초기 경계 산정</td><td>사용자의 신체 정보(나이·키·체중·안정심박·최대심박)를 프로필로 관리하고, 첫 러닝에 쓸 Zone 2 경계를 계산한다. 최대심박은 Tanaka 공식으로 추정하고, 안정심박을 알면 Karvonen 방식으로, 모르면 최대심박 비율(%HRmax)로 경계를 잡는다.</td><td></td></tr>
+      <tr><td>FR2</td><td>실시간 심박 수집 및 존 판정</td><td>1초마다 심박을 받아 규칙으로 현재 존을 판정한다. 손목 심박은 노이즈가 많으므로, 생리 범위를 벗어난 값을 걸러내고(입력 검사), 경계 근처에서 판정이 깜빡이지 않도록 여유 구간(히스테리시스: 한 번 넘으면 조금 더 내려와야 되돌아옴)을 두며, 신호가 끊기면 마지막 값으로 잠시 버틴다. 판정 기준은 둘이다 — 화면 표시는 순간 심박(5개 존), 코칭·통계는 60초 지속 심박.</td><td style="text-align:center">●</td></tr>
+      <tr><td>FR3</td><td>관측 데이터 분석 엔진</td><td>미래를 예측하지 않고, 관측한 데이터만으로 파생 지표를 계산한다 — 심박 드리프트, 같은 페이스 대비 심박(서브맥시멀), 운동 후 심박 회복(HRR), 경사 보정 페이스, 케이던스 안정성. 예측값은 맞았는지 확인할 방법이 없어 검증이 불가능하므로 도입하지 않았다.</td><td style="text-align:center">●</td></tr>
+      <tr><td>FR4</td><td>개인화 적응</td><td>러닝이 쌓일수록 경계를 그 사람에게 맞춰 간다. 최대심박은 더 높은 값이 관측되면 위로만, 안정심박은 더 낮은 값이 관측되면 아래로만 갱신하고, Zone 2 상한은 러닝 중 사용자가 답하는 말하기 테스트(실제 라벨)를 근거로 온라인 베이지안으로 조정한다. 공식이 준 초기값에서 시작해 그 사람의 실제 반응 지점으로 수렴한다.</td><td style="text-align:center">●</td></tr>
+      <tr><td>FR5</td><td>반응형 실시간 코칭 및 안전 가드</td><td>존을 벗어나거나 심박이 흐르는 방향에 맞춰 실시간으로 코칭한다. 코칭의 방향과 사실은 규칙·분석 엔진이 확정하고, 문장은 LLM이 만든다. 나가는 문장은 형식·방향·숫자 검사를 거치며, 검사에 걸리거나 LLM이 없으면 짧은 기본 문구로 끊김 없이 대체한다. 위험할 만큼 심박이 높으면 LLM을 거치지 않고 규칙이 즉시 권고한다.</td><td style="text-align:center">●</td></tr>
+      <tr><td>FR6</td><td>세션 리포트 및 근거 설명</td><td>러닝이 끝나면 파생 지표를 그래프와 카드로 보여주고, "왜 이렇게 판정하고 코칭했는지"를 설명한다. 세션 이야기와 각 코칭 문장의 근거를 눌러서 추적할 수 있으며, LLM이 만드는 설명 문장은 종료 시 한 번만 생성해 저장한다(다시 열어도 재생성하지 않는다).</td><td style="text-align:center">●</td></tr>
     </tbody>
   </table></div>
   <p class="note">규정 충족: FR 6개(최소 4개 이상), AI 관련 FR 5개(FR2~FR6).</p>
   <div class="tbl"><table class="decide">
-    <thead><tr><th style="width:3.5em">ID</th><th style="width:17em">제약</th><th>함의</th></tr></thead>
+    <thead><tr><th style="width:3.5em">ID</th><th style="width:15em">TITLE</th><th>Description</th></tr></thead>
     <tbody>
-      <tr><td>C01</td><td>운영 비용 0 (서버/추론 API 과금 불가)</td><td>온디바이스 추론/LLM 강제, 클라우드 배제 — 오프라인/프라이버시는 부수효과</td></tr>
-      <tr><td>C02</td><td>도메인에 맞는 대량 학습 데이터 확보 불가</td><td>공개 데이터셋은 모집단 평균이라 개인차를 못 풂 → 블랙박스 NN 대신 관측 분석 + 온라인 베이지안</td></tr>
-      <tr><td>C03</td><td>개인 참값(젖산/환기역치) 측정 불가</td><td>절대 정확도 대신 — 검증 가능한 실라벨, 판정 일관성, 시뮬 폐루프로 품질을 세움</td></tr>
+      <tr><td>C01</td><td>운영 비용 0</td><td>자체 서버나 유료 추론 API를 쓸 수 없다. 모든 추론과 LLM 실행은 사용자의 기기 안에서 이루어져야 한다.</td></tr>
+      <tr><td>C02</td><td>대량 학습 데이터 확보 불가</td><td>이 도메인(개인 러닝 심박)에 맞는 대량의 학습 데이터를 확보할 수 없다. 공개 데이터셋은 여러 사람의 평균이라 개인의 차이를 담지 못한다.</td></tr>
+      <tr><td>C03</td><td>개인 참값 측정 불가</td><td>개인의 유산소 역치(젖산·환기역치) 참값을 실측할 수 없다. 실험실 장비 없이는 정확한 정답값을 얻을 수 없다.</td></tr>
     </tbody>
   </table></div>
   <div class="crumb">과제 소개 <b>요구사항</b> <span>설계</span> <span>구현/검증</span> <span>결론</span></div>
@@ -89,14 +89,14 @@
   <div class="slide-head"><h2>품질 요구사항 — QAW / Utility Tree를 통한 ASR 선정</h2><span class="sec-no">2</span></div>
   <p class="note">QA는 6개를 선정했다. AI 특화 4개(설명용이성, 기능적응성, 제어가능성, 강건성)는 강의 AI 8대 QA에서 골랐다. 일반 SW 2개 중 테스트가능성은 8대 밖의 일반 QA이고, 수행효율성은 8대에도 속하나 AI 특화 계상에서는 보수적으로 제외했다. 규정(QA 4개 이상, AI 특화 2개 이상)을 충족한다.</p>
   <div class="tbl"><table class="decide">
-    <thead><tr><th style="width:3.5em">ID</th><th style="width:9em">QA</th><th style="width:7em">분류</th><th>시나리오 요약 → [측정]</th><th style="width:4em">중요도</th><th style="width:4em">난이도</th></tr></thead>
+    <thead><tr><th style="width:3.2em">ID</th><th style="width:8.5em">QA</th><th style="width:16em">내용</th><th>시나리오 → <span class="meas">[측정]</span></th><th style="width:3.5em">중요도</th><th style="width:3.5em">난이도</th></tr></thead>
     <tbody>
-      <tr><td>QA1</td><td><strong>설명용이성</strong></td><td>AI ★정체성</td><td>판정/코칭/개인화의 "왜"를 실제 사실 근거로 → [지어낸 수치 0, 근거 기록 1:1, 동일 입력 설명 일치]</td><td style="text-align:center">9</td><td style="text-align:center">6</td></tr>
-      <tr><td>QA2</td><td><strong>기능적응성</strong></td><td>AI ★정체성</td><td>변화 감지→경계 적응→안정(실라벨, 온라인 베이지안) → [수렴 오차↓, 안착 세션 수, 진동폭]</td><td style="text-align:center">9</td><td style="text-align:center">8</td></tr>
-      <tr><td>QA3</td><td><strong>제어가능성</strong></td><td>AI</td><td>어긋난 LLM 출력 기각/폴백, 위험 시 규칙 직접 개입 → [방향위반 기각율 100%, 폴백 무중단, 이동 ≤10bpm]</td><td style="text-align:center">8</td><td style="text-align:center">6</td></tr>
-      <tr><td>QA4</td><td><strong>강건성</strong></td><td>AI</td><td>이상치/경계 떨림에도 판정 유지 → [이상치 기각율 100%, Flicker 억제, 판정 유지율]</td><td style="text-align:center">8</td><td style="text-align:center">5</td></tr>
-      <tr><td>QA5</td><td><strong>테스트가능성</strong></td><td>일반</td><td>참값 없는 문제를 폐루프 서로게이트로 검증 → [기기 없이 독립 실행 100%, 단위 테스트, 수렴 곡선]</td><td style="text-align:center">7</td><td style="text-align:center">6</td></tr>
-      <tr><td>QA6</td><td><strong>수행효율성</strong></td><td>일반</td><td>심박 변화를 지연 없이 반영 → [1주기 내 반영, 음성 5초 내, 코칭 중 멈춤 0]</td><td style="text-align:center">8</td><td style="text-align:center">6</td></tr>
+      <tr><td>QA1</td><td><strong>설명용이성</strong><br><span class="dim">AI 8대 · 정체성</span></td><td>AI가 왜 그렇게 판정·코칭·개인화했는지를, 지어낸 말이 아니라 실제로 판단에 쓴 사실을 근거로 설명한다.</td><td>판정·코칭·개인화가 일어난 세션에서 "왜 이렇게 판단했나"를 조회하면, 규칙이 확정한 사실(경계 비교, 드리프트가 코칭을 부른 인과, 세션 수·관측 수·경계 이동량)을 그대로 근거로 제시한다.<br><span class="meas">[측정] 출력 문장에 입력 사실에 없는 숫자가 섞인 비율 0%, 코칭 문장과 근거 기록의 1:1 대응 100%, 동일 입력에 대한 설명 근거 일치율 100%</span></td><td style="text-align:center">9</td><td style="text-align:center">6</td></tr>
+      <tr><td>QA2</td><td><strong>기능적응성</strong><br><span class="dim">AI 8대 · 정체성</span></td><td>개인차와 그날 컨디션 변화를 감지해 개인 경계를 조정하고, 몇 세션 안에 그 사람 값으로 안정된다(관측으로 온라인 학습).</td><td>세션이 쌓이고 변화 신호(후반 드리프트 급증·기온·말하기 테스트 응답)가 들어오면 이를 적응 신호로 삼아 Zone 2 경계를 온라인 베이지안으로 갱신하고, 최대·안정심박 프로필도 갱신한다.<br><span class="meas">[측정] 참임계(정답)를 아는 가상 러너로 반복했을 때 수렴 오차 최종 3bpm 이하, 안착까지 5세션 이하, 세션 간 경계 진동폭 4bpm 이하 (오답 라벨 10%를 섞어도 오차 5bpm 이하)</span></td><td style="text-align:center">9</td><td style="text-align:center">8</td></tr>
+      <tr><td>QA3</td><td><strong>제어가능성</strong><br><span class="dim">AI 8대</span></td><td>규칙과 사용자가 AI 출력에 개입해, 어긋난 코칭을 막고 위험 상황을 규칙이 직접 처리한다.</td><td>LLM이 판정과 어긋나거나 방향이 없는 코칭을 내면 규칙이 기각하고 기본 문구로 대체한다. 위험할 만큼 심박이 높으면 안전 가드가 LLM을 거치지 않고 규칙으로 즉시 권고한다.<br><span class="meas">[측정] 방향 위반 문장 기각율 100%, LLM 실패 시에도 코칭 중단 0회, 한 세션 내 경계 이동 10bpm 이하 보장</span></td><td style="text-align:center">8</td><td style="text-align:center">6</td></tr>
+      <tr><td>QA4</td><td><strong>강건성</strong><br><span class="dim">AI 8대</span></td><td>손목 심박·GPS의 노이즈와 경계 근처의 떨림에도 판정이 흔들리지 않는다.</td><td>생리 범위(40~220bpm)를 벗어난 이상치, GPS 고도 튐, 경계 근처에서 오르내리는 심박을 연속으로 입력한다. 입력 검사·히스테리시스·창 회귀 평탄화·분석 게이팅으로 방어한다.<br><span class="meas">[측정] 이상치 기각율 100%(정상값 오탐 0), 경계 떨림에서 판정 번복 60% 이상 억제(진짜 이동은 2틱 이내 전환), 정상 대비 판정 유지율</span></td><td style="text-align:center">8</td><td style="text-align:center">5</td></tr>
+      <tr><td>QA5</td><td><strong>테스트가능성</strong><br><span class="dim">일반 SW</span></td><td>참값이 없는 문제라도, 정답을 아는 가상 러너로 폐루프를 돌려 개인화·판정·코칭을 검증할 수 있다.</td><td>워치 없이 입력 소스를 가상 러너·수동으로 바꿔 전체 파이프라인을 실행하고, 참임계를 아는 가상 러너로 개인화 수렴을 정량 검증한다.<br><span class="meas">[측정] 워치 없이 전 파이프라인 독립 실행 100%, 순수 로직 단위 테스트 통과, 개인화 수렴 곡선 확보(시뮬은 구조 검증이지 실인간 정확도가 아님)</span></td><td style="text-align:center">7</td><td style="text-align:center">6</td></tr>
+      <tr><td>QA6</td><td><strong>수행효율성</strong><br><span class="dim">일반 SW</span></td><td>심박 변화를 지연 없이 판정·화면에 반영하고, 코칭 생성이 화면을 멈추지 않는다.</td><td>1초 샘플을 한 주기 안에 판정·화면에 반영하고, LLM 코칭 생성은 비동기로 돌려 판정·렌더를 막지 않는다.<br><span class="meas">[측정] 틱당 로직 처리 10ms 미만(1Hz 여유), 존 이탈 감지→TTS 음성 5초 이내, 코칭 생성 중 화면 멈춤 0회</span></td><td style="text-align:center">8</td><td style="text-align:center">6</td></tr>
     </tbody>
   </table></div>
   <p class="note"><strong>ASR 선정 기준</strong>: 중요도 7 이상을 ASR(Architecturally Significant Requirement)로 삼는다 — QA1~QA6 모두 7 이상이라 전부 ASR이다. 우선순위(중요도와 난이도 종합) = QA2 &gt; QA1 = QA6 &gt; QA3 &gt; QA4 &gt; QA5.</p>
@@ -200,7 +200,7 @@
       <tr>
         <th class="rowh">단점</th>
         <td class="win">
-          <div class="qa-line"><span>기능적응성 <span class="dim">(규칙에 없는 복잡한 패턴은 배우지 못한다)</span></span><span class="stars">★★★</span></div>
+          <div class="qa-line"><span>기능적응성 <span class="dim">(경계를 그 사람에게 맞추는 적응은 하지만, 규칙에 없는 복잡한 패턴까지 스스로 배우지는 못한다 — 이 축은 DP3에서 다룸)</span></span><span class="stars">★★★</span></div>
           <div class="qa-line"><span>기능정확성 <span class="dim">(정답지가 없어 절대 정확도는 검증할 수 없다 — 두 안 공통)</span></span><span class="stars">★★★★</span></div>
         </td>
         <td>
@@ -236,17 +236,16 @@
 
   <h3 class="num"><span>2.</span>채택 근거</h3>
   <ul>
-    <li><strong>판단 근거가 그대로 설명이 된다.</strong> 판단에 쓴 숫자와 규칙을 그대로 보여주므로 지어낸 설명이 나갈 수 없다. 코칭 문장마다 근거 수치와 만들어진 과정이 기록되어 리포트에서 다시 확인할 수 있다.</li>
-    <li><strong>사용자의 정정이 바로 반영된다.</strong> "그건 내 느낌과 달라"라고 답하면(말하기 테스트) 그 자리에서 개인 경계가 움직이고, 얼마나 움직였는지 화면에 보인다. 2안은 정정을 모아 재학습해야 반영되고, 반영 여부를 확인하기도 어렵다.</li>
-    <li><strong>이 과제의 조건에 맞는다.</strong> 2안이 힘을 쓰려면 많은 데이터와 정답지가 필요하다. 이 과제에는 둘 다 없다. 입력도 심박, 페이스처럼 뜻이 분명한 몇 개의 신호여서, 투명한 모델을 써도 정확도 손해가 작다(Rudin 2019).</li>
-    <li><strong>폰에서 가볍다.</strong> 설명은 이미 계산한 값을 보여줄 뿐이라 추가 연산이 거의 없다.</li>
-    <li><strong>확장 여지도 있다.</strong> 정답 데이터가 생기면 2안 요소를 더해 고도화할 수 있다.</li>
+    <li><strong>설명이 곧 판단 근거다(설명용이성).</strong> 이 앱은 설명을 따로 지어내지 않는다. "심박 145가 상한 132를 넘었다"처럼 판정에 실제로 쓴 숫자와 규칙을 그대로 보여주는 것이 설명이다. 그래서 설명과 실제 판단이 어긋날 수 없다. 코칭 문장마다 그 근거 숫자와 생성 과정이 기록되어, 리포트에서 문장을 눌러 다시 확인할 수 있다.</li>
+    <li><strong>사용자의 정정이 바로 반영된다(제어가능성).</strong> 러닝 중 "그건 내 느낌과 달라"라고 답하면(말하기 테스트) 그 자리에서 개인 경계가 움직이고, 얼마나 움직였는지 화면에 보인다. 2안은 이런 정정을 모아 모델을 다시 학습해야 반영되고, 제대로 반영됐는지 확인하기도 어렵다.</li>
+    <li><strong>이 과제의 조건에 맞는다.</strong> 2안의 장점은 학습 데이터와 정답이 충분할 때 나오는데, 이 과제에는 그 둘이 다 없다(제약 C02·C03). 게다가 입력이 심박·페이스처럼 뜻이 분명한 소수의 신호라, 투명한 모델을 써도 정확도 손해가 크지 않다(Rudin 2019).</li>
+    <li><strong>추가 연산이 거의 없다.</strong> 설명은 이미 계산해 둔 값을 그대로 보여주는 것이라 별도 연산이 들지 않아, 폰에서 실시간으로 무리 없이 돌아간다.</li>
   </ul>
 
   <h3 class="num"><span>3.</span>보완 계획</h3>
   <ul>
-    <li><strong>단기</strong>: 시중 러닝 앱의 설명 기능을 조사한다. 사용자에게 설명이 이해되는지 평가한다. LLM 문장 기각 기록으로 표현 왜곡을 지켜본다.</li>
-    <li><strong>장기</strong>: 설명이 판단과 일치해도 판단 자체는 틀릴 수 있다. 이 부분은 말하기 테스트 정정을 강화해 메운다.</li>
+    <li><strong>단기</strong>: 시중 러닝 앱(가민·스트라바 등)이 코칭 근거를 어디까지, 어떤 형태로 보여주는지 조사해, 우리 설명의 상세도와 표현 형식을 다듬는 기준으로 삼는다. 실사용자에게 설명이 실제로 이해되는지 평가해 어려운 용어를 고친다. LLM 문장이 검사에서 기각된 기록을 모아 어떤 표현이 자주 걸리는지 분석하고 프롬프트를 교정한다.</li>
+    <li><strong>장기</strong>: 설명이 판단과 일치해도 판단 자체는 틀릴 수 있다(참값이 없어 절대 정확도는 검증 불가). 이를 말하기 테스트로 메우되 — 질문을 심박이 안정된 구간에서만 던지고, 응답의 일관성에 따라 경계 갱신 폭을 가중해 — 사용자 라벨의 신뢰도를 끌어올린다.</li>
   </ul>
 
   <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
@@ -261,7 +260,7 @@
 
   <h3 class="num"><span>1.</span>문제점이 걸리는 품질 속성</h3>
   <ul>
-    <li>사용자가 설명을 이해하지 못하면 코칭을 따르지 않는다 → 설명용이성</li>
+    <li>사용자가 설명을 이해하지 못하면 코칭에 대한 신뢰가 떨어진다 → 설명용이성</li>
     <li>설명이 지어낸 이유여서는 안 된다 → 설명용이성(심화)</li>
     <li>정답지가 없어 사후 채점이 불가능하다 → 구조 선택으로 대응</li>
     <li>개인 경계가 계속 갱신된다 → 기능적응성</li>
@@ -270,7 +269,8 @@
     <li>소형 LLM이 말을 지어낼 수 있다 → 제어가능성, 강건성</li>
   </ul>
 
-  <h3 class="num"><span>2.</span>채택안의 설명 생성 경로 5단계 <span class="note" style="font-weight:400">(다른 DP의 구조 표와 같은 형식)</span></h3>
+  <h3 class="num"><span>2.</span>채택안 상세 설계 — 설명 생성 5단계 파이프라인</h3>
+  <figure style="margin:0 0 12px"><div class="fig-frame"><img data-img="dp1-detail" alt="DP1 채택안 상세 설계 — 설명 생성 5단계 파이프라인" width="900"></div></figure>
   <div class="tbl">
   <table class="decide">
     <thead><tr><th style="width:9em">단계</th><th>하는 일</th></tr></thead>

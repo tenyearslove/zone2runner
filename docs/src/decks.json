@@ -1,25 +1,24 @@
 {
   "_comment": "Deck build configuration. Korean text lives here as UTF-8 data so build.ps1 can stay pure ASCII (no BOM needed).",
-
   "images": {
-    "cnc-simple":  "arch/diagrams/02b-component-cnc-simple.png",
-    "cnc-detail":  "arch/diagrams/02-component-cnc.png",
-    "context":     "arch/diagrams/01-context.png",
-    "deployment":  "arch/diagrams/03-deployment.png",
+    "cnc-simple": "arch/diagrams/02b-component-cnc-simple.png",
+    "cnc-detail": "arch/diagrams/02-component-cnc.png",
+    "context": "arch/diagrams/01-context.png",
+    "deployment": "arch/diagrams/03-deployment.png",
     "module-view": "arch/diagrams/04-module-view.png",
-    "usecase":     "arch/diagrams/05-usecase.png",
-    "macro":       "arch/diagrams/06-final-architecture.png",
-    "mod-a":       "arch/diagrams/06a-module-inference.png",
-    "mod-bc":      "arch/diagrams/06b-module-explain-analysis.png",
-    "mod-de":      "arch/diagrams/06c-module-operation-storage.png",
-    "mod-f":       "arch/diagrams/06d-module-adaptation-verification.png",
+    "usecase": "arch/diagrams/05-usecase.png",
+    "macro": "arch/diagrams/06-final-architecture.png",
+    "mod-a": "arch/diagrams/06a-module-inference.png",
+    "mod-bc": "arch/diagrams/06b-module-explain-analysis.png",
+    "mod-de": "arch/diagrams/06c-module-operation-storage.png",
+    "mod-f": "arch/diagrams/06d-module-adaptation-verification.png",
     "dp1-counter": "arch/dp/dp-01-explainability/images/dp-01-explainability-counter-simple.png",
     "dp2-counter": "arch/dp/dp-02-controllability/images/dp-02-controllability-counter-simple.png",
     "dp3-counter": "arch/dp/dp-03-adaptability/images/dp-03-adaptability-counter-simple.png",
     "dp4-counter": "arch/dp/dp-04-robustness/images/dp-04-robustness-counter-simple.png",
-    "dp5-counter": "arch/dp/dp-05-testability/images/dp-05-testability-counter-simple.png"
+    "dp5-counter": "arch/dp/dp-05-testability/images/dp-05-testability-counter-simple.png",
+    "dp1-detail": "arch/dp/dp-01-explainability/images/dp-01-explainability-detail.png"
   },
-
   "decks": [
     {
       "out": "index.html",
@@ -45,28 +44,40 @@
       "src": "03-dp2.html",
       "title": "DP2 제어가능성 — Zone2Runner 인증 보고서 설계 파트",
       "deckCss": true,
-      "placeholders": { "IMG1": "cnc-simple", "IMG2": "dp2-counter" }
+      "placeholders": {
+        "IMG1": "cnc-simple",
+        "IMG2": "dp2-counter"
+      }
     },
     {
       "out": "04-dp3.html",
       "src": "04-dp3.html",
       "title": "DP3 기능적응성 — Zone2Runner 인증 보고서 설계 파트",
       "deckCss": true,
-      "placeholders": { "IMG1": "cnc-simple", "IMG2": "dp3-counter" }
+      "placeholders": {
+        "IMG1": "cnc-simple",
+        "IMG2": "dp3-counter"
+      }
     },
     {
       "out": "05-dp4.html",
       "src": "05-dp4.html",
       "title": "DP4 강건성 — Zone2Runner 인증 보고서 설계 파트",
       "deckCss": true,
-      "placeholders": { "IMG1": "cnc-simple", "IMG2": "dp4-counter" }
+      "placeholders": {
+        "IMG1": "cnc-simple",
+        "IMG2": "dp4-counter"
+      }
     },
     {
       "out": "06-dp5.html",
       "src": "06-dp5.html",
       "title": "DP5 테스트가능성 — Zone2Runner 인증 보고서 설계 파트",
       "deckCss": true,
-      "placeholders": { "IMG1": "cnc-simple", "IMG2": "dp5-counter" }
+      "placeholders": {
+        "IMG1": "cnc-simple",
+        "IMG2": "dp5-counter"
+      }
     },
     {
       "out": "07-arch.html",
