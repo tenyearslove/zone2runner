@@ -13,13 +13,15 @@ arch/dp/
     dp-{NN}-{qa}-script.md                     # 채택안(1안) 발표 대본(쉬운 풀이)
     dp-{NN}-{qa}-counter-catalog.md            # 카운터(2안) 컴포넌트 카탈로그
     images/
+      dp-{NN}-{qa}-adopted-simple.puml/.png    # 채택안 추상(실제 아키텍처를 DP 축이 드러나게 개별화)
+      dp-{NN}-{qa}-detail.puml/.png            # 채택안 상세(그 DP 경로를 실제 클래스 단위로 전개)
       dp-{NN}-{qa}-counter-simple.puml/.png    # 카운터 축약(PPT용)
       dp-{NN}-{qa}-counter-detailed.puml/.png  # 카운터 상세
 ```
 
 - **`{NN}`** = 보고서 제시 순서(2자리, `01`,`02`,…). **`{qa}`** = 이 DP가 드러내는 8대 QA의 영문 슬러그(`explainability`, `controllability`, …).
 - **파일 kind**: `decision` / `research` / `script` / `counter-catalog`. 필요 시 확장(`script-counter`, `qa-eval` 등)하되 `dp-{NN}-{qa}-{kind}` 패턴을 지킨다.
-- **이미지**: DP 폴더 안 `images/`에, `dp-{NN}-{qa}-{design}-{variant}` 로. `{design}`=`counter`(2안), `{variant}`=`simple`|`detailed`. 항상 **상세+축약 쌍**을 유지한다(CLAUDE.md 도식 규칙).
+- **이미지**: DP 폴더 안 `images/`에. 카운터(2안) = `dp-{NN}-{qa}-counter-{simple|detailed}`, 채택안(1안) = `dp-{NN}-{qa}-adopted-simple`(추상)/`dp-{NN}-{qa}-detail`(상세). 항상 **상세+축약 쌍**을 유지한다(CLAUDE.md 도식 규칙). 적용 현황: dp-01/02/03 완비, dp-04/05 예정.
 - **금지기호 `·` 사용 안 함**(CLAUDE.md). 열거는 `/`,`,`.
 
 ## ★ 채택안(1안)은 여기 두지 않는다 — 참조한다

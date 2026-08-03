@@ -1,6 +1,6 @@
 # DP1 (1안) 발표 대본 — "규칙/통계 기반 개인화 아키텍처"를 아주 쉽게
 
-> 용도: 설명용이성 DP의 채택안(1안)을 그림(`../../diagrams/02b-component-cnc-simple.png`)을 띄워놓고 말로 설명하는 대본.
+> 용도: 설명용이성 DP의 채택안(1안)을 그림(`images/dp-01-explainability-adopted-simple.png` — 설명용이성 관점 개별화본, 하위 모듈 전개 = `images/dp-01-explainability-detail.png`)을 띄워놓고 말로 설명하는 대본.
 > 원칙: 용어 하나하나 풀어서, 각 컴포넌트가 무슨 일을 하는지 쉽게. 처음 듣는 사람도 이해할 수 있게.
 > 🎙️ = 그대로 읽는 말. (풀이) = 어려운 말 설명. 상태: v3 (2026-07-31) — as-built 현행화(LLM 직생성/출력 가드 3종/단어 폴백/코칭 프로비넌스, adr-028/spec-027).
 
@@ -130,4 +130,4 @@ LLM이 만든 코칭 문장도 마찬가지입니다. 문장마다 그 순간의
 
 핵심은 하나예요 — **판단의 원리를 따라갈 수 있다.** 카운터의 블랙박스는 그게 어렵고, 우리는 됩니다."
 
-> 관련: `dp-01-explainability-decision.md`(DP 본문), `../../diagrams/02b-component-cnc-simple.png`(그림), `../../component-catalog.md`(컴포넌트 상세).
+> 관련: `dp-01-explainability-decision.md`(DP 본문), `images/dp-01-explainability-adopted-simple.png`/`-detail.png`(그림), `../../component-catalog.md`(컴포넌트 상세).
