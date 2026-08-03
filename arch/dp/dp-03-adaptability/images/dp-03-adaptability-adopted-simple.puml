@@ -1,0 +1,52 @@
+@startuml
+title (1안) 온라인 베이지안 개인 적응 아키텍처 — 기능적응성 관점
+skinparam defaultFontName "AppleGothic"
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam linetype ortho
+
+actor "사용자" as User
+component "센서\nHR / GPS / 케이던스" as Sensors #FFF9C4
+
+package "AI Operation Subsystem" {
+  component "OutlierGuard" <<입력 가드레일>> as IG #FFE0B2
+  component "베이지안 개인 적응 ★\n개인 경계 μ(값) + σ(불확실도)\n말하기 테스트 답으로 즉시 갱신\n(세션 내 이동 ±10bpm 한도)" <<개인 적응>> as ADAPT #B2DFDB
+  component "공식 초기값(prior)\n나이/체형/수준으로 출발점" as PRIOR #E1F5FE
+  component "판정/코칭\n적응된 경계를 그대로 사용" <<모델 서빙>> as SERVE #BBDEFB
+  component "적응 표시\n경계 이동량 + 신뢰도(σ)를 화면에" <<설명 서비스>> as VIEW #C8E6C9
+}
+
+package "AI Development (개인 적응 루프)" {
+  database "LearnedZone\n경계/이력/관측 수/σ 저장" as LZ #CFD8DC
+  component "세션 간 warm-start ★\n다음 러닝이 이어서 적응" <<Retraining>> as RT #B2DFDB
+}
+
+PRIOR --> ADAPT : 첫 출발점
+User ..> ADAPT : 말하기 테스트\n(편함/보통/벅참 = 실제 라벨)
+Sensors --> IG
+IG --> SERVE
+ADAPT --> SERVE : 개인 경계
+ADAPT --> VIEW : μ/σ 그대로
+VIEW --> User
+ADAPT --> LZ : 세션 종료 저장
+LZ --> RT
+RT ..> ADAPT : 다음 세션 prior
+
+note right of ADAPT
+  라벨이 적어도 안전한 이유:
+  확신(σ)이 작으면 조금만 움직이고
+  한 세션 이동은 10bpm을 넘지 않는다
+end note
+
+legend right
+|= 색 |= 성격 |
+|<#B2DFDB>| 개인 적응 (★ 이 DP의 축) |
+|<#BBDEFB>| 모델 서빙 |
+|<#E1F5FE>| 초기값(prior) |
+|<#C8E6C9>| 설명(적응 표시) |
+|<#CFD8DC>| 저장 |
+|<#FFE0B2>| 가드레일 |
+|<#FFF9C4>| 외부 |
+endlegend
+@enduml

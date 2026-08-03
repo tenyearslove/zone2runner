@@ -1,0 +1,64 @@
+@startuml
+title DP3 채택안 상세 — 적응 경로를 하위 모듈(실제 클래스)까지 전개
+skinparam defaultFontName "AppleGothic"
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam linetype ortho
+
+actor "사용자" as USER
+
+package "초기값 — 공식 출발점" {
+  component "Zone2Prior\n나이/체형/수준/빈도 → uFrac0, σ0\n(문헌 앵커 70% HRmax)" as PRIOR #E1F5FE
+  component "ProfileStore\n최대심박(관측 피크로 위로만)\n안정심박(아래로만)" as PS #E1F5FE
+}
+
+package "라벨 — 검증 가능한 실제 답" {
+  component "말하기 테스트(폰/워치)\n편함 / 보통 / 벅참" as TALK #E1BEE7
+  component "라벨 → 관측 변환\n편함: +5bpm(σ14, 올림만)\n보통: 현재 심박(σ6, 양방향)\n벅참: -5bpm(σ14, 내림만)" as MAP #B2DFDB
+}
+
+package "적응 — 추상도의 «베이지안 개인 적응» 내부" {
+  component "Personalization.update\n정밀도 가중 평균(확신 클수록 조금 이동)\nμ/σ 동시 갱신" <<개인 적응>> as UPD #B2DFDB
+  component "한도(clamp)\n세션 내 ±10bpm\n경계 범위 30~75% HRR" as CL #FFE0B2
+}
+
+package "지속 — 세션을 넘어 이어짐" {
+  database "LearnedZone\nu_frac / 이력 50개 / 관측 수 / σ\n드리프트 플로어 / 오르막 경향" as LZ #CFD8DC
+  component "세션 간 warm-start\n다음 러닝이 저장된 경계에서 시작" <<Retraining>> as WS #B2DFDB
+}
+
+package "소비·표시" {
+  component "ZoneJudge\n적응된 경계로 판정" as ZJ #BBDEFB
+  component "PersonalizationView\n경계 이동 + σ 신뢰도 시각화" as PV #C8E6C9
+}
+
+PRIOR --> UPD : 첫 prior(μ0, σ0)
+PS ..> UPD : 심박 범위
+USER ..> TALK
+TALK --> MAP
+MAP --> UPD
+UPD --> CL
+CL --> ZJ : 개인 경계(즉시 반영)
+CL --> PV
+UPD --> LZ : 세션 종료 저장
+LZ --> WS
+WS ..> UPD : 다음 세션 prior
+
+note bottom of UPD
+  틀린 답이 섞여도 폭주하지 않는 이유:
+  한 답의 영향 = 그 답의 확신(σ)만큼
+  + 한도(clamp)가 이중 안전판
+end note
+
+legend right
+|= 색 |= 성격 |
+|<#B2DFDB>| 개인 적응 (베이지안) |
+|<#E1F5FE>| 초기값(prior) |
+|<#FFE0B2>| 한도(가드) |
+|<#BBDEFB>| 판정(소비) |
+|<#C8E6C9>| 표시 |
+|<#CFD8DC>| 저장 |
+|<#E1BEE7>| 사용자 입력 |
+endlegend
+@enduml

@@ -1,0 +1,53 @@
+@startuml
+title (1안) 규칙 확정 + LLM 표현 한정 아키텍처 — 제어가능성 관점
+skinparam defaultFontName "AppleGothic"
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam linetype ortho
+
+actor "사용자" as User
+component "센서\nHR / GPS / 케이던스" as Sensors #FFF9C4
+component "Gemini Nano\n(AICore)" as Nano #FFF9C4
+
+package "AI Operation Subsystem" {
+  component "OutlierGuard" <<입력 가드레일>> as IG #FFE0B2
+  component "판단 = 규칙/통계\n판정 + 개인 경계 + 분석\n(정답 방향이 여기서 확정됨)" <<모델 서빙>> as SERVE #BBDEFB
+  component "LLM = 문장만\n확정된 사실로 문장 생성" <<모델 서빙: LLM>> as LLM #BBDEFB
+  component "출력 가드레일 ★\n형식 / 방향(정답 대조) / 숫자\n어긋나면 기각" <<출력 가드레일>> as OG #FFE0B2
+  component "폴백\n기각·실패 시 짧은 기본 문구\n(코칭 무중단)" as FB #FFE0B2
+  component "SafetyGuard ★\n위험 심박 → LLM 우회 즉시 권고" <<안전 전환>> as SG #FFE0B2
+  component "기각·폴백 기록\n(무엇을 왜 걸렀는지)" as LOG #CFD8DC
+  component "운영 서비스\n말하기 테스트(판정 기준 정정)\n설정(빈도/말투) + 기록 열람" as OPS #E1BEE7
+}
+
+Sensors --> IG
+IG --> SERVE
+SERVE --> LLM : 방향+사실 숫자
+Nano ..> LLM
+LLM --> OG
+OG --> OPS : 통과 문장 / TTS
+OG --> FB : 기각
+FB --> OPS
+SERVE --> SG : 위험 심박
+SG --> OPS : 규칙 권고(즉시)
+OG ..> LOG : 기각 사유
+LOG --> OPS : 사후 확인(감사)
+User ..> OPS
+OPS ..> SERVE : HITL 정정 / HOTL 설정
+
+note right of OG
+  정답 방향이 LLM 밖(규칙)에 있어
+  출력을 대조·차단할 수 있다
+  = 잘못 만들어져도 잘못 나가지 않는다
+end note
+
+legend right
+|= 색 |= 성격 |
+|<#FFE0B2>| 가드레일/폴백/안전 (★ 이 DP의 축) |
+|<#BBDEFB>| 모델 서빙 |
+|<#CFD8DC>| 저장 (감사 기록) |
+|<#E1BEE7>| 운영 (HITL/HOTL) |
+|<#FFF9C4>| 외부 |
+endlegend
+@enduml

@@ -18,7 +18,11 @@
     "dp4-counter": "arch/dp/dp-04-robustness/images/dp-04-robustness-counter-simple.png",
     "dp5-counter": "arch/dp/dp-05-testability/images/dp-05-testability-counter-simple.png",
     "dp1-detail": "arch/dp/dp-01-explainability/images/dp-01-explainability-detail.png",
-    "dp1-adopted": "arch/dp/dp-01-explainability/images/dp-01-explainability-adopted-simple.png"
+    "dp1-adopted": "arch/dp/dp-01-explainability/images/dp-01-explainability-adopted-simple.png",
+    "dp2-adopted": "arch/dp/dp-02-controllability/images/dp-02-controllability-adopted-simple.png",
+    "dp2-detail": "arch/dp/dp-02-controllability/images/dp-02-controllability-detail.png",
+    "dp3-adopted": "arch/dp/dp-03-adaptability/images/dp-03-adaptability-adopted-simple.png",
+    "dp3-detail": "arch/dp/dp-03-adaptability/images/dp-03-adaptability-detail.png"
   },
   "decks": [
     {
@@ -45,8 +49,8 @@
       "src": "03-dp2.html",
       "title": "DP2 제어가능성 — Zone2Runner 인증 보고서 설계 파트",
       "deckCss": true,
+      "dataImg": true,
       "placeholders": {
-        "IMG1": "cnc-simple",
         "IMG2": "dp2-counter"
       }
     },
@@ -55,8 +59,8 @@
       "src": "04-dp3.html",
       "title": "DP3 기능적응성 — Zone2Runner 인증 보고서 설계 파트",
       "deckCss": true,
+      "dataImg": true,
       "placeholders": {
-        "IMG1": "cnc-simple",
         "IMG2": "dp3-counter"
       }
     },
