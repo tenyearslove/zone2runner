@@ -1,0 +1,55 @@
+@startuml
+title (1안) 규칙/통계 기반 개인화 아키텍처 — 설명용이성 관점
+skinparam defaultFontName "AppleGothic"
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam linetype ortho
+
+actor "사용자" as User
+component "센서\nHR / GPS / 케이던스" as Sensors #FFF9C4
+component "Gemini Nano\n(AICore)" as Nano #FFF9C4
+
+package "AI Operation Subsystem" {
+  component "OutlierGuard" <<입력 가드레일>> as IG #FFE0B2
+  component "모델 서빙\n규칙 판정 + 베이지안 경계\n+ 관측 분석 엔진 + 온디바이스 LLM\n— 판단 과정이 훤히 보임" <<모델 서빙>> as SERVE #BBDEFB
+  component "DirectionGuard / NumberGuard\n/ SafetyGuard" <<출력 가드레일>> as OG #FFE0B2
+  component "설명 서비스 ★\n판단에 쓴 값·규칙을 그대로 설명\n+ 문장마다 근거·프롬프트 기록" <<설명 서비스>> as EXP #C8E6C9
+  component "운영 서비스\nOperation UI + HITL/HOTL\n(리포트에서 근거 추적 열람)" as OPS #E1BEE7
+}
+
+package "AI Development (개인 적응으로 축소)" {
+  database "Data Lake\nSessionStore(llmCalls 프로비넌스)\n/ LearnedZone" as DL #CFD8DC
+  component "개인 적응 학습\n(세션마다 갱신)" <<Retraining>> as RT #B2DFDB
+}
+
+Sensors --> IG
+IG --> SERVE
+Nano ..> SERVE : LLM 서빙(문장만)
+SERVE --> OG
+OG --> OPS : 코칭 문장 / TTS
+SERVE --> EXP : 실제 판단 근거\n(추정 아님)
+EXP --> OPS
+EXP ..> DL : 근거/프롬프트/경로 기록
+DL --> RT
+RT ..> SERVE : 다음 세션 prior
+User ..> OPS
+OPS ..> SERVE : HITL 라벨(말하기 테스트)\n→ 즉시 반영·확인
+
+note right of EXP
+  설명은 별도 모듈의 추정이 아니라
+  판단이 실제로 쓴 값의 표시
+  = 어긋날 수 없음
+end note
+
+legend right
+|= 색 |= 컴포넌트 성격 |
+|<#FFE0B2>| 가드레일 (입출력 통제) |
+|<#BBDEFB>| 모델 서빙 (투명 추론) |
+|<#C8E6C9>| 설명 서비스 (★ 이 DP의 축) |
+|<#E1BEE7>| 운영 서비스 (HITL/HOTL) |
+|<#CFD8DC>| 저장 (프로비넌스 포함) |
+|<#B2DFDB>| 개인 적응 (Retraining) |
+|<#FFF9C4>| 외부 (센서 / LLM) |
+endlegend
+@enduml

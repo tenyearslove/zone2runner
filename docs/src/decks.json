@@ -17,7 +17,8 @@
     "dp3-counter": "arch/dp/dp-03-adaptability/images/dp-03-adaptability-counter-simple.png",
     "dp4-counter": "arch/dp/dp-04-robustness/images/dp-04-robustness-counter-simple.png",
     "dp5-counter": "arch/dp/dp-05-testability/images/dp-05-testability-counter-simple.png",
-    "dp1-detail": "arch/dp/dp-01-explainability/images/dp-01-explainability-detail.png"
+    "dp1-detail": "arch/dp/dp-01-explainability/images/dp-01-explainability-detail.png",
+    "dp1-adopted": "arch/dp/dp-01-explainability/images/dp-01-explainability-adopted-simple.png"
   },
   "decks": [
     {
