@@ -66,7 +66,7 @@
 **(그림: `arch/diagrams/02-component-cnc.png` 상세 / `02b-component-cnc-simple.png` 축약)**
 
 - 실행 시 컴포넌트와 커넥터: 센서 → 입력 가드레일 → 모델 서빙(규칙 판정+베이지안 경계+관측 분석+온디바이스 LLM) → 출력 가드레일(DirectionGuard/NumberGuard/SafetyGuard) → 설명/운영 서비스, 오른쪽에 Data Lake와 개인 적응 루프.
-- 이 뷰의 축약본이 **DP1~DP5의 채택안(1안) 도식과 동일** — DP마다 새 그림을 만든 게 아니라 한 아키텍처를 다섯 QA 관점에서 본 것이다(DP 폴더에는 카운터 2안 도식만 별도 존재).
+- 이 뷰가 **DP1~DP5 채택안(1안) 도식의 원본**이다. 각 DP는 이 한 아키텍처를 자기 QA 축이 드러나게 개별화한 도식(`images/*-adopted-simple.png`)과 그 경로를 실제 클래스 단위로 전개한 상세 도식(`images/*-detail.png`)을 폴더에 둔다 — 다섯 그림은 서로 다른 시스템이 아니라 **한 아키텍처의 다섯 단면**이다(카운터 2안 도식도 DP 폴더에 별도 존재).
 - 색 = 컴포넌트 성격(가드레일 주황/모델 서빙 파랑/설명 초록/운영 보라/저장 회청/적응 청록/외부 노랑), «...» = 강의 표준 컴포넌트 유형.
 
 ## §7. Appendix. 최종 Architecture (Deployment View)

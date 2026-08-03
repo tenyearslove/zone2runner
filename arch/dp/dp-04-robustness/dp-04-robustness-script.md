@@ -1,8 +1,8 @@
 # DP4 (1안) 발표 대본 — "계층 방어 판정 아키텍처"를 아주 쉽게
 
-> 용도: 강건성 DP의 채택안(1안)을 그림(`../../diagrams/02b-component-cnc-simple.png`)을 띄워놓고 말로 설명하는 대본.
+> 용도: 강건성 DP의 채택안(1안)을 그림(`images/dp-04-robustness-adopted-simple.png` — 강건성 관점 개별화본, 상세는 `images/dp-04-robustness-detail.png`)을 띄워놓고 말로 설명하는 대본.
 > 원칙: 용어 하나하나 풀어서, 각 방어층이 무슨 노이즈를 막는지 쉽게. 처음 듣는 사람도 이해할 수 있게.
-> 🎙️ = 그대로 읽는 말. (풀이) = 어려운 말 설명. 상태: v1 (2026-07-31).
+> 🎙️ = 그대로 읽는 말. (풀이) = 어려운 말 설명. 상태: v2 (2026-08-03 — 개별화 채택안+상세 도식, 60초 기준 정정).
 
 ---
 
@@ -85,4 +85,4 @@
 
 핵심은 하나예요 — **오판의 비용이 비대칭이다.** 조금 늦은 올바른 지시가 빠른 잘못된 지시보다 낫습니다. 즉시 반응 설계는 단순하고 빠르지만, 그 신중함을 지불할 곳이 없습니다."
 
-> 관련: `dp-04-robustness-decision.md`(DP 본문), `../../diagrams/02b-component-cnc-simple.png`(그림), `../../component-catalog.md`(컴포넌트 상세).
+> 관련: `dp-04-robustness-decision.md`(DP 본문), `images/dp-04-robustness-adopted-simple.png`/`-detail.png`(그림), `../../component-catalog.md`(컴포넌트 상세).

@@ -1,8 +1,8 @@
 # DP5 (1안) 발표 대본 — "소스 추상화 + 폐루프 시뮬 계측 아키텍처"를 아주 쉽게
 
-> 용도: 테스트가능성 DP의 채택안(1안)을 그림(`../../diagrams/02b-component-cnc-simple.png`)을 띄워놓고 말로 설명하는 대본.
+> 용도: 테스트가능성 DP의 채택안(1안)을 그림(`images/dp-05-testability-adopted-simple.png` — 테스트가능성 관점 개별화본, 상세는 `images/dp-05-testability-detail.png`)을 띄워놓고 말로 설명하는 대본.
 > 원칙: 용어 하나하나 풀어서, 검증 구조가 왜 필요한지 쉽게. 처음 듣는 사람도 이해할 수 있게.
-> 🎙️ = 그대로 읽는 말. (풀이) = 어려운 말 설명. 상태: v1 (2026-07-31).
+> 🎙️ = 그대로 읽는 말. (풀이) = 어려운 말 설명. 상태: v2 (2026-08-03 — 개별화 채택안+상세 도식).
 
 ---
 
@@ -84,4 +84,4 @@
 
 단, 시뮬의 결론은 '로직이 설계대로 돈다'까지입니다. 실제 사람에 대한 정확도는 — 저희가 직접 겪은 자기 채점 함정 때문에 — 실주행 검증으로만 말합니다. 실기기만으로 검증하는 방식은 실환경 충실도가 강점이지만, 재현과 자동화가 안 돼 저희 조건에서는 시뮬과 실기기의 역할 분담을 택했습니다."
 
-> 관련: `dp-05-testability-decision.md`(DP 본문), `../../diagrams/02b-component-cnc-simple.png`(그림), `../../component-catalog.md`(컴포넌트 상세).
+> 관련: `dp-05-testability-decision.md`(DP 본문), `images/dp-05-testability-adopted-simple.png`/`-detail.png`(그림), `../../component-catalog.md`(컴포넌트 상세).

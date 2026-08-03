@@ -1,6 +1,6 @@
 # Report-009: DP2 (제어가능성) — 인증 보고서 "03. 설계 / Architectural Decision" 원고
 
-- **날짜**: 2026-07-31 (v1)
+- **날짜**: 2026-08-03 (v3 — 리뷰 반영: 개별화 채택안+상세 도식, 표현 교정)
 - **용도**: 인증 보고서 PPT 원고. 인증과제 샘플(씬스틸러) DP 형식 3장 + Appendix 1장.
 - **작성 원칙**: 전문가가 아니어도 읽히는 쉬운 한국어. 압축 표기와 영문 용어 없이 설명하는 문장으로. 영문 용어는 Appendix 용어표에만.
 - **정본**: `arch/dp/dp-02-controllability/dp-02-controllability-decision.md` — 이 문서는 그 표현물.

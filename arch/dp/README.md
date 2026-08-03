@@ -24,25 +24,27 @@ arch/dp/
 - **이미지**: DP 폴더 안 `images/`에. 카운터(2안) = `dp-{NN}-{qa}-counter-{simple|detailed}`, 채택안(1안) = `dp-{NN}-{qa}-adopted-simple`(추상)/`dp-{NN}-{qa}-detail`(상세). 항상 **상세+축약 쌍**을 유지한다(CLAUDE.md 도식 규칙). 적용 현황: dp-01~05 전 DP 완비(2026-08-03).
 - **금지기호 `·` 사용 안 함**(CLAUDE.md). 열거는 `/`,`,`.
 
-## ★ 채택안(1안)은 여기 두지 않는다 — 참조한다
+## ★ 채택안(1안)의 실체는 일반 아키텍처 — DP 폴더엔 그 DP 관점의 도식만 둔다
 
-각 DP의 **채택안(1안)은 곧 이 시스템의 실제 아키텍처**다. 따라서 1안의 도식/카탈로그는 DP 폴더에 **중복 저장하지 않고**, 일반 시스템 아키텍처를 참조한다:
-- 1안 도식 = `arch/diagrams/02-component-cnc.png`(상세) / `02b-component-cnc-simple.png`(축약)
+각 DP의 **채택안(1안)은 곧 이 시스템의 실제 아키텍처**다. 따라서 1안의 서술과 원본 도식은 DP 폴더에 **중복 저장하지 않고** 일반 시스템 아키텍처를 참조한다:
+- 1안 원본 도식(전체 시스템) = `arch/diagrams/02-component-cnc.png`(상세) / `02b-component-cnc-simple.png`(축약)
 - 1안 컴포넌트 서술 = `arch/component-catalog.md`
 
-DP 폴더에는 **그 DP 전용 자산**(DP 본문/리서치/대본 + 카운터 2안 도식/카탈로그 + **채택안의 DP 관점 개별화 도식과 하위 모듈 상세 도식**)만 둔다. 채택안 도식 2종 = `-adopted-simple`(추상, DP 축 강조) / `-detail`(해당 블록을 실제 클래스 단위로 전개). 이 비대칭이 곧 사실을 반영한다 — 1안은 실제 시스템, 2안은 공정 비교용 가정 설계.
+다만 **DP 본문에 싣는 1안 그림은 이 원본을 그 DP의 QA 축이 드러나게 개별화한 것**(`images/*-adopted-simple.png`)이다 — 채택안 그림이 DP마다 똑같아 보이던 문제를 없애기 위함이며, 다섯 그림은 서로 다른 시스템이 아니라 **한 아키텍처의 다섯 단면**이다. 그 경로를 실제 클래스 단위로 전개한 상세본(`images/*-detail.png`)이 짝을 이룬다.
+
+즉 DP 폴더에는 **그 DP 전용 자산**(DP 본문/리서치/대본 + 채택안 도식 2종 + 카운터 2안 도식/카탈로그)만 둔다. 1안의 컴포넌트 서술을 폴더에 복제하지 않고 카탈로그를 참조하는 비대칭이 곧 사실을 반영한다 — 1안은 실제 시스템, 2안은 공정 비교용 가정 설계.
 
 ## 인덱스
 
 | DP | QA(정체성) | 상태 | 결정(채택) | 폴더 |
 |----|-----------|------|-----------|------|
-| DP-01 | 설명용이성(Explainability) | v3 (2026-07-31) | 1안 = 규칙/통계 기반 개인화(intrinsic+provenance, LLM=verbalizer) | `dp-01-explainability/` |
+| DP-01 | 설명용이성(Explainability) | v4 (2026-08-03, 리뷰 반영) | 1안 = 규칙/통계 기반 개인화(intrinsic+provenance, LLM=verbalizer) | `dp-01-explainability/` |
 | DP-02 | 제어가능성(Controllability) | v3 (2026-08-03, 리뷰 반영) | 1안 = 규칙 확정 + LLM 표현 한정(구조적 격리 + 출력 가드 3종 + 단어 폴백 + 안전 분리 + HITL/HOTL/감사) | `dp-02-controllability/` |
 | DP-03 | 기능적응성(Adaptability) | v2 (2026-08-03, 리뷰 반영) | 1안 = 온라인 베이지안 개인 적응(실라벨 즉시 갱신 + 불확실도 + 이동 한도 + 세션 간 warm-start) | `dp-03-adaptability/` |
 | DP-04 | 강건성(Robustness) | v2 (2026-08-03, 리뷰 반영) | 1안 = 계층 방어 판정(입력 가드레일 + 이중 기준/히스테리시스 + 통계 평탄화 k·σ + 소스 폴백) | `dp-04-robustness/` |
 | DP-05 | 테스트가능성(Testability) | v2 (2026-08-03, 리뷰 반영) | 1안 = 소스 추상화 + 폐루프 시뮬 계측(RunSource 교체 + 참임계 가상 러너 + 순수 로직 자동 테스트) | `dp-05-testability/` |
 
 - **보고서 원고/HTML**: 각 DP의 PPT 원고 = `report/report-008`(DP1)~`report-012`(DP5). HTML 렌더 = `docs/`(GitHub Pages, 인덱스 `docs/index.html`).
-- **DP2~DP5 카운터 도식 렌더 환경**: plantuml 1.2025.2 + smetana 레이아웃(graphviz 불필요), 폰트 = 렌더 머신의 한글 폰트(Mac=AppleGothic, Windows=Malgun Gothic).
+- **DP 도식 렌더 환경**: plantuml 1.2025.2 + smetana 레이아웃(graphviz 불필요), 폰트 = 렌더 머신의 한글 폰트(Mac=AppleGothic, Windows=Malgun Gothic — puml 안 `skinparam defaultFontName`이 그 머신 기준으로 박혀 있으니 수정 시 유지). 명령 = `java "-Dfile.encoding=UTF-8" -jar plantuml.jar -charset UTF-8 -Playout=smetana -tpng <files>`.
 
 > 관련: `framework/ai-8-qa.md`(8대 QA), `framework/assignment/`(과제 규정 = QA 4개+ / AI 특화 2개+), `arch/diagrams/`(일반 아키텍처), `arch/component-catalog.md`(우리 컴포넌트).
