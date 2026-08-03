@@ -33,7 +33,8 @@
 도식을 base64 로 심은 자체 완결 파일은 필요할 때 만든다 — 저장소 밖으로 보내거나 Artifact 로 배포할 때다. 같은 내용이 6.4MB가 되고 갱신할 때마다 그만큼 이력에 쌓이므로 커밋하지 않는다.
 
 ```powershell
-# 링크 모드(커밋 대상) — docs/ 에 덮어쓴다(도식은 img/로 복사돼 Pages에서도 열림)
+# 링크 모드(커밋 대상) — docs/ 에 덮어쓴다(도식은 img/로 복사, ?v=해시 캐시버스터 자동)
+python3 docs/build.py          # macOS/Linux 정본 빌더
 powershell -File docs/build.ps1
 
 # 자체 완결 단일 파일 — 저장소 밖 아무 폴더로

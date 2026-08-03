@@ -185,7 +185,7 @@
 
 <section class="slide">
   <div class="slide-head"><h2>최종 Architecture (1/2) — 거시: 모듈 조립</h2><span class="sec-no">3</span></div>
-  <div class="fig-frame"><img src="img/06-final-architecture.png" alt="최종 아키텍처 거시 다이어그램"></div>
+  <div class="fig-frame"><img src="img/06-final-architecture.png?v=1e98d381" alt="최종 아키텍처 거시 다이어그램"></div>
   <h3 class="num"><span>■</span>강의 표준 용어 대응</h3>
   <div class="tbl"><table class="decide">
     <thead><tr><th>강의 AI System 컴포넌트</th><th>이 시스템의 구현</th><th style="width:5em">모듈</th></tr></thead>
@@ -209,28 +209,28 @@
 
 <section class="slide">
   <div class="slide-head"><h2>최종 Architecture (2/2) — 모듈 A: 추론 서비스</h2><span class="sec-no">3</span></div>
-  <div class="fig-frame"><img src="img/06a-module-inference.png" alt="모듈 A 추론 서비스 상세"></div>
+  <div class="fig-frame"><img src="img/06a-module-inference.png?v=0f34e780" alt="모듈 A 추론 서비스 상세"></div>
   <p class="note">입력에서 출력까지 9컴포넌트: 신호 소스(A1, 실센서/시뮬 교체 지점) → 입력 가드레일(A2) → 특징 준비(A3) → 존 판정(A4)/개인 경계(A5)/관측 분석(A6) → 코칭 표현(A7, 규칙이 확정한 사실로 LLM이 문장만) → 출력 가드레일 3종+안전(A8). 오케스트레이터(A9)가 매초 구동.</p>
   <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
 </section>
 
 <section class="slide">
   <div class="slide-head"><h2>모듈 B+C: 설명 + 분석 서비스</h2><span class="sec-no">3</span></div>
-  <div class="fig-frame"><img src="img/06b-module-explain-analysis.png" alt="모듈 B+C 설명 분석 상세"></div>
+  <div class="fig-frame"><img src="img/06b-module-explain-analysis.png?v=13616a23" alt="모듈 B+C 설명 분석 상세"></div>
   <p class="note">설명 생성기(B1)는 판단에 실제로 쓴 사실로 스토리/설명을 만들고(세션 종료 1회 생성/저장), 프로비넌스(B2-1)는 모든 LLM 호출의 근거/프롬프트/경로를 기록해 리포트에서 문장 단위 추적을 만든다. 분석(C)은 세션 내 구간/경사/워밍업과 세션 간 비교/추세/기록을 도출한다.</p>
   <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
 </section>
 
 <section class="slide">
   <div class="slide-head"><h2>모듈 D+E: 운영 서비스 + 저장</h2><span class="sec-no">3</span></div>
-  <div class="fig-frame"><img src="img/06c-module-operation-storage.png" alt="모듈 D+E 운영 저장 상세"></div>
+  <div class="fig-frame"><img src="img/06c-module-operation-storage.png?v=b1b5a546" alt="모듈 D+E 운영 저장 상세"></div>
   <p class="note">운영(D)은 화면/음성 UI + 폰-워치 인프라 + 사람의 개입 통로(HITL=말하기 테스트, HOTL=설정/감사). 저장(E)은 Data Lake(세션 이력) + Model Artifact(개인 파라미터) + 프로필/설정 + Registry 대응(APK/AICore, 경량).</p>
   <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
 </section>
 
 <section class="slide">
   <div class="slide-head"><h2>모듈 F: 개인 적응 + 시뮬 검증 (AI Development 대응)</h2><span class="sec-no">3</span></div>
-  <div class="fig-frame"><img src="img/06d-module-adaptation-verification.png" alt="모듈 F 적응 검증 상세"></div>
+  <div class="fig-frame"><img src="img/06d-module-adaptation-verification.png?v=55353207" alt="모듈 F 적응 검증 상세"></div>
   <p class="note">표준의 오프라인 대량 학습이 없는 대신 — 개인 적응 갱신(F1)이 운영 안에서 세션마다 돌고(Retraining 대응), 시뮬 검증 도구(F2)가 참값 없는 조건의 검증을 맡으며(모델 테스팅 대응), 모델 준비 관리자(A7-1)가 Nano 상태/다운로드를 관리한다(Model Registry 인접).</p>
 
   <h3 class="num"><span>■</span>DP 도식과의 관계 — 다섯 DP는 이 한 아키텍처의 다른 QA 단면</h3>

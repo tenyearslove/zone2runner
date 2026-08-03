@@ -233,11 +233,11 @@
       <tr>
         <th class="rowh">구조</th>
         <td class="win">
-          <div class="fig-frame"><img src="img/02b-component-cnc-simple.png" alt="1안 — 소스 추상화 + 폐루프 시뮬 계측 아키텍처 다이어그램"></div>
+          <div class="fig-frame"><img src="img/02b-component-cnc-simple.png?v=0b55e862" alt="1안 — 소스 추상화 + 폐루프 시뮬 계측 아키텍처 다이어그램"></div>
           <p class="note" style="margin-top:8px">실센서, 가상 러너, 수동 시뮬이 같은 인터페이스로 파이프라인에 꽂힌다 — 뒤의 코드는 입력이 진짜인지 모른다. 진짜 경계값을 아는 가상 러너가 코칭에 반응하며(폐루프) 개인화 수렴을 분 단위에 채점하고, 판정/개인화/분석 로직은 순수 모듈이라 단위 테스트 153개가 자동으로 돈다. 위험 심박, 두절 같은 시나리오는 시뮬로 안전하게 주입한다</p>
         </td>
         <td>
-          <div class="fig-frame"><img src="img/dp-05-testability-counter-simple.png" alt="2안 — 실기기 결합 검증 아키텍처 다이어그램"></div>
+          <div class="fig-frame"><img src="img/dp-05-testability-counter-simple.png?v=6f3c324e" alt="2안 — 실기기 결합 검증 아키텍처 다이어그램"></div>
           <p class="note" style="margin-top:8px">추상화 계층 없이 센서 API가 로직에 직접 연결된다. 검증은 코스를 골라 실기기를 착용하고 실제로 달리며 확인하고, 세션 기록을 내려받아 수동으로 검토한다. 검증되는 것이 곧 실환경이다</p>
         </td>
       </tr>
