@@ -1,0 +1,57 @@
+@startuml
+title (1안) 소스 추상화 + 폐루프 시뮬 계측 아키텍처 — 테스트가능성 관점
+skinparam defaultFontName "Malgun Gothic"
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam linetype ortho
+
+actor "개발자/검증자" as Dev
+
+package "자극 주입 — 같은 포트에 꽂히는 입력들" {
+  component "실센서\n워치 HR + GPS" as LIVE #FFF9C4
+  component "폐루프 가상 러너 ★\n참임계를 아는 러너\n코칭에 반응해 행동이 바뀐다" <<데이터셋 구축>> as VR #FFAB91
+  component "수동 시뮬\n페이스/케이던스를 손으로 조종" <<데이터셋 구축>> as MAN #FFAB91
+}
+
+component "RunSource «포트» ★\n입력 원천을 가리는 인터페이스 하나\n뒤의 코드는 입력이 진짜인지 모른다" as PORT #FFAB91
+
+package "AI Operation Subsystem (동일 코드)" {
+  component "판정 / 개인화 / 분석 / 코칭\n검증과 운영이 같은 경로를 지난다\n(테스트 전용 코드 경로 없음)" <<추론 서비스>> as PIPE #BBDEFB
+}
+
+package "관찰 — 결과를 들여다보는 창" {
+  component "시뮬 계측 패널\n시나리오 주입(경사/더위/두절/위험 심박)\nLLM 켬-끔 비교 + 배속 재생" <<설명 서비스>> as INST #C8E6C9
+  component "자동 회귀 테스트 ★\n기기 의존 없는 순수 로직\n개발 머신에서 수 초 만에" <<모델 테스팅>> as TEST #FFAB91
+}
+
+LIVE --> PORT
+VR --> PORT
+MAN --> PORT
+PORT --> PIPE
+PIPE --> INST
+PIPE --> TEST
+VR <.. PIPE : onFeedback(코칭) — 폐루프
+Dev ..> VR : 시나리오 선택
+Dev ..> TEST
+
+LIVE -[hidden]right- VR
+VR -[hidden]right- MAN
+PORT -[hidden]down- PIPE
+PIPE -[hidden]down- INST
+INST -[hidden]right- TEST
+
+note bottom of TEST
+  시뮬은 구조 검증과 디버깅의 도구이지
+  정확도의 심판이 아니다
+  = "설계대로 도는가"에만 답한다
+end note
+
+legend right
+|= 색 |= 성격 |
+|<#FFAB91>| 검증 구조 (★ 이 DP의 축) |
+|<#BBDEFB>| 추론 서비스 (검증 대상) |
+|<#C8E6C9>| 계측(관찰) |
+|<#FFF9C4>| 외부 (실센서) |
+endlegend
+@enduml

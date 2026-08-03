@@ -4,7 +4,7 @@
 > **[설계 문제 정의] → [설계안 결정 표: 구조(다이어그램) / 장점(QA 별점) / 단점(QA 별점) / Trade Off] → [설계 결정 및 근거]**.
 > 이 분야를 전혀 모르는 사람도 읽고 이해할 수 있게 쓴다. 이 문서는 **기능적응성 DP 하나에만** 집중한다.
 >
-> **상태**: v1 (2026-07-31, 사용자 검토 대기). 리서치 노트(`dp-03-adaptability-research.md`) 근거.
+> **상태**: v2 (2026-08-03, 리뷰 반영 — 채택안 개별화 도식 + 상세 도식 신설, 표현 교정). 리서치 노트(`dp-03-adaptability-research.md`) 근거.
 > DP-01(설명용이성)/DP-02(제어가능성)와 같은 아키텍처의 다른 QA 단면 — 이 DP는 그중 **적응 루프**를 본다.
 
 ---
@@ -207,4 +207,4 @@
 - **적응 지연(adaptation latency)**: 변화 발생→경계 반영까지의 시간. 이 DP의 결정축.
 - **코호트 학습**: 비슷한 사용자들의 데이터를 함께 학습해 개인 추정을 보강하는 방식(2안의 강점).
 
-> 관련 문서: `dp-03-adaptability-research.md`(리서치), `arch/component-catalog.md`(1안=우리 시스템 A5/E1/F1/D3)/`dp-03-adaptability-counter-catalog.md`(2안 카운터), `arch/diagrams/`(1안 도식)/`images/`(2안 도식), `spec/spec-002`(QA2 시나리오/측정), `spec/spec-004`(경계 갱신), `spec/spec-013`(사전값 층위), `spec/spec-016`(말하기 테스트), `arch/adr-004`(온라인 Bayesian), `arch/adr-012`(최대/안정심박 갱신), `arch/adr-025`(AI≠NN), `arch/dp/dp-01-explainability/`/`arch/dp/dp-02-controllability/`(같은 구조의 다른 QA 단면).
+> 관련 문서: `dp-03-adaptability-research.md`(리서치), `arch/component-catalog.md`(1안=우리 시스템 A5/E1/F1/D3)/`dp-03-adaptability-counter-catalog.md`(2안 카운터), `images/`(1안 개별화 채택안 도식 + 상세 도식, 2안 카운터 도식)/`arch/diagrams/`(일반 아키텍처 도식), `spec/spec-002`(QA2 시나리오/측정), `spec/spec-004`(경계 갱신), `spec/spec-013`(사전값 층위), `spec/spec-016`(말하기 테스트), `arch/adr-004`(온라인 Bayesian), `arch/adr-012`(최대/안정심박 갱신), `arch/adr-025`(AI≠NN), `arch/dp/dp-01-explainability/`/`arch/dp/dp-02-controllability/`(같은 구조의 다른 QA 단면).

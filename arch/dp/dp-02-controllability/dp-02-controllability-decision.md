@@ -4,7 +4,7 @@
 > **[설계 문제 정의] → [설계안 결정 표: 구조(다이어그램) / 장점(QA 별점) / 단점(QA 별점) / Trade Off] → [설계 결정 및 근거]**.
 > 이 분야를 전혀 모르는 사람도 읽고 이해할 수 있게 쓴다. 이 문서는 **제어가능성 DP 하나에만** 집중한다.
 >
-> **상태**: v2 (2026-07-31) — 쉬운 문장 재작성(DP1 v3와 같은 톤, 전문 용어는 부록 B로) + as-built 정합(문장 세트 잔재 제거, 모델 준비 보류 반영). 리서치 노트(`dp-02-controllability-research.md`) 근거.
+> **상태**: v3 (2026-08-03, 리뷰 반영 — 채택안 개별화 도식 + 상세 도식 신설, 표현 교정). v2(2026-07-31) = 쉬운 문장 재작성 + as-built 정합. 리서치 노트(`dp-02-controllability-research.md`) 근거.
 > v1.1: 표현 경로 현행화 — LLM 직생성 + 단어 수준 폴백 + 숫자 무결성 가드.
 > DP-01(설명용이성)과 같은 아키텍처의 다른 QA 단면 — 관계는 §0/§6-2 참조.
 
@@ -209,4 +209,4 @@
 - **지시 이행(instruction following)**: 모델이 프롬프트의 규정(형식/금지/방향)을 지키는 능력 — 작은 모델에서 불안정.
 - **감사(audit)**: 통제가 실제로 작동했는지 기록으로 사후 확인하는 것 — 이 시스템은 모든 LLM 호출의 경로/기각/폴백 사유를 세션에 저장한다.
 
-> 관련 문서: `dp-02-controllability-research.md`(리서치), `arch/component-catalog.md`(1안=우리 시스템 A2/A7/A7-1/A8/D3)/`dp-02-controllability-counter-catalog.md`(2안 카운터), `arch/diagrams/`(1안 도식)/`images/`(2안 도식), `spec/spec-002`(QA3 시나리오/측정), `arch/adr-002`(방향=규칙/표현=LLM), `arch/adr-028`+`spec/spec-028`(LLM 직생성+단어 폴백 표현 정본), `arch/adr-027`(모델 준비/다운로드 정책), `spec/spec-005`(출력 가드/폴백), `spec/spec-008`(안전 가드), `spec/spec-021`/`spec/spec-024`(HOTL 설정/페르소나), `spec/spec-016`(HITL 말하기 테스트), `spec/spec-027`(감사 기록), `arch/dp/dp-01-explainability/`(설명용이성 DP — 같은 구조의 다른 QA 단면).
+> 관련 문서: `dp-02-controllability-research.md`(리서치), `arch/component-catalog.md`(1안=우리 시스템 A2/A7/A7-1/A8/D3)/`dp-02-controllability-counter-catalog.md`(2안 카운터), `images/`(1안 개별화 채택안 도식 + 상세 도식, 2안 카운터 도식)/`arch/diagrams/`(일반 아키텍처 도식), `spec/spec-002`(QA3 시나리오/측정), `arch/adr-002`(방향=규칙/표현=LLM), `arch/adr-028`+`spec/spec-028`(LLM 직생성+단어 폴백 표현 정본), `arch/adr-027`(모델 준비/다운로드 정책), `spec/spec-005`(출력 가드/폴백), `spec/spec-008`(안전 가드), `spec/spec-021`/`spec/spec-024`(HOTL 설정/페르소나), `spec/spec-016`(HITL 말하기 테스트), `spec/spec-027`(감사 기록), `arch/dp/dp-01-explainability/`(설명용이성 DP — 같은 구조의 다른 QA 단면).

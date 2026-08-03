@@ -1,0 +1,48 @@
+@startuml
+title (1안) 계층 방어 판정 아키텍처 — 강건성 관점
+skinparam defaultFontName "Malgun Gothic"
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam linetype ortho
+
+actor "사용자" as User
+component "센서\nHR / GPS / 케이던스\n(스파이크 / 튐 / 두절 포함)" as Sensors #FFF9C4
+
+package "AI Operation Subsystem" {
+  component "층1. 입력 가드레일 ★\n생리 범위 밖(40 미만/220 초과) 기각\n낡은 값(15초 초과) 폐기" <<입력 가드레일>> as L1 #FFE0B2
+  component "SafetyGuard\n위험 심박 지속 → 즉시 규칙 권고\n(판정/코칭보다 먼저)" <<안전 전환>> as SG #FFE0B2
+  component "층2. 이중 기준 판정 ★\n표시 = 순간심박 + 히스테리시스\n코칭/통계 = 60초 지속심박(60초 평균)" <<모델 서빙>> as L2 #BBDEFB
+  component "층3. 통계 평탄화 ★\n추세 = 창 회귀(기울기 + SE + R²)\n신뢰도 낮으면 보류, 문턱 = 개인 k·σ" <<분석 서비스>> as L3 #B2DFDB
+  component "층4. 소스 폴백 ★\n케이던스: 워치 실측 → 폰 추정\nGPS 점간 게이트 / 두절 시 직전 유효값" as L4 #FFE0B2
+  component "표시\n순간 반응(빠름)" <<운영 서비스>> as VIEW #E1BEE7
+  component "코칭\n행동 지시(엄격)" <<운영 서비스>> as COACH #E1BEE7
+}
+
+Sensors --> L1
+L1 --> SG
+SG --> COACH : 위험 시 우회
+L1 --> L2
+L4 ..> L1 : 값이 없을 때 대체 소스
+L2 --> VIEW : 순간심박 5존
+L2 --> COACH : 지속심박 판정
+L2 --> L3
+L3 --> COACH : 게이팅 통과한 추세만
+VIEW --> User
+COACH --> User
+
+note bottom of L3
+  각 층이 서로 다른 노이즈를 막는다
+  한 층이 놓쳐도 다음 층이 막는다
+  = 방어가 필터 하나에 걸려 있지 않다
+end note
+
+legend right
+|= 색 |= 성격 |
+|<#FFE0B2>| 가드레일/폴백/안전 (★ 이 DP의 축) |
+|<#BBDEFB>| 모델 서빙 (판정) |
+|<#B2DFDB>| 분석 (통계 평탄화) |
+|<#E1BEE7>| 운영 (표시/코칭) |
+|<#FFF9C4>| 외부 (센서) |
+endlegend
+@enduml

@@ -1,0 +1,97 @@
+@startuml
+title DP4 채택안 상세 — 방어 4층을 하위 모듈(실제 클래스)까지 전개
+skinparam defaultFontName "Malgun Gothic"
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam linetype ortho
+
+component "워치/폰 센서\nHR / GPS / 케이던스" as SENS #FFF9C4
+
+package "층1 — 입력 가드레일" {
+  component "OutlierGuard\nMIN_HR 40 / MAX_HR 220\nclean(hr, lastValid) = 이상치면 직전 유효값" as OG #FFE0B2
+  component "WatchHrProvider\nstaleMs 15초 초과 → -1(값 없음)\n수신 범위 필터 hr 30~240 / spm 60~260" as WHP #FFE0B2
+  component "LiveRunSource 위치 게이트\n정확도 25m 초과 위치 무시\n수직정확도 8m 초과면 경사 갱신 스킵" as GPSG #FFE0B2
+  component "SlopeEstimator\n순간 미분 대신 150m 거리창 회귀\n±15% 클램프 + EMA" as SLE #FFE0B2
+}
+
+package "안전 — 판정보다 앞선 우선 경로" {
+  component "SafetyGuard\nPCT_OF_MAX 0.95 / HOLD_SEC 15\nREALERT_SEC 30 → LLM 우회 규칙 권고" as SG #FFE0B2
+}
+
+package "층2 — 이중 기준 판정" {
+  component "FeatureExtractor.smoothedHrAt\nHRW = 60 롤링 평균 = 지속 심박\n(순간 스파이크가 판정을 뒤집지 못함)" as FE #BBDEFB
+  component "ZoneJudge(marginBpm 2.0)\n슈미트 트리거 — 상태 방향으로 문턱 이동\n코칭/통계 경로" as ZJ #BBDEFB
+  component "DisplayZoneJudge(margin 2, holdTicks 3)\n순간심박 5존 — 경계 밖 즉시 전환\n경계 안쪽은 3틱 연속 시 전환 / 표시 경로" as DZJ #BBDEFB
+}
+
+package "층3 — 통계 평탄화(분석 엔진)" {
+  component "SignalBuffer\nhr/pace/spm/slope 창 뷰\npaceCv() 정속 게이트" as SB #B2DFDB
+  component "LinearRegression\nOLS → slope, se, r2, n" as LR #B2DFDB
+  component "AnalysisEngine + 지표 5종\nDriftSlope / GapMinetti / CadenceStability\n/ SubmaxHr / Hrr — MetricSample.gated" as AE #B2DFDB
+  component "NoiseFloor\n개인 노이즈 EWMA → threshold(k) = mean + k·sigma\nAnalysisConfig.K_SIGMA 2.0 / CV_STEADY 0.05" as NF #B2DFDB
+}
+
+package "층4 — 소스 폴백" {
+  component "케이던스 폴백\n워치 실측 없으면 페이스 추정\n168 - 4(pace-6), 150~200 clamp" as CF #FFE0B2
+  component "GPS 거리 점간 게이트\n0.5m 미만 = 0(지터)\n40m 초과 = 페이스 적분으로 폴백" as GF #FFE0B2
+  component "HR 두절 브리지\nRunEngine.lastValidHr 유지\n첫 유효값 전엔 파이프라인 스킵" as HF #FFE0B2
+}
+
+package "소비 — 표시와 코칭" {
+  component "RunEngine\n오케스트레이션(onSample)\ndriftRising = 추세 UP AND 개인 문턱 초과" as RE #BBDEFB
+  component "CoachCadence(20 / 60 / 40)\n최소 간격/재코칭 주기(설정 5단계)" as CC #E1BEE7
+  component "LiveState → 표시 / TTS 코칭" as OUT #E1BEE7
+}
+
+SENS --> OG
+SENS --> WHP
+SENS --> GPSG
+GPSG --> SLE
+OG --> SG
+OG --> FE
+WHP ..> CF : 실측 없음
+FE --> ZJ
+OG --> DZJ
+ZJ --> RE
+DZJ --> OUT : 5존 색/칩
+SLE --> SB
+OG --> SB
+SB --> LR
+LR --> AE
+NF <--> AE : 개인 문턱 비교/갱신
+AE --> RE
+CF --> RE
+GF --> RE
+HF --> RE
+SG --> OUT : 즉시 권고
+RE --> CC
+CC --> OUT
+
+' 층 순서를 세로로 고정(1 → 2 → 3 → 4 → 소비)
+OG -[hidden]down- FE
+ZJ -[hidden]down- SB
+AE -[hidden]down- CF
+CF -[hidden]right- GF
+GF -[hidden]right- HF
+
+note bottom of NF
+  문턱이 고정 상수가 아니라 그 사람 노이즈의 배수라
+  노이즈가 큰 사람과 깨끗한 사람 모두에서
+  같은 오경보율이 유지된다
+end note
+
+note bottom of CC
+  이상치 기각률/번복률은 프로덕션 카운터가 아니라
+  QaMeasurementTest 시뮬 계측으로 측정한다(DP5)
+end note
+
+legend right
+|= 색 |= 성격 |
+|<#FFE0B2>| 가드레일/폴백/안전 |
+|<#BBDEFB>| 판정(모델 서빙) |
+|<#B2DFDB>| 분석(통계 평탄화) |
+|<#E1BEE7>| 운영(표시/코칭) |
+|<#FFF9C4>| 외부(센서) |
+endlegend
+@enduml

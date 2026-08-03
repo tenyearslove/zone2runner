@@ -1,0 +1,80 @@
+@startuml
+title DP5 채택안 상세 — 검증 경로를 하위 모듈(실제 클래스)까지 전개
+skinparam defaultFontName "Malgun Gothic"
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam linetype ortho
+
+actor "개발자/검증자" as DEV
+
+package "포트 — 입력 원천의 추상화" {
+  component "RunSource «interface»\nlabel / realtime\nstart(scope, onSample, onComplete) / stop()\nonFeedback(state) / setPaused(paused)" as PORT #FFAB91
+}
+
+package "어댑터 — 같은 포트의 구현들" {
+  component "LiveRunSource\n실센서: FusedLocation GPS + HrProvider\nrealtime = true" as LIVE #FFF9C4
+  component "SimRunnerSource\n폐루프 가상 러너 재생\nonFeedback → judgeDelay → 노력 조정\n90초마다 말하기 테스트 응답" as SRS #FFAB91
+  component "SimulatedRunSource\nRunSimulator 사전 생성 세션 가속 재생" as SIM #FFAB91
+  component "ManualRunSource / ManualVirtualRunnerSource\n페이스 슬라이더 / 케이던스/보폭 수동 조종\n(targetSpm, targetStrideM, hrOffsetBpm, slopePct)" as MAN #FFAB91
+}
+
+package "참값을 가진 가상 러너" {
+  component "VirtualRunner «data class»\ntrueZone2UpperHrmaxFrac 0.68 → trueUpperBpm\nPRESETS 8종 + randomHuman(seed)" as VR #FFAB91
+  component "검증용 아티팩트 필드\nsensorDropoutRate / sensorSpikeRate\ncoachingResponsiveness / coachingLagSec\ntalkBias / terrainHilliness / tempC" as ART #FFAB91
+}
+
+package "검증 대상 — Android 비의존 순수 로직" {
+  component "pipeline\nRunEngine / FeatureExtractor / ZoneJudge\nOutlierGuard / SafetyGuard / CoachCadence" as PIPE #BBDEFB
+  component "analysis\nAnalysisEngine / LinearRegression / NoiseFloor\n지표 5종" as ANA #B2DFDB
+  component "domain + coaching 가드\nDisplayZoneJudge / Zone2Prior / Personalization\nDirectionGuard / NumberGuard / RuleCoach" as DOM #BBDEFB
+}
+
+package "관찰 — 자동 검증과 계측" {
+  component "JVM 단위 테스트 153개 / 29파일\ntestDebugUnitTest — 개발 머신에서 수 초" <<모델 테스팅>> as TEST #FFAB91
+  component "QaMeasurementTest\nQA 6종 실측(기각률/수렴/번복 억제/틱 비용)\n결과를 build/qa-measurements/에 기록" <<모델 테스팅>> as QAT #FFAB91
+  component "RunActivity(MODE_SIM) 계측 패널\n주입: manualSlope / manualTempC / manualHrOffset\n/ simLlmEnabled / simDelayMs 배속\n관찰: promptView / zoneBand / uEstView / coachView" <<설명 서비스>> as INST #C8E6C9
+  component "RunLogger + LlmCallLog\n샘플/이벤트/LLM 경로 기록" as LOG #CFD8DC
+}
+
+LIVE --> PORT
+SRS --> PORT
+SIM --> PORT
+MAN --> PORT
+VR --> SRS : 참임계 + 성향
+ART --> SRS : 두절/스파이크 주입
+PORT --> PIPE
+PIPE --> ANA
+PIPE --> DOM
+PIPE ..> SRS : onFeedback(LiveState) — 폐루프
+PIPE --> INST
+ANA --> INST
+PIPE --> LOG
+TEST --> PIPE
+TEST --> ANA
+TEST --> DOM
+QAT --> TEST
+DEV ..> INST
+DEV ..> TEST
+
+note bottom of QAT
+  참임계를 아는 러너라 수렴을 채점할 수 있다
+  — 수 주 걸릴 확인이 분 단위로 압축된다
+end note
+
+note bottom of INST
+  시뮬 통과 = "로직이 설계대로 동작한다"
+  ≠ "실제 사람에게 정확하다"
+  후자는 실주행 검증의 몫으로 남긴다
+end note
+
+legend right
+|= 색 |= 성격 |
+|<#FFAB91>| 검증 구조(포트/어댑터/테스트) |
+|<#BBDEFB>| 검증 대상 — 순수 로직 |
+|<#B2DFDB>| 분석 지표 |
+|<#C8E6C9>| 계측(관찰) |
+|<#CFD8DC>| 기록 |
+|<#FFF9C4>| 외부(실센서) |
+endlegend
+@enduml

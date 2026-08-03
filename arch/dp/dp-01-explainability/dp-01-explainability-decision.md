@@ -215,4 +215,4 @@
 - **verbalizer vs rationalizer**: LLM이 *확정 사실을 표현*(verbalize, 1안 방식) vs *이유를 지어냄*(rationalize, 위험).
 - **SHAP/LIME**: 블랙박스의 각 특징 기여도를 사후 근사하는 대표적 post-hoc 기법.
 
-> 관련 문서: `dp-01-explainability-research.md`(리서치), `arch/component-catalog.md`(1안=우리 시스템)/`dp-01-explainability-counter-catalog.md`(2안 카운터), `arch/diagrams/`(1안 도식)/`images/`(2안 도식), `spec/spec-002`(QA), `arch/adr-025`(AI≠NN), `framework/ai-system-and-quality.md`(AI System 아키텍처).
+> 관련 문서: `dp-01-explainability-research.md`(리서치), `arch/component-catalog.md`(1안=우리 시스템)/`dp-01-explainability-counter-catalog.md`(2안 카운터), `images/`(1안 개별화 채택안 도식 + 상세 도식, 2안 카운터 도식)/`arch/diagrams/`(일반 아키텍처 도식), `spec/spec-002`(QA), `arch/adr-025`(AI≠NN), `framework/ai-system-and-quality.md`(AI System 아키텍처).

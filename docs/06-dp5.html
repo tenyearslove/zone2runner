@@ -180,7 +180,7 @@
 
 <div class="deck-head">
   <h1>DP5. 테스트가능성 — 인증 보고서 "03. 설계 / Architectural Decision" 원고</h1>
-  <p>인증과제 샘플(씬스틸러) DP 형식 3장 + Appendix 1장 — 2026-07-31 v1 — 정본: <code>arch/dp/dp-05-testability/-decision.md</code>, 원고: <code>report/report-012</code></p>
+  <p>인증과제 샘플(씬스틸러) DP 형식 3장 + Appendix 1장 — 2026-08-03 v2(리뷰 반영: 개별화 채택안+상세 도식) — 정본: <code>arch/dp/dp-05-testability/-decision.md</code>, 원고: <code>report/report-012</code></p>
 </div>
 
 <!-- ======================= 슬라이드 1 ======================= -->
@@ -233,7 +233,7 @@
       <tr>
         <th class="rowh">구조</th>
         <td class="win">
-          <div class="fig-frame"><img src="img/02b-component-cnc-simple.png?v=0b55e862" alt="1안 — 소스 추상화 + 폐루프 시뮬 계측 아키텍처 다이어그램"></div>
+          <div class="fig-frame"><img src="img/dp-05-testability-adopted-simple.png?v=8c051fe8" data-img="dp5-adopted" alt="1안 — 소스 추상화 + 폐루프 시뮬 계측 아키텍처, 테스트가능성 관점"></div>
           <p class="note" style="margin-top:8px">실센서, 가상 러너, 수동 시뮬이 같은 인터페이스로 파이프라인에 꽂힌다 — 뒤의 코드는 입력이 진짜인지 모른다. 진짜 경계값을 아는 가상 러너가 코칭에 반응하며(폐루프) 개인화 수렴을 분 단위에 채점하고, 판정/개인화/분석 로직은 순수 모듈이라 단위 테스트 153개가 자동으로 돈다. 위험 심박, 두절 같은 시나리오는 시뮬로 안전하게 주입한다</p>
         </td>
         <td>
@@ -290,7 +290,7 @@
     <li><strong>재현이 검증의 전제다.</strong> 수정 전후를 같은 자극으로 비교할 수 없으면 회귀를 잡을 수 없다. 1안은 시나리오 재생으로 이것을 얻는다.</li>
     <li><strong>위험한 것일수록 시뮬로 검증해야 한다.</strong> 위험 심박에서 안전 규칙이 작동하는지를 실주행으로 확인하는 것은 위험하다. 시뮬 주입이 이 검증을 안전하게 만든다.</li>
     <li><strong>변경 비용이 러닝 한 번이면 검증은 생략된다.</strong> 자동 회귀(몇 초)와 실주행(시간 단위)의 차이는, 로직이 계속 바뀌는 단계에서는 검증을 하느냐 마느냐의 차이다.</li>
-    <li><strong>수렴은 압축 시간으로만 확인된다.</strong> 개인화가 경계값으로 수렴하는지는 여러 세션에 걸친 동작이라 실측이면 수 주가 걸린다. 진짜 값을 아는 가상 러너의 폐루프가 이것을 분 단위로 만든다.</li>
+    <li><strong>수렴은 압축 시간으로만 확인된다.</strong> 개인화가 경계값으로 수렴하는지는 여러 세션에 걸친 동작이라 실측이면 수 주가 걸린다. 진짜 경계값을 아는 가상 러너의 폐루프가 이것을 분 단위로 만든다.</li>
     <li><strong>자기 채점 함정을 구조로 피했다.</strong> 시뮬의 역할을 "구조 검증과 디버깅"으로 명시해, 시뮬 성적을 정확도 주장에 쓰는 함정을 설계 차원에서 차단했다. 실제 사람에 대한 정확도는 실주행 검증 계획으로 남긴다.</li>
   </ul>
 
@@ -322,6 +322,7 @@
   </ul>
 
   <h3 class="num"><span>A2.</span>채택안의 검증 구조 4요소</h3>
+  <figure style="margin:0 0 12px"><div class="fig-frame"><img src="img/dp-05-testability-detail.png?v=ac001e52" data-img="dp5-detail" alt="DP5 채택안 상세 — 검증 경로 하위 모듈 전개" width="1100"></div></figure>
   <div class="tbl">
   <table class="decide">
     <thead>
