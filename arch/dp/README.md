@@ -40,7 +40,7 @@ DP 폴더에는 **그 DP 전용 자산**(DP 본문/리서치/대본 + 카운터 
 | DP-04 | 강건성(Robustness) | v1 (2026-07-31, 사용자 검토 대기) | 1안 = 계층 방어 판정(입력 가드레일 + 이중 기준/히스테리시스 + 통계 평탄화 k·σ + 소스 폴백) | `dp-04-robustness/` |
 | DP-05 | 테스트가능성(Testability) | v1 (2026-07-31, 사용자 검토 대기) | 1안 = 소스 추상화 + 폐루프 시뮬 계측(RunSource 교체 + 참임계 가상 러너 + 순수 로직 자동 테스트) | `dp-05-testability/` |
 
-- **보고서 원고/HTML**: 각 DP의 PPT 원고 = `report/report-008`(DP1)~`report-012`(DP5). HTML 렌더(Artifact)는 원고와 함께 유지.
+- **보고서 원고/HTML**: 각 DP의 PPT 원고 = `report/report-008`(DP1)~`report-012`(DP5). HTML 렌더 = `docs/`(GitHub Pages, 인덱스 `docs/index.html`).
 - **DP2~DP5 카운터 도식 렌더 환경**: plantuml 1.2025.2 + smetana 레이아웃(graphviz 불필요), 폰트 = 렌더 머신의 한글 폰트(Mac=AppleGothic, Windows=Malgun Gothic).
 
 > 관련: `framework/ai-8-qa.md`(8대 QA), `framework/assignment/`(과제 규정 = QA 4개+ / AI 특화 2개+), `arch/diagrams/`(일반 아키텍처), `arch/component-catalog.md`(우리 컴포넌트).

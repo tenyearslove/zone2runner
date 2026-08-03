@@ -33,11 +33,11 @@
 도식을 base64 로 심은 자체 완결 파일은 필요할 때 만든다 — 저장소 밖으로 보내거나 Artifact 로 배포할 때다. 같은 내용이 6.4MB가 되고 갱신할 때마다 그만큼 이력에 쌓이므로 커밋하지 않는다.
 
 ```powershell
-# 링크 모드(커밋 대상) — report/html/ 에 덮어쓴다
-powershell -File report/html/build.ps1
+# 링크 모드(커밋 대상) — docs/ 에 덮어쓴다(도식은 img/로 복사돼 Pages에서도 열림)
+powershell -File docs/build.ps1
 
 # 자체 완결 단일 파일 — 저장소 밖 아무 폴더로
-powershell -File report/html/build.ps1 -Inline -OutDir C:\temp\zone2runner-deck
+powershell -File docs/build.ps1 -Inline -OutDir C:\temp\zone2runner-deck
 ```
 
 빌드는 결정적이다. 같은 소스와 같은 PNG면 같은 결과가 나오므로, 도식을 다시 렌더한 뒤에는 빌드를 다시 돌려 커밋한다.
@@ -50,22 +50,22 @@ powershell -File report/html/build.ps1 -Inline -OutDir C:\temp\zone2runner-deck
 
 도식 자리표시자는 두 가지다 — `{{IMG1}}` 처럼 이름을 직접 쓰는 방식(DP2~5, 아키텍처, Appendix)과 `<img data-img="키">` 방식(DP1, 통합본). 키와 PNG 경로의 대응, 그리고 덱마다 어떤 자리표시자를 쓰는지는 `src/decks.json` 에 있다. 덱을 새로 추가할 때도 `decks.json` 에 항목 하나를 더하면 되고 스크립트는 손대지 않는다.
 
-## Artifact 배포본
+## 배포 (GitHub Pages) 와 구 Artifact 채널
 
 같은 내용을 웹에서 볼 수 있게 배포한 주소. 갱신하면 같은 URL로 다시 배포된다.
 
 | 덱 | URL |
 |---|---|
-| 통합본 | https://claude.ai/code/artifact/82597934-14b2-49d5-80dd-f9b6dfc9c04e |
-| 인덱스 | https://claude.ai/code/artifact/2375aee0-4163-42c3-9867-2ff0f653b08e |
-| 01 소개/요구 | https://claude.ai/code/artifact/9e41e1a3-4498-4a7f-88ac-2577cf39ae47 |
-| DP1 | https://claude.ai/code/artifact/fba06e57-0273-428f-8829-43ed6c1c7c5b |
-| DP2 | https://claude.ai/code/artifact/782d02bb-b769-43c9-8ef6-a8496ac9e9b7 |
-| DP3 | https://claude.ai/code/artifact/bb523471-9a76-4a95-aa4e-f116d0dc6e13 |
-| DP4 | https://claude.ai/code/artifact/4bfb5619-0d1d-47ad-b838-30ebec0e0776 |
-| DP5 | https://claude.ai/code/artifact/b4d306e0-d274-46fe-9d74-5136cb1f3dba |
-| 최종 아키텍처 | https://claude.ai/code/artifact/56da277d-24d0-4430-859c-5308c7ab8281 |
-| 구현/검증/결론 | https://claude.ai/code/artifact/ded1a065-554f-4d59-a30e-071f1b076208 |
-| Appendix 뷰 | https://claude.ai/code/artifact/9e8ad40f-e2cd-4542-84e9-da8f44ba4dfc |
+| 통합본 | `full-report.html` |
+| 인덱스 | `index.html` |
+| 01 소개/요구 | `01-intro.html` |
+| DP1 | `02-dp1.html` |
+| DP2 | `03-dp2.html` |
+| DP3 | `04-dp3.html` |
+| DP4 | `05-dp4.html` |
+| DP5 | `06-dp5.html` |
+| 최종 아키텍처 | `07-arch.html` |
+| 구현/검증/결론 | `08-impl.html` |
+| Appendix 뷰 | `09-appendix.html` |
 
-Artifact 는 `-Inline` 산출물을 올린 것이라 이 폴더의 소스와 같은 내용이다. 배포본만 고치고 저장소를 안 고치면 다음 빌드에서 되돌아가므로, 항상 `src/` 를 고쳐 다시 빌드한 것을 올린다.
+정본 배포는 **GitHub Pages**(저장소 설정에서 Source = main 브랜치 `/docs`)다 — 이 폴더가 그대로 사이트가 되고, 진입점은 `index.html`. 표의 파일명은 이 폴더 안 페이지들이다. 과거 claude.ai Artifact 채널은 폐기했다(같은 내용의 옛 배포본이 남아 있을 수 있으나 갱신되지 않음). 항상 `src/` 를 고쳐 다시 빌드한 것을 커밋한다.

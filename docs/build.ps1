@@ -4,14 +4,14 @@
   Assembles src/ body fragments + deck-style.html + PNG diagrams under arch/
   into complete HTML pages (doctype + charset) that open directly in a browser.
 
-  Default (linked mode) : images referenced by relative path. Small files, readable
-                          diffs, and they render as long as they sit in the repo.
+  Default (linked mode) : diagrams are copied into docs/img/ and referenced as img/<name>.
+                          Self-contained under docs/, so GitHub Pages serves everything.
   -Inline               : images embedded as base64, one self-contained file each.
                           Use this to publish or to send a deck outside the repo.
 
   Usage:
-    powershell -File report/html/build.ps1
-    powershell -File report/html/build.ps1 -Inline -OutDir C:\temp\zone2runner-deck
+    powershell -File docs/build.ps1
+    powershell -File docs/build.ps1 -Inline -OutDir C:\temp\zone2runner-deck
 
   Encoding note: this script is pure ASCII on purpose, so it parses correctly under
   both Windows PowerShell 5.1 and PowerShell 7 with no byte order mark. All Korean
@@ -25,22 +25,32 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $here = $PSScriptRoot
-$repo = (Resolve-Path (Join-Path $here '..\..')).Path
+$repo = (Resolve-Path (Join-Path $here '..')).Path
 if (-not $OutDir) { $OutDir = $here }
 New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
 
-# Relative prefix from an output file back to the repo root (linked mode only).
-# Outside report/html those links would break, so that combination is rejected.
-$prefix = '../../'
+# Linked mode copies each referenced diagram into docs/img/ and points at img/<basename>,
+# so the docs/ folder is self-contained (GitHub Pages serves only docs/).
 $sameDir = ((Resolve-Path $OutDir).Path.TrimEnd('\') -eq $here.TrimEnd('\'))
 if (-not $Inline -and -not $sameDir) {
-  throw 'Linked mode can only write to report/html (relative image paths). Use -Inline for any other location.'
+  throw 'Linked mode can only write to docs (img/ relative paths). Use -Inline for any other location.'
 }
+$imgDir = Join-Path $here 'img'
+if (-not $Inline) { New-Item -ItemType Directory -Force -Path $imgDir | Out-Null }
 
 $utf8 = New-Object System.Text.UTF8Encoding($false)
 function Read-Utf8([string]$path) { return [IO.File]::ReadAllText($path, [Text.Encoding]::UTF8) }
 
 $cfg = Read-Utf8 (Join-Path $here 'src\decks.json') | ConvertFrom-Json
+function Get-LinkedSrc([string]$key) {
+  $rel = $cfg.images.$key
+  $p = Join-Path $repo $rel
+  if (-not (Test-Path $p)) { throw "Diagram not found: $p" }
+  $base = Split-Path $rel -Leaf
+  Copy-Item $p (Join-Path $imgDir $base) -Force
+  return 'img/' + $base
+}
+
 $deckCss = Read-Utf8 (Join-Path $here 'src\deck-style.html')
 $navHtml = (Read-Utf8 (Join-Path $here 'src\nav.html')).TrimEnd("`r", "`n")
 
@@ -80,7 +90,7 @@ foreach ($d in $cfg.decks) {
       if ($Inline) {
         $body = $body.Replace('{{' + $prop.Name + '}}', (Get-B64 $key))
       } else {
-        $body = $body.Replace('data:image/png;base64,{{' + $prop.Name + '}}', ($prefix + $cfg.images.$key))
+        $body = $body.Replace('data:image/png;base64,{{' + $prop.Name + '}}', (Get-LinkedSrc $key))
       }
     }
   }
@@ -95,7 +105,7 @@ foreach ($d in $cfg.decks) {
       $tail = '<script>const IMGS={' + ($entries -join ',') + '};document.querySelectorAll("img[data-img]").forEach(i=>{i.src=IMGS[i.dataset.img];});</script>'
     } else {
       foreach ($k in $keys) {
-        $body = $body.Replace('<img data-img="' + $k + '"', '<img src="' + $prefix + $cfg.images.$k + '" data-img="' + $k + '"')
+        $body = $body.Replace('<img data-img="' + $k + '"', '<img src="' + (Get-LinkedSrc $k) + '" data-img="' + $k + '"')
       }
     }
   }

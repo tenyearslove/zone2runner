@@ -1,3 +1,12 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zone2Runner 인증 보고서 — 문서 인덱스</title>
+<style>*,*::before,*::after{box-sizing:border-box}img{max-width:100%;height:auto}</style>
+</head>
+<body>
 <style>
   :root {
     --bg: #EEF1F5; --slide: #FFFFFF; --ink: #1F2A3A; --muted: #64748B;
@@ -36,21 +45,21 @@
   <p class="sub">보고서 전 파트의 HTML 렌더 한눈 목록 (2026-08-01 기준). 각 페이지의 md 정본은 저장소 <code>report/</code>, 도식은 <code>arch/diagrams/</code>.</p>
 
   <h2>📕 한 번에 보기</h2>
-  <p><a href="https://claude.ai/code/artifact/82597934-14b2-49d5-80dd-f9b6dfc9c04e" style="font-size:15px">보고서 전문 통합본</a> — 과제소개부터 Appendix까지 전 파트 + 도식 16장을 한 페이지에(상단 목차 내비게이션 포함). 아래는 파트별 개별 덱.</p>
+  <p><a href="full-report.html" style="font-size:15px">보고서 전문 통합본</a> — 과제소개부터 Appendix까지 전 파트 + 도식 16장을 한 페이지에(상단 목차 내비게이션 포함). 아래는 파트별 개별 덱.</p>
 
   <h2>보고서 순서대로 (파트별)</h2>
   <table>
     <thead><tr><th style="width:12em">파트</th><th>HTML</th><th style="width:11em">md 정본</th></tr></thead>
     <tbody>
-      <tr><td>01 과제 소개 + 02 요구사항</td><td><a href="https://claude.ai/code/artifact/9e41e1a3-4498-4a7f-88ac-2577cf39ae47">과제 소개 / 요구사항</a></td><td><code>report-018</code></td></tr>
-      <tr><td>03 설계 — DP1 설명용이성</td><td><a href="https://claude.ai/code/artifact/fba06e57-0273-428f-8829-43ed6c1c7c5b">DP1 덱</a></td><td><code>report-008</code></td></tr>
-      <tr><td>03 설계 — DP2 제어가능성</td><td><a href="https://claude.ai/code/artifact/782d02bb-b769-43c9-8ef6-a8496ac9e9b7">DP2 덱</a></td><td><code>report-009</code></td></tr>
-      <tr><td>03 설계 — DP3 기능적응성</td><td><a href="https://claude.ai/code/artifact/bb523471-9a76-4a95-aa4e-f116d0dc6e13">DP3 덱</a></td><td><code>report-010</code></td></tr>
-      <tr><td>03 설계 — DP4 강건성</td><td><a href="https://claude.ai/code/artifact/4bfb5619-0d1d-47ad-b838-30ebec0e0776">DP4 덱</a></td><td><code>report-011</code></td></tr>
-      <tr><td>03 설계 — DP5 테스트가능성</td><td><a href="https://claude.ai/code/artifact/b4d306e0-d274-46fe-9d74-5136cb1f3dba">DP5 덱</a></td><td><code>report-012</code></td></tr>
-      <tr><td>03 설계 — 최종 Architecture</td><td><a href="https://claude.ai/code/artifact/56da277d-24d0-4430-859c-5308c7ab8281">최종 아키텍처 덱</a> (거시 + 모듈 4장)</td><td><code>report-013</code></td></tr>
-      <tr><td>04 구현/검증 + 05 결론</td><td><a href="https://claude.ai/code/artifact/ded1a065-554f-4d59-a30e-071f1b076208">구현/검증/결론 덱</a> (스크린샷 자리 20장 + 실측 표)</td><td><code>report-014·015·016</code></td></tr>
-      <tr><td>Appendix — 뷰 5종(도식 6장)</td><td><a href="https://claude.ai/code/artifact/9e8ad40f-e2cd-4542-84e9-da8f44ba4dfc">Appendix 뷰 덱</a> (Use Case/Context/Module/C&amp;C 상세+축약/Deployment)</td><td><code>report-017</code></td></tr>
+      <tr><td>01 과제 소개 + 02 요구사항</td><td><a href="01-intro.html">과제 소개 / 요구사항</a></td><td><code>report-018</code></td></tr>
+      <tr><td>03 설계 — DP1 설명용이성</td><td><a href="02-dp1.html">DP1 덱</a></td><td><code>report-008</code></td></tr>
+      <tr><td>03 설계 — DP2 제어가능성</td><td><a href="03-dp2.html">DP2 덱</a></td><td><code>report-009</code></td></tr>
+      <tr><td>03 설계 — DP3 기능적응성</td><td><a href="04-dp3.html">DP3 덱</a></td><td><code>report-010</code></td></tr>
+      <tr><td>03 설계 — DP4 강건성</td><td><a href="05-dp4.html">DP4 덱</a></td><td><code>report-011</code></td></tr>
+      <tr><td>03 설계 — DP5 테스트가능성</td><td><a href="06-dp5.html">DP5 덱</a></td><td><code>report-012</code></td></tr>
+      <tr><td>03 설계 — 최종 Architecture</td><td><a href="07-arch.html">최종 아키텍처 덱</a> (거시 + 모듈 4장)</td><td><code>report-013</code></td></tr>
+      <tr><td>04 구현/검증 + 05 결론</td><td><a href="08-impl.html">구현/검증/결론 덱</a> (스크린샷 자리 20장 + 실측 표)</td><td><code>report-014·015·016</code></td></tr>
+      <tr><td>Appendix — 뷰 5종(도식 6장)</td><td><a href="09-appendix.html">Appendix 뷰 덱</a> (Use Case/Context/Module/C&amp;C 상세+축약/Deployment)</td><td><code>report-017</code></td></tr>
     </tbody>
   </table>
 
@@ -60,3 +69,7 @@
   <h2>남은 것</h2>
   <p class="muted">① 실기기 스크린샷 20장 캡처(자리/조건은 구현 덱에 명시) ② QA6 실기기 실측 ③ 검토 피드백 반영 ④ 최종 PPT 조립.</p>
 </div>
+
+
+</body>
+</html>

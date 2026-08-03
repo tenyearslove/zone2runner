@@ -173,7 +173,7 @@
 
 <section class="slide">
   <div class="slide-head"><h2>Appendix. Use Case</h2><span class="sec-no">A</span></div>
-  <div class="fig-frame"><img src="../../arch/diagrams/05-usecase.png" alt="Use Case 다이어그램"></div>
+  <div class="fig-frame"><img src="img/05-usecase.png" alt="Use Case 다이어그램"></div>
   <ul>
     <li>액터는 둘 — <strong>러너(사용자)</strong>와 <strong>개발자/검증자</strong>. 검증자가 정식 액터인 것이 이 시스템의 특징이다(시뮬 모드가 제품 기능 — DP5 테스트가능성).</li>
     <li>러너 중심 흐름: 프로필 등록 → 세션 시작 → 실시간 존/음성 코칭 → <strong>말하기 테스트 응답</strong>(코칭 흐름에 포함 — 답이 그 자리에서 판정 기준을 정정하는 HITL) → 리포트 → <strong>지표 설명/코칭 근거 열람</strong>(리포트에서 확장).</li>
@@ -184,7 +184,7 @@
 
 <section class="slide">
   <div class="slide-head"><h2>Appendix. Context View</h2><span class="sec-no">A</span></div>
-  <div class="fig-frame"><img src="../../arch/diagrams/01-context.png" alt="Context 다이어그램"></div>
+  <div class="fig-frame"><img src="img/01-context.png" alt="Context 다이어그램"></div>
   <ul>
     <li>시스템 경계: 폰 앱(판정/분석/개인화/코칭의 단일 주체) + 워치 앱(측정/표시). 외부 5종: Health Services / GPS / <strong>Gemini Nano(AICore, 별도 프로세스)</strong> / Open-Meteo(기온, 세션당 1회) / OSM 지도 타일 서버.</li>
     <li>LLM 왕복에 통제 명시: 나가는 것은 "규칙이 확정한 사실+임무"뿐, 들어오는 문장은 <strong>가드 3종 통과 시 채택, 아니면 단어 폴백</strong>. 모델 다운로드는 세션 밖에서만.</li>
@@ -195,7 +195,7 @@
 
 <section class="slide">
   <div class="slide-head"><h2>Appendix. 최종 Architecture (Module View)</h2><span class="sec-no">A</span></div>
-  <div class="fig-frame"><img src="../../arch/diagrams/04-module-view.png" alt="Module View 다이어그램"></div>
+  <div class="fig-frame"><img src="img/04-module-view.png" alt="Module View 다이어그램"></div>
   <ul>
     <li>코드 정적 구조: 폰 65파일 9패키지 + 워치 9파일. <strong>domain이 리프</strong>(의존 0, 안드로이드 미의존).</li>
     <li>결정 로직(pipeline/coaching/analysis)이 전부 안드로이드 미의존 → <strong>단위 테스트 153개가 기기 없이 실행</strong> — 테스트가능성의 구조적 근거.</li>
@@ -206,7 +206,7 @@
 
 <section class="slide">
   <div class="slide-head"><h2>Appendix. 최종 Architecture (C&amp;C View)</h2><span class="sec-no">A</span></div>
-  <div class="fig-frame"><img src="../../arch/diagrams/02b-component-cnc-simple.png" alt="C&C View 다이어그램(축약)"></div>
+  <div class="fig-frame"><img src="img/02b-component-cnc-simple.png" alt="C&C View 다이어그램(축약)"></div>
   <ul>
     <li>실행 시 컴포넌트와 커넥터: 센서 → 입력 가드레일 → 모델 서빙(규칙+베이지안+분석+LLM) → 출력 가드레일 3종 → 설명/운영, 오른쪽에 Data Lake와 개인 적응 루프. (상세판 = <code>arch/diagrams/02-component-cnc.png</code>)</li>
     <li>이 축약 뷰가 <strong>DP1~DP5의 채택안(1안) 도식과 동일</strong> — DP마다 새 그림이 아니라 한 아키텍처를 다섯 QA 관점에서 본 것.</li>
@@ -216,7 +216,7 @@
 
 <section class="slide">
   <div class="slide-head"><h2>Appendix. C&amp;C View — 상세판 (전 컴포넌트)</h2><span class="sec-no">A</span></div>
-  <div class="fig-frame"><img src="../../arch/diagrams/02-component-cnc.png" alt="C&C View 상세 다이어그램"></div>
+  <div class="fig-frame"><img src="img/02-component-cnc.png" alt="C&C View 상세 다이어그램"></div>
   <ul>
     <li>축약판을 컴포넌트 수준으로 편 상세 뷰 — 추론 서비스 내부(신호 소스/입력 가드레일/특징 준비/존 판정/개인 경계/분석 엔진/코칭 표현/출력 가드레일/오케스트레이터)와 설명/분석/운영/저장/적응의 전 컴포넌트, 프로비넌스 엣지까지.</li>
     <li>컴포넌트별 책임/입출력/구현 파일 = <code>arch/component-catalog.md</code> (A1~A9, B1~B2-1, C1~C3, D1~D3, E1~E4, F1~F2).</li>
@@ -226,7 +226,7 @@
 
 <section class="slide">
   <div class="slide-head"><h2>Appendix. 최종 Architecture (Deployment View)</h2><span class="sec-no">A</span></div>
-  <div class="fig-frame"><img src="../../arch/diagrams/03-deployment.png" alt="Deployment 다이어그램"></div>
+  <div class="fig-frame"><img src="img/03-deployment.png" alt="Deployment 다이어그램"></div>
   <ul>
     <li>3노드 + 1클라우드: 워치(UI + 포그라운드 측정 서비스 + Health Services) / 폰(앱 본체 + 원격 제어 서비스 + 저장 5종) / <strong>AICore(별도 프로세스)</strong> / Open-Meteo.</li>
     <li>폰-워치 커넥터 = Wearable Data Layer 경로 목록 — <strong>/run/live(폰이 확정한 존의 1Hz 푸시)</strong>가 "폰=단일 판정 주체"의 배치상 증거.</li>

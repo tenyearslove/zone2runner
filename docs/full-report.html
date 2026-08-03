@@ -364,11 +364,11 @@
       <tr>
         <th class="rowh">구조</th>
         <td class="win">
-          <div class="fig-frame"><img src="../../arch/diagrams/02b-component-cnc-simple.png" data-img="cnc-simple" alt="1안 규칙/통계 기반 개인화 아키텍처 다이어그램" width="1400"></div>
+          <div class="fig-frame"><img src="img/02b-component-cnc-simple.png" data-img="cnc-simple" alt="1안 규칙/통계 기반 개인화 아키텍처 다이어그램" width="1400"></div>
           <p class="struct-note">판정은 "심박 145가 상한 132보다 높다"처럼 단순한 비교 규칙으로 내린다. 개인 경계는 러닝 중 말하기 테스트 답을 따라 조금씩 옮겨 간다. LLM은 이렇게 정해진 내용을 자연스러운 문장으로 바꾸는 일만 하고, 나가는 문장은 형식, 방향, 숫자 검사를 한 번 더 거친다.</p>
         </td>
         <td>
-          <div class="fig-frame"><img src="../../arch/dp/dp-01-explainability/images/dp-01-explainability-counter-simple.png" data-img="dp1-counter" alt="2안 사전학습 블랙박스 아키텍처 다이어그램" width="1400"></div>
+          <div class="fig-frame"><img src="img/dp-01-explainability-counter-simple.png" data-img="dp1-counter" alt="2안 사전학습 블랙박스 아키텍처 다이어그램" width="1400"></div>
           <p class="struct-note">많은 사람의 데이터로 미리 학습한 모델이 판정과 코칭을 직접 내놓는다. 판단 과정은 수많은 내부 숫자에 흩어져 있어 사람이 읽을 수 없다. 그래서 설명은 결정이 난 뒤에 별도 분석 도구나 LLM이 추정해서 만들어 붙인다.</p>
         </td>
       </tr>
@@ -562,11 +562,11 @@
       <tr>
         <th class="rowh">구조</th>
         <td class="win">
-          <div class="fig-frame"><img src="../../arch/diagrams/02b-component-cnc-simple.png" data-img="cnc-simple" alt="1안 — 규칙 확정 + LLM 표현 한정 아키텍처 다이어그램"></div>
+          <div class="fig-frame"><img src="img/02b-component-cnc-simple.png" data-img="cnc-simple" alt="1안 — 규칙 확정 + LLM 표현 한정 아키텍처 다이어그램"></div>
           <p class="note" style="margin-top:8px">규칙이 방향과 사실 숫자를 확정하면 LLM은 그 재료로 문장만 만든다. 나온 문장은 형식, 방향, 숫자 세 가지 검사를 거치고, 걸리거나 LLM이 실패하면 "속도 줄이기" 같은 짧은 문구로 바꿔 내보낸다. 위험 심박 권고는 LLM을 거치지 않고, 모든 호출의 경로와 기각 사유가 기록된다</p>
         </td>
         <td>
-          <div class="fig-frame"><img src="../../arch/dp/dp-02-controllability/images/dp-02-controllability-counter-simple.png" data-img="dp2-counter" alt="2안 — LLM 판단 위임 아키텍처 다이어그램"></div>
+          <div class="fig-frame"><img src="img/dp-02-controllability-counter-simple.png" data-img="dp2-counter" alt="2안 — LLM 판단 위임 아키텍처 다이어그램"></div>
           <p class="note" style="margin-top:8px">심박, 페이스 같은 상황을 프롬프트로 주면 LLM이 무엇을 권할지까지 스스로 판단해 문장을 만든다. 통제는 프롬프트에 규정을 써 두고 출력에 금칙어, 수치 범위 필터를 거는 방식이다. LLM 활용 서비스의 주류 접근이다</p>
         </td>
       </tr>
@@ -757,11 +757,11 @@
       <tr>
         <th class="rowh">구조</th>
         <td class="win">
-          <div class="fig-frame"><img src="../../arch/diagrams/02b-component-cnc-simple.png" data-img="cnc-simple" alt="1안 — 온라인 베이지안 개인 적응 아키텍처 다이어그램"></div>
+          <div class="fig-frame"><img src="img/02b-component-cnc-simple.png" data-img="cnc-simple" alt="1안 — 온라인 베이지안 개인 적응 아키텍처 다이어그램"></div>
           <p class="note" style="margin-top:8px">경계를 "평균과 확신 폭"으로 들고 다닌다. 처음엔 나이와 안정심박으로 넓은 짐작에서 출발하고, 달리는 중 말하기 테스트 답이 들어올 때마다 통계 공식으로 옮긴다. 얼마나 옮길지는 사람이 정한 상수가 아니라 두 불확실성이 공식으로 계산한다. 한 세션의 이동 한도가 폭주를 막고, 결과는 저장돼 다음 세션의 출발선이 된다</p>
         </td>
         <td>
-          <div class="fig-frame"><img src="../../arch/dp/dp-03-adaptability/images/dp-03-adaptability-counter-simple.png" data-img="dp3-counter" alt="2안 — 오프라인 재학습 개인화 아키텍처 다이어그램"></div>
+          <div class="fig-frame"><img src="img/dp-03-adaptability-counter-simple.png" data-img="dp3-counter" alt="2안 — 오프라인 재학습 개인화 아키텍처 다이어그램"></div>
           <p class="note" style="margin-top:8px">세션 관측과 답을 서버로 올려 전체 사용자 데이터와 함께 주기적으로 개인화 모델을 다시 학습하고, 새 모델을 배포해 경계를 갱신한다. 배포 사이에서 경계는 고정이다. 업계 개인화 서비스의 주류 방식이다</p>
         </td>
       </tr>
@@ -952,11 +952,11 @@
       <tr>
         <th class="rowh">구조</th>
         <td class="win">
-          <div class="fig-frame"><img src="../../arch/diagrams/02b-component-cnc-simple.png" data-img="cnc-simple" alt="1안 — 계층 방어 판정 아키텍처 다이어그램"></div>
+          <div class="fig-frame"><img src="img/02b-component-cnc-simple.png" data-img="cnc-simple" alt="1안 — 계층 방어 판정 아키텍처 다이어그램"></div>
           <p class="note" style="margin-top:8px">① 있을 수 없는 값(심박 40 미만/220 초과, 낡은 값)은 문에서 버린다. ② 화면 표시는 순간값으로 빠르게 하되 이중 문턱으로 깜빡임을 막고, 코칭은 60초 지속된 상태에만 반응한다. ③ 추세는 창 통계(기울기+신뢰도)로 읽고, 문턱은 그 사람 노이즈의 배수로 자가 보정한다. ④ 센서가 빠지면 다음 소스로 갈아탄다</p>
         </td>
         <td>
-          <div class="fig-frame"><img src="../../arch/dp/dp-04-robustness/images/dp-04-robustness-counter-simple.png" data-img="dp4-counter" alt="2안 — 즉시 반응 판정 아키텍처 다이어그램"></div>
+          <div class="fig-frame"><img src="img/dp-04-robustness-counter-simple.png" data-img="dp4-counter" alt="2안 — 즉시 반응 판정 아키텍처 다이어그램"></div>
           <p class="note" style="margin-top:8px">최근 몇 초의 이동평균으로 신호를 다듬은 뒤, 순간값을 경계와 바로 비교해 판정하고 코칭까지 그대로 잇는다. 구조가 단순하고 반응이 수 초로 빠르다</p>
         </td>
       </tr>
@@ -1147,11 +1147,11 @@
       <tr>
         <th class="rowh">구조</th>
         <td class="win">
-          <div class="fig-frame"><img src="../../arch/diagrams/02b-component-cnc-simple.png" data-img="cnc-simple" alt="1안 — 소스 추상화 + 폐루프 시뮬 계측 아키텍처 다이어그램"></div>
+          <div class="fig-frame"><img src="img/02b-component-cnc-simple.png" data-img="cnc-simple" alt="1안 — 소스 추상화 + 폐루프 시뮬 계측 아키텍처 다이어그램"></div>
           <p class="note" style="margin-top:8px">실센서, 가상 러너, 수동 시뮬이 같은 인터페이스로 파이프라인에 꽂힌다 — 뒤의 코드는 입력이 진짜인지 모른다. 진짜 경계값을 아는 가상 러너가 코칭에 반응하며(폐루프) 개인화 수렴을 분 단위에 채점하고, 판정/개인화/분석 로직은 순수 모듈이라 단위 테스트 153개가 자동으로 돈다. 위험 심박, 두절 같은 시나리오는 시뮬로 안전하게 주입한다</p>
         </td>
         <td>
-          <div class="fig-frame"><img src="../../arch/dp/dp-05-testability/images/dp-05-testability-counter-simple.png" data-img="dp5-counter" alt="2안 — 실기기 결합 검증 아키텍처 다이어그램"></div>
+          <div class="fig-frame"><img src="img/dp-05-testability-counter-simple.png" data-img="dp5-counter" alt="2안 — 실기기 결합 검증 아키텍처 다이어그램"></div>
           <p class="note" style="margin-top:8px">추상화 계층 없이 센서 API가 로직에 직접 연결된다. 검증은 코스를 골라 실기기를 착용하고 실제로 달리며 확인하고, 세션 기록을 내려받아 수동으로 검토한다. 검증되는 것이 곧 실환경이다</p>
         </td>
       </tr>
@@ -1293,7 +1293,7 @@
 
 <section class="slide">
   <div class="slide-head"><h2>최종 Architecture (1/2) — 거시: 모듈 조립</h2><span class="sec-no">3</span></div>
-  <div class="fig-frame"><img src="../../arch/diagrams/06-final-architecture.png" data-img="macro" alt="최종 아키텍처 거시 다이어그램"></div>
+  <div class="fig-frame"><img src="img/06-final-architecture.png" data-img="macro" alt="최종 아키텍처 거시 다이어그램"></div>
   <h3 class="num"><span>■</span>강의 표준 용어 대응</h3>
   <div class="tbl"><table class="decide">
     <thead><tr><th>강의 AI System 컴포넌트</th><th>이 시스템의 구현</th><th style="width:5em">모듈</th></tr></thead>
@@ -1317,28 +1317,28 @@
 
 <section class="slide">
   <div class="slide-head"><h2>최종 Architecture (2/2) — 모듈 A: 추론 서비스</h2><span class="sec-no">3</span></div>
-  <div class="fig-frame"><img src="../../arch/diagrams/06a-module-inference.png" data-img="mod-a" alt="모듈 A 추론 서비스 상세"></div>
+  <div class="fig-frame"><img src="img/06a-module-inference.png" data-img="mod-a" alt="모듈 A 추론 서비스 상세"></div>
   <p class="note">입력에서 출력까지 9컴포넌트: 신호 소스(A1, 실센서/시뮬 교체 지점) → 입력 가드레일(A2) → 특징 준비(A3) → 존 판정(A4)/개인 경계(A5)/관측 분석(A6) → 코칭 표현(A7, 규칙이 확정한 사실로 LLM이 문장만) → 출력 가드레일 3종+안전(A8). 오케스트레이터(A9)가 매초 구동.</p>
   <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
 </section>
 
 <section class="slide">
   <div class="slide-head"><h2>모듈 B+C: 설명 + 분석 서비스</h2><span class="sec-no">3</span></div>
-  <div class="fig-frame"><img src="../../arch/diagrams/06b-module-explain-analysis.png" data-img="mod-bc" alt="모듈 B+C 설명 분석 상세"></div>
+  <div class="fig-frame"><img src="img/06b-module-explain-analysis.png" data-img="mod-bc" alt="모듈 B+C 설명 분석 상세"></div>
   <p class="note">설명 생성기(B1)는 판단에 실제로 쓴 사실로 스토리/설명을 만들고(세션 종료 1회 생성/저장), 프로비넌스(B2-1)는 모든 LLM 호출의 근거/프롬프트/경로를 기록해 리포트에서 문장 단위 추적을 만든다. 분석(C)은 세션 내 구간/경사/워밍업과 세션 간 비교/추세/기록을 도출한다.</p>
   <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
 </section>
 
 <section class="slide">
   <div class="slide-head"><h2>모듈 D+E: 운영 서비스 + 저장</h2><span class="sec-no">3</span></div>
-  <div class="fig-frame"><img src="../../arch/diagrams/06c-module-operation-storage.png" data-img="mod-de" alt="모듈 D+E 운영 저장 상세"></div>
+  <div class="fig-frame"><img src="img/06c-module-operation-storage.png" data-img="mod-de" alt="모듈 D+E 운영 저장 상세"></div>
   <p class="note">운영(D)은 화면/음성 UI + 폰-워치 인프라 + 사람의 개입 통로(HITL=말하기 테스트, HOTL=설정/감사). 저장(E)은 Data Lake(세션 이력) + Model Artifact(개인 파라미터) + 프로필/설정 + Registry 대응(APK/AICore, 경량).</p>
   <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
 </section>
 
 <section class="slide">
   <div class="slide-head"><h2>모듈 F: 개인 적응 + 시뮬 검증 (AI Development 대응)</h2><span class="sec-no">3</span></div>
-  <div class="fig-frame"><img src="../../arch/diagrams/06d-module-adaptation-verification.png" data-img="mod-f" alt="모듈 F 적응 검증 상세"></div>
+  <div class="fig-frame"><img src="img/06d-module-adaptation-verification.png" data-img="mod-f" alt="모듈 F 적응 검증 상세"></div>
   <p class="note">표준의 오프라인 대량 학습이 없는 대신 — 개인 적응 갱신(F1)이 운영 안에서 세션마다 돌고(Retraining 대응), 시뮬 검증 도구(F2)가 참값 없는 조건의 검증을 맡으며(모델 테스팅 대응), 모델 준비 관리자(A7-1)가 Nano 상태/다운로드를 관리한다(Model Registry 인접).</p>
 
   <h3 class="num"><span>■</span>DP 도식과의 관계 — 다섯 DP는 이 한 아키텍처의 다른 QA 단면</h3>
@@ -1555,7 +1555,7 @@
 
 <section class="slide">
   <div class="slide-head"><h2>Appendix. Use Case</h2><span class="sec-no">A</span></div>
-  <div class="fig-frame"><img src="../../arch/diagrams/05-usecase.png" data-img="usecase" alt="Use Case 다이어그램"></div>
+  <div class="fig-frame"><img src="img/05-usecase.png" data-img="usecase" alt="Use Case 다이어그램"></div>
   <ul>
     <li>액터는 둘 — <strong>러너(사용자)</strong>와 <strong>개발자/검증자</strong>. 검증자가 정식 액터인 것이 이 시스템의 특징이다(시뮬 모드가 제품 기능 — DP5 테스트가능성).</li>
     <li>러너 중심 흐름: 프로필 등록 → 세션 시작 → 실시간 존/음성 코칭 → <strong>말하기 테스트 응답</strong>(코칭 흐름에 포함 — 답이 그 자리에서 판정 기준을 정정하는 HITL) → 리포트 → <strong>지표 설명/코칭 근거 열람</strong>(리포트에서 확장).</li>
@@ -1566,7 +1566,7 @@
 
 <section class="slide">
   <div class="slide-head"><h2>Appendix. Context View</h2><span class="sec-no">A</span></div>
-  <div class="fig-frame"><img src="../../arch/diagrams/01-context.png" data-img="context" alt="Context 다이어그램"></div>
+  <div class="fig-frame"><img src="img/01-context.png" data-img="context" alt="Context 다이어그램"></div>
   <ul>
     <li>시스템 경계: 폰 앱(판정/분석/개인화/코칭의 단일 주체) + 워치 앱(측정/표시). 외부 5종: Health Services / GPS / <strong>Gemini Nano(AICore, 별도 프로세스)</strong> / Open-Meteo(기온, 세션당 1회) / OSM 지도 타일 서버.</li>
     <li>LLM 왕복에 통제 명시: 나가는 것은 "규칙이 확정한 사실+임무"뿐, 들어오는 문장은 <strong>가드 3종 통과 시 채택, 아니면 단어 폴백</strong>. 모델 다운로드는 세션 밖에서만.</li>
@@ -1577,7 +1577,7 @@
 
 <section class="slide">
   <div class="slide-head"><h2>Appendix. 최종 Architecture (Module View)</h2><span class="sec-no">A</span></div>
-  <div class="fig-frame"><img src="../../arch/diagrams/04-module-view.png" data-img="module-view" alt="Module View 다이어그램"></div>
+  <div class="fig-frame"><img src="img/04-module-view.png" data-img="module-view" alt="Module View 다이어그램"></div>
   <ul>
     <li>코드 정적 구조: 폰 65파일 9패키지 + 워치 9파일. <strong>domain이 리프</strong>(의존 0, 안드로이드 미의존).</li>
     <li>결정 로직(pipeline/coaching/analysis)이 전부 안드로이드 미의존 → <strong>단위 테스트 153개가 기기 없이 실행</strong> — 테스트가능성의 구조적 근거.</li>
@@ -1588,7 +1588,7 @@
 
 <section class="slide">
   <div class="slide-head"><h2>Appendix. 최종 Architecture (C&amp;C View)</h2><span class="sec-no">A</span></div>
-  <div class="fig-frame"><img src="../../arch/diagrams/02b-component-cnc-simple.png" data-img="cnc-simple" alt="C&C View 다이어그램(축약)"></div>
+  <div class="fig-frame"><img src="img/02b-component-cnc-simple.png" data-img="cnc-simple" alt="C&C View 다이어그램(축약)"></div>
   <ul>
     <li>실행 시 컴포넌트와 커넥터: 센서 → 입력 가드레일 → 모델 서빙(규칙+베이지안+분석+LLM) → 출력 가드레일 3종 → 설명/운영, 오른쪽에 Data Lake와 개인 적응 루프. (상세판 = <code>arch/diagrams/02-component-cnc.png</code>)</li>
     <li>이 축약 뷰가 <strong>DP1~DP5의 채택안(1안) 도식과 동일</strong> — DP마다 새 그림이 아니라 한 아키텍처를 다섯 QA 관점에서 본 것.</li>
@@ -1598,7 +1598,7 @@
 
 <section class="slide">
   <div class="slide-head"><h2>Appendix. C&amp;C View — 상세판 (전 컴포넌트)</h2><span class="sec-no">A</span></div>
-  <div class="fig-frame"><img src="../../arch/diagrams/02-component-cnc.png" data-img="cnc-detail" alt="C&C View 상세 다이어그램"></div>
+  <div class="fig-frame"><img src="img/02-component-cnc.png" data-img="cnc-detail" alt="C&C View 상세 다이어그램"></div>
   <ul>
     <li>축약판을 컴포넌트 수준으로 편 상세 뷰 — 추론 서비스 내부(신호 소스/입력 가드레일/특징 준비/존 판정/개인 경계/분석 엔진/코칭 표현/출력 가드레일/오케스트레이터)와 설명/분석/운영/저장/적응의 전 컴포넌트, 프로비넌스 엣지까지.</li>
     <li>컴포넌트별 책임/입출력/구현 파일 = <code>arch/component-catalog.md</code> (A1~A9, B1~B2-1, C1~C3, D1~D3, E1~E4, F1~F2).</li>
@@ -1608,7 +1608,7 @@
 
 <section class="slide">
   <div class="slide-head"><h2>Appendix. 최종 Architecture (Deployment View)</h2><span class="sec-no">A</span></div>
-  <div class="fig-frame"><img src="../../arch/diagrams/03-deployment.png" data-img="deployment" alt="Deployment 다이어그램"></div>
+  <div class="fig-frame"><img src="img/03-deployment.png" data-img="deployment" alt="Deployment 다이어그램"></div>
   <ul>
     <li>3노드 + 1클라우드: 워치(UI + 포그라운드 측정 서비스 + Health Services) / 폰(앱 본체 + 원격 제어 서비스 + 저장 5종) / <strong>AICore(별도 프로세스)</strong> / Open-Meteo.</li>
     <li>폰-워치 커넥터 = Wearable Data Layer 경로 목록 — <strong>/run/live(폰이 확정한 존의 1Hz 푸시)</strong>가 "폰=단일 판정 주체"의 배치상 증거.</li>
