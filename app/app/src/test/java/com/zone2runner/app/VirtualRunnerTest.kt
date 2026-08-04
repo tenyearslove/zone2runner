@@ -40,14 +40,18 @@ class VirtualRunnerTest {
     }
 
     @Test fun ac2_deterministicBySeed_andVariesAcrossSeeds() {
-        val r = VirtualRunner.DEFAULT
-        val a1 = collect(r, seed = 7L, durationSec = 300)
-        val a2 = collect(r, seed = 7L, durationSec = 300)
-        assertEquals("같은 seed → 같은 길이", a1.size, a2.size)
-        assertTrue("같은 seed → 동일 시퀀스", a1.zip(a2).all { (x, y) -> x.hr == y.hr && x.paceMinKm == y.paceMinKm && x.slopePct == y.slopePct })
-        val b = collect(r, seed = 99L, durationSec = 300)
-        val hrDiff = a1.zip(b).count { (x, y) -> x.hr != y.hr }
-        assertTrue("다른 seed → 유의미하게 다른 세션", hrDiff > 100)
+        val runner = VirtualRunner.DEFAULT
+        for (seed in listOf(3L, 7L, 11L, 21L, 42L)) {
+            val first = collect(runner, seed = seed, durationSec = 300)
+            val replay = collect(runner, seed = seed, durationSec = 300)
+            assertEquals("같은 seed → 같은 길이 (seed=$seed)", first.size, replay.size)
+            assertTrue("같은 seed → 동일 시퀀스 (seed=$seed)", first.zip(replay).all { (x, y) ->
+                x.hr == y.hr && x.paceMinKm == y.paceMinKm && x.slopePct == y.slopePct
+            })
+            val different = collect(runner, seed = seed + 1_000L, durationSec = 300)
+            val hrDiff = first.zip(different).count { (x, y) -> x.hr != y.hr }
+            assertTrue("다른 seed → 유의미하게 다른 세션 (seed=$seed)", hrDiff > 100)
+        }
     }
 
     @Test fun ac3_terrain_emitsNonZeroSlope_whenHilly() {
@@ -68,7 +72,7 @@ class VirtualRunnerTest {
         val spikes = samples.count { it.hr > 220 } // 스파이크는 생리범위(220) 밖으로 튐
         assertTrue("드롭아웃 발생", dropouts > 5)
         assertTrue("스파이크 발생", spikes > 3)
-        // OutlierGuard가 무효/스파이크를 걸러낸다(강건성 QA2)
+        // OutlierGuard가 무효/스파이크를 걸러낸다(강건성 QA4)
         assertTrue("드롭아웃은 무효로 기각", samples.filter { it.hr <= 0 }.all { !OutlierGuard.isValid(it.hr) })
         assertTrue("생리범위 밖 스파이크 기각", samples.filter { it.hr > 220 }.all { !OutlierGuard.isValid(it.hr) })
     }
