@@ -137,23 +137,23 @@
 <div class="deck" id="part-dp1">
 <div class="deck-head">
   <h1>DP1. 설명용이성 — 검증할 수 있는 판단과 설명</h1>
-  <p>ML을 직접 적용했던 과정에서 무엇을 확인했고, 왜 현재 구조로 바꾸었는지 설명한다.</p>
+  <p>ML 대안을 직접 구현해 확인한 결과와, 운영 구조를 선택한 기준을 설명한다.</p>
 </div>
 
 <section class="slide">
-  <div class="slide-head"><h2>DP1. ML 시도에서 발견한 설계 문제</h2><span class="sec-no">3</span></div>
-  <h3 class="num"><span>1.</span>처음에는 ML로 판단과 예측을 시도했다</h3>
+  <div class="slide-head"><h2>DP1. ML 대안을 검토하고 운영 구조를 선택한 과정</h2><span class="sec-no">3</span></div>
+  <h3 class="num"><span>1.</span>초기에는 ML의 적용 가능성을 검토했다</h3>
   <ul>
     <li>가상 러너로 학습 데이터를 만들어 <strong>Zone 판정, 개인 경계 추정, 30~60초 뒤 심박 예측</strong>에 작은 신경망을 적용했다.</li>
-    <li>시뮬레이션에서는 좋은 점수가 나왔지만, 실제 기기 시험에서 심박이 상한보다 42bpm 높은데도 ‘아래’로 판정한 사례가 나왔다.</li>
-    <li>원인을 살펴보니 모델은 실제 사람의 생리를 배운 것이 아니라, 가상 러너가 정한 규칙과 데이터 생성 공식을 다시 배운 것이었다.</li>
+    <li>시뮬레이션에서는 좋은 점수가 나왔지만, 일부 실기기 관찰에서는 같은 수준의 타당성을 확인하지 못했다.</li>
+    <li>합성 데이터의 생성 규칙을 잘 재현하는 것과 실제 사람에게 맞는 판단을 내리는 것은 서로 다른 문제임을 확인했다.</li>
   </ul>
-  <h3 class="num"><span>2.</span>핵심 문제는 설명 이전에 ‘검증할 정답이 없다’는 점이었다</h3>
+  <h3 class="num"><span>2.</span>운영 판정으로 채택하려면 검증 근거가 필요했다</h3>
   <ul>
     <li><strong>학습할 실제 데이터가 부족했다.</strong> 개인별 Zone 2 경계와 미래 심박을 함께 기록한 데이터가 없었다.</li>
     <li><strong>정답을 확인하기 어려웠다.</strong> 실험실 장비로 측정한 유산소 역치가 없어 ML의 출력이 맞는지 검증할 수 없었다.</li>
     <li><strong>판정 기준이 둘로 갈렸다.</strong> 말하기 테스트로 조정한 개인 경계와 ML 판정이 서로 다른 답을 낼 수 있었다.</li>
-    <li>따라서 이번 과제에서는 정확하다고 입증할 수 없는 ML 판정보다, <strong>판단 근거를 기록하고 반복 시험할 수 있는 구조</strong>가 필요했다.</li>
+    <li>따라서 이번 과제에서는 ML의 가능성과 별개로, <strong>현재 확보한 데이터로 근거를 설명하고 반복 검증할 수 있는 구조</strong>를 운영안으로 선택해야 했다.</li>
   </ul>
   <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
 </section>
@@ -183,7 +183,7 @@
   <p class="lead">이번 과제에서는 1안인 ‘투명한 규칙·관측 통계 + 사용자 응답’ 구조를 채택했다.</p>
   <h3 class="num"><span>2.</span>결정 근거</h3>
   <ol>
-    <li><strong>실제 정답으로 검증할 수 있는 ML 모델이 없었다.</strong> 합성 데이터 점수만으로 사람의 Zone 2 판정이 정확하다고 주장하지 않는다.</li>
+    <li><strong>현재 데이터로 ML을 운영 판정에 채택할 수준의 타당성을 입증하기 어려웠다.</strong> 합성 데이터 점수만으로 사람의 Zone 2 판정이 정확하다고 주장하지 않는다.</li>
     <li><strong>판정 기준을 하나로 모았다.</strong> 현재 심박과 말하기 테스트로 조정한 개인 경계를 모든 판정과 설명이 함께 사용한다.</li>
     <li><strong>판단에서 설명까지 같은 근거를 이어 쓴다.</strong> 판정, 심박, 개인 경계, 경계가 바뀐 이유를 한 기록에 남긴다. 설명을 나중에 추측해 붙이지 않는다.</li>
     <li><strong>나중에 ML을 다시 검토할 길은 남겼다.</strong> 실제 러닝 데이터가 충분히 쌓이면, 전체 판단을 바꾸기보다 규칙이 놓친 오차만 보정하는 작은 모델부터 검증할 수 있다.</li>
@@ -200,14 +200,14 @@
 
 <section class="slide">
   <div class="slide-head"><h2>Appendix. DP1 개발 이력과 상세 구조</h2><span class="sec-no">A</span></div>
-  <h3 class="num"><span>1.</span>ML 적용 범위를 단계적으로 줄인 과정</h3>
+  <h3 class="num"><span>1.</span>ML 대안별 검토 결과</h3>
   <div class="tbl"><table class="decide">
-    <thead><tr><th style="width:10em">시도</th><th>확인한 문제</th><th>현재 결정</th></tr></thead>
+    <thead><tr><th style="width:10em">검토한 대안</th><th>평가 결과</th><th>운영 반영</th></tr></thead>
     <tbody>
-      <tr><td><strong>Zone 판정 MLP</strong></td><td>합성 정답을 잘 맞혔지만 실제 기기 사례에서 명백한 오판이 나왔다. 개인 경계와 ML 판정도 서로 다른 기준이 됐다.</td><td>현재 심박과 개인 경계를 직접 비교</td></tr>
+      <tr><td><strong>Zone 판정 MLP</strong></td><td>합성 정답은 잘 맞혔지만 일부 실기기 관찰과 결과가 일치하지 않았다. 개인 경계와 ML 판정도 서로 다른 기준이 됐다.</td><td>현재 심박과 개인 경계를 직접 비교</td></tr>
       <tr><td><strong>개인 경계 추정 MLP</strong></td><td>개인의 측정 정답과 학습 데이터가 없었다.</td><td>말하기 테스트 응답으로 경계를 조금씩 갱신</td></tr>
       <tr><td><strong>심박 예측 MLP</strong></td><td>가상 러너의 생리 공식을 다시 학습해 실제 사람에 대한 정확도를 확인할 수 없었다.</td><td>실제 관측값 분석으로 범위를 축소</td></tr>
-      <tr><td><strong>규칙 오차 보정 NN</strong></td><td>합성 시험에서는 오차가 약 10% 줄었지만 실제 데이터로 검증하지 못했다.</td><td>배포하지 않고 향후 후보로 보관</td></tr>
+      <tr><td><strong>규칙 오차 보정 NN</strong></td><td>합성 시험에서는 오차가 약 10% 줄었다. 실제 데이터 검증은 추가로 필요하다.</td><td>향후 후보로 보관</td></tr>
     </tbody>
   </table></div>
   <h3 class="num"><span>2.</span>채택안의 근거 흐름</h3>
