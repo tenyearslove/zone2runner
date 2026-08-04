@@ -1,6 +1,6 @@
 # Report-017: Appendix — 인증 보고서 부록 구성
 
-- **날짜**: 2026-08-01 (v1)
+- **날짜**: 2026-08-04 (QAS 감사 반영)
 - **용도**: 인증 보고서 Appendix 파트의 조립 인덱스 + 페이지별 원고. 샘플 p18~31 구성을 따른다.
 - **구성**: ① 지표 산출 근거 & 측정 기준(QA별) ② Use Case ③ Context View ④ DP별 상세 설계 내역 ⑤ 최종 Architecture 3뷰(Module/C&C/Deployment) ⑥ 품질속성 검증 결과(QA별 상세)
 
@@ -10,14 +10,14 @@
 
 | # | 페이지 | 원고/도식 정본 |
 |---|---|---|
-| A-1 | QA1~QA6 지표 산출 근거 & 측정 기준 (6페이지) | `report-015` Appendix 1절 |
+| A-1 | QA1~QA4 지표 산출 근거와 측정 기준 (4페이지) | report-015 |
 | A-2 | Use Case | `arch/diagrams/05-usecase.png` + 본 문서 §2 |
 | A-3 | Context View | `arch/diagrams/01-context.png` + 본 문서 §3 |
 | A-4 | DP1~DP5 상세 설계 내역 (5페이지) | `report-008`~`report-012` 각 Appendix 슬라이드 |
 | A-5 | 최종 Architecture (Module View) | `arch/diagrams/04-module-view.png` + 본 문서 §5 |
 | A-6 | 최종 Architecture (C&C View) | `arch/diagrams/02-component-cnc.png`(상세) / `02b`(축약) + 본 문서 §6 |
 | A-7 | 최종 Architecture (Deployment View) | `arch/diagrams/03-deployment.png` + 본 문서 §7 |
-| A-8 | QA1~QA6 품질 속성 검증 결과 (6페이지) | `report-015` Appendix 2절 |
+| A-8 | QA1~QA4 품질 속성 검증 결과 (4페이지) | report-015 |
 
 ---
 
@@ -25,7 +25,7 @@
 
 **(그림: `arch/diagrams/05-usecase.png`)**
 
-- 액터는 둘이다 — **러너(사용자)**와 **개발자/검증자**. 검증자가 정식 액터인 것이 이 시스템의 특징(시뮬 모드가 제품 기능, 테스트가능성 DP5).
+- 액터는 둘이다 — **러너(사용자)**와 **개발자/검증자**. 검증자가 정식 액터인 것이 이 시스템의 특징이다. DP5의 시뮬 모드는 네 QAS를 기기 없이 반복 검증하게 한다.
 - 러너의 중심 흐름: 프로필 등록 → 세션 시작 → 실시간 존 확인/음성 코칭 → **말하기 테스트 응답**(코칭 흐름에 포함 — 답이 그 자리에서 판정 기준을 정정하는 HITL) → 리포트 열람 → **지표 설명/코칭 근거 열람**(리포트에서 확장 — 설명용이성의 사용자 접점).
 - 부속 흐름: 코칭 방식 조정(빈도/음성/말투/더위/관절 — HOTL), AI 모델 준비(세션 시작 시 미준비면 안내로 확장), 이력/추세 확인.
 
@@ -49,7 +49,7 @@
 | DP2 | 제어가능성 | `report-009` Appendix | `arch/dp/dp-02-controllability/` |
 | DP3 | 기능적응성 | `report-010` Appendix | `arch/dp/dp-03-adaptability/` |
 | DP4 | 강건성 | `report-011` Appendix | `arch/dp/dp-04-robustness/` |
-| DP5 | 테스트가능성 | `report-012` Appendix | `arch/dp/dp-05-testability/` |
+| DP5 | 공통 검증 구조 | `report-012` Appendix | `arch/dp/dp-05-testability/` |
 
 공통 형식: 문제점→걸리는 QA / 채택안의 구조 표(설명 경로 5단계, 통제 5층, 적응 5단계, 방어 4층, 검증 4요소) / QA 별점 종합(각 DP와 관련이 큰 6축만 표기 — 축 구성이 DP마다 다른 이유) / **평가의 조건**(조건이 다르면 2안이 우선될 수 있음 명시) / 예상 질문 / 용어 대조(심사용) / 근거 문헌.
 
@@ -58,7 +58,7 @@
 **(그림: `arch/diagrams/04-module-view.png`)**
 
 - 코드 정적 구조(패키지 의존): 폰 65파일 9패키지 + 워치 9파일 1패키지.
-- **읽는 포인트 3가지**: ① `domain`이 리프(의존 0, 안드로이드 미의존) — 순수 모델. ② 결정 로직(`pipeline`/`coaching`/`analysis`)이 전부 안드로이드 미의존 → **단위 테스트 153개가 기기 없이 실행**(테스트가능성의 구조적 근거). ③ `sim`이 `sensor`의 RunSource 인터페이스를 구현(의존성 역전) — 검증 입력이 운영과 같은 경로로 흐른다.
+- **읽는 포인트 3가지**: ① `domain`이 리프(의존 0, 안드로이드 미의존) — 순수 모델. ② 결정 로직(`pipeline`/`coaching`/`analysis`)이 전부 안드로이드 미의존 → **단위 테스트 153개가 기기 없이 실행**된다. ③ `sim`이 `sensor`의 RunSource 인터페이스를 구현(의존성 역전) — 검증 입력이 운영과 같은 경로로 흐른다.
 - 워치는 뷰(Activity 2 + ZoneGaugeView)/서비스(측정/원격제어)/링크(경로/공유 상태) 3그룹 — 폰과는 코드 의존이 아니라 Wearable Data Layer(프로세스 간)로만 연결.
 
 ## §6. Appendix. 최종 Architecture (C&C View)
