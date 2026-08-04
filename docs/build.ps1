@@ -48,7 +48,8 @@ function Get-LinkedSrc([string]$key) {
   if (-not (Test-Path $p)) { throw "Diagram not found: $p" }
   $base = Split-Path $rel -Leaf
   Copy-Item $p (Join-Path $imgDir $base) -Force
-  return 'img/' + $base
+  $hash = (Get-FileHash -Algorithm MD5 -LiteralPath $p).Hash.Substring(0, 8).ToLowerInvariant()
+  return 'img/' + $base + '?v=' + $hash
 }
 
 $deckCss = Read-Utf8 (Join-Path $here 'src\deck-style.html')

@@ -6,182 +6,144 @@
   }
   .shot small { display: block; font-weight: 400; color: var(--muted); margin-top: 2px; }
   .ok { color: #1E8E3E; font-weight: 800; }
-  .partial { color: #B8860B; font-weight: 800; }
 </style>
 
 <div class="deck">
 
 <div class="deck-head">
-  <h1>구현 / 품질속성 검증 / 결론 — 인증 보고서 "04. 구현 및 검증" + "05. 결론"</h1>
-  <p>화면 8종 기능 소개(스크린샷 자리 20장 지정(폰 16 + 워치 3 + 합동 1)) + 검증 표(실측) + 결론 — 2026-08-01 v1 — 원고: <code>report/report-014·015·016</code></p>
+  <h1>구현 / AI 품질 검증 / 결론</h1>
+  <p>설계가 실제 기능으로 어떻게 구현됐는지 보여 주고, 네 가지 QAS의 자동 검증 결과와 한계를 정리한다.</p>
 </div>
 
-<!-- ==================== 구현 개요 ==================== -->
 <section class="slide">
   <div class="slide-head"><h2>구현 개요</h2><span class="sec-no">4</span></div>
   <div class="tbl"><table class="decide">
     <tbody>
-      <tr><th class="rowh">플랫폼</th><td>Android 폰 앱 + Wear OS 워치 앱 (Kotlin)</td></tr>
-      <tr><th class="rowh">규모</th><td>폰 65파일 9패키지 + 워치 9파일 — 도메인/판정/코칭/분석 로직은 안드로이드 미의존 순수 모듈</td></tr>
-      <tr><th class="rowh">AI 구성</th><td>판정=규칙, 개인화=온라인 베이지안, 분석=통계(회귀/EWMA), 표현=온디바이스 LLM(Gemini Nano) + 출력 가드 3종</td></tr>
-      <tr><th class="rowh">외부 의존</th><td>Health Services(워치 센서), GPS, ML Kit GenAI(AICore), Open-Meteo(기온), OSM 지도 타일 — 자체 서버 없음, 러닝/개인 데이터 비이탈</td></tr>
-      <tr><th class="rowh">검증</th><td>JVM 단위 테스트 <strong>153개</strong>(품질 측정 6종 포함) 전부 통과 + 시뮬 폐루프 + 실기기 설치 확인</td></tr>
-      <tr><th class="rowh">특이점</th><td>시뮬레이션 모드가 정식 기능(가상 러너/수동 조작) — 워치 없이 전 기능 시연 가능</td></tr>
+      <tr><th class="rowh">플랫폼</th><td>Android 폰 앱과 Wear OS 워치 앱, Kotlin</td></tr>
+      <tr><th class="rowh">역할 분리</th><td>폰은 판정·분석·개인화·코칭을 담당하고, 워치는 심박을 측정해 보내고 판정 결과를 표시한다.</td></tr>
+      <tr><th class="rowh">AI 구성</th><td>규칙 판정 + 온라인 Bayesian 개인화 + 관측 통계 분석 + 온디바이스 LLM 문장 표현</td></tr>
+      <tr><th class="rowh">통제 장치</th><td>입력 범위 검사, 판정 히스테리시스, LLM 방향·숫자 검사, 기본 문구, 규칙 우선 처리</td></tr>
+      <tr><th class="rowh">외부 의존</th><td>워치 센서, GPS, AICore, Open-Meteo, OSM 지도 타일을 사용한다. 자체 서버는 없다.</td></tr>
+      <tr><th class="rowh">데이터 경계</th><td>심박·개인화 값·세션 분석은 자체 서버나 외부 AI API로 보내지 않는다. 날씨와 지도는 외부 요청을 사용한다.</td></tr>
+      <tr><th class="rowh">자동 검증</th><td>최근 JVM 단위시험 153개가 통과했다. QAS 측정값은 별도 결과 파일로 다시 생성된다.</td></tr>
     </tbody>
   </table></div>
-  <div class="shot">📸 스크린샷 0-1: 폰+워치 나란히 러닝 중<small>실주행 또는 시뮬 미러 상태에서 두 기기 함께</small></div>
+  <div class="shot">화면 자료: 폰의 러닝 화면과 워치의 Zone 표시<small>실외 주행이 아니라 시뮬레이션 모드로도 캡처할 수 있다.</small></div>
   <div class="crumb">과제 소개 <span>요구사항</span> <span>설계</span> <b>구현/검증</b> <span>결론</span></div>
 </section>
 
-<!-- ==================== 홈 ==================== -->
 <section class="slide">
-  <div class="slide-head"><h2>구현 — 홈 화면</h2><span class="sec-no">4</span></div>
+  <div class="slide-head"><h2>구현 — 홈과 프로필</h2><span class="sec-no">4</span></div>
   <ul>
-    <li><strong>AI 코칭 모델 배너</strong>: Nano 미준비 시에만 표시 — 첫 실행 자동 다운로드(진행률) + "미준비여도 규칙 코칭 정상 동작" 안내. 준비되면 배너가 사라진다.</li>
-    <li><strong>프로필/Zone 2 목표 카드</strong>: 다중 프로필 전환, 나이/안정/최대심박 타일, 현재 목표 심박 범위. 학습 반영 시 <strong>"공식 초기값 대비 상향/하향 + 근거(N회 러닝 학습)"</strong>를 문장으로 — 기능적응성(DP3)이 홈에서 보이는 지점.</li>
-    <li><strong>최근 러닝 카드</strong>(탭=리포트) + 액션 버튼 5종(시뮬 러닝/실센서 러닝/기록/프로필/설정).</li>
-    <li>프로필 미설정 시 온보딩 자동 진입.</li>
+    <li><strong>Zone 2 목표</strong>: 프로필 정보로 첫 경계를 계산하고 홈 화면에 범위를 보여 준다.</li>
+    <li><strong>개인화 진행</strong>: 말하기 테스트 응답이 쌓이면 공식 초기값에서 얼마나 바뀌었는지와 사용한 관측 수를 표시한다.</li>
+    <li><strong>근거 설명</strong>: 개인화 카드에서 현재 경계가 나온 이유를 확인할 수 있다.</li>
+    <li><strong>모델 상태</strong>: 온디바이스 LLM이 준비되지 않아도 규칙 기반 기본 코칭은 계속 동작한다.</li>
   </ul>
-  <div class="shot">📸 스크린샷 1-1: 홈 전체<small>"N회 러닝 학습 반영" 문구가 보이는 상태</small></div>
-  <div class="shot">📸 스크린샷 1-2: Nano 모델 자동 다운로드 배너<small>진행률 표시 중</small></div>
+  <div class="shot">화면 자료 1: 홈 화면<small>현재 Zone 2 목표와 학습 반영 문구가 보이는 상태</small></div>
+  <div class="shot">화면 자료 2: 프로필의 개인화 진행 카드<small>러닝 횟수, 말하기 테스트 횟수, 경계 변화 표시</small></div>
   <div class="crumb">과제 소개 <span>요구사항</span> <span>설계</span> <b>구현/검증</b> <span>결론</span></div>
 </section>
 
-<!-- ==================== 러닝 ① ==================== -->
 <section class="slide">
-  <div class="slide-head"><h2>구현 — 러닝 화면 ①: 실시간 대시보드</h2><span class="sec-no">4</span></div>
+  <div class="slide-head"><h2>구현 — 러닝과 시뮬레이션</h2><span class="sec-no">4</span></div>
   <ul>
-    <li><strong>지도(상단)</strong>: 경로를 존 색 폴리라인으로 + 현재 위치. 시뮬/실센서가 같은 화면(입력 소스만 교체 — DP5).</li>
-    <li><strong>심박 + 존 칩</strong>: 순간 심박 큰 숫자 + 5존 색(히스테리시스로 무깜빡임 — DP4). 범례에 "순간 심박 | 60초 평균(코칭 기준)" — 이중 기준을 사용자에게도 표시.</li>
-    <li><strong>존 게이지 탭 → "왜 이 범위인가" 설명 팝업</strong>: 규칙 설명 먼저, LLM 자연어 풀이로 교체(DP1).</li>
-    <li><strong>조언 줄</strong>: 안전 경고(⚠) 최우선 → 드리프트/경사보정 페이스. 지표 타일: 시간/거리/페이스/경사/케이던스/보폭/기온.</li>
-    <li><strong>코칭(🗣+TTS)</strong>: 규칙이 확정한 방향/사실을 LLM 문장으로(가드 3종 통과분만).</li>
-    <li><strong>말하기 테스트 팝업</strong>: 편함/보통/벅참 + 안내 + 건너뛰기 — 답이 그 자리에서 경계를 움직인다(HITL, DP3).</li>
+    <li><strong>실시간 판정</strong>: 심박, 현재 존, Zone 2 게이지, 페이스와 거리를 한 화면에 보여 준다.</li>
+    <li><strong>두 가지 시간 기준</strong>: 화면에는 현재 심박을 빠르게 반영하고, 코칭과 통계에는 일정 시간 유지된 값을 사용한다.</li>
+    <li><strong>코칭</strong>: 규칙이 올릴지, 유지할지, 낮출지를 정한다. LLM은 그 뜻을 자연스러운 문장으로 바꾼다.</li>
+    <li><strong>말하기 테스트</strong>: 사용자는 편함·보통·벅참 중 하나를 고른다. 이 응답이 개인 경계 갱신에 사용된다.</li>
+    <li><strong>시뮬레이션 모드</strong>: 자동 시나리오, 수동 페이스, 수동 러너를 선택하고 재생 속도를 높여 긴 세션을 짧게 확인할 수 있다.</li>
+    <li><strong>검증 도구</strong>: LLM을 켜고 끄거나 가상 러너를 바꿔 같은 화면과 파이프라인을 비교할 수 있다.</li>
   </ul>
-  <div class="shot">📸 스크린샷 2-1: 러닝 중 전체 화면<small>지도 경로(존 색) + 심박/게이지 + 코칭 문구</small></div>
-  <div class="shot">📸 스크린샷 2-2: 존 게이지 탭 → Zone 2 계산 근거 팝업<small>LLM 풀이 교체 후</small></div>
-  <div class="shot">📸 스크린샷 2-3: 말하기 테스트 3지선다 팝업</div>
-  <div class="shot">📸 스크린샷 2-4: 안전 경고(⚠ 지속 고심박) 표시<small>시뮬로 유발</small></div>
+  <div class="shot">화면 자료 3: 시뮬레이션 러닝 화면<small>심박, 존 게이지, 코칭 문장, 시뮬레이션 제어가 보이는 상태</small></div>
+  <div class="shot">화면 자료 4: 말하기 테스트<small>편함·보통·벅참 선택 화면</small></div>
   <div class="crumb">과제 소개 <span>요구사항</span> <span>설계</span> <b>구현/검증</b> <span>결론</span></div>
 </section>
 
-<!-- ==================== 러닝 ② ==================== -->
 <section class="slide">
-  <div class="slide-head"><h2>구현 — 러닝 화면 ②: 시뮬레이션/검증 모드</h2><span class="sec-no">4</span></div>
+  <div class="slide-head"><h2>구현 — 리포트와 설명</h2><span class="sec-no">4</span></div>
   <ul>
-    <li><strong>재생 배속</strong> ×70/×30/×10/×1 — 60분 세션을 1분 내 압축 검증.</li>
-    <li><strong>입력 모드 순환</strong>: 자동 시나리오 → 수동 페이스 → 수동 러너(케이던스/보폭/심박보정/경사 슬라이더).</li>
-    <li><strong>가상 러너 선택</strong>: 🎲 랜덤 + 프리셋 — <strong>진짜 임계</strong>가 다른 러너로 폐루프 검증(개인화가 그 값으로 수렴하는지).</li>
-    <li><strong>LLM 토글</strong>: 켬/끔 실시간 비교 — 끄면 단어 폴백, 감사 기록에 "rule(LLM 꺼짐)"(DP2 검증 도구).</li>
-    <li><strong>프롬프트 뷰</strong>: 누적 사용량(LLM/규칙/평균 ms) + 프롬프트 전문.</li>
+    <li><strong>세션 요약</strong>: 존 분포, 심박과 페이스 변화, 경사, 케이던스, 구간 기록을 카드와 그래프로 보여 준다.</li>
+    <li><strong>관측 중심 분석</strong>: 미래를 예측하지 않고 실제 세션에서 계산한 드리프트, 회복 심박, 경사 보정 페이스를 설명한다.</li>
+    <li><strong>문장별 근거</strong>: 코칭 문장을 누르면 당시 심박과 경계, 사용한 프롬프트, 채택·차단·기본 문구 경로를 확인할 수 있다.</li>
+    <li><strong>LLM 사용 기록</strong>: 호출 횟수, 채택과 기본 문구 횟수, 차단 이유를 남겨 생성 모델의 동작을 살펴볼 수 있다.</li>
+    <li><strong>저장 후 재사용</strong>: 세션 설명은 종료 시 저장한다. 같은 리포트를 다시 열 때 LLM을 다시 호출하지 않는다.</li>
   </ul>
-  <div class="shot">📸 스크린샷 3-1: 시뮬 컨트롤 전체<small>배속 칩 + 가상 러너 카드 + 슬라이더</small></div>
-  <div class="shot">📸 스크린샷 3-2: LLM 토글 + 프롬프트 뷰<small>프롬프트 전문과 누적 카운터가 보이게</small></div>
+  <div class="shot">화면 자료 5: 리포트의 심박·존 분석</div>
+  <div class="shot">화면 자료 6: 코칭 문장의 근거 팝업<small>입력 사실과 생성 경로가 보이는 상태</small></div>
+  <div class="shot">화면 자료 7: LLM 사용 기록 카드</div>
   <div class="crumb">과제 소개 <span>요구사항</span> <span>설계</span> <b>구현/검증</b> <span>결론</span></div>
 </section>
 
-<!-- ==================== 리포트 ==================== -->
 <section class="slide">
-  <div class="slide-head"><h2>구현 — 리포트 화면: 관측 데이터 최대 활용</h2><span class="sec-no">4</span></div>
-  <p><strong>카드 20여 종</strong>(전부 저장본 렌더, LLM 재호출 없음): 이전 세션 대비 → 오늘 컨디션 → 추세 스파크라인 → 개인 기록(🏅) → 기간 요약 → <strong>러닝 이야기</strong> → 요약 → 존 분포 → 심박/페이스 추이 → 존 타임라인 → 유산소 분석(드리프트→코칭 인과) → 관측 분석 지표 → km 구간(경사보정) → 경사 분해 → 워밍업 → 내리막 습관 → 초과 원인 → 효율 곡선(이번 vs 직전) → 개인 Zone 2 학습 → 경로(존 색) → <strong>코칭 로그</strong> → <strong>LLM 사용</strong>.</p>
+  <div class="slide-head"><h2>구현 — 워치</h2><span class="sec-no">4</span></div>
   <ul>
-    <li>카드 제목 대부분에 <strong>ⓘ 설명 팝업</strong>(지표 사전 20항목 — 타임라인/경로 같은 순수 시각 카드 일부는 제외).</li>
-    <li><strong>코칭 문장 터치 → 프로비넌스 팝업</strong>: 근거 관측 + 생성 프롬프트 전문 + 채택/기각/폴백 경로 + 지연 — 문장 단위 추적(DP1).</li>
-    <li><strong>LLM 사용 카드</strong>: 호출/채택 vs 폴백/지연/사유별 카운트 + 앱 메모리. AICore 계측 한계를 ⓘ에 정직 명시(HOTL 감사, DP2).</li>
+    <li><strong>심박 측정</strong>: 워치가 Health Services로 심박을 측정해 폰으로 보낸다.</li>
+    <li><strong>한 곳에서만 판정</strong>: 워치가 존을 따로 계산하지 않는다. 폰이 확정한 결과를 받아 같은 값을 표시한다.</li>
+    <li><strong>오래된 값 거부</strong>: 폰의 새 결과가 일정 시간 들어오지 않으면 기존 존을 계속 보여 주지 않고 동기화 중임을 알린다.</li>
+    <li><strong>빠른 사용자 응답</strong>: 말하기 테스트가 오면 진동과 함께 세 가지 선택지를 보여 준다. 한 번의 탭으로 답할 수 있다.</li>
   </ul>
-  <div class="shot">📸 스크린샷 4-1: 리포트 상단<small>이전 대비/컨디션/추세 스파크라인 카드</small></div>
-  <div class="shot">📸 스크린샷 4-2: 심박 추이(Zone 2 밴드) + 존 타임라인</div>
-  <div class="shot">📸 스크린샷 4-3: 코칭 문장 터치 → 프로비넌스 팝업<small>근거+프롬프트가 보이게</small></div>
-  <div class="shot">📸 스크린샷 4-4: LLM 사용 카드 전체</div>
-  <div class="shot">📸 스크린샷 4-5: 효율 곡선(이번 vs 직전) + 구간 분석</div>
+  <div class="shot">화면 자료 8: 워치 러닝 화면<small>심박과 폰이 판정한 현재 존 표시</small></div>
+  <div class="shot">화면 자료 9: 워치 말하기 테스트</div>
   <div class="crumb">과제 소개 <span>요구사항</span> <span>설계</span> <b>구현/검증</b> <span>결론</span></div>
 </section>
 
-<!-- ==================== 프로필/이력/설정 + 워치 ==================== -->
 <section class="slide">
-  <div class="slide-head"><h2>구현 — 프로필/이력/설정 + 워치</h2><span class="sec-no">4</span></div>
-  <ul>
-    <li><strong>프로필</strong>: 다중 프로필 관리 / <strong>개인화 진행 카드</strong>(단계 + 러닝·테스트 횟수 + 학습 시각화 + AI 설명, 터치=생성 근거) / 심박·신체 정보(0=자동, BMI→체형 제안) / 체형·수준·빈도 5단계 칩 / 관절 보호 토글 / <strong>초기 Zone 2 미리보기</strong>(범위+신뢰도 ±bpm).</li>
-    <li><strong>이력</strong>: 세션 카드 목록(탭=리포트, 길게=삭제).</li>
-    <li><strong>설정</strong>: 코칭 빈도 5단계 / 음성(TTS·속도·높낮이·목소리 미리듣기) / 말투 4종(방향·숫자는 말투와 무관) / 더위 토글 / <strong>AI 모델 카드</strong>(상태+수동 다운로드) — HOTL 개입 지점 모음(DP2).</li>
-    <li><strong>워치 대시보드</strong>: 베젤 5존 게이지 + 심박/존 라벨/페이스·거리. <strong>워치는 존을 계산하지 않는다</strong> — 폰 확정 존을 1Hz 수신, 8초 미수신이면 "폰 동기화 중…"(낡은 값 거부 — DP4).</li>
-    <li><strong>워치 토크테스트</strong>: 진동 + 전체 화면 3지선다(편함/보통/벅참) — 달리며 한 번의 탭. 폰 응답 시 자동 닫힘.</li>
-  </ul>
-  <div class="shot">📸 스크린샷 5-1: 프로필 개인화 진행 카드<small>AI 설명 텍스트 보이게</small></div>
-  <div class="shot">📸 스크린샷 5-2: 초기 Zone 2 미리보기<small>신뢰도 ±bpm 보이게</small></div>
-  <div class="shot">📸 스크린샷 5-3: 설정 전체<small>말투 4종 + AI 모델 카드</small></div>
-  <div class="shot">📸 스크린샷 6-1: 워치 러닝 대시보드<small>게이지 + Z2 상태</small></div>
-  <div class="shot">📸 스크린샷 6-2: 워치 토크테스트 3지선다</div>
-  <div class="shot">📸 스크린샷 6-3: 워치 "폰 동기화 중…"<small>폰 앱 종료로 유발</small></div>
-  <div class="crumb">과제 소개 <span>요구사항</span> <span>설계</span> <b>구현/검증</b> <span>결론</span></div>
-</section>
-
-<!-- ==================== 품질속성 검증 ==================== -->
-<section class="slide">
-  <div class="slide-head"><h2>품질속성 검증 (실측)</h2><span class="sec-no">4</span></div>
-  <p class="note">측정 도구 = <code>QaMeasurementTest.kt</code>(저장소 내, 1회 실행으로 전 수치 재현). 층위: ①시뮬/단위테스트 실측(완료) ②실기기 실측(향후). 시뮬 수치는 구조 검증이며 실인간 정확도 주장이 아니다.</p>
+  <div class="slide-head"><h2>AI 품질 검증 결과</h2><span class="sec-no">4</span></div>
+  <p class="note">같은 QAS의 목표와 결과를 비교했다. 아래의 달성은 자동화된 구조 검증 범위에서의 달성을 뜻한다.</p>
   <div class="tbl"><table class="decide">
-    <thead><tr><th style="width:3em">ID</th><th style="width:7em">QA</th><th style="width:6em">설계 근거</th><th>시나리오</th><th>검증결과 (목표 → 측정)</th><th style="width:3.5em">달성</th></tr></thead>
+    <thead><tr><th style="width:8em">AI QA</th><th style="width:14em">적용한 설계</th><th>합격 기준과 결과</th><th style="width:4em">판정</th></tr></thead>
     <tbody>
-      <tr><td>QA1</td><td>설명용이성 (AI)</td><td>DP1</td><td>설명이 실제 사실에만 근거하는가</td><td>지어낸 수치 0 → <strong>근거에 없는 숫자 기각율 100%</strong>(NumberGuard), 프로비넌스 1:1 기록/왕복 보존, 규칙 팩트 결정론</td><td class="ok">O</td></tr>
-      <tr><td>QA2</td><td>기능적응성 (AI)</td><td>DP3</td><td>참임계를 아는 라벨원 8세션 이월(warm-start) 루프 수렴</td><td>수렴+안착+안정 → 기준 사례 <strong>12.9 → 1.73bpm</strong>(수렴 후 라벨 산포 내 진동), <strong>참임계 5종×시드 3종 스윕 15케이스 전부 1~2세션 안착</strong>(최종 0.20~0.77bpm), 오답 라벨 10% 주입에도 0.09bpm, 이동 한도 준수(클램프 작동 확인)</td><td class="ok">O¹</td></tr>
-      <tr><td>QA3</td><td>제어가능성 (AI)</td><td>DP2</td><td>모순/무방향 출력 차단 + 폴백 무중단</td><td>기각율 100% → <strong>방향위반 기각 10/10</strong>, 정상 통과 5/5, 폴백 무중단(로딩 보류/단어 폴백), <strong>경계이동 ≤10bpm 보장</strong>(실측 9.97)</td><td class="ok">O</td></tr>
-      <tr><td>QA4</td><td>강건성 (AI)</td><td>DP4</td><td>이상치/경계 진동 연속 입력</td><td>기각 100%+번복 억제 → <strong>이상치 기각 50/50(오탐 0/500, 경계값 확인 — 구조 보증)</strong>, 번복 억제율 <strong>67~75%(시드 5종 스윕)</strong>, 진짜 이동은 1틱 전환</td><td class="ok">O¹ᵇ</td></tr>
-      <tr><td>QA5</td><td>테스트가능성 (일반)</td><td>DP5</td><td>기기 없이 전 파이프라인 재현 검증</td><td>독립 실행 100% → <strong>153테스트 전원 JVM 실행</strong>(기기 0대), 시뮬 소스 4종 교체, 시드 결정성 — 단, 시뮬=구조 검증(단서 명시)</td><td class="ok">O</td></tr>
-      <tr><td>QA6</td><td>수행효율성 (일반)</td><td>아키텍처 횡단</td><td>1Hz 주기 내 반영 + 코칭 비동기</td><td>≤10ms/틱 → <strong>틱당 약 0.07ms</strong>(실행별 0.06~0.08ms 변동, 주기의 0.01% 미만), 코칭 비동기 구조. TTS 5초 항목은 <strong>실기기 실측 대기</strong></td><td class="partial">△²</td></tr>
+      <tr><td>QA1<br><strong>설명용이성</strong></td><td>규칙이 사실 확정, 숫자 가드, 근거 기록</td><td>미등록 숫자 전부 차단 → <strong>5/5 차단</strong><br>사실 문장 전부 통과 → <strong>3/3 통과</strong><br>근거 기록 저장·복원 시험 통과</td><td class="ok">달성</td></tr>
+      <tr><td>QA2<br><strong>기능적응성</strong></td><td>말하기 테스트와 제한된 Bayesian 갱신</td><td>15개 사례에서 최종 오차 3bpm 이하 → <strong>0.20~0.77bpm</strong><br>5세션 안착 → <strong>모두 1~2세션</strong><br>경계 폭 4bpm 이하 → <strong>3.04bpm</strong><br>세션 이동 10bpm 이하 → <strong>최대 9.97bpm</strong></td><td class="ok">달성</td></tr>
+      <tr><td>QA3<br><strong>제어가능성</strong></td><td>방향 가드와 기본 문구</td><td>위반 문장 전부 차단 → <strong>10/10 차단</strong><br>정상 문장 전부 통과 → <strong>5/5 통과</strong><br>LLM 실패·로딩·모델 없음 경로 시험 통과</td><td class="ok">달성</td></tr>
+      <tr><td>QA4<br><strong>강건성</strong></td><td>입력 가드와 판정 히스테리시스</td><td>이상치 전부 차단 → <strong>50/50 차단</strong>, 정상 오차단 <strong>0/500</strong><br>번복 60% 이상 감소 → <strong>67.1~74.7%</strong><br>실제 이동 2틱 안에 반영 → <strong>1틱</strong></td><td class="ok">달성</td></tr>
     </tbody>
   </table></div>
-  <p class="note">¹ 시뮬 실측(라벨 주입형 — 정보량 상한 시나리오임을 명시) — 실주행 재확인은 층위 ②. &nbsp; ¹ᵇ 시뮬 층위 3지표 완료 — (실기기) 두절 대응은 층위 ②. &nbsp; ² 로직 층위 완료, 실기기 측정(스크린샷 캡처 세션) 후 확정. 지표별 산출 근거/측정 기준 상세 = <code>report-015</code> Appendix.</p>
+  <p class="note">측정 코드는 QaMeasurementTest.kt에 있으며 결과는 app/app/build/qa-measurements에 저장된다.</p>
   <div class="crumb">과제 소개 <span>요구사항</span> <span>설계</span> <b>구현/검증</b> <span>결론</span></div>
 </section>
 
-<!-- ==================== 지표 산출 근거 요약 ==================== -->
 <section class="slide">
-  <div class="slide-head"><h2>지표 산출 근거 &amp; 측정 기준 (요약)</h2><span class="sec-no">4</span></div>
-  <p class="note">"왜 그 목표치인가"의 근거 — QA별 상세 표(지표명/측정 방법/목표치/최소 허용치)는 <code>report-015</code> Appendix에.</p>
+  <div class="slide-head"><h2>검증 결과를 해석하는 방법</h2><span class="sec-no">4</span></div>
   <div class="tbl"><table class="decide">
-    <thead><tr><th style="width:7em">QA</th><th>핵심 지표(목표)</th><th>목표치의 산출 근거</th></tr></thead>
+    <thead><tr><th style="width:9em">항목</th><th>확인한 내용</th><th>이 결과로는 말할 수 없는 내용</th></tr></thead>
     <tbody>
-      <tr><td>QA1 설명용이성</td><td>지어낸 숫자 기각율 100% / 프로비넌스 1:1</td><td>참값 없는 조건에서 설명의 신뢰는 사후 채점이 아니라 구조로 — "정확한 설명 %"가 아니라 "어긋난 설명이 만들어질 수 없음"이 지표. 100% 미만은 곧 원칙("없는 숫자 금지") 위반</td></tr>
-      <tr><td>QA2 기능적응성</td><td>수렴 오차 ≤3bpm / 진동폭 ≤4bpm</td><td>3bpm = 존 폭(프로필별 약 12~18bpm)의 1/6~1/4 — 경계 오차가 판정을 바꾸는 빈도가 무시 가능해지는 수준. 진동폭 상한 = 라벨 자체의 경계대(±4bpm) — 학습기가 라벨 노이즈를 증폭하면 안 됨</td></tr>
-      <tr><td>QA3 제어가능성</td><td>방향위반 기각율 100% / 이동 한도 10bpm</td><td>기각율 100%가 가능한 이유 = 정답(규칙 판정)이 시스템 안에 있어 검증이 결정론적. 10bpm = 잘못된 답 1회의 피해 상한(실기기 관찰 이력에서 결정)</td></tr>
-      <tr><td>QA4 강건성</td><td>이상치 기각 100% / 번복 억제 ≥60% + 진짜 이동 ≤2틱</td><td>40~220bpm = 생리적 불가능 값의 보수적 경계. 억제율 100%를 목표하지 않는 이유 — 진짜 이동까지 뭉개는 과방어가 되므로, 억제와 반응 유지를 쌍으로 측정</td></tr>
-      <tr><td>QA5 테스트가능성</td><td>기기 독립 실행 100% / 시드 결정성</td><td>테스트가능성의 정의(제어+관찰) — "몇 개 통과"가 아니라 "재현 가능한 주입이 되는 구조인가". 시뮬=구조 검증 단서는 자기 채점 함정을 직접 겪은 이력(실험 기록)에서</td></tr>
-      <tr><td>QA6 수행효율성</td><td>틱당 ≤10ms / 음성 ≤5초</td><td>10ms = 1Hz 주기의 1%(판정 로직이 주기의 지배 요인이면 안 됨). 5초 = 코칭 유용성의 상한(수십 걸음 내 반영) — 실기기 항목으로 분리</td></tr>
+      <tr><td>설명용이성</td><td>선언한 문장 집합에서 근거에 없는 숫자를 차단했다.</td><td>모든 한국어 문장을 완벽하게 검사하거나 모든 사용자가 설명을 쉽게 이해한다는 뜻은 아니다.</td></tr>
+      <tr><td>기능적응성</td><td>가상 러너에서 개인화 값이 정해 둔 목표 안으로 수렴하고 안정됐다.</td><td>실제 사람의 유산소 역치를 0.20~0.77bpm 오차로 찾았다는 뜻은 아니다.</td></tr>
+      <tr><td>제어가능성</td><td>선언한 위반 문장과 LLM 실패 경로를 규칙이 처리했다.</td><td>세상에 존재하는 모든 잘못된 표현을 막는다는 뜻은 아니다.</td></tr>
+      <tr><td>강건성</td><td>정해 둔 이상값과 노이즈 입력에서 판정 규칙이 목표대로 동작했다.</td><td>실제 손목 센서의 정확도와 모든 실외 환경을 검증했다는 뜻은 아니다.</td></tr>
     </tbody>
   </table></div>
+  <h3 class="num"><span>■</span>공통 검증 기반</h3>
+  <p>RunSource 교체, 가상 러너, 고정 시드, JVM 단위시험은 네 QAS를 워치 없이 반복 확인하게 해 준다. 최근 전체 단위시험 153개가 통과했다. 시험 개수는 제품 정확도가 아니라 자동 회귀 범위를 보여 주는 참고 정보다.</p>
+  <h3 class="num"><span>■</span>보조 성능 확인</h3>
+  <p>60분 분량 3600틱의 JVM 로직 비용은 틱당 0.1ms 미만이었다. 워치 통신, 화면, TTS, LLM을 포함하지 않으므로 실기기 전체 성능으로 일반화하지 않는다.</p>
   <div class="crumb">과제 소개 <span>요구사항</span> <span>설계</span> <b>구현/검증</b> <span>결론</span></div>
 </section>
 
-<!-- ==================== 결론 ==================== -->
 <section class="slide">
   <div class="slide-head"><h2>결론</h2><span class="sec-no">5</span></div>
   <h3 class="num"><span>1.</span>주요 성과</h3>
   <ul>
-    <li><strong>참값 없는 문제를 검증 가능한 AI 시스템으로 설계.</strong> 판정=투명한 규칙, 개인화=실라벨 기반 온라인 베이지안, 분석=관측 통계, 표현만 LLM — "없는 숫자 금지"를 기계 검증(숫자 무결성 가드)까지 내림.</li>
-    <li><strong>강의 AI System 표준 요소를 온디바이스 한 벌에 구현.</strong> 입출력 가드레일, 모델 서빙, 설명/분석 서비스, HITL/HOTL, Data Lake, 개인 적응(Retraining 대응), 시뮬 검증(모델 테스팅 대응) — 서버 없이, 비용 0, 데이터 비이탈.</li>
-    <li><strong>설계 결정 5건(DP1~5)을 정체성 품질과 1:1로.</strong> 각 DP에 조건이 다르면 우선될 수 있는 대안과의 비교, Trade-off, 조건 의존성 명시 — 다섯 DP가 같은 아키텍처의 다른 단면.</li>
-    <li><strong>검증을 실측으로 마침.</strong> 153테스트 + 품질 측정 6종 — 수렴 12.9→1.73bpm(스윕 15케이스 전부 1~2세션 안착, 오답 라벨 10% 내성), 기각율 3종 100%, 번복 억제 67~75%, 틱당 약 0.07ms. 측정 도구가 저장소에 있어 재현 가능.</li>
-    <li><strong>구현이 설계 그대로.</strong> 화면 8종의 모든 AI 접점(설명 팝업/근거 추적/학습 표시/감사 카드/시뮬 모드)이 DP 결정의 사용자 가시 기능 — 화면 증빙 스크린샷은 실기기 세션에서 캡처 예정.</li>
+    <li><strong>문제와 제약에서 네 가지 AI 품질을 선정했다.</strong> 설명용이성, 기능적응성, 제어가능성, 강건성이 프로젝트의 핵심 설계를 이끌었다.</li>
+    <li><strong>품질 요구를 실제 구조로 구현했다.</strong> 사용자 응답 기반 개인화, 규칙 중심의 판단, LLM 출력 가드, 입력 노이즈 방어가 각각 코드와 화면에 연결된다.</li>
+    <li><strong>같은 기준으로 구현을 검증했다.</strong> 각 QAS에 미리 정한 입력과 합격 기준을 적용했고, 네 항목 모두 자동화된 구조 검증 범위에서 목표를 만족했다.</li>
+    <li><strong>확인한 범위와 확인하지 않은 범위를 나눴다.</strong> 실제 사람의 생리 정확도나 사용자 효과를 자동시험 결과로 바꾸어 말하지 않았다.</li>
   </ul>
-  <h3 class="num"><span>1-1.</span>과제 규정 충족 요약</h3>
+  <h3 class="num"><span>2.</span>과제 규정 충족</h3>
   <div class="tbl"><table class="decide">
     <thead><tr><th style="width:10em">규정</th><th style="width:13em">요구</th><th>이 과제</th></tr></thead>
     <tbody>
-      <tr><td>기능 요구사항</td><td>4개 이상</td><td><strong>6개</strong> (AI 관련 5개: FR2~FR6)</td></tr>
-      <tr><td>품질속성</td><td>4개 이상, AI 특화 2개 이상</td><td><strong>6개</strong> (AI 특화 4개: 설명용이성/기능적응성/제어가능성/강건성)</td></tr>
-      <tr><td>설계 결정(DP)</td><td>대안 비교 포함</td><td><strong>5건</strong> — 각각 2안 비교 + QA 별점 + Trade-off + 조건 의존성</td></tr>
-      <tr><td>검증</td><td>품질속성 검증</td><td><strong>6종 실측</strong> (시뮬/단위테스트 층위 완료, 실기기 항목은 측정 예정 표기)</td></tr>
+      <tr><td>기능 요구사항</td><td>4개 이상</td><td><strong>6개</strong>, AI 관련 5개</td></tr>
+      <tr><td>품질속성</td><td>4개 이상, AI 품질 2개 이상</td><td><strong>AI 품질 4개</strong></td></tr>
+      <tr><td>설계 결정</td><td>대안 비교 포함</td><td><strong>5건</strong>: 품질 설계 4건과 공통 검증 구조 1건</td></tr>
+      <tr><td>검증</td><td>품질속성 검증</td><td><strong>QA1~QA4</strong>의 자동 검증 결과 제시</td></tr>
     </tbody>
   </table></div>
-  <h3 class="num"><span>2.</span>향후 계획</h3>
-  <ul>
-    <li><strong>실주행 검증(층위 ②)</strong>: 코칭 음성 지연(5초), 필드 기각률/폴백 분포, 수렴 체감 — 실측 후 종류 C 상수 튜닝.</li>
-    <li><strong>LLM 직생성 품질</strong>: 모델 준비 기기에서 채택률/기각 사유 분포로 프롬프트/가드 기준 데이터 튜닝.</li>
-    <li><strong>다국어 확장</strong>: 문장=LLM(언어 지시), 폴백/UI=리소스 — 표현 정본 구조가 구조적으로 지원.</li>
-    <li><strong>적응 신호 확장 + 사용자 평가</strong>: 세션 간 추세를 적응 트리거로 승격 검토, 설명 이해도/신뢰 실측.</li>
-  </ul>
-  <p class="lead">이 과제의 답은 "더 큰 모델"이 아니라 "검증할 수 있는 구조"였다 — 참값이 없어도, 모델이 약해도, 시스템 수준에서 신뢰를 만드는 것이 AI 시스템 설계의 본론임을 이 구현으로 보였다.</p>
+  <h3 class="num"><span>3.</span>향후 확인 항목</h3>
+  <p>실제 제품으로 발전시킬 경우 사용자 설명 이해도, 실제 달리기에서의 개인화, 손목 움직임이 있는 센서 환경, 워치 입력부터 음성 출력까지의 지연을 추가로 확인한다. 이 항목들은 이번 과제 제출의 필수 검증 범위에는 포함하지 않는다.</p>
+  <p class="lead">이 과제의 핵심은 큰 모델이 아니라, 필요한 AI 품질을 정하고 설계와 구현과 검증을 한 흐름으로 연결한 것이다.</p>
   <div class="crumb">과제 소개 <span>요구사항</span> <span>설계</span> <span>구현/검증</span> <b>결론</b></div>
 </section>
 
