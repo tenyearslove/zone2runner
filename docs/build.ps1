@@ -41,6 +41,17 @@ if (-not $Inline) { New-Item -ItemType Directory -Force -Path $imgDir | Out-Null
 $utf8 = New-Object System.Text.UTF8Encoding($false)
 function Read-Utf8([string]$path) { return [IO.File]::ReadAllText($path, [Text.Encoding]::UTF8) }
 
+$parts = @(
+  @('01-intro.html', 'intro'), @('02-dp1.html', 'dp1'), @('03-dp2.html', 'dp2'),
+  @('04-dp3.html', 'dp3'), @('05-dp4.html', 'dp4'), @('06-dp5.html', 'dp5'),
+  @('07-arch.html', 'arch'), @('08-impl.html', 'impl'), @('09-appendix.html', 'appendix')
+)
+$fullParts = foreach ($part in $parts) {
+  $body = (Read-Utf8 (Join-Path $here ('src\' + $part[0]))).Trim()
+  $body.Replace('<div class="deck">', '<div class="deck" id="part-' + $part[1] + '">')
+}
+[IO.File]::WriteAllText((Join-Path $here 'src\10-full-report-parts.html'), ($fullParts -join "`r`n`r`n") + "`r`n", $utf8)
+
 $cfg = Read-Utf8 (Join-Path $here 'src\decks.json') | ConvertFrom-Json
 function Get-LinkedSrc([string]$key) {
   $rel = $cfg.images.$key

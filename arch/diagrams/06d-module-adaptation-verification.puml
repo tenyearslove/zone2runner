@@ -12,7 +12,7 @@ component "운영 서비스 (모듈 D)\n말하기 테스트(HITL) / 시뮬 대�
 
 package "AI Development 대응 (오프라인 대량 학습 없음 - 개인 적응/시뮬로 축소)" {
   component "F1. 개인 적응 갱신\nPersonalization.update()\n말하기 테스트 응답으로 Bayesian 경계 갱신\n결과를 다음 세션에 이어서 사용\n안전장치 = 세션당 최대 10bpm + 불확실성" <<Model Construction / Retraining>> as F1 #B2DFDB
-  component "F2. 공통 검증 구조\n경계를 정해 둔 VirtualRunner\nSimRunnerSource / ManualRunSource / RouteWalk\n워치 없이 같은 코드 경로 실행\n(구조 검증으로 범위 한정)" <<Model Testing>> as F2 #FFAB91
+  component "F2. 공통 검증 구조\n경계를 정해 둔 VirtualRunner\nseed 기반 난수 + 같은 seed 재현\nQA1~QA4를 워치 없이 같은 경로로 실행\n(구조 검증으로 범위 한정)" <<Model Testing>> as F2 #FFAB91
   component "A7-1. 모델 준비 관리자\nNanoModelManager\n기능 2종(생성/요약) 상태/다운로드\n홈 배너 + 설정 AI 모델 카드\n사용 시점 = AVAILABLE만" <<Model Registry 인접>> as REG #FFAB91
 }
 

@@ -31,7 +31,7 @@ package "검증 대상 — Android 비의존 순수 로직" {
 }
 
 package "관찰 — 자동 검증과 계측" {
-  component "JVM 단위 테스트 153개 / 29파일\ntestDebugUnitTest — 개발 머신에서 수 초" <<모델 테스팅>> as TEST #FFAB91
+  component "JVM 자동 회귀시험\nQA1~QA4 경로 + seed 재현성" <<모델 테스팅>> as TEST #FFAB91
   component "QaMeasurementTest\nQA 6종 실측(기각률/수렴/번복 억제/틱 비용)\n결과를 build/qa-measurements/에 기록" <<모델 테스팅>> as QAT #FFAB91
   component "RunActivity(MODE_SIM) 계측 패널\n주입: manualSlope / manualTempC / manualHrOffset\n/ simLlmEnabled / simDelayMs 배속\n관찰: promptView / zoneBand / uEstView / coachView" <<설명 서비스>> as INST #C8E6C9
   component "RunLogger + LlmCallLog\n샘플/이벤트/LLM 경로 기록" as LOG #CFD8DC

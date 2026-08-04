@@ -2,14 +2,14 @@
 
 <div class="deck-head">
   <h1>과제 소개 / 요구사항 분석</h1>
-  <p>Zone2Runner가 해결하려는 문제와 제약을 설명하고, 이를 바탕으로 선정한 AI 품질 요구사항을 정리한다.</p>
+  <p>Zone2Runner가 해결하려는 문제와 제약을 설명하고, 이를 바탕으로 선정한 다섯 가지 품질 요구사항을 정리한다.</p>
 </div>
 
 <section class="slide" style="text-align:center; padding: 80px 44px;">
   <p class="note" style="margin-bottom: 24px;">AI Specialist (설계) 인증과제</p>
   <h2 style="font-size: 34px; font-weight: 800; margin: 0 0 10px;">Zone2Runner</h2>
   <p style="font-size: 17px; font-weight: 650; margin: 0 0 6px;">개인화 Zone 2 러닝 코칭 앱</p>
-  <p class="note" style="margin-bottom: 40px;">AI 품질 요구사항을 설계하고 구현과 검증으로 연결한 1인 과제</p>
+  <p class="note" style="margin-bottom: 40px;">품질 요구사항을 설계하고 구현과 검증으로 연결한 1인 과제</p>
   <p class="note">소속: [소속 사업부 / 부서 기입] &nbsp;|&nbsp; 이름: 성시원</p>
 </section>
 
@@ -19,7 +19,7 @@
     <thead><tr><th style="width:11em">장</th><th>내용</th></tr></thead>
     <tbody>
       <tr><td><strong>01. 과제 소개</strong></td><td>배경과 필요성 / 과제 개요</td></tr>
-      <tr><td><strong>02. 요구사항 분석</strong></td><td>기능 요구사항 / 제약사항 / AI 품질 요구사항</td></tr>
+      <tr><td><strong>02. 요구사항 분석</strong></td><td>기능 요구사항 / 제약사항 / 품질 요구사항</td></tr>
       <tr><td><strong>03. 설계</strong></td><td>주요 설계 결정과 대안 비교 / 최종 아키텍처</td></tr>
       <tr><td><strong>04. 구현 및 검증</strong></td><td>구현 화면 / QAS별 자동 검증 결과</td></tr>
       <tr><td><strong>05. 결론</strong></td><td>주요 성과 / 향후 확인 항목</td></tr>
@@ -30,18 +30,36 @@
 </section>
 
 <section class="slide">
+  <div class="slide-head"><h2>Zone 2와 말하기 테스트</h2><span class="sec-no">1</span></div>
+  <h3 class="num"><span>■</span>Zone 2란?</h3>
+  <ul>
+    <li><strong>숨이 조금 차지만 문장으로 대화할 수 있고, 비교적 오래 유지할 수 있는 낮은 운동 강도</strong>다.</li>
+    <li>전문적으로는 첫 번째 젖산·환기역치 바로 아래를 목표로 보는 견해가 많다. 다만 Zone 2를 나누는 방법은 하나로 통일되어 있지 않다.</li>
+    <li>나이와 안정심박으로 계산한 범위는 시작점일 뿐이다. 같은 심박도 사람에 따라 편안함이 다르다.</li>
+  </ul>
+  <h3 class="num"><span>■</span>말하기 테스트는 어떻게 쓰나?</h3>
+  <ul>
+    <li>달리는 중 짧은 문장을 말해 보고 <strong>편안함·보통·벅참</strong> 중 하나로 답한다. 별도 장비 없이 현재 강도를 가늠하는 실용적인 방법이다.</li>
+    <li>Zone2Runner는 이 응답을 개인 경계를 조금씩 조정하는 관측값으로 사용한다. 한 번의 답을 정답으로 보지 않고 여러 응답을 누적한다.</li>
+    <li>말하기 테스트가 실험실 측정을 대신하지는 않는다. 이 과제는 사용자의 느낌이 개인화 로직에 안정적으로 반영되는지를 검증한다.</li>
+  </ul>
+  <p class="note">쉽게 말하면, 평균 공식으로 시작하되 달리는 사람의 실제 느낌을 물어 그 사람에게 맞춰 가는 방식이다.</p>
+  <div class="crumb"><b>과제 소개</b> <span>요구사항</span> <span>설계</span> <span>구현/검증</span> <span>결론</span></div>
+</section>
+
+<section class="slide">
   <div class="slide-head"><h2>과제 소개 — 배경과 필요성</h2><span class="sec-no">1</span></div>
   <h3 class="num"><span>■</span>과제 배경</h3>
   <ul>
-    <li><strong>유지하기 어려운 운동 강도</strong>: Zone 2는 대화가 가능한 낮은 강도를 오래 유지하는 훈련이다. 하지만 초보 러너는 자신도 모르게 속도와 심박을 올리기 쉽다.</li>
-    <li><strong>사람마다 다른 심박 경계</strong>: 나이로 계산한 최대심박과 평균 비율만으로는 개인차를 충분히 반영하기 어렵다. 같은 숫자가 모든 사람에게 같은 운동 강도를 뜻하지 않는다.</li>
-    <li><strong>기기 안에서 실행할 수 있는 AI</strong>: 워치 센서와 온디바이스 LLM을 이용하면 자체 서버 없이도 개인화와 자연어 코칭을 제공할 수 있다.</li>
+    <li><strong>유지하기 어려운 운동 강도</strong>: 초보 러너는 Zone 2로 달리려 해도 자신도 모르게 속도와 심박을 올리기 쉽다.</li>
+    <li><strong>사람마다 다른 심박 경계</strong>: 나이와 평균 비율만으로는 개인차를 충분히 반영하기 어렵다. 같은 숫자가 모든 사람에게 같은 운동 강도를 뜻하지 않는다.</li>
+    <li><strong>기기 안에서 실행하는 AI</strong>: 워치 센서와 온디바이스 LLM을 이용하면 자체 서버 없이도 개인화와 자연어 코칭을 제공할 수 있다.</li>
   </ul>
   <h3 class="num"><span>■</span>왜 설계가 중요한가</h3>
   <ul>
     <li>개인의 정확한 유산소 역치는 실험실 장비 없이 알기 어렵다. 따라서 앱이 정답을 안다고 가정해서는 안 된다.</li>
-    <li>LLM은 자연스러운 문장을 만들 수 있지만, 실제 판정과 반대되는 말을 할 수도 있다. 생성 모델에 최종 판단 권한을 맡기면 안 된다.</li>
-    <li>이 과제는 더 큰 모델을 만드는 일이 아니다. <strong>제한된 조건에서도 설명하고, 적응하고, 통제하고, 검증할 수 있는 AI 시스템</strong>을 설계하는 일이다.</li>
+    <li>LLM의 문장은 매번 같지 않고, 요청한 형식이나 제공된 숫자를 벗어날 수 있다. 최종 판단은 규칙이 맡고 출력은 다시 확인해야 한다.</li>
+    <li>이 과제는 더 큰 모델을 만드는 일이 아니다. <strong>제한된 조건에서도 설명하고, 적응하고, 통제하고, 반복 검증할 수 있는 AI 시스템</strong>을 설계하는 일이다.</li>
   </ul>
   <div class="crumb"><b>과제 소개</b> <span>요구사항</span> <span>설계</span> <span>구현/검증</span> <span>결론</span></div>
 </section>
@@ -52,10 +70,10 @@
     <tbody>
       <tr><th class="rowh">과제명</th><td><strong>Zone2Runner</strong> — 개인화 Zone 2 러닝 코칭 앱</td></tr>
       <tr><th class="rowh">목표</th><td>워치에서 받은 심박을 개인 경계와 비교해 운동 강도를 알려 주고, 사용자 응답으로 그 경계를 조정한다. 코칭과 리포트에는 판단 근거를 함께 제공한다.</td></tr>
-      <tr><th class="rowh">구성</th><td>폰 앱이 판정·분석·개인화·코칭을 담당하고, 워치 앱은 심박 측정과 결과 표시를 담당한다. 자체 서버는 없다.</td></tr>
+      <tr><th class="rowh">구성</th><td>시스템은 폰 앱과 워치 앱으로 구성된다. 폰은 판정·분석·개인화·코칭을 맡고, 워치는 심박을 측정해 결과를 보여 준다. 별도의 자체 서버는 운영하지 않는다.</td></tr>
       <tr><th class="rowh">AI 적용</th><td>판정은 규칙, 개인화는 온라인 Bayesian 갱신, 분석은 관측 통계, 문장 표현은 온디바이스 LLM이 맡는다.</td></tr>
       <tr><th class="rowh">데이터 경계</th><td>심박·개인화 값·세션 분석은 자체 서버나 외부 AI API로 보내지 않는다. 날씨 조회와 지도 표시는 외부 서비스를 사용한다.</td></tr>
-      <tr><th class="rowh">검증 방법</th><td>실제 달리기 대신 입력이 정해진 가상 러너와 자동시험을 사용한다. 확인 범위는 설계와 로직의 동작이며, 사람의 생리 정확도는 주장하지 않는다.</td></tr>
+      <tr><th class="rowh">검증 방법</th><td>시드로 재현 가능한 난수 기반 가상 러너와 자동시험을 사용한다. 사람·지형·센서 잡음을 바꾸면서도 같은 시드의 입력은 다시 만들 수 있다. 확인 범위는 설계와 로직의 동작이며, 사람의 생리 정확도는 주장하지 않는다.</td></tr>
     </tbody>
   </table></div>
   <div class="crumb"><b>과제 소개</b> <span>요구사항</span> <span>설계</span> <span>구현/검증</span> <span>결론</span></div>
@@ -80,35 +98,37 @@
     <tbody>
       <tr><td>C01</td><td>운영 비용 0</td><td>자체 서버와 유료 추론 API를 사용하지 않는다. AI 추론과 LLM 실행은 사용자의 기기 안에서 처리한다.</td></tr>
       <tr><td>C02</td><td>대량 학습 데이터 없음</td><td>개인 러닝 심박을 학습할 충분한 데이터를 모을 수 없다. 다른 사람의 평균 데이터만으로 개인 값을 단정하지 않는다.</td></tr>
-      <tr><td>C03</td><td>개인 참값 측정 불가</td><td>개인의 정확한 유산소 역치는 실험실 장비 없이는 측정하기 어렵다. 따라서 실제 사람에 대한 절대 정확도를 합격 기준으로 삼지 않는다.</td></tr>
+      <tr><td>C03</td><td>개인 참값 측정 불가</td><td>개인의 정확한 유산소 역치는 실험실 장비 없이는 측정하기 어렵다. 따라서 실제 사람에 대한 절대 정확도를 자동 검증 기준으로 삼지 않는다.</td></tr>
     </tbody>
   </table></div>
   <div class="crumb">과제 소개 <b>요구사항</b> <span>설계</span> <span>구현/검증</span> <span>결론</span></div>
 </section>
 
 <section class="slide">
-  <div class="slide-head"><h2>AI 품질 요구사항 — QAW와 Utility Tree</h2><span class="sec-no">2</span></div>
-  <p class="note">강의의 AI 8대 품질 중 문제·설계·자동시험에 직접 연결되는 네 가지를 선택했다. 모든 결과는 구조 검증 범위에서 판정한다.</p>
+  <div class="slide-head"><h2>품질 요구사항 — QAS와 설계 연결</h2><span class="sec-no">2</span></div>
+  <p class="note">AI 품질 4개와 일반 품질인 테스트가능성 1개를 선택했다. 모든 결과는 자동화된 구조 검증 범위에서 해석한다.</p>
   <div class="tbl"><table class="decide">
-    <thead><tr><th style="width:3.2em">ID</th><th style="width:8em">AI 품질</th><th style="width:14em">선정 이유</th><th>상황과 합격 기준</th><th style="width:4em">역할</th></tr></thead>
+    <thead><tr><th style="width:3.2em">ID</th><th style="width:8em">품질 속성</th><th style="width:14em">선정 이유</th><th>상황과 성공 기준</th><th style="width:4em">역할</th></tr></thead>
     <tbody>
-      <tr><td>QA1</td><td><strong>설명용이성</strong></td><td>참값을 직접 측정하기 어려우므로 판단에 사용한 사실을 확인할 수 있어야 한다.</td><td>LLM이 근거에 없는 숫자를 만들면 문장을 차단한다.<br><span class="meas">미등록 숫자 5/5 차단, 사실 문장 3/3 통과, 근거 기록 시험 통과</span></td><td>핵심 ASR</td></tr>
-      <tr><td>QA2</td><td><strong>기능적응성</strong></td><td>평균 공식값을 그대로 쓰지 않고 사용자 응답으로 개인 경계를 바꿔야 한다.</td><td>말하기 테스트 응답으로 경계를 갱신한다.<br><span class="meas">15개 가상 사례에서 최종 오차 3bpm 이하, 5세션 안착, 마지막 4세션 폭 4bpm 이하, 세션 이동 10bpm 이하</span></td><td>핵심 ASR</td></tr>
-      <tr><td>QA3</td><td><strong>제어가능성</strong></td><td>생성 문장이 판정 권한을 가져서는 안 된다.</td><td>판정과 어긋난 문장을 막고 기본 문구로 바꾼다.<br><span class="meas">위반 문장 10/10 차단, 정상 문장 5/5 통과, LLM 실패 경로 시험 통과</span></td><td>핵심 ASR</td></tr>
-      <tr><td>QA4</td><td><strong>강건성</strong></td><td>센서값이 흔들리면 판정과 개인화도 흔들린다.</td><td>범위 밖 값을 버리고 경계 부근의 판정 번복을 줄인다.<br><span class="meas">이상치 50/50 차단, 정상값 오차단 0/500, 번복 60% 이상 감소, 실제 이동 2틱 안에 반영</span></td><td>지원 QA</td></tr>
+      <tr><td>QA1</td><td><strong>설명용이성</strong><br><span class="note">AI 품질</span></td><td>판단에 사용한 사실을 확인할 수 있어야 한다.</td><td>미등록 숫자 차단율 <span class="meas">100%(5/5)</span>, 사실 문장 통과율 <span class="meas">100%(3/3)</span></td><td>핵심 ASR</td></tr>
+      <tr><td>QA2</td><td><strong>기능적응성</strong><br><span class="note">AI 품질</span></td><td>사용자 응답으로 개인 경계를 조정해야 한다.</td><td>15개 사례의 목표 오차 도달률 <span class="meas">100%(15/15)</span>; 기준 사례의 안정성과 이동 한도 충족</td><td>핵심 ASR</td></tr>
+      <tr><td>QA3</td><td><strong>제어가능성</strong><br><span class="note">AI 품질</span></td><td>LLM이 판단 권한을 가져서는 안 된다.</td><td>의도적으로 만든 위반 문장 탐지율 <span class="meas">100%(10/10)</span>, 정상 통과율 <span class="meas">100%(5/5)</span></td><td>핵심 ASR</td></tr>
+      <tr><td>QA4</td><td><strong>강건성</strong><br><span class="note">AI 품질</span></td><td>센서값이 흔들려도 판정이 안정적이어야 한다.</td><td>이상치 차단율 <span class="meas">100%(50/50)</span>, 정상 오차단율 <span class="meas">0%(0/500)</span>, 번복 감소 기준 <span class="meas">100%(5/5 시드)</span></td><td>지원 QA</td></tr>
+      <tr><td>QA5</td><td><strong>테스트가능성</strong><br><span class="note">일반 품질</span></td><td>실제 달리기 없이 같은 조건을 반복해야 한다.</td><td>QA1~QA4 자동 경로 <span class="meas">100%(4/4) 제공</span>, 동일 시드 재현율 <span class="meas">100%(5/5)</span></td><td>핵심 ASR</td></tr>
     </tbody>
   </table></div>
-  <h3 class="num"><span>■</span>QA에서 설계와 검증으로</h3>
+  <h3 class="num"><span>■</span>QAS가 설계와 검증으로 이어지는 과정</h3>
   <div class="tbl"><table class="decide">
     <thead><tr><th style="width:11em">QA</th><th>연결된 설계</th><th style="width:9em">검증</th></tr></thead>
     <tbody>
       <tr><td>QA1 설명용이성</td><td>DP1: 규칙이 사실을 확정하고 근거를 기록</td><td>검증 표 QA1</td></tr>
       <tr><td>QA2 기능적응성</td><td>DP3: 제한된 온라인 개인화</td><td>검증 표 QA2</td></tr>
       <tr><td>QA3 제어가능성</td><td>DP2: 출력 가드와 기본 문구</td><td>검증 표 QA3</td></tr>
-      <tr><td>QA4 강건성</td><td>DP4: 입력 가드와 히스테리시스</td><td>검증 표 QA4</td></tr>
+      <tr><td>QA4 강건성</td><td>DP4: 입력 가드와 히스테리시스(경계에 약간의 여유를 두어 판정이 자주 바뀌지 않게 하는 규칙)</td><td>검증 표 QA4</td></tr>
+      <tr><td>QA5 테스트가능성</td><td>DP5: 입력 교체와 seed 기반 가상 러너</td><td>검증 표 QA5</td></tr>
     </tbody>
   </table></div>
-  <p class="note">RunSource와 가상 러너는 네 QAS를 워치 없이 반복 검증하게 하는 공통 설계 수단이다. 수행효율성은 실기기 측정이 필요한 보조 제약으로 관리한다.</p>
+  <p class="note">ASR(Architecture Significant Requirement)은 아키텍처에 큰 영향을 주는 핵심 요구사항을 뜻한다. QA1~QA3과 QA5를 ASR로 선정했고, QA4는 이를 지지하는 품질로 두었다. 수행효율성은 실기기 측정이 필요한 보조 제약으로 관리한다.</p>
   <div class="crumb">과제 소개 <b>요구사항</b> <span>설계</span> <span>구현/검증</span> <span>결론</span></div>
 </section>
 
@@ -140,7 +160,7 @@
     <li><strong>생리적인 정답을 알기 어렵다.</strong> 실제 Zone 2 경계가 맞는지는 실험실 장비 없이 확인하기 어렵다. 대신 설명이 앱 내부의 판단 과정과 일치하는지는 확인할 수 있다.</li>
     <li><strong>판단과 설명을 같은 사실에서 만들어야 한다.</strong> 설명을 나중에 추측해서 붙이면 실제 판단과 다른 이유가 나올 수 있다.</li>
     <li><strong>판단 기준이 계속 바뀐다.</strong> 개인 경계는 러닝마다 갱신되고, 설명은 늘 그 최신 값을 보여줘야 한다.</li>
-    <li><strong>LLM은 입력에 없는 내용을 만들 수 있다.</strong> 설명 전체를 맡기지 말고, 이미 정해진 사실을 문장으로 바꾸는 역할만 맡겨야 한다.</li>
+    <li><strong>생성된 설명은 확인이 필요하다.</strong> LLM은 이미 정해진 사실을 자연스럽게 표현하는 역할만 맡고, 문장에 나온 숫자와 방향은 규칙이 다시 확인한다.</li>
   </ul>
 
   <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
@@ -187,14 +207,14 @@
         </td>
         <td>
           <div class="qa-line"><span>기능적응성 <span class="dim">(데이터가 많으면 복잡한 패턴까지 배울 수 있다)</span></span><span class="stars">★★★★</span></div>
-          <div class="qa-line"><span>기능정확성 <span class="dim">(신호가 복잡할 때 강하다 — 잠재력)</span></span><span class="stars">★★★</span></div>
+          <div class="qa-line"><span>설명용이성 <span class="dim">(설명이 실제 판단을 그대로 보여 주지는 못한다)</span></span><span class="stars">★★</span></div>
         </td>
       </tr>
       <tr>
         <th class="rowh">단점</th>
         <td class="win">
           <div class="qa-line"><span>기능적응성 <span class="dim">(경계를 그 사람에게 맞추는 적응은 하지만, 규칙에 없는 복잡한 패턴까지 스스로 배우지는 못한다 — 이 축은 DP3에서 다룸)</span></span><span class="stars">★★★</span></div>
-          <div class="qa-line"><span>기능정확성 <span class="dim">(정답지가 없어 절대 정확도는 검증할 수 없다 — 두 안 공통)</span></span><span class="stars">★★★★</span></div>
+          <div class="qa-line"><span>테스트가능성 <span class="dim">(규칙과 근거 값의 연결을 자동시험으로 직접 확인할 수 있다)</span></span><span class="stars">★★★★★</span></div>
         </td>
         <td>
           <div class="qa-line"><span>설명용이성 <span class="dim">(설명이 나중에 붙인 추정이라 실제 판단과 다를 수 있다)</span></span><span class="stars">★★</span></div>
@@ -232,13 +252,13 @@
     <li><strong>판정과 설명이 같은 사실을 사용한다.</strong> "심박 145가 상한 132를 넘었다"처럼 판정에 사용한 숫자와 규칙이 설명의 재료가 된다. 코칭 문장마다 근거와 생성 경로를 기록해 리포트에서 다시 확인할 수 있다.</li>
     <li><strong>사용자의 정정이 바로 반영된다(제어가능성).</strong> 러닝 중 "그건 내 느낌과 달라"라고 답하면(말하기 테스트) 그 자리에서 개인 경계가 움직이고, 얼마나 움직였는지 화면에 보인다. 2안은 이런 정정을 모아 모델을 다시 학습해야 반영되고, 제대로 반영됐는지 확인하기도 어렵다.</li>
     <li><strong>이 과제의 조건에 맞는다.</strong> 2안은 충분한 학습 데이터와 정답이 있을 때 장점을 확인할 수 있다. 이 과제에는 두 가지가 모두 없으므로, 동작을 직접 확인할 수 있는 1안이 더 적합하다.</li>
-    <li><strong>사실 생성은 가볍다.</strong> 설명에 사용할 숫자와 판정 이유는 이미 계산한 값에서 가져온다. LLM 문장 생성은 별도로 실행해 실시간 판정을 막지 않는다.</li>
+    <li><strong>설명 근거를 따로 추정하지 않는다.</strong> 설명에 필요한 숫자와 판정 이유는 이미 계산된 값에서 가져온다. LLM 문장 생성은 별도로 실행해 실시간 판정을 막지 않는다.</li>
   </ul>
 
   <h3 class="num"><span>3.</span>보완 계획</h3>
   <ul>
-    <li><strong>이번 과제에서 확인</strong>: 미등록 숫자 문장 5/5 차단, 사실 문장 3/3 통과, 근거 기록 저장·복원 시험 통과.</li>
-    <li><strong>향후 확인</strong>: 실제 사용자가 설명을 쉽게 이해하는지는 사용자 평가가 필요하다. 이번 제출의 합격 기준에는 포함하지 않는다.</li>
+    <li><strong>이번 과제에서 확인</strong>: 선언한 문장 집합에서 미등록 숫자 차단율 100%(5/5), 사실 문장 통과율 100%(3/3), 근거 기록 저장·복원 시험 통과.</li>
+    <li><strong>향후 확인</strong>: 실제 사용자가 설명을 쉽게 이해하는지는 향후 사용자 평가로 확인한다.</li>
   </ul>
 
   <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
@@ -251,15 +271,12 @@
     <span class="sec-no">A</span>
   </div>
 
-  <h3 class="num"><span>1.</span>문제점이 걸리는 품질 속성</h3>
+  <h3 class="num"><span>1.</span>이 설계 결정이 다루는 품질 문제</h3>
   <ul>
-    <li>사용자가 설명을 이해하지 못하면 코칭에 대한 신뢰가 떨어진다 → 설명용이성</li>
-    <li>설명이 지어낸 이유여서는 안 된다 → 설명용이성(심화)</li>
-    <li>정답지가 없어 사후 채점이 불가능하다 → 구조 선택으로 대응</li>
-    <li>개인 경계가 계속 갱신된다 → 기능적응성</li>
-    <li>사용자가 정정할 수 있어야 한다 → 제어가능성</li>
-    <li>서버 없이 폰 안에서, 추가 비용 없이 돌아야 한다 → 수행효율성</li>
-    <li>소형 LLM이 말을 지어낼 수 있다 → 제어가능성, 강건성</li>
+    <li>판단과 설명이 서로 다른 값에서 만들어지면 근거를 믿기 어렵다 → 설명용이성</li>
+    <li>개인 경계가 바뀌면 설명도 최신 경계를 사용해야 한다 → 기능적응성</li>
+    <li>설명 문장의 숫자와 방향을 시스템이 확인할 수 있어야 한다 → 제어가능성</li>
+    <li>판정과 근거 값의 연결을 같은 입력으로 반복 확인할 수 있어야 한다 → 테스트가능성</li>
   </ul>
 
   <h3 class="num"><span>2.</span>채택안 상세 설계 — 추상 블록을 하위 모듈(실제 클래스)까지 전개</h3>
@@ -277,29 +294,21 @@
   </table>
   </div>
 
-  <h3 class="num"><span>3.</span>QA 별점 종합</h3>
+  <h3 class="num"><span>3.</span>선정 품질에 미치는 영향</h3>
   <div class="tbl">
   <table class="decide">
     <thead><tr><th style="text-align:left">품질 속성</th><th>(1안) 규칙/통계 기반 개인화</th><th>(2안) 사전학습 블랙박스</th></tr></thead>
     <tbody>
       <tr><td>설명용이성</td><td style="text-align:center"><span class="stars">★★★★★</span></td><td style="text-align:center"><span class="stars">★★</span></td></tr>
       <tr><td>제어가능성</td><td style="text-align:center"><span class="stars">★★★★★</span></td><td style="text-align:center"><span class="stars">★★</span></td></tr>
-      <tr><td>강건성</td><td style="text-align:center"><span class="stars">★★★★</span></td><td style="text-align:center"><span class="stars">★★</span></td></tr>
-      <tr><td>수행효율성</td><td style="text-align:center"><span class="stars">★★★★★</span></td><td style="text-align:center"><span class="stars">★★</span></td></tr>
       <tr><td>기능적응성</td><td style="text-align:center"><span class="stars">★★★</span></td><td style="text-align:center"><span class="stars">★★★★</span></td></tr>
-      <tr><td>기능정확성</td><td style="text-align:center"><span class="stars">★★★★</span></td><td style="text-align:center"><span class="stars">★★★</span> <span class="dim">(잠재, 미검증)</span></td></tr>
+      <tr><td>테스트가능성</td><td style="text-align:center"><span class="stars">★★★★★</span></td><td style="text-align:center"><span class="stars">★★★</span></td></tr>
     </tbody>
   </table>
   </div>
-  <p class="note">별점은 폰 단독 실행, 대량 데이터 없음, 개인 참값 측정 불가라는 이 과제의 조건에서 비교한 결과다. 충분한 학습 데이터와 검증용 정답을 확보할 수 있다면 2안의 평가가 달라질 수 있다.</p>
+  <p class="note">별점은 이 과제에서 선정한 품질만 비교한 결과다. 충분한 학습 데이터와 검증용 정답이 있다면 2안의 기능적응성 평가는 달라질 수 있다.</p>
 
-  <h3 class="num"><span>4.</span>예상 질문</h3>
-  <ul>
-    <li>"사후 설명 도구(SHAP, LIME)를 붙이면 2안도 설명되지 않나?" → 그 설명은 모델 밖에서 추정한 근사라서 실제 판단과 같다는 보장이 없고, 계산도 무겁다.</li>
-    <li>"LLM에게 설명을 다 시키면 되지 않나?" → 자기가 내리지 않은 판단의 이유를 지어낼 위험이 있다. 이 설계에서 LLM은 이미 정해진 내용을 문장으로 바꾸는 일만 한다.</li>
-  </ul>
-
-  <h3 class="num"><span>5.</span>용어와 문헌</h3>
+  <h3 class="num"><span>4.</span>용어와 문헌</h3>
   <ul>
     <li><strong>용어 대조(심사용)</strong>: 1안의 설명 방식 = intrinsic interpretability(모델 자체가 해석 가능), 2안의 설명 방식 = post-hoc explanation(사후 설명), 설명과 실제 판단의 일치 = fidelity(충실도), 값의 출처 추적 = provenance, data lineage</li>
     <li><strong>근거 문헌</strong>: Rudin(2019, Nature Machine Intelligence) — 신뢰가 필요한 결정에는 해석 가능한 모델을 쓰라 / XAI 충실도 문헌(2024, 상세 서지는 설계문서 부록 A) / 웨어러블 XAI 체계적 리뷰(JMIR 2024, 사후 설명이 88%) / DARPA XAI 프로그램</li>
@@ -328,16 +337,16 @@
   <h3 class="num"><span>1.</span>배경</h3>
   <ul>
     <li>이 앱은 코칭 문장을 만들 때 폰 안에서 실행되는 LLM을 사용한다.</li>
-    <li>LLM의 출력은 항상 같지 않다. 판정은 "속도를 낮추기"인데 생성 문장은 반대로 "속도를 올리기"라고 말할 수 있다.</li>
-    <li>그런데 코칭은 달리는 중에 실시간 음성으로 나간다. 사람이 문장 하나하나를 검사해 줄 수 없다. <strong>통제는 사람 손이 아니라 자동으로 작동하는 구조여야 한다.</strong> 그 구조를 고르는 것이 이 설계 결정이다.</li>
+    <li>LLM은 자연스러운 표현을 만들 수 있지만 출력이 매번 같지는 않으며, 요청한 형식이나 제공된 숫자를 벗어날 수 있다.</li>
+    <li>코칭은 달리는 중에 실시간으로 나가므로 사람이 문장마다 확인할 수 없다. <strong>LLM이 맡는 범위와 실패했을 때의 대응을 시스템 구조로 정해야 한다.</strong> 그 구조를 고르는 것이 이 설계 결정이다.</li>
   </ul>
 
   <h3 class="num"><span>2.</span>문제점</h3>
   <ul>
-    <li><strong>프롬프트만으로는 어긋난 문장을 막지 못한다.</strong> 판정은 "초과 — 늦춰라"인데 문장은 "속도를 올려요"가 나올 수 있다. 다만 정답 방향은 LLM 밖의 규칙이 이미 정해 두었다 — 잘못 만들어지는 것은 못 막아도, 나온 문장을 정답과 대조해 잘못 나가는 것은 막을 수 있어야 한다.</li>
-    <li><strong>LLM이 없는 상황도 있다.</strong> 지원하지 않는 기종이 있고, 첫 모델 다운로드가 끝나기 전이거나 응답이 늦거나 실패할 수도 있다. 어느 경우든 코칭은 끊기면 안 된다.</li>
+    <li><strong>판단과 표현의 책임을 나눠야 한다.</strong> 코칭 방향과 근거 숫자는 규칙이 먼저 정하고, LLM은 그 범위 안에서 문장만 만든다.</li>
+    <li><strong>LLM을 사용할 수 없는 상황도 있다.</strong> 지원하지 않는 기종, 첫 모델 다운로드 전, 응답 지연이나 실행 실패에도 코칭이 끊기지 않아야 한다.</li>
     <li><strong>정해 둔 고심박 규칙은 먼저 동작해야 한다.</strong> 설정된 임계값을 넘으면 LLM을 기다리지 않고 규칙 문구를 사용한다.</li>
-    <li><strong>통제가 작동했는지 나중에 확인할 수 있어야 한다.</strong> 어떤 문장을 왜 기각했는지 기록으로 남고, 사용자도 말하기 테스트로 판정 기준을 정정하고 설정에서 코칭 빈도와 말투를 바꿀 수 있어야 한다.</li>
+    <li><strong>자동 대응을 나중에 확인할 수 있어야 한다.</strong> 문장이 왜 기각되거나 기본 문구로 바뀌었는지 기록으로 남겨야 한다.</li>
   </ul>
 
   <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
@@ -384,14 +393,14 @@
         </td>
         <td>
           <p>기능적응성 <span class="stars">★★★★</span><br><span class="note">규칙에 없는 상황에도 문맥을 읽은 코칭을 만들 잠재력</span></p>
-          <p>기능정확성 <span class="stars">★★★</span><br><span class="note">풍부한 문맥 반영 — 잠재력</span></p>
+          <p>설명용이성 <span class="stars">★★★</span><br><span class="note">문맥을 풍부하게 표현할 수 있지만 판단 근거와의 연결은 별도 확인이 필요</span></p>
         </td>
       </tr>
       <tr>
         <th class="rowh">단점</th>
         <td class="win">
           <p>기능적응성 <span class="stars">★★★</span><br><span class="note">언제 무엇을 코칭할지는 규칙에 묶여, 새 상황은 규칙을 추가해야 한다</span></p>
-          <p>수행효율성 <span class="stars">★★★★</span><br><span class="note">검사와 폴백의 부담이 조금 있다</span></p>
+          <p>테스트가능성 <span class="stars">★★★★★</span><br><span class="note">검사 조건과 기본 문구 전환을 자동시험으로 반복 확인할 수 있다</span></p>
         </td>
         <td>
           <p>제어가능성 <span class="stars">★★</span><br><span class="note">개입 수단이 프롬프트 수정뿐이고, 고쳐졌는지 확인이 어렵다</span></p>
@@ -422,8 +431,8 @@
 
   <h3 class="num"><span>2.</span>채택 근거</h3>
   <ul>
-    <li><strong>문제가 생기면 손쓸 수단이 구조 안에 있다.</strong> 어긋난 문장은 기각되고(교정), LLM이 없으면 짧은 문구로 대신하고(보완), 위험 심박이면 LLM을 거치지 않는다(안전전환). 셋 다 사람 손 없이 자동으로 작동한다. 2안에서 손쓸 수단은 프롬프트 수정뿐이고 그 효과는 보장되지 않는다.</li>
-    <li><strong>LLM의 성능과 관계없이 통제가 동작한다.</strong> 출력을 규칙이 다시 검사하고, 기준에 맞지 않으면 기본 문구로 바꾼다. 2안은 LLM이 프롬프트를 잘 따르는지에 더 크게 의존한다.</li>
+    <li><strong>LLM 출력이 기준을 벗어나거나 모델을 사용할 수 없을 때 자동으로 대응한다.</strong> 기준을 벗어난 문장은 기각하고, LLM이 없으면 짧은 기본 문구로 바꾸며, 고심박 권고는 LLM을 거치지 않는다.</li>
+    <li><strong>통제 기준은 LLM 밖에 있다.</strong> 규칙이 방향·형식·숫자를 확인하고 기준에 맞지 않으면 기본 문구로 바꾼다. 2안은 판단과 표현을 모두 LLM에 맡기므로 실패 시 비교할 기준이 약하다.</li>
     <li><strong>실패해도 코칭이 이어진다.</strong> LLM이 없거나 실패했을 때 1안의 최악은 "짧은 문구 코칭"이고, 2안의 최악은 "코칭 중단"이다.</li>
     <li><strong>통제 작동을 데이터로 확인한다.</strong> 어떤 문장이 왜 기각됐고 언제 폴백했는지가 세션마다 기록되어 리포트에서 확인할 수 있다.</li>
     <li><strong>DP1과 같은 구조에서 나온다.</strong> 판단을 규칙에 두었기 때문에 설명이 실제 판단과 일치하고(DP1), 나온 문장을 검사할 정답도 시스템 안에 생긴다(DP2). 하나의 구조 선택이 두 품질을 함께 만든다.</li>
@@ -431,7 +440,7 @@
 
   <h3 class="num"><span>3.</span>보완 계획</h3>
   <ul>
-    <li><strong>이번 과제에서 확인</strong>: 선언한 검증 집합에서 위반 문장 10/10 차단, 정상 문장 5/5 통과, LLM 실패·로딩·모델 없음 경로 시험 통과.</li>
+    <li><strong>이번 과제에서 확인</strong>: 의도적으로 만든 위반 문장 탐지율 100%(10/10), 정상 문장 통과율 100%(5/5), LLM 실패·로딩·모델 없음 경로의 기본 문구 전환 시험 통과.</li>
     <li><strong>향후 확인</strong>: 더 다양한 한국어 표현으로 시험 집합을 늘리고, 자주 차단되는 표현을 바탕으로 프롬프트와 검사 규칙을 다듬는다.</li>
   </ul>
 
@@ -445,15 +454,12 @@
     <span class="sec-no">A</span>
   </div>
 
-  <h3 class="num"><span>A1.</span>문제점이 걸리는 품질 속성</h3>
+  <h3 class="num"><span>A1.</span>이 설계 결정이 다루는 품질 문제</h3>
   <ul>
-    <li>작은 LLM은 프롬프트를 가끔 어긴다 → 제어가능성</li>
-    <li>실시간이라 출력마다 사람이 검수할 수 없다 → 제어가능성</li>
-    <li>미지원 기종, 다운로드 전, 지연, 오류로 LLM이 없을 수 있다 → 강건성</li>
-    <li>위험 심박 권고는 지연과 오작동을 허용할 수 없다 → 제어가능성(안전전환)</li>
-    <li>통제가 작동했는지 사후 확인이 필요하다 → 제어가능성(감사)</li>
-    <li>사용자도 개입할 수 있어야 한다 → 제어가능성(교정, 보완)</li>
-    <li>통제가 과하면 표현이 굳는다 → 기능적응성</li>
+    <li>실시간 출력마다 사람이 검토할 수 없다 → 제어가능성</li>
+    <li>모델 미지원, 다운로드 전, 지연이나 오류에도 코칭이 이어져야 한다 → 강건성</li>
+    <li>판단 근거와 생성 문장이 같은 사실을 사용해야 한다 → 설명용이성</li>
+    <li>가드와 기본 문구 전환을 같은 입력으로 반복 확인해야 한다 → 테스트가능성</li>
   </ul>
 
   <h3 class="num"><span>A2.</span>채택안의 통제 단계 <span class="note" style="font-weight:400">(판단 권한 제한부터 기록까지 순서대로 적용)</span></h3>
@@ -473,7 +479,7 @@
   </table>
   </div>
 
-  <h3 class="num"><span>A3.</span>QA 별점 종합</h3>
+  <h3 class="num"><span>A3.</span>선정 품질에 미치는 영향</h3>
   <div class="tbl">
   <table class="decide">
     <thead>
@@ -483,23 +489,15 @@
       <tr><td>제어가능성</td><td style="text-align:center"><span class="stars">★★★★★</span></td><td style="text-align:center"><span class="stars">★★</span></td></tr>
       <tr><td>강건성</td><td style="text-align:center"><span class="stars">★★★★★</span></td><td style="text-align:center"><span class="stars">★★</span></td></tr>
       <tr><td>설명용이성</td><td style="text-align:center"><span class="stars">★★★★★</span></td><td style="text-align:center"><span class="stars">★★</span></td></tr>
-      <tr><td>수행효율성</td><td style="text-align:center"><span class="stars">★★★★</span></td><td style="text-align:center"><span class="stars">★★★</span></td></tr>
-      <tr><td>기능적응성</td><td style="text-align:center"><span class="stars">★★★</span></td><td style="text-align:center"><span class="stars">★★★★</span></td></tr>
-      <tr><td>기능정확성</td><td style="text-align:center"><span class="stars">★★★★</span></td><td style="text-align:center"><span class="stars">★★★</span> (잠재, 미검증)</td></tr>
+      <tr><td>테스트가능성</td><td style="text-align:center"><span class="stars">★★★★★</span></td><td style="text-align:center"><span class="stars">★★★</span></td></tr>
     </tbody>
   </table>
   </div>
   <p class="note"><strong>평가 조건</strong>: 폰 안에서 실행하고, 실시간으로 문장을 내보내며, LLM을 사용할 수 없는 상황에도 코칭이 이어져야 한다는 조건에서 비교했다. 사람이 모든 출력을 미리 검토할 수 있는 서비스라면 2안의 평가가 달라질 수 있다.</p>
 
-  <h3 class="num"><span>A4.</span>예상 질문</h3>
-  <ul>
-    <li>"프롬프트를 잘 쓰면 2안도 통제되지 않나?" → 프롬프트 규정은 권고이지 강제가 아니다. 물론 2안에도 규칙 판정기를 병렬 검증기로 붙일 수는 있다 — 그러나 그 검증기가 곧 규칙 판정이고, 불일치 때 규칙을 따라야 하는 순간 1안 구조로 수렴한다. 2안 고유의 것은 "규칙 없이 LLM만 믿는 구간"인데, 그 구간이 통제되지 않는다.</li>
-    <li>"검사가 정상 문장까지 기각해 코칭이 굳지 않나?" → 가능하다. 그래서 기각이 전부 기록되고, 기각률이 높으면 기준을 데이터로 조정한다. 기각의 비용은 덜 자연스러운 짧은 문구이지 코칭 중단이 아니다.</li>
-  </ul>
-
-  <h3 class="num"><span>A5.</span>용어 대조(심사용)와 근거 문헌</h3>
+  <h3 class="num"><span>A4.</span>용어 대조(심사용)와 근거 문헌</h3>
   <p class="note">개입 가능성 = intervenability(ISO/IEC 25059 제어가능성의 핵심) / 맡기는 일 자체를 좁히는 통제 = architectural containment(구조적 격리) / 실패 시 무손상 전환 = fail-safe fallback / 사람 개입 = HITL(루프 안 교정), HOTL(루프 위 감독) / 사후 확인 = audit(감사)</p>
-  <p class="note">근거 문헌: ISO/IEC 25059(제어가능성 정의) / LLM 가드레일 계층 방어 서베이(구조적 격리가 가장 강한 층) / LLM 단독 판단 회피 권고 / 소형 모델 지시 이행 한계(이행률 60% 미만 사례)</p>
+  <p class="note">근거 문헌: ISO/IEC 25059(제어가능성 정의) / LLM 가드레일 계층 방어 서베이(구조적 격리가 가장 강한 층) / LLM 단독 판단 회피 권고 / 생성 결과 검사와 실패 경로 분리를 다룬 가드레일 연구</p>
   <p class="note">상세 = <code>arch/dp/dp-02-controllability/</code> (decision / research / counter-catalog)</p>
 
   <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
@@ -576,22 +574,22 @@
         <th class="rowh">장점</th>
         <td class="win">
           <p>기능적응성 <span class="stars">★★★★★</span><br><span class="note">답한 그 자리에서 반영 — 적응 지연이 분 단위</span></p>
-          <p>수행효율성 <span class="stars">★★★★★</span><br><span class="note">개인화 계산에 서버, 네트워크, 재학습이 필요 없음</span></p>
+          <p>테스트가능성 <span class="stars">★★★★★</span><br><span class="note">응답과 갱신 결과를 같은 입력으로 반복 확인할 수 있음</span></p>
         </td>
         <td>
-          <p>기능정확성 <span class="stars">★★★★</span><br><span class="note">여러 사용자의 패턴을 함께 배울 잠재력 — 단 검증 어려움</span></p>
+          <p>기능적응성 <span class="stars">★★★★</span><br><span class="note">여러 사용자의 패턴을 함께 배울 잠재력 — 단 배포 전까지 반영되지 않음</span></p>
           <p>강건성 <span class="stars">★★★★</span><br><span class="note">대량 평균화라 답 하나의 노이즈에 강함</span></p>
         </td>
       </tr>
       <tr>
         <th class="rowh">단점</th>
         <td class="win">
-          <p>기능정확성 <span class="stars">★★★★</span><br><span class="note">주관 답의 노이즈, 절대 정확도 미검증 — 두 안 공통</span></p>
+          <p>설명용이성 <span class="stars">★★★★★</span><br><span class="note">응답과 경계 이동을 직접 연결해 보여 줄 수 있음</span></p>
           <p>강건성 <span class="stars">★★★★</span><br><span class="note">엉뚱한 답의 영향이 남는다 — 한도와 확신 폭이 제한할 뿐</span></p>
         </td>
         <td>
           <p>기능적응성 <span class="stars">★★</span><br><span class="note">적응이 수집, 재학습, 배포 주기에 묶인다 — 일/주 단위</span></p>
-          <p>수행효율성 <span class="stars">★★</span><br><span class="note">서버와 네트워크 인프라, 운영 비용 필요</span></p>
+          <p>테스트가능성 <span class="stars">★★★</span><br><span class="note">수집·재학습·배포까지 포함한 반복 검증이 어려움</span></p>
         </td>
       </tr>
       <tr>
@@ -627,7 +625,7 @@
 
   <h3 class="num"><span>3.</span>보완 계획</h3>
   <ul>
-    <li><strong>이번 과제에서 확인</strong>: 경계를 정해 둔 가상 러너 15개 사례가 모두 1~2세션 안에 목표 범위에 들어왔다. 8세션 뒤 오차는 0.20~0.77bpm, 마지막 4세션의 경계 폭은 기준 사례에서 3.04bpm, 한 세션 최대 이동은 9.97bpm이었다.</li>
+    <li><strong>이번 과제에서 확인</strong>: 참임계 5종×시드 3종의 15개 사례 모두가 목표 오차에 들어왔다(100%, 15/15). 현재 모의 조건에서는 말하기 테스트 응답 10회 이내(1~2세션)에 도달했고, 응답 40회 뒤 최종 오차는 0.20~0.77bpm이었다. 별도의 기준 사례에서 마지막 4세션 경계 폭 3.04bpm과 세션당 최대 이동 9.97bpm을 확인했다.</li>
     <li><strong>향후 확인</strong>: 이 수치는 시뮬레이션 결과다. 실제 사람의 유산소 역치를 같은 오차로 찾았다는 뜻이 아니며, 실사용 평가를 하게 되면 말하기 테스트 안내와 개인화 상수를 다시 조정한다.</li>
   </ul>
 
@@ -641,14 +639,14 @@
     <span class="sec-no">A</span>
   </div>
 
-  <h3 class="num"><span>A1.</span>문제점이 걸리는 품질 속성</h3>
+  <h3 class="num"><span>A1.</span>이 설계 결정이 다루는 품질 문제</h3>
   <ul>
     <li>나이 공식의 개인 오차가 커 고정 경계는 코칭을 틀리게 한다 → 기능적응성</li>
     <li>몸 상태가 변해 한 번 맞춘 경계도 낡는다 → 기능적응성</li>
     <li>사람에 대한 경계 정답지가 없다 → 관측 가능한 말하기 테스트 응답을 갱신 근거로 사용</li>
     <li>응답이 적고 주관적이다 → 강건성</li>
     <li>적응이 왜 그렇게 움직였는지 보여야 한다 → 설명용이성</li>
-    <li>서버 없이 폰 안에서, 추가 비용 없이 돌아야 한다 → 수행효율성</li>
+    <li>같은 응답과 시드에서 경계 이동을 반복 확인할 수 있어야 한다 → 테스트가능성</li>
     <li>사용자가 적응을 확인하고 제어할 수 있어야 한다 → 제어가능성</li>
   </ul>
 
@@ -669,7 +667,7 @@
   </table>
   </div>
 
-  <h3 class="num"><span>A3.</span>QA 별점 종합</h3>
+  <h3 class="num"><span>A3.</span>선정 품질에 미치는 영향</h3>
   <div class="tbl">
   <table class="decide">
     <thead>
@@ -677,23 +675,16 @@
     </thead>
     <tbody>
       <tr><td>기능적응성</td><td style="text-align:center"><span class="stars">★★★★★</span></td><td style="text-align:center"><span class="stars">★★</span></td></tr>
-      <tr><td>수행효율성</td><td style="text-align:center"><span class="stars">★★★★★</span></td><td style="text-align:center"><span class="stars">★★</span></td></tr>
       <tr><td>설명용이성</td><td style="text-align:center"><span class="stars">★★★★★</span></td><td style="text-align:center"><span class="stars">★★</span></td></tr>
       <tr><td>제어가능성</td><td style="text-align:center"><span class="stars">★★★★★</span></td><td style="text-align:center"><span class="stars">★★★</span></td></tr>
       <tr><td>강건성</td><td style="text-align:center"><span class="stars">★★★★</span></td><td style="text-align:center"><span class="stars">★★★★</span></td></tr>
-      <tr><td>기능정확성</td><td style="text-align:center"><span class="stars">★★★★</span></td><td style="text-align:center"><span class="stars">★★★★</span> (잠재, 미검증)</td></tr>
+      <tr><td>테스트가능성</td><td style="text-align:center"><span class="stars">★★★★★</span></td><td style="text-align:center"><span class="stars">★★★</span></td></tr>
     </tbody>
   </table>
   </div>
   <p class="note"><strong>별점의 범위</strong>: 1인 과제, 온디바이스 실행, 적은 사용자 응답, 서버 없음이라는 조건에서 두 안을 비교했다. 많은 사용자 데이터와 서버 운영 환경이 있다면 결과가 달라질 수 있다. 별점은 실제 사람의 유산소 역치 정확도를 평가한 점수가 아니다.</p>
 
-  <h3 class="num"><span>A4.</span>예상 질문</h3>
-  <ul>
-    <li>"데이터를 모아 학습하면 더 정확해지지 않나?" → 사용자가 많고 검증 체계가 있으면 그렇다. 이 조건에서는 코호트도 채점 기준도 없어 잠재를 확인할 수 없고, 개인의 변화 반영은 오히려 느려진다.</li>
-    <li>"말하기 테스트 답이 틀리면?" → 답 하나의 영향은 확신 폭이 제한하고 세션당 이동 한도가 추가로 막는다. 갱신 이력이 화면에 노출되어 확인하고 재설정할 수 있다.</li>
-  </ul>
-
-  <h3 class="num"><span>A5.</span>용어 대조(심사용)와 근거 문헌</h3>
+  <h3 class="num"><span>A4.</span>용어 대조(심사용)와 근거 문헌</h3>
   <p class="note">첫 짐작 = prior(사전값) / 증거로 짐작을 고치는 통계 방법 = Bayesian update / 데이터 없는 첫 상태 = cold start / 변화 발생에서 반영까지의 시간 = adaptation latency(이 DP의 결정축) / 표본마다 즉시 갱신 vs 모아서 재학습 = online learning vs batch retraining</p>
   <p class="note">근거 문헌: 베이지안 켤레 갱신(표준 통계 교과, Gelman 외) / 변화 대응 온라인 학습 서베이(Gama 외 2014) / 말하기 테스트 = 제1환기역치 실용 지표(Persinger 2004) / 나이 공식의 개인 오차 ±10~15bpm(Tanaka 2001 기반, spec-001)</p>
   <p class="note">상세 = <code>arch/dp/dp-03-adaptability/</code> (decision / research / counter-catalog)</p>
@@ -702,7 +693,6 @@
 </section>
 
 </div>
-
 
 <div class="deck" id="part-dp4">
 
@@ -776,15 +766,15 @@
           <p>테스트가능성 <span class="stars">★★★★</span><br><span class="note">층이 독립 모듈이라 층별로 검증할 수 있다</span></p>
         </td>
         <td>
-          <p>수행효율성 <span class="stars">★★★★★</span><br><span class="note">수 초 반응, 계산 최소, 구조 단순</span></p>
-          <p>기능정확성 <span class="stars">★★★</span><br><span class="note">진짜 급변을 놓치지 않는다 — 단 노이즈와 구별 못 함</span></p>
+          <p>기능적응성 <span class="stars">★★★★</span><br><span class="note">큰 변화는 빠르게 반영하지만 노이즈 크기에 맞춰 조정하지 못함</span></p>
+          <p>테스트가능성 <span class="stars">★★★</span><br><span class="note">구조는 단순하지만 위험하거나 드문 입력을 실주행으로 만들기 어려움</span></p>
         </td>
       </tr>
       <tr>
         <th class="rowh">단점</th>
         <td class="win">
-          <p>수행효율성 <span class="stars">★★★★</span><br><span class="note">코칭 반응이 최대 60초 늦다 — 의도된 비용</span></p>
-          <p>기능정확성 <span class="stars">★★★★</span><br><span class="note">방어가 과하면 진짜 변화도 늦게 반영 — 최적점 미검증, 두 안 공통</span></p>
+          <p>강건성 <span class="stars">★★★★</span><br><span class="note">방어가 강한 만큼 실제 변화도 늦게 반영될 수 있음</span></p>
+          <p>테스트가능성 <span class="stars">★★★★</span><br><span class="note">방어층이 늘어난 만큼 층별 시험을 함께 관리해야 함</span></p>
         </td>
         <td>
           <p>강건성 <span class="stars">★★</span><br><span class="note">깜빡임과 스파이크가 통과한다 — 방어가 평활 하나</span></p>
@@ -824,7 +814,7 @@
 
   <h3 class="num"><span>3.</span>보완 계획</h3>
   <ul>
-    <li><strong>이번 과제에서 확인</strong>: 정해 둔 범위 밖 값 50개는 모두 차단했고 정상 범위 500개는 잘못 차단하지 않았다. 경계 부근의 판정 번복은 5개 시드에서 순간값 판정보다 67.1~74.7% 줄었고, 화면 판정은 +10bpm 변화에 1틱 만에 전환했다.</li>
+    <li><strong>이번 과제에서 확인</strong>: 범위 밖 입력 차단율 100%(50/50), 정상 입력 오차단율 0%(0/500)였다. 번복 감소 기준은 5개 시드 모두 충족했고(100%, 5/5), 실제 감소 폭은 67.1~74.7%였다. 시험에서 만든 +10bpm 계단 입력에는 1틱 만에 전환했다.</li>
     <li><strong>향후 확인</strong>: 이 결과는 결정론적 입력을 사용한 구조 회귀시험이며 실제 워치 센서의 정확도 시험이 아니다. 실제 주행 데이터를 확보하게 되면 60초 평균과 판정 기준을 다시 조정한다.</li>
   </ul>
 
@@ -838,7 +828,7 @@
     <span class="sec-no">A</span>
   </div>
 
-  <h3 class="num"><span>A1.</span>문제점이 걸리는 품질 속성</h3>
+  <h3 class="num"><span>A1.</span>이 설계 결정이 다루는 품질 문제</h3>
   <ul>
     <li>손목 심박의 순간 스파이크 → 강건성(입력 차단)</li>
     <li>경계 근처 판정 깜빡임 → 강건성(번복 억제)</li>
@@ -846,7 +836,7 @@
     <li>노이즈 폭의 개인차 → 기능적응성(자가 보정 문턱)</li>
     <li>신호 두절과 센서 부재 → 강건성(기능 유지)</li>
     <li>정답지가 없어 채점 불가 → 일관성 지표로 대응</li>
-    <li>방어가 과하면 진짜 변화도 늦는다 → 수행효율성(비용의 정직한 인정)</li>
+    <li>각 방어층을 같은 노이즈 입력으로 반복 확인할 수 있어야 한다 → 테스트가능성</li>
   </ul>
 
   <h3 class="num"><span>A2.</span>채택안의 방어 4층 <span class="note" style="font-weight:400">(각 층은 서로 다른 노이즈를 막는다)</span></h3>
@@ -865,7 +855,7 @@
   </table>
   </div>
 
-  <h3 class="num"><span>A3.</span>QA 별점 종합</h3>
+  <h3 class="num"><span>A3.</span>선정 품질에 미치는 영향</h3>
   <div class="tbl">
   <table class="decide">
     <thead>
@@ -876,21 +866,12 @@
       <tr><td>제어가능성</td><td style="text-align:center"><span class="stars">★★★★★</span></td><td style="text-align:center"><span class="stars">★★★</span></td></tr>
       <tr><td>테스트가능성</td><td style="text-align:center"><span class="stars">★★★★</span></td><td style="text-align:center"><span class="stars">★★★</span></td></tr>
       <tr><td>기능적응성</td><td style="text-align:center"><span class="stars">★★★★</span></td><td style="text-align:center"><span class="stars">★★</span></td></tr>
-      <tr><td>수행효율성</td><td style="text-align:center"><span class="stars">★★★★</span></td><td style="text-align:center"><span class="stars">★★★★★</span></td></tr>
-      <tr><td>기능정확성</td><td style="text-align:center"><span class="stars">★★★★</span></td><td style="text-align:center"><span class="stars">★★★</span> (잠재, 미검증)</td></tr>
     </tbody>
   </table>
   </div>
   <p class="note"><strong>별점의 범위</strong>: 손목 심박, 야외 사용, 행동 지시가 있는 앱이라는 조건에서 구조를 비교한 점수다. 실제 센서 정확도나 의학적 안전성을 평가한 점수가 아니며, 더 안정적인 센서를 쓰거나 기록만 보여 주는 앱이라면 결과가 달라질 수 있다.</p>
 
-  <h3 class="num"><span>A4.</span>예상 질문</h3>
-  <ul>
-    <li>"코칭이 60초 늦으면 이미 늦은 것 아닌가?" → 이 설계는 순간 반응보다 안정적인 강도 유지를 우선한다. 화면 판정은 순간심박으로 빠르게 바뀌고, 코칭만 60초 평균을 사용한다. 위험 심박은 별도 규칙으로 처리하지만 이것이 의료 안전을 보장한다는 뜻은 아니다.</li>
-    <li>"이동평균 창을 잘 고르면 2안도 충분하지 않나?" → 창 하나로는 스파이크 억제(긴 창)와 반응성(짧은 창)을 동시에 못 잡고, 경계 근처 번복은 창 길이와 무관하게 남는다. 번복 억제는 평활이 아니라 판정 규칙(이중 문턱)과 판정 입력(순간값을 보느냐 60초 평균을 보느냐)의 문제다.</li>
-    <li>"이동평균에 히스테리시스만 더한 중간안은?" → 그 순간 "층을 쌓는 설계"를 받아들인 것이다. 남는 질문은 몇 층이냐이고, 시간 필터와 개인 문턱과 폴백도 같은 논리로 필요해진다 — 각 층이 서로 다른 노이즈를 막기 때문이다.</li>
-  </ul>
-
-  <h3 class="num"><span>A5.</span>용어 대조(심사용)와 근거 문헌</h3>
+  <h3 class="num"><span>A4.</span>용어 대조(심사용)와 근거 문헌</h3>
   <p class="note">들어올 때/나갈 때 문턱 분리 = hysteresis / 판정 번복 = flicker, chattering / 순간 이탈을 시간축에서 거르기 = 시간 필터(경보 관리 표준 ISA-18.2는 on-delay 타이머와 데드밴드를 제시 — 우리 구현은 60초 평균과 히스테리시스) / 개인 노이즈 배수 문턱 = k·σ(통계적 공정 관리) / 두절 시 갈아타기 = graceful degradation</p>
   <p class="note">근거 문헌: 슈미트 트리거(이중 문턱 표준 기법) / ISA-18.2(경보의 시간 필터와 데드밴드) / Shewhart 관리도(산포 배수 관리한계) / 손목 광학 심박의 운동 중 오차(검증 연구들의 일관된 보고)</p>
   <p class="note">상세 = <code>arch/dp/dp-04-robustness/</code> (decision / research / counter-catalog)</p>
@@ -900,11 +881,10 @@
 
 </div>
 
-
 <div class="deck" id="part-dp5">
 
 <div class="deck-head">
-  <h1>DP5. 공통 검증 구조 — 네 QAS를 반복 확인하는 설계</h1>
+  <h1>DP5. 테스트가능성 — 같은 조건을 반복 검증하는 설계</h1>
   <p>인증과제 샘플(씬스틸러) DP 형식 3장 + Appendix 1장 — 2026-08-03 v2(리뷰 반영: 개별화 채택안+상세 도식) — 정본: <code>arch/dp/dp-05-testability/-decision.md</code>, 원고: <code>report/report-012</code></p>
 </div>
 
@@ -919,7 +899,7 @@
   <ul>
     <li>이 시스템은 검증하기 어려운 조건이 겹쳐 있다. 실제 사람의 Zone 2 경계 정답지가 없고, 같은 달리기를 정확히 반복할 수 없으며, 워치와 폰이 함께 동작한다.</li>
     <li>판정, 개인화, 코칭 로직은 개발 중에 계속 바뀐다. 매번 직접 달려야만 확인할 수 있다면 1인 과제에서 충분한 반복 검증이 어렵다.</li>
-    <li>그래서 <strong>실제로 달리지 않아도 입력부터 판정·코칭·리포트까지 같은 코드 경로를 반복 확인하는 구조</strong>를 선택했다. 테스트가능성은 별도 AI QA가 아니라 네 QAS를 검증하게 하는 공통 기반이다.</li>
+    <li>그래서 <strong>실제로 달리지 않아도 입력부터 판정·코칭·리포트까지 같은 코드 경로를 반복 확인하는 구조</strong>를 선택했다. 테스트가능성은 일반 소프트웨어 품질이지만, 실제 달리기를 반복하기 어려운 제약 때문에 이 시스템의 구조를 바꾼 핵심 요구사항이다.</li>
   </ul>
 
   <h3 class="num"><span>2.</span>문제점</h3>
@@ -959,7 +939,7 @@
         <th class="rowh">구조</th>
         <td class="win">
           <div class="fig-frame"><img data-img="dp5-adopted" alt="1안 — 입력 교체와 반복 시뮬레이션 구조"></div>
-          <p class="note" style="margin-top:8px">실제 센서, 가상 러너, 수동 입력이 같은 인터페이스를 사용한다. 뒤의 판정·개인화·분석 로직은 입력 출처와 분리된다. 경계를 정해 둔 가상 러너의 결과를 다음 세션 입력에 다시 반영해 개인화 수렴을 빠르게 확인하고, 기기와 분리한 로직은 153개 JVM 단위시험으로 반복 검사한다. 이 시험 개수는 제품 정확도가 아니라 자동 회귀 범위를 뜻한다</p>
+          <p class="note" style="margin-top:8px">실제 센서, 가상 러너, 수동 입력이 같은 인터페이스를 사용한다. 뒤의 판정·개인화·분석 로직은 입력 출처와 분리된다. 경계를 정해 둔 가상 러너의 결과를 다음 세션 입력에 다시 반영해 개인화 수렴을 빠르게 확인하고, 기기와 분리한 로직은 JVM 단위시험으로 반복 검사한다. QA1~QA4 검증 경로 4개를 모두 워치 없이 실행하고, 같은 seed 5종의 입력이 정확히 재현되는지 확인한다</p>
         </td>
         <td>
           <div class="fig-frame"><img data-img="dp5-counter" alt="2안 — 실기기 결합 검증 아키텍처 다이어그램"></div>
@@ -973,15 +953,14 @@
           <p>강건성 <span class="stars">★★★★</span><br><span class="note">위험/엣지 시나리오를 안전하게 주입해 방어 로직 검증</span></p>
         </td>
         <td>
-          <p>기능정확성 <span class="stars">★★★★</span><br><span class="note">실환경 충실도 — 센서 특성, 타이밍, OS 제약까지 실제 그대로</span></p>
-          <p>수행효율성 <span class="stars">★★★★</span><br><span class="note">시뮬 자산을 만들고 유지할 필요 없음</span></p>
+          <p>강건성 <span class="stars">★★★</span><br><span class="note">실제 센서 조건을 볼 수 있지만 위험하고 드문 상황은 반복하기 어렵다</span></p>
         </td>
       </tr>
       <tr>
         <th class="rowh">단점</th>
         <td class="win">
-          <p>기능정확성 <span class="stars">★★★★</span><br><span class="note">시뮬 통과가 실제 사람에 대한 정확도를 말하지 못함 — 실주행 검증 별도, 두 안 공통</span></p>
-          <p>수행효율성 <span class="stars">★★★★</span><br><span class="note">시뮬 자산도 만들고 유지해야 한다</span></p>
+          <p>강건성 <span class="stars">★★★★</span><br><span class="note">시뮬레이션 통과가 실제 사람과 센서의 정확도를 증명하지는 않는다</span></p>
+          <p>테스트가능성 <span class="stars">★★★★</span><br><span class="note">가상 러너와 시험 시나리오를 함께 관리해야 한다</span></p>
         </td>
         <td>
           <p>테스트가능성 <span class="stars">★★</span><br><span class="note">재현도 자동화도 안 됨 — 변경 하나 검증이 러닝 한 번</span></p>
@@ -1016,12 +995,12 @@
     <li><strong>위험하거나 드문 입력도 안전하게 넣을 수 있다.</strong> 범위 밖 심박이나 신호 두절처럼 실제 달리기로 만들기 어려운 조건을 시험 입력으로 재현할 수 있다.</li>
     <li><strong>짧은 시간에 반복할 수 있다.</strong> 같은 입력으로 수정 전후를 비교하므로, 틈을 내어 진행하는 1인 과제에서도 변경할 때마다 다시 확인할 수 있다.</li>
     <li><strong>여러 세션의 적응을 빠르게 확인한다.</strong> 경계를 정해 둔 가상 러너의 결과를 다음 입력에 다시 반영해, QA2의 8세션 과정을 자동으로 실행한다.</li>
-    <li><strong>시뮬레이션의 한계를 분리했다.</strong> 자동시험은 규칙과 구조가 설계대로 움직이는지 확인한다. 실제 사람의 유산소 역치 정확도와 실제 센서 성능은 이번 제출의 합격 판단에 포함하지 않는다.</li>
+    <li><strong>시뮬레이션의 한계를 분리했다.</strong> 자동시험은 규칙과 구조가 설계대로 움직이는지 확인한다. 실제 사람의 유산소 역치와 실제 센서 성능은 별도의 기기·사용자 평가가 필요한 항목이다.</li>
   </ul>
 
   <h3 class="num"><span>3.</span>보완 계획</h3>
   <ul>
-    <li><strong>이번 과제에서 확인</strong>: 같은 입력과 고정 시드로 QA1~QA4의 합격 기준을 다시 만들 수 있고, 최근 JVM 단위시험 153개가 통과했다.</li>
+    <li><strong>이번 과제에서 확인</strong>: QA1~QA4 자동 검증 경로 4개를 모두 워치 없이 실행했다(4/4). 같은 seed로 다시 만든 입력은 5개 seed 모두 일치했고(100%, 5/5), 서로 다른 seed에서는 다른 심박 시퀀스가 생성됐다. 전체 JVM 단위시험은 153/153 통과했다.</li>
     <li><strong>향후 확인</strong>: 실제 기기 연결, 실제 센서 성능, 사람에 대한 정확도는 자동시험이 답하지 못한다. 제품화를 검토할 때 별도의 기기·사용자 평가로 확인한다.</li>
   </ul>
 
@@ -1035,7 +1014,7 @@
     <span class="sec-no">A</span>
   </div>
 
-  <h3 class="num"><span>A1.</span>문제점이 걸리는 품질 속성</h3>
+  <h3 class="num"><span>A1.</span>이 설계 결정이 다루는 품질 문제</h3>
   <ul>
     <li>같은 자극을 두 번 줄 수 없다 → 테스트가능성(재현 주입)</li>
     <li>위험/엣지 시나리오를 실주행으로 못 만든다 → 테스트가능성, 강건성</li>
@@ -1043,7 +1022,7 @@
     <li>정답지가 없어 "정확하다" 채점 불가 → 시뮬 역할을 구조 검증으로 한정</li>
     <li>개인화 수렴에 여러 세션이 필요하다 → 결과를 다음 입력에 반영하는 반복 시뮬레이션</li>
     <li>워치-폰 결합이라 단독 실행이 어렵다 → 테스트가능성(기기 의존 분리)</li>
-    <li>시뮬 자산도 만들고 유지해야 한다 → 수행효율성(비용의 정직한 인정)</li>
+    <li>시뮬레이션 결과를 실제 사람의 정확도로 오해하지 않아야 한다 → 강건성 검증 범위의 한계</li>
   </ul>
 
   <h3 class="num"><span>A2.</span>채택안의 검증 구조 4요소</h3>
@@ -1056,7 +1035,7 @@
     <tbody>
       <tr><td><strong>1. 소스 추상화</strong></td><td>실센서/가상 러너/수동 시뮬이 같은 인터페이스로 꽂힌다 — 검증과 운영이 같은 코드 경로</td></tr>
       <tr><td><strong>2. 반복 가상 러너</strong></td><td>경계를 정해 둔 가상 러너의 결과를 다음 세션 입력에 반영해 수렴 과정을 자동 실행</td></tr>
-      <tr><td><strong>3. 순수 로직 분리</strong></td><td>판정 로직을 기기와 분리해 JVM 단위시험 153개로 자동 회귀 확인</td></tr>
+      <tr><td><strong>3. 순수 로직 분리</strong></td><td>판정 로직을 기기와 분리해 JVM 단위시험으로 자동 회귀 확인</td></tr>
       <tr><td><strong>4. 시뮬레이션 계측</strong></td><td>QA별로 정한 입력을 넣고 결과를 같은 지표로 기록</td></tr>
     </tbody>
   </table>
@@ -1073,20 +1052,12 @@
       <tr><td>강건성</td><td style="text-align:center"><span class="stars">★★★★</span></td><td style="text-align:center"><span class="stars">★★</span></td></tr>
       <tr><td>기능적응성</td><td style="text-align:center"><span class="stars">★★★★★</span></td><td style="text-align:center"><span class="stars">★★★</span></td></tr>
       <tr><td>설명용이성</td><td style="text-align:center"><span class="stars">★★★★</span></td><td style="text-align:center"><span class="stars">★★★</span></td></tr>
-      <tr><td>수행효율성</td><td style="text-align:center"><span class="stars">★★★★</span></td><td style="text-align:center"><span class="stars">★★★★</span></td></tr>
-      <tr><td>기능정확성</td><td style="text-align:center"><span class="stars">★★★★</span></td><td style="text-align:center"><span class="stars">★★★★</span> (실환경 충실)</td></tr>
     </tbody>
   </table>
   </div>
-  <p class="note"><strong>별점의 범위</strong>: 1인 개발, 짧은 제출 일정, 반복해서 확인해야 하는 네 QAS라는 조건에서 비교했다. 테스트가능성은 이번에 선정한 AI QA가 아니라 검증을 돕는 지원 품질이다. 실제 기기 확인과 자동시험은 서로 대체하지 않으며, 이번 제출에서는 자동화된 구조 검증을 합격 판단에 사용한다.</p>
+  <p class="note"><strong>별점의 범위</strong>: 1인 개발, 짧은 제출 일정, 반복해서 확인해야 하는 네 AI QAS라는 조건에서 비교했다. 테스트가능성은 일반 품질이며, 실제 기기 확인과 자동시험은 서로 대체하지 않는다. 이번 과제에서는 자동화된 구조 검증 결과를 제시한다.</p>
 
-  <h3 class="num"><span>A4.</span>예상 질문</h3>
-  <ul>
-    <li>"시뮬로 통과한 게 무슨 의미가 있나?" → 시뮬이 답하는 것은 "로직이 설계대로 동작하는가"이지 "실제 사람에게 정확한가"가 아니다. 후자는 실주행 검증으로만 답해지며 그 계획이 별도로 있다. 이 한계를 설계 문서에 못 박았다.</li>
-    <li>"입력 인터페이스가 과한 설계 아닌가?" → 이 경계 덕분에 워치 없이도 같은 판정 로직에 시험 입력을 넣을 수 있다. 153개 시험은 정확도 점수가 아니라 이 구조가 제공하는 자동 회귀 범위를 보여 준다.</li>
-  </ul>
-
-  <h3 class="num"><span>A5.</span>용어 대조(심사용)와 근거 문헌</h3>
+  <h3 class="num"><span>A4.</span>용어 대조(심사용)와 근거 문헌</h3>
   <p class="note">입력 자리를 인터페이스로 = Ports and Adapters(헥사고날), 의존성 역전(DIP) / 실물을 대신하는 가짜 = test double / 출력이 입력에 되먹임 = closed loop / 수정 후 자동 재확인 = regression test / 시뮬과 실환경의 간극 = sim-to-real gap</p>
   <p class="note">근거 문헌: ISO/IEC 25010(테스트가능성 정의) / Cockburn(포트와 어댑터) / Meszaros(테스트 대역) / 테스트 피라미드(Cohn, Fowler) / 이 저장소의 자체 이력(시뮬 자기 채점 함정을 직접 확인하고 시뮬 역할을 한정 — 실험 기록 §15-3)</p>
   <p class="note">상세 = <code>arch/dp/dp-05-testability/</code> (decision / research / counter-catalog)</p>
@@ -1096,11 +1067,10 @@
 
 </div>
 
-
 <div class="deck" id="part-arch">
 
 <div class="deck-head">
-  <h1>최종 아키텍처 — 네 QAS를 하나의 구조로 연결</h1>
+  <h1>최종 아키텍처 — 다섯 QAS를 하나의 구조로 연결</h1>
   <p>거시 1장 + 모듈별 4장 — 최종 구현 상태(as-built)를 강의 AI System 용어로 표현 — 2026-08-01 v1 — 원고: <code>report/report-013</code>, 도식: <code>arch/diagrams/06*</code></p>
 </div>
 
@@ -1150,11 +1120,11 @@
 </section>
 
 <section class="slide">
-  <div class="slide-head"><h2>모듈 F: 개인 적응과 공통 검증 구조</h2><span class="sec-no">3</span></div>
+  <div class="slide-head"><h2>모듈 F: 개인 적응과 반복 검증</h2><span class="sec-no">3</span></div>
   <div class="fig-frame"><img data-img="mod-f" alt="모듈 F 적응 검증 상세"></div>
-  <p class="note">개인 적응(F1)은 말하기 테스트 응답이 들어올 때 Bayesian 방식으로 경계를 갱신하고 결과를 다음 세션에 이어 쓴다. 공통 검증 구조(F2)는 같은 입력과 고정 시드로 QA1~QA4를 반복 확인한다. Nano 준비 관리자(A7-1)는 모델 상태를 확인하고 세션 밖에서 다운로드를 요청한다.</p>
+  <p class="note">개인 적응(F1)은 말하기 테스트 응답이 들어올 때 Bayesian 방식으로 경계를 갱신하고 결과를 다음 세션에 이어 쓴다. 반복 검증 구조(F2)는 seed 기반 난수 입력으로 QA1~QA4를 반복 확인하고, 같은 seed의 결과가 재현되는지 검증한다. Nano 준비 관리자(A7-1)는 모델 상태를 확인하고 세션 밖에서 다운로드를 요청한다.</p>
 
-  <h3 class="num"><span>■</span>DP 도식과의 관계 — 네 QAS와 공통 검증 구조가 한 아키텍처에 모인다</h3>
+  <h3 class="num"><span>■</span>DP 도식과의 관계 — 다섯 QAS가 한 아키텍처에 모인다</h3>
   <div class="tbl"><table class="decide">
     <thead><tr><th style="width:4em">DP</th><th style="width:8em">QA</th><th>이 아키텍처의 어느 단면인가</th><th style="width:13em">카운터(2안)</th></tr></thead>
     <tbody>
@@ -1162,7 +1132,7 @@
       <tr><td>DP2</td><td>제어가능성</td><td>LLM 권한 제한(A7) + 출력 검사(A8) + 기본 문구 + 사용자 설정과 기록(D3)</td><td>LLM에 판단 위임</td></tr>
       <tr><td>DP3</td><td>기능적응성</td><td>개인 경계 추정(A5) + 적응 루프(F1/E1) + 말하기 테스트(D3)</td><td>오프라인 재학습 개인화</td></tr>
       <tr><td>DP4</td><td>강건성</td><td>입력 검사(A2) + 화면·코칭 기준 분리(A4) + 구간 통계(A6) + 입력 전환(A1)</td><td>즉시 반응 판정</td></tr>
-      <tr><td>DP5</td><td>공통 검증 구조</td><td>입력 교체(A1) + 반복 시뮬레이션(F2) + 기기와 분리한 핵심 로직</td><td>실기기 중심 검증</td></tr>
+      <tr><td>DP5</td><td>테스트가능성</td><td>입력 교체(A1) + 반복 시뮬레이션(F2) + 기기와 분리한 핵심 로직</td><td>실기기 중심 검증</td></tr>
     </tbody>
   </table></div>
   <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
@@ -1170,11 +1140,20 @@
 
 </div>
 
+<style>
+  .shot {
+    border: 2px dashed var(--accent); border-radius: 6px;
+    background: var(--accent-soft); color: var(--accent);
+    padding: 14px 16px; margin: 8px 0; font-size: 13px; font-weight: 650;
+  }
+  .shot small { display: block; font-weight: 400; color: var(--muted); margin-top: 2px; }
+  .ok { color: #1E8E3E; font-weight: 800; }
+</style>
 
 <div class="deck" id="part-impl">
 
 <div class="deck-head">
-  <h1>구현 / AI 품질 검증 / 결론</h1>
+  <h1>구현 / QAS 검증 / 결론</h1>
   <p>설계가 실제 기능으로 어떻게 구현됐는지 보여 주고, 네 가지 QAS의 자동 검증 결과와 한계를 정리한다.</p>
 </div>
 
@@ -1252,15 +1231,16 @@
 </section>
 
 <section class="slide">
-  <div class="slide-head"><h2>AI 품질 검증 결과</h2><span class="sec-no">4</span></div>
+  <div class="slide-head"><h2>QAS별 검증 결과</h2><span class="sec-no">4</span></div>
   <p class="note">같은 QAS의 목표와 결과를 비교했다. 아래의 달성은 자동화된 구조 검증 범위에서의 달성을 뜻한다.</p>
   <div class="tbl"><table class="decide">
-    <thead><tr><th style="width:8em">AI QA</th><th style="width:14em">적용한 설계</th><th>합격 기준과 결과</th><th style="width:4em">판정</th></tr></thead>
+    <thead><tr><th style="width:8em">품질 속성</th><th style="width:14em">적용한 설계</th><th>성공 기준과 결과</th><th style="width:4em">판정</th></tr></thead>
     <tbody>
-      <tr><td>QA1<br><strong>설명용이성</strong></td><td>규칙이 사실 확정, 숫자 가드, 근거 기록</td><td>미등록 숫자 전부 차단 → <strong>5/5 차단</strong><br>사실 문장 전부 통과 → <strong>3/3 통과</strong><br>근거 기록 저장·복원 시험 통과</td><td class="ok">달성</td></tr>
-      <tr><td>QA2<br><strong>기능적응성</strong></td><td>말하기 테스트와 제한된 Bayesian 갱신</td><td>15개 사례에서 최종 오차 3bpm 이하 → <strong>0.20~0.77bpm</strong><br>5세션 안착 → <strong>모두 1~2세션</strong><br>경계 폭 4bpm 이하 → <strong>3.04bpm</strong><br>세션 이동 10bpm 이하 → <strong>최대 9.97bpm</strong></td><td class="ok">달성</td></tr>
-      <tr><td>QA3<br><strong>제어가능성</strong></td><td>방향 가드와 기본 문구</td><td>위반 문장 전부 차단 → <strong>10/10 차단</strong><br>정상 문장 전부 통과 → <strong>5/5 통과</strong><br>LLM 실패·로딩·모델 없음 경로 시험 통과</td><td class="ok">달성</td></tr>
-      <tr><td>QA4<br><strong>강건성</strong></td><td>입력 가드와 판정 히스테리시스</td><td>이상치 전부 차단 → <strong>50/50 차단</strong>, 정상 오차단 <strong>0/500</strong><br>번복 60% 이상 감소 → <strong>67.1~74.7%</strong><br>실제 이동 2틱 안에 반영 → <strong>1틱</strong></td><td class="ok">달성</td></tr>
+      <tr><td>QA1<br><strong>설명용이성</strong></td><td>규칙이 사실 확정, 숫자 가드, 근거 기록</td><td>미등록 숫자 차단율 <strong>100%(5/5)</strong><br>사실 문장 통과율 <strong>100%(3/3)</strong><br>근거 기록 저장·복원 시험 통과</td><td class="ok">달성</td></tr>
+      <tr><td>QA2<br><strong>기능적응성</strong></td><td>말하기 테스트와 제한된 Bayesian 갱신</td><td>15개 사례 목표 오차 도달률 <strong>100%(15/15)</strong><br>모의 응답 10회 이내 도달, 응답 40회 뒤 오차 <strong>0.20~0.77bpm</strong><br>기준 사례의 마지막 4세션 폭 <strong>3.04bpm</strong>, 세션 최대 이동 <strong>9.97bpm</strong></td><td class="ok">달성</td></tr>
+      <tr><td>QA3<br><strong>제어가능성</strong></td><td>방향·형식·숫자 가드와 기본 문구</td><td>의도적으로 만든 위반 문장 탐지율 <strong>100%(10/10)</strong><br>정상 문장 통과율 <strong>100%(5/5)</strong><br>LLM 미가용 경로의 기본 문구 전환 시험 통과</td><td class="ok">달성</td></tr>
+      <tr><td>QA4<br><strong>강건성</strong></td><td>입력 가드와 판정 히스테리시스</td><td>이상치 차단율 <strong>100%(50/50)</strong>, 정상 오차단율 <strong>0%(0/500)</strong><br>번복 감소 기준 충족률 <strong>100%(5/5 seed)</strong>, 실제 감소 폭 <strong>67.1~74.7%</strong><br>+10bpm 계단 입력 전환 <strong>1틱</strong></td><td class="ok">달성</td></tr>
+      <tr><td>QA5<br><strong>테스트가능성</strong></td><td>RunSource, seed 기반 가상 러너, 순수 로직 시험</td><td>QA1~QA4 워치 없는 자동 경로 <strong>100%(4/4) 제공</strong><br>동일 seed 재현율 <strong>100%(5/5)</strong><br>전체 JVM 단위시험 <strong>153/153 통과</strong></td><td class="ok">달성</td></tr>
     </tbody>
   </table></div>
   <p class="note">측정 코드는 QaMeasurementTest.kt에 있으며 결과는 app/app/build/qa-measurements에 저장된다.</p>
@@ -1276,10 +1256,11 @@
       <tr><td>기능적응성</td><td>가상 러너에서 개인화 값이 정해 둔 목표 안으로 수렴하고 안정됐다.</td><td>실제 사람의 유산소 역치를 0.20~0.77bpm 오차로 찾았다는 뜻은 아니다.</td></tr>
       <tr><td>제어가능성</td><td>선언한 위반 문장과 LLM 실패 경로를 규칙이 처리했다.</td><td>세상에 존재하는 모든 잘못된 표현을 막는다는 뜻은 아니다.</td></tr>
       <tr><td>강건성</td><td>정해 둔 이상값과 노이즈 입력에서 판정 규칙이 목표대로 동작했다.</td><td>실제 손목 센서의 정확도와 모든 실외 환경을 검증했다는 뜻은 아니다.</td></tr>
+      <tr><td>테스트가능성</td><td>같은 seed의 난수 입력을 다시 만들고 네 AI QAS를 워치 없이 실행했다.</td><td>시뮬레이션 결과가 실제 사람과 센서의 정확도를 대신한다는 뜻은 아니다.</td></tr>
     </tbody>
   </table></div>
   <h3 class="num"><span>■</span>공통 검증 기반</h3>
-  <p>RunSource 교체, 가상 러너, 고정 시드, JVM 단위시험은 네 QAS를 워치 없이 반복 확인하게 해 준다. 최근 전체 단위시험 153개가 통과했다. 시험 개수는 제품 정확도가 아니라 자동 회귀 범위를 보여 주는 참고 정보다.</p>
+  <p>RunSource 교체, 가상 러너, 고정 seed, JVM 단위시험은 네 AI QAS를 워치 없이 반복 확인하게 해 준다. 전체 단위시험 153/153 통과는 제품 정확도가 아니라 자동 회귀 범위를 보여 주는 참고 정보다.</p>
   <h3 class="num"><span>■</span>보조 성능 확인</h3>
   <p>60분 분량 3600틱의 JVM 로직 비용은 틱당 0.1ms 미만이었다. 워치 통신, 화면, TTS, LLM을 포함하지 않으므로 실기기 전체 성능으로 일반화하지 않는다.</p>
   <div class="crumb">과제 소개 <span>요구사항</span> <span>설계</span> <b>구현/검증</b> <span>결론</span></div>
@@ -1289,9 +1270,9 @@
   <div class="slide-head"><h2>결론</h2><span class="sec-no">5</span></div>
   <h3 class="num"><span>1.</span>주요 성과</h3>
   <ul>
-    <li><strong>문제와 제약에서 네 가지 AI 품질을 선정했다.</strong> 설명용이성, 기능적응성, 제어가능성, 강건성이 프로젝트의 핵심 설계를 이끌었다.</li>
-    <li><strong>품질 요구를 실제 구조로 구현했다.</strong> 사용자 응답 기반 개인화, 규칙 중심의 판단, LLM 출력 가드, 입력 노이즈 방어가 각각 코드와 화면에 연결된다.</li>
-    <li><strong>같은 기준으로 구현을 검증했다.</strong> 각 QAS에 미리 정한 입력과 합격 기준을 적용했고, 네 항목 모두 자동화된 구조 검증 범위에서 목표를 만족했다.</li>
+    <li><strong>문제와 제약에서 다섯 가지 품질을 선정했다.</strong> 네 가지 AI 품질과 테스트가능성이 프로젝트의 핵심 설계를 이끌었다.</li>
+    <li><strong>품질 요구를 실제 구조로 구현했다.</strong> 사용자 응답 기반 개인화, 규칙 중심의 판단, LLM 출력 가드, 입력 노이즈 방어, 반복 가능한 시뮬레이션이 각각 코드와 화면에 연결된다.</li>
+    <li><strong>같은 기준으로 구현을 검증했다.</strong> 각 QAS에 미리 정한 입력과 성공 기준을 적용했고, 다섯 항목 모두 자동화된 구조 검증 범위에서 목표를 만족했다.</li>
     <li><strong>확인한 범위와 확인하지 않은 범위를 나눴다.</strong> 실제 사람의 생리 정확도나 사용자 효과를 자동시험 결과로 바꾸어 말하지 않았다.</li>
   </ul>
   <h3 class="num"><span>2.</span>과제 규정 충족</h3>
@@ -1299,9 +1280,9 @@
     <thead><tr><th style="width:10em">규정</th><th style="width:13em">요구</th><th>이 과제</th></tr></thead>
     <tbody>
       <tr><td>기능 요구사항</td><td>4개 이상</td><td><strong>6개</strong>, AI 관련 5개</td></tr>
-      <tr><td>품질속성</td><td>4개 이상, AI 품질 2개 이상</td><td><strong>AI 품질 4개</strong></td></tr>
-      <tr><td>설계 결정</td><td>대안 비교 포함</td><td><strong>5건</strong>: 품질 설계 4건과 공통 검증 구조 1건</td></tr>
-      <tr><td>검증</td><td>품질속성 검증</td><td><strong>QA1~QA4</strong>의 자동 검증 결과 제시</td></tr>
+      <tr><td>품질속성</td><td>4개 이상, AI 품질 2개 이상</td><td><strong>5개</strong>: AI 품질 4개와 일반 품질 1개</td></tr>
+      <tr><td>설계 결정</td><td>대안 비교 포함</td><td><strong>5건</strong>: 다섯 품질에 대한 설계 결정</td></tr>
+      <tr><td>검증</td><td>품질속성 검증</td><td><strong>QA1~QA5</strong>의 자동 검증 결과 제시</td></tr>
     </tbody>
   </table></div>
   <h3 class="num"><span>3.</span>향후 확인 항목</h3>
@@ -1323,7 +1304,7 @@
   <div class="slide-head"><h2>Appendix. Use Case</h2><span class="sec-no">A</span></div>
   <div class="fig-frame"><img data-img="usecase" alt="Use Case 다이어그램"></div>
   <ul>
-    <li>그림에는 <strong>러너</strong>와 <strong>개발자·검증자</strong>가 나온다. 러너는 앱 기능을 사용하고, 검증자는 시험 입력으로 네 QAS를 반복 확인한다. 검증 기능을 상용 기능으로 주장하는 것은 아니다.</li>
+    <li>그림에는 <strong>러너</strong>와 <strong>개발자·검증자</strong>가 나온다. 러너는 앱 기능을 사용하고, 검증자는 시험 입력으로 다섯 QAS를 반복 확인한다. 검증 기능을 상용 기능으로 주장하는 것은 아니다.</li>
     <li>러너의 흐름은 프로필 등록 → 세션 시작 → 존 확인과 음성 코칭 → 말하기 테스트 응답 → 리포트와 코칭 근거 확인 순서다. 말하기 테스트 응답은 개인 경계 갱신에 사용된다.</li>
     <li>설정에서는 코칭 빈도·음성·말투 등을 바꿀 수 있고, 홈과 설정 화면에서 Nano 모델 상태와 다운로드 필요 여부를 확인할 수 있다.</li>
   </ul>

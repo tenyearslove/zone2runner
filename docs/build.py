@@ -15,6 +15,18 @@ REPO = os.path.dirname(HERE)
 SRC = os.path.join(HERE, 'src')
 os.chdir(REPO)
 
+PARTS = [
+    ('01-intro.html', 'intro'), ('02-dp1.html', 'dp1'), ('03-dp2.html', 'dp2'),
+    ('04-dp3.html', 'dp3'), ('05-dp4.html', 'dp4'), ('06-dp5.html', 'dp5'),
+    ('07-arch.html', 'arch'), ('08-impl.html', 'impl'), ('09-appendix.html', 'appendix'),
+]
+full_parts = []
+for filename, anchor in PARTS:
+    part = open(f'{SRC}/{filename}', encoding='utf-8').read().strip()
+    part = part.replace('<div class="deck">', f'<div class="deck" id="part-{anchor}">', 1)
+    full_parts.append(part)
+open(f'{SRC}/10-full-report-parts.html', 'w', encoding='utf-8', newline='\n').write('\n\n'.join(full_parts) + '\n')
+
 cfg = json.load(open(f'{SRC}/decks.json', encoding='utf-8'))
 deck_css = open(f'{SRC}/deck-style.html', encoding='utf-8').read()
 nav_html = open(f'{SRC}/nav.html', encoding='utf-8').read().rstrip('\r\n')

@@ -32,31 +32,31 @@
 </style>
 
 <div class="wrap">
-  <h1>Zone2Runner — 인증 보고서 검수 인덱스</h1>
-  <p class="sub">보고서 전 파트의 HTML 렌더 한눈 목록 (2026-08-01 기준). 각 페이지의 md 정본은 저장소 <code>report/</code>, 도식은 <code>arch/diagrams/</code>.</p>
+  <h1>Zone2Runner — AI Specialist 설계 과제 문서</h1>
+  <p class="sub">제출 HTML 검토 인덱스 · 2026-08-04 기준. 최종 품질 판단은 <code>docs/src/</code> 원본과 빌드된 HTML을 기준으로 하며, Markdown은 근거와 작업 기록을 남기는 보조 문서다.</p>
 
-  <h2>📕 한 번에 보기</h2>
-  <p><a href="full-report.html" style="font-size:15px">보고서 전문 통합본</a> — 과제소개부터 Appendix까지 전 파트 + 도식 26장을 한 페이지에(상단 목차 내비게이션 포함). 아래는 파트별 개별 덱.</p>
+  <h2>한 번에 보기</h2>
+  <p><a href="full-report.html" style="font-size:15px">보고서 통합본</a> — 과제 소개부터 부록까지 46개 슬라이드와 PUML로 만든 그림 26장을 한 페이지에서 볼 수 있다. 화면 위쪽 목차로 각 부분에 바로 이동할 수 있다.</p>
 
-  <h2>보고서 순서대로 (파트별)</h2>
+  <h2>보고서 순서</h2>
   <table>
-    <thead><tr><th style="width:12em">파트</th><th>HTML</th><th style="width:11em">md 정본</th></tr></thead>
+    <thead><tr><th style="width:15em">파트</th><th>HTML</th><th style="width:15em">핵심 내용</th></tr></thead>
     <tbody>
-      <tr><td>01 과제 소개 + 02 요구사항</td><td><a href="01-intro.html">과제 소개 / 요구사항</a></td><td><code>report-018</code></td></tr>
-      <tr><td>03 설계 — DP1 설명용이성</td><td><a href="02-dp1.html">DP1 덱</a></td><td><code>report-008</code></td></tr>
-      <tr><td>03 설계 — DP2 제어가능성</td><td><a href="03-dp2.html">DP2 덱</a></td><td><code>report-009</code></td></tr>
-      <tr><td>03 설계 — DP3 기능적응성</td><td><a href="04-dp3.html">DP3 덱</a></td><td><code>report-010</code></td></tr>
-      <tr><td>03 설계 — DP4 강건성</td><td><a href="05-dp4.html">DP4 덱</a></td><td><code>report-011</code></td></tr>
-      <tr><td>03 설계 — DP5 테스트가능성</td><td><a href="06-dp5.html">DP5 덱</a></td><td><code>report-012</code></td></tr>
-      <tr><td>03 설계 — 최종 Architecture</td><td><a href="07-arch.html">최종 아키텍처 덱</a> (거시 + 모듈 4장)</td><td><code>report-013</code></td></tr>
-      <tr><td>04 구현/검증 + 05 결론</td><td><a href="08-impl.html">구현/검증/결론 덱</a> (스크린샷 자리 20장 + 실측 표)</td><td><code>report-014·015·016</code></td></tr>
-      <tr><td>Appendix — 뷰 5종(도식 6장)</td><td><a href="09-appendix.html">Appendix 뷰 덱</a> (Use Case/Context/Module/C&amp;C 상세+축약/Deployment)</td><td><code>report-017</code></td></tr>
+      <tr><td>01 과제 소개 · 02 요구사항</td><td><a href="01-intro.html">소개와 요구사항</a></td><td>문제, 제약, 네 AI QAS</td></tr>
+      <tr><td>03 설계 — DP1</td><td><a href="02-dp1.html">설명용이성</a></td><td>판단 사실과 설명을 같은 값에서 생성</td></tr>
+      <tr><td>03 설계 — DP2</td><td><a href="03-dp2.html">제어가능성</a></td><td>LLM 권한 제한, 출력 검사, 기본 문구</td></tr>
+      <tr><td>03 설계 — DP3</td><td><a href="04-dp3.html">기능적응성</a></td><td>말하기 테스트 기반 개인 경계 갱신</td></tr>
+      <tr><td>03 설계 — DP4</td><td><a href="05-dp4.html">강건성</a></td><td>이상값 차단과 판정 번복 억제</td></tr>
+      <tr><td>03 설계 — DP5</td><td><a href="06-dp5.html">테스트가능성</a></td><td>실제 달리기 없이 같은 조건을 반복 검증</td></tr>
+      <tr><td>03 설계 — 최종 아키텍처</td><td><a href="07-arch.html">최종 아키텍처</a></td><td>QAS, 설계 결정, 구현 구조의 연결</td></tr>
+      <tr><td>04 구현·검증 · 05 결론</td><td><a href="08-impl.html">구현·검증·결론</a></td><td>QA1~QA5 결과와 검증 한계</td></tr>
+      <tr><td>부록</td><td><a href="09-appendix.html">아키텍처 상세 뷰</a></td><td>Use Case, Context, Module, C&amp;C, Deployment</td></tr>
     </tbody>
   </table>
 
-  <h2>검증 실측 재현 방법</h2>
-  <p class="muted">검증 표의 모든 수치는 <code>app/app/src/test/.../QaMeasurementTest.kt</code> 실행으로 재산출된다 — <code>gradlew :app:test</code> (153테스트, 측정값은 <code>app/build/qa-measurements/</code>에 기록). 실기기 항목(QA6 TTS 5초, 스크린샷 20장)은 기기 연결 세션에서.</p>
+  <h2>검증 결과 재현</h2>
+  <p class="muted"><code>app</code> 폴더에서 <code>.\gradlew.bat :app:testDebugUnitTest --no-daemon --rerun-tasks</code>를 실행한다. 최근 결과는 153개 시험 통과다. 이 숫자는 제품 정확도가 아니라 자동 회귀 범위를 뜻하며, QA별 성공 판단은 <code>QaMeasurementTest.kt</code>가 기록한 지표를 사용한다.</p>
 
-  <h2>남은 것</h2>
-  <p class="muted">① 실기기 스크린샷 20장 캡처(자리/조건은 구현 덱에 명시) ② QA6 실기기 실측 ③ 검토 피드백 반영 ④ 최종 PPT 조립.</p>
+  <h2>현재 남은 작업</h2>
+  <p class="muted">① HTML 내용과 한국어 표현에 대한 사용자 검수 ② 검수 의견 반영 ③ 최종 HTML을 기준으로 발표 대본 작성. 실제 달리기, 사용자 연구, 의료 정확도 평가는 이번 과제의 제출 합격 항목에 포함하지 않는다.</p>
 </div>

@@ -91,8 +91,9 @@
     {
       "out": "07-arch.html",
       "src": "07-arch.html",
-      "title": "최종 Architecture — Zone2Runner 인증 보고서 설계 파트",
+      "title": "최종 아키텍처 — Zone2Runner 인증 보고서 설계 파트",
       "deckCss": true,
+      "dataImg": true,
       "placeholders": {
         "IMG_MACRO": "macro",
         "IMG_A": "mod-a",
@@ -110,8 +111,9 @@
     {
       "out": "09-appendix.html",
       "src": "09-appendix.html",
-      "title": "Appendix 뷰 — Use Case/Context/Module/C&C/Deployment",
+      "title": "부록 아키텍처 뷰 — Use Case/Context/Module/C&C/Deployment",
       "deckCss": true,
+      "dataImg": true,
       "placeholders": {
         "IMG_UC": "usecase",
         "IMG_CTX": "context",

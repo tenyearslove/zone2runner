@@ -180,14 +180,14 @@
 
 <div class="deck-head">
   <h1>과제 소개 / 요구사항 분석</h1>
-  <p>Zone2Runner가 해결하려는 문제와 제약을 설명하고, 이를 바탕으로 선정한 AI 품질 요구사항을 정리한다.</p>
+  <p>Zone2Runner가 해결하려는 문제와 제약을 설명하고, 이를 바탕으로 선정한 다섯 가지 품질 요구사항을 정리한다.</p>
 </div>
 
 <section class="slide" style="text-align:center; padding: 80px 44px;">
   <p class="note" style="margin-bottom: 24px;">AI Specialist (설계) 인증과제</p>
   <h2 style="font-size: 34px; font-weight: 800; margin: 0 0 10px;">Zone2Runner</h2>
   <p style="font-size: 17px; font-weight: 650; margin: 0 0 6px;">개인화 Zone 2 러닝 코칭 앱</p>
-  <p class="note" style="margin-bottom: 40px;">AI 품질 요구사항을 설계하고 구현과 검증으로 연결한 1인 과제</p>
+  <p class="note" style="margin-bottom: 40px;">품질 요구사항을 설계하고 구현과 검증으로 연결한 1인 과제</p>
   <p class="note">소속: [소속 사업부 / 부서 기입] &nbsp;|&nbsp; 이름: 성시원</p>
 </section>
 
@@ -197,7 +197,7 @@
     <thead><tr><th style="width:11em">장</th><th>내용</th></tr></thead>
     <tbody>
       <tr><td><strong>01. 과제 소개</strong></td><td>배경과 필요성 / 과제 개요</td></tr>
-      <tr><td><strong>02. 요구사항 분석</strong></td><td>기능 요구사항 / 제약사항 / AI 품질 요구사항</td></tr>
+      <tr><td><strong>02. 요구사항 분석</strong></td><td>기능 요구사항 / 제약사항 / 품질 요구사항</td></tr>
       <tr><td><strong>03. 설계</strong></td><td>주요 설계 결정과 대안 비교 / 최종 아키텍처</td></tr>
       <tr><td><strong>04. 구현 및 검증</strong></td><td>구현 화면 / QAS별 자동 검증 결과</td></tr>
       <tr><td><strong>05. 결론</strong></td><td>주요 성과 / 향후 확인 항목</td></tr>
@@ -208,18 +208,36 @@
 </section>
 
 <section class="slide">
+  <div class="slide-head"><h2>Zone 2와 말하기 테스트</h2><span class="sec-no">1</span></div>
+  <h3 class="num"><span>■</span>Zone 2란?</h3>
+  <ul>
+    <li><strong>숨이 조금 차지만 문장으로 대화할 수 있고, 비교적 오래 유지할 수 있는 낮은 운동 강도</strong>다.</li>
+    <li>전문적으로는 첫 번째 젖산·환기역치 바로 아래를 목표로 보는 견해가 많다. 다만 Zone 2를 나누는 방법은 하나로 통일되어 있지 않다.</li>
+    <li>나이와 안정심박으로 계산한 범위는 시작점일 뿐이다. 같은 심박도 사람에 따라 편안함이 다르다.</li>
+  </ul>
+  <h3 class="num"><span>■</span>말하기 테스트는 어떻게 쓰나?</h3>
+  <ul>
+    <li>달리는 중 짧은 문장을 말해 보고 <strong>편안함·보통·벅참</strong> 중 하나로 답한다. 별도 장비 없이 현재 강도를 가늠하는 실용적인 방법이다.</li>
+    <li>Zone2Runner는 이 응답을 개인 경계를 조금씩 조정하는 관측값으로 사용한다. 한 번의 답을 정답으로 보지 않고 여러 응답을 누적한다.</li>
+    <li>말하기 테스트가 실험실 측정을 대신하지는 않는다. 이 과제는 사용자의 느낌이 개인화 로직에 안정적으로 반영되는지를 검증한다.</li>
+  </ul>
+  <p class="note">쉽게 말하면, 평균 공식으로 시작하되 달리는 사람의 실제 느낌을 물어 그 사람에게 맞춰 가는 방식이다.</p>
+  <div class="crumb"><b>과제 소개</b> <span>요구사항</span> <span>설계</span> <span>구현/검증</span> <span>결론</span></div>
+</section>
+
+<section class="slide">
   <div class="slide-head"><h2>과제 소개 — 배경과 필요성</h2><span class="sec-no">1</span></div>
   <h3 class="num"><span>■</span>과제 배경</h3>
   <ul>
-    <li><strong>유지하기 어려운 운동 강도</strong>: Zone 2는 대화가 가능한 낮은 강도를 오래 유지하는 훈련이다. 하지만 초보 러너는 자신도 모르게 속도와 심박을 올리기 쉽다.</li>
-    <li><strong>사람마다 다른 심박 경계</strong>: 나이로 계산한 최대심박과 평균 비율만으로는 개인차를 충분히 반영하기 어렵다. 같은 숫자가 모든 사람에게 같은 운동 강도를 뜻하지 않는다.</li>
-    <li><strong>기기 안에서 실행할 수 있는 AI</strong>: 워치 센서와 온디바이스 LLM을 이용하면 자체 서버 없이도 개인화와 자연어 코칭을 제공할 수 있다.</li>
+    <li><strong>유지하기 어려운 운동 강도</strong>: 초보 러너는 Zone 2로 달리려 해도 자신도 모르게 속도와 심박을 올리기 쉽다.</li>
+    <li><strong>사람마다 다른 심박 경계</strong>: 나이와 평균 비율만으로는 개인차를 충분히 반영하기 어렵다. 같은 숫자가 모든 사람에게 같은 운동 강도를 뜻하지 않는다.</li>
+    <li><strong>기기 안에서 실행하는 AI</strong>: 워치 센서와 온디바이스 LLM을 이용하면 자체 서버 없이도 개인화와 자연어 코칭을 제공할 수 있다.</li>
   </ul>
   <h3 class="num"><span>■</span>왜 설계가 중요한가</h3>
   <ul>
     <li>개인의 정확한 유산소 역치는 실험실 장비 없이 알기 어렵다. 따라서 앱이 정답을 안다고 가정해서는 안 된다.</li>
-    <li>LLM은 자연스러운 문장을 만들 수 있지만, 실제 판정과 반대되는 말을 할 수도 있다. 생성 모델에 최종 판단 권한을 맡기면 안 된다.</li>
-    <li>이 과제는 더 큰 모델을 만드는 일이 아니다. <strong>제한된 조건에서도 설명하고, 적응하고, 통제하고, 검증할 수 있는 AI 시스템</strong>을 설계하는 일이다.</li>
+    <li>LLM의 문장은 매번 같지 않고, 요청한 형식이나 제공된 숫자를 벗어날 수 있다. 최종 판단은 규칙이 맡고 출력은 다시 확인해야 한다.</li>
+    <li>이 과제는 더 큰 모델을 만드는 일이 아니다. <strong>제한된 조건에서도 설명하고, 적응하고, 통제하고, 반복 검증할 수 있는 AI 시스템</strong>을 설계하는 일이다.</li>
   </ul>
   <div class="crumb"><b>과제 소개</b> <span>요구사항</span> <span>설계</span> <span>구현/검증</span> <span>결론</span></div>
 </section>
@@ -230,10 +248,10 @@
     <tbody>
       <tr><th class="rowh">과제명</th><td><strong>Zone2Runner</strong> — 개인화 Zone 2 러닝 코칭 앱</td></tr>
       <tr><th class="rowh">목표</th><td>워치에서 받은 심박을 개인 경계와 비교해 운동 강도를 알려 주고, 사용자 응답으로 그 경계를 조정한다. 코칭과 리포트에는 판단 근거를 함께 제공한다.</td></tr>
-      <tr><th class="rowh">구성</th><td>폰 앱이 판정·분석·개인화·코칭을 담당하고, 워치 앱은 심박 측정과 결과 표시를 담당한다. 자체 서버는 없다.</td></tr>
+      <tr><th class="rowh">구성</th><td>시스템은 폰 앱과 워치 앱으로 구성된다. 폰은 판정·분석·개인화·코칭을 맡고, 워치는 심박을 측정해 결과를 보여 준다. 별도의 자체 서버는 운영하지 않는다.</td></tr>
       <tr><th class="rowh">AI 적용</th><td>판정은 규칙, 개인화는 온라인 Bayesian 갱신, 분석은 관측 통계, 문장 표현은 온디바이스 LLM이 맡는다.</td></tr>
       <tr><th class="rowh">데이터 경계</th><td>심박·개인화 값·세션 분석은 자체 서버나 외부 AI API로 보내지 않는다. 날씨 조회와 지도 표시는 외부 서비스를 사용한다.</td></tr>
-      <tr><th class="rowh">검증 방법</th><td>실제 달리기 대신 입력이 정해진 가상 러너와 자동시험을 사용한다. 확인 범위는 설계와 로직의 동작이며, 사람의 생리 정확도는 주장하지 않는다.</td></tr>
+      <tr><th class="rowh">검증 방법</th><td>시드로 재현 가능한 난수 기반 가상 러너와 자동시험을 사용한다. 사람·지형·센서 잡음을 바꾸면서도 같은 시드의 입력은 다시 만들 수 있다. 확인 범위는 설계와 로직의 동작이며, 사람의 생리 정확도는 주장하지 않는다.</td></tr>
     </tbody>
   </table></div>
   <div class="crumb"><b>과제 소개</b> <span>요구사항</span> <span>설계</span> <span>구현/검증</span> <span>결론</span></div>
@@ -258,35 +276,37 @@
     <tbody>
       <tr><td>C01</td><td>운영 비용 0</td><td>자체 서버와 유료 추론 API를 사용하지 않는다. AI 추론과 LLM 실행은 사용자의 기기 안에서 처리한다.</td></tr>
       <tr><td>C02</td><td>대량 학습 데이터 없음</td><td>개인 러닝 심박을 학습할 충분한 데이터를 모을 수 없다. 다른 사람의 평균 데이터만으로 개인 값을 단정하지 않는다.</td></tr>
-      <tr><td>C03</td><td>개인 참값 측정 불가</td><td>개인의 정확한 유산소 역치는 실험실 장비 없이는 측정하기 어렵다. 따라서 실제 사람에 대한 절대 정확도를 합격 기준으로 삼지 않는다.</td></tr>
+      <tr><td>C03</td><td>개인 참값 측정 불가</td><td>개인의 정확한 유산소 역치는 실험실 장비 없이는 측정하기 어렵다. 따라서 실제 사람에 대한 절대 정확도를 자동 검증 기준으로 삼지 않는다.</td></tr>
     </tbody>
   </table></div>
   <div class="crumb">과제 소개 <b>요구사항</b> <span>설계</span> <span>구현/검증</span> <span>결론</span></div>
 </section>
 
 <section class="slide">
-  <div class="slide-head"><h2>AI 품질 요구사항 — QAW와 Utility Tree</h2><span class="sec-no">2</span></div>
-  <p class="note">강의의 AI 8대 품질 중 문제·설계·자동시험에 직접 연결되는 네 가지를 선택했다. 모든 결과는 구조 검증 범위에서 판정한다.</p>
+  <div class="slide-head"><h2>품질 요구사항 — QAS와 설계 연결</h2><span class="sec-no">2</span></div>
+  <p class="note">AI 품질 4개와 일반 품질인 테스트가능성 1개를 선택했다. 모든 결과는 자동화된 구조 검증 범위에서 해석한다.</p>
   <div class="tbl"><table class="decide">
-    <thead><tr><th style="width:3.2em">ID</th><th style="width:8em">AI 품질</th><th style="width:14em">선정 이유</th><th>상황과 합격 기준</th><th style="width:4em">역할</th></tr></thead>
+    <thead><tr><th style="width:3.2em">ID</th><th style="width:8em">품질 속성</th><th style="width:14em">선정 이유</th><th>상황과 성공 기준</th><th style="width:4em">역할</th></tr></thead>
     <tbody>
-      <tr><td>QA1</td><td><strong>설명용이성</strong></td><td>참값을 직접 측정하기 어려우므로 판단에 사용한 사실을 확인할 수 있어야 한다.</td><td>LLM이 근거에 없는 숫자를 만들면 문장을 차단한다.<br><span class="meas">미등록 숫자 5/5 차단, 사실 문장 3/3 통과, 근거 기록 시험 통과</span></td><td>핵심 ASR</td></tr>
-      <tr><td>QA2</td><td><strong>기능적응성</strong></td><td>평균 공식값을 그대로 쓰지 않고 사용자 응답으로 개인 경계를 바꿔야 한다.</td><td>말하기 테스트 응답으로 경계를 갱신한다.<br><span class="meas">15개 가상 사례에서 최종 오차 3bpm 이하, 5세션 안착, 마지막 4세션 폭 4bpm 이하, 세션 이동 10bpm 이하</span></td><td>핵심 ASR</td></tr>
-      <tr><td>QA3</td><td><strong>제어가능성</strong></td><td>생성 문장이 판정 권한을 가져서는 안 된다.</td><td>판정과 어긋난 문장을 막고 기본 문구로 바꾼다.<br><span class="meas">위반 문장 10/10 차단, 정상 문장 5/5 통과, LLM 실패 경로 시험 통과</span></td><td>핵심 ASR</td></tr>
-      <tr><td>QA4</td><td><strong>강건성</strong></td><td>센서값이 흔들리면 판정과 개인화도 흔들린다.</td><td>범위 밖 값을 버리고 경계 부근의 판정 번복을 줄인다.<br><span class="meas">이상치 50/50 차단, 정상값 오차단 0/500, 번복 60% 이상 감소, 실제 이동 2틱 안에 반영</span></td><td>지원 QA</td></tr>
+      <tr><td>QA1</td><td><strong>설명용이성</strong><br><span class="note">AI 품질</span></td><td>판단에 사용한 사실을 확인할 수 있어야 한다.</td><td>미등록 숫자 차단율 <span class="meas">100%(5/5)</span>, 사실 문장 통과율 <span class="meas">100%(3/3)</span></td><td>핵심 ASR</td></tr>
+      <tr><td>QA2</td><td><strong>기능적응성</strong><br><span class="note">AI 품질</span></td><td>사용자 응답으로 개인 경계를 조정해야 한다.</td><td>15개 사례의 목표 오차 도달률 <span class="meas">100%(15/15)</span>; 기준 사례의 안정성과 이동 한도 충족</td><td>핵심 ASR</td></tr>
+      <tr><td>QA3</td><td><strong>제어가능성</strong><br><span class="note">AI 품질</span></td><td>LLM이 판단 권한을 가져서는 안 된다.</td><td>의도적으로 만든 위반 문장 탐지율 <span class="meas">100%(10/10)</span>, 정상 통과율 <span class="meas">100%(5/5)</span></td><td>핵심 ASR</td></tr>
+      <tr><td>QA4</td><td><strong>강건성</strong><br><span class="note">AI 품질</span></td><td>센서값이 흔들려도 판정이 안정적이어야 한다.</td><td>이상치 차단율 <span class="meas">100%(50/50)</span>, 정상 오차단율 <span class="meas">0%(0/500)</span>, 번복 감소 기준 <span class="meas">100%(5/5 시드)</span></td><td>지원 QA</td></tr>
+      <tr><td>QA5</td><td><strong>테스트가능성</strong><br><span class="note">일반 품질</span></td><td>실제 달리기 없이 같은 조건을 반복해야 한다.</td><td>QA1~QA4 자동 경로 <span class="meas">100%(4/4) 제공</span>, 동일 시드 재현율 <span class="meas">100%(5/5)</span></td><td>핵심 ASR</td></tr>
     </tbody>
   </table></div>
-  <h3 class="num"><span>■</span>QA에서 설계와 검증으로</h3>
+  <h3 class="num"><span>■</span>QAS가 설계와 검증으로 이어지는 과정</h3>
   <div class="tbl"><table class="decide">
     <thead><tr><th style="width:11em">QA</th><th>연결된 설계</th><th style="width:9em">검증</th></tr></thead>
     <tbody>
       <tr><td>QA1 설명용이성</td><td>DP1: 규칙이 사실을 확정하고 근거를 기록</td><td>검증 표 QA1</td></tr>
       <tr><td>QA2 기능적응성</td><td>DP3: 제한된 온라인 개인화</td><td>검증 표 QA2</td></tr>
       <tr><td>QA3 제어가능성</td><td>DP2: 출력 가드와 기본 문구</td><td>검증 표 QA3</td></tr>
-      <tr><td>QA4 강건성</td><td>DP4: 입력 가드와 히스테리시스</td><td>검증 표 QA4</td></tr>
+      <tr><td>QA4 강건성</td><td>DP4: 입력 가드와 히스테리시스(경계에 약간의 여유를 두어 판정이 자주 바뀌지 않게 하는 규칙)</td><td>검증 표 QA4</td></tr>
+      <tr><td>QA5 테스트가능성</td><td>DP5: 입력 교체와 seed 기반 가상 러너</td><td>검증 표 QA5</td></tr>
     </tbody>
   </table></div>
-  <p class="note">RunSource와 가상 러너는 네 QAS를 워치 없이 반복 검증하게 하는 공통 설계 수단이다. 수행효율성은 실기기 측정이 필요한 보조 제약으로 관리한다.</p>
+  <p class="note">ASR(Architecture Significant Requirement)은 아키텍처에 큰 영향을 주는 핵심 요구사항을 뜻한다. QA1~QA3과 QA5를 ASR로 선정했고, QA4는 이를 지지하는 품질로 두었다. 수행효율성은 실기기 측정이 필요한 보조 제약으로 관리한다.</p>
   <div class="crumb">과제 소개 <b>요구사항</b> <span>설계</span> <span>구현/검증</span> <span>결론</span></div>
 </section>
 

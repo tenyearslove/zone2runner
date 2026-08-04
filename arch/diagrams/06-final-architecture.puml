@@ -22,7 +22,7 @@ database "저장 (모듈 E)\nData Lake = 세션 이력(SessionStore)\nModel Arti
 
 package "AI Development Subsystem (개인 적응으로 축소)" {
   component "개인 적응 갱신 (모듈 F1)\n말하기 테스트 응답으로\nBayesian 개인 경계 갱신" <<Retraining>> as ADAPT #B2DFDB
-  component "공통 검증 구조 (모듈 F2)\n경계를 정해 둔 가상 러너\n+ 고정 시드 자동시험" <<Model Testing>> as SIM #FFAB91
+  component "공통 검증 구조 (모듈 F2)\n경계를 정해 둔 가상 러너\n+ seed 기반 난수 자동시험\n(QA1~QA4 반복 검증)" <<Model Testing>> as SIM #FFAB91
   component "모델 준비 관리자 (A7-1)\nNano 상태/다운로드\n(Model Registry 인접)" <<Model Registry>> as REG #FFAB91
 }
 

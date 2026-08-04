@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Appendix 뷰 — Use Case/Context/Module/C&C/Deployment</title>
+<title>부록 아키텍처 뷰 — Use Case/Context/Module/C&C/Deployment</title>
 <style>*,*::before,*::after{box-sizing:border-box}img{max-width:100%;height:auto}</style>
 <style>
   :root {
@@ -185,9 +185,9 @@
 
 <section class="slide">
   <div class="slide-head"><h2>Appendix. Use Case</h2><span class="sec-no">A</span></div>
-  <div class="fig-frame"><img src="img/05-usecase.png?v=bfff19db" alt="Use Case 다이어그램"></div>
+  <div class="fig-frame"><img src="img/05-usecase.png?v=bfff19db" data-img="usecase" alt="Use Case 다이어그램"></div>
   <ul>
-    <li>그림에는 <strong>러너</strong>와 <strong>개발자·검증자</strong>가 나온다. 러너는 앱 기능을 사용하고, 검증자는 시험 입력으로 네 QAS를 반복 확인한다. 검증 기능을 상용 기능으로 주장하는 것은 아니다.</li>
+    <li>그림에는 <strong>러너</strong>와 <strong>개발자·검증자</strong>가 나온다. 러너는 앱 기능을 사용하고, 검증자는 시험 입력으로 다섯 QAS를 반복 확인한다. 검증 기능을 상용 기능으로 주장하는 것은 아니다.</li>
     <li>러너의 흐름은 프로필 등록 → 세션 시작 → 존 확인과 음성 코칭 → 말하기 테스트 응답 → 리포트와 코칭 근거 확인 순서다. 말하기 테스트 응답은 개인 경계 갱신에 사용된다.</li>
     <li>설정에서는 코칭 빈도·음성·말투 등을 바꿀 수 있고, 홈과 설정 화면에서 Nano 모델 상태와 다운로드 필요 여부를 확인할 수 있다.</li>
   </ul>
@@ -196,7 +196,7 @@
 
 <section class="slide">
   <div class="slide-head"><h2>Appendix. Context View</h2><span class="sec-no">A</span></div>
-  <div class="fig-frame"><img src="img/01-context.png?v=09044dc9" alt="Context 다이어그램"></div>
+  <div class="fig-frame"><img src="img/01-context.png?v=09044dc9" data-img="context" alt="Context 다이어그램"></div>
   <ul>
     <li>시스템은 폰 앱과 워치 앱이다. 워치는 심박·케이던스를 측정하고 화면에 표시하며, 폰은 판정·분석·개인화·코칭을 담당한다.</li>
     <li>외부 연결은 Health Services, 폰 GPS, 기기 안의 별도 프로세스인 Gemini Nano/AICore, Open-Meteo, OSM 지도 타일 서버다. 날씨 조회 때 반올림한 위도·경도가 Open-Meteo로 전송되고, 지도 화면은 OSM 타일을 요청한다. 심박·개인화·세션 분석은 자체 서버나 외부 AI API로 보내지 않는다.</li>
@@ -207,7 +207,7 @@
 
 <section class="slide">
   <div class="slide-head"><h2>Appendix. 최종 Architecture (Module View)</h2><span class="sec-no">A</span></div>
-  <div class="fig-frame"><img src="img/04-module-view.png?v=ef2b1204" alt="Module View 다이어그램"></div>
+  <div class="fig-frame"><img src="img/04-module-view.png?v=59fbe8bf" data-img="module-view" alt="Module View 다이어그램"></div>
   <ul>
     <li>이 그림은 파일 개수가 아니라 코드 사이의 의존 방향을 보여 준다. 공통 데이터 모델은 안드로이드 기능에 의존하지 않으며, 판정·개인화·분석의 핵심 계산도 기기와 분리돼 있다.</li>
     <li>이 분리 덕분에 최근 JVM 단위시험 153개를 워치 없이 실행했다. 이 숫자는 제품 정확도가 아니라 자동 회귀 범위를 뜻한다.</li>
@@ -218,7 +218,7 @@
 
 <section class="slide">
   <div class="slide-head"><h2>Appendix. 최종 Architecture (C&amp;C View)</h2><span class="sec-no">A</span></div>
-  <div class="fig-frame"><img src="img/02b-component-cnc-simple.png?v=93e3eedb" alt="C&C View 다이어그램(축약)"></div>
+  <div class="fig-frame"><img src="img/02b-component-cnc-simple.png?v=93e3eedb" data-img="cnc-simple" alt="C&C View 다이어그램(축약)"></div>
   <ul>
     <li>실행 흐름은 센서 입력 → 입력 검사 → 규칙 판정·개인 경계·분석·LLM 표현 → 출력 검사 → 화면·음성·리포트 순서다. 세션 결과와 개인 경계는 폰에 저장된다.</li>
     <li>DP1~DP4는 같은 아키텍처에서 각 QAS와 관련된 경로를 강조한 그림이고, DP5는 이 구조를 반복 시험하는 방법을 강조한 그림이다. 서로 다른 다섯 시스템을 제안한 것이 아니다.</li>
@@ -228,7 +228,7 @@
 
 <section class="slide">
   <div class="slide-head"><h2>Appendix. C&amp;C View — 상세판 (전 컴포넌트)</h2><span class="sec-no">A</span></div>
-  <div class="fig-frame"><img src="img/02-component-cnc.png?v=d4b9e935" alt="C&C View 상세 다이어그램"></div>
+  <div class="fig-frame"><img src="img/02-component-cnc.png?v=d4b9e935" data-img="cnc-detail" alt="C&C View 상세 다이어그램"></div>
   <ul>
     <li>상세 그림은 입력 출처부터 판정, 개인 경계, 분석, 코칭 문장, 출력 검사, 저장까지의 연결을 모두 보여 준다. 화살표를 따라가면 어떤 값이 판단과 설명 기록에 사용되는지 확인할 수 있다.</li>
     <li>각 컴포넌트의 책임, 입력·출력, 구현 파일은 <code>arch/component-catalog.md</code>에 정리돼 있다.</li>
@@ -238,7 +238,7 @@
 
 <section class="slide">
   <div class="slide-head"><h2>Appendix. 최종 Architecture (Deployment View)</h2><span class="sec-no">A</span></div>
-  <div class="fig-frame"><img src="img/03-deployment.png?v=a9a66dc4" alt="Deployment 다이어그램"></div>
+  <div class="fig-frame"><img src="img/03-deployment.png?v=a9a66dc4" data-img="deployment" alt="Deployment 다이어그램"></div>
   <ul>
     <li>배치는 워치, 폰, 기기 안의 AICore와 외부의 Open-Meteo·OSM 타일 서버로 나뉜다. 세션과 개인화 값은 폰에 저장된다.</li>
     <li>워치가 측정한 심박과 응답은 Wearable Data Layer로 폰에 전달된다. 폰이 확정한 화면용 존은 <strong>/run/live</strong> 경로로 매초 워치에 보내므로, 판정 주체가 폰 하나라는 설계가 배치에서도 드러난다.</li>

@@ -193,16 +193,16 @@
   <h3 class="num"><span>1.</span>배경</h3>
   <ul>
     <li>이 앱은 코칭 문장을 만들 때 폰 안에서 실행되는 LLM을 사용한다.</li>
-    <li>LLM의 출력은 항상 같지 않다. 판정은 "속도를 낮추기"인데 생성 문장은 반대로 "속도를 올리기"라고 말할 수 있다.</li>
-    <li>그런데 코칭은 달리는 중에 실시간 음성으로 나간다. 사람이 문장 하나하나를 검사해 줄 수 없다. <strong>통제는 사람 손이 아니라 자동으로 작동하는 구조여야 한다.</strong> 그 구조를 고르는 것이 이 설계 결정이다.</li>
+    <li>LLM은 자연스러운 표현을 만들 수 있지만 출력이 매번 같지는 않으며, 요청한 형식이나 제공된 숫자를 벗어날 수 있다.</li>
+    <li>코칭은 달리는 중에 실시간으로 나가므로 사람이 문장마다 확인할 수 없다. <strong>LLM이 맡는 범위와 실패했을 때의 대응을 시스템 구조로 정해야 한다.</strong> 그 구조를 고르는 것이 이 설계 결정이다.</li>
   </ul>
 
   <h3 class="num"><span>2.</span>문제점</h3>
   <ul>
-    <li><strong>프롬프트만으로는 어긋난 문장을 막지 못한다.</strong> 판정은 "초과 — 늦춰라"인데 문장은 "속도를 올려요"가 나올 수 있다. 다만 정답 방향은 LLM 밖의 규칙이 이미 정해 두었다 — 잘못 만들어지는 것은 못 막아도, 나온 문장을 정답과 대조해 잘못 나가는 것은 막을 수 있어야 한다.</li>
-    <li><strong>LLM이 없는 상황도 있다.</strong> 지원하지 않는 기종이 있고, 첫 모델 다운로드가 끝나기 전이거나 응답이 늦거나 실패할 수도 있다. 어느 경우든 코칭은 끊기면 안 된다.</li>
+    <li><strong>판단과 표현의 책임을 나눠야 한다.</strong> 코칭 방향과 근거 숫자는 규칙이 먼저 정하고, LLM은 그 범위 안에서 문장만 만든다.</li>
+    <li><strong>LLM을 사용할 수 없는 상황도 있다.</strong> 지원하지 않는 기종, 첫 모델 다운로드 전, 응답 지연이나 실행 실패에도 코칭이 끊기지 않아야 한다.</li>
     <li><strong>정해 둔 고심박 규칙은 먼저 동작해야 한다.</strong> 설정된 임계값을 넘으면 LLM을 기다리지 않고 규칙 문구를 사용한다.</li>
-    <li><strong>통제가 작동했는지 나중에 확인할 수 있어야 한다.</strong> 어떤 문장을 왜 기각했는지 기록으로 남고, 사용자도 말하기 테스트로 판정 기준을 정정하고 설정에서 코칭 빈도와 말투를 바꿀 수 있어야 한다.</li>
+    <li><strong>자동 대응을 나중에 확인할 수 있어야 한다.</strong> 문장이 왜 기각되거나 기본 문구로 바뀌었는지 기록으로 남겨야 한다.</li>
   </ul>
 
   <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
@@ -237,7 +237,7 @@
           <p class="note" style="margin-top:8px">규칙이 방향과 사실 숫자를 확정하면 LLM은 그 재료로 문장만 만든다. 나온 문장은 형식, 방향, 숫자 세 가지 검사를 거치고, 걸리거나 LLM이 실패하면 "속도 줄이기" 같은 짧은 문구로 바꿔 내보낸다. 위험 심박 권고는 LLM을 거치지 않고, 모든 호출의 경로와 기각 사유가 기록된다</p>
         </td>
         <td>
-          <div class="fig-frame"><img src="img/dp-02-controllability-counter-simple.png?v=a629199a" alt="2안 — LLM 판단 위임 아키텍처 다이어그램"></div>
+          <div class="fig-frame"><img src="img/dp-02-controllability-counter-simple.png?v=a629199a" data-img="dp2-counter" alt="2안 — LLM 판단 위임 아키텍처 다이어그램"></div>
           <p class="note" style="margin-top:8px">심박과 페이스를 프롬프트로 주고 LLM이 코칭 방향과 문장을 함께 정한다. 프롬프트 지시와 간단한 출력 필터로 잘못된 문장을 줄인다.</p>
         </td>
       </tr>
@@ -249,14 +249,14 @@
         </td>
         <td>
           <p>기능적응성 <span class="stars">★★★★</span><br><span class="note">규칙에 없는 상황에도 문맥을 읽은 코칭을 만들 잠재력</span></p>
-          <p>기능정확성 <span class="stars">★★★</span><br><span class="note">풍부한 문맥 반영 — 잠재력</span></p>
+          <p>설명용이성 <span class="stars">★★★</span><br><span class="note">문맥을 풍부하게 표현할 수 있지만 판단 근거와의 연결은 별도 확인이 필요</span></p>
         </td>
       </tr>
       <tr>
         <th class="rowh">단점</th>
         <td class="win">
           <p>기능적응성 <span class="stars">★★★</span><br><span class="note">언제 무엇을 코칭할지는 규칙에 묶여, 새 상황은 규칙을 추가해야 한다</span></p>
-          <p>수행효율성 <span class="stars">★★★★</span><br><span class="note">검사와 폴백의 부담이 조금 있다</span></p>
+          <p>테스트가능성 <span class="stars">★★★★★</span><br><span class="note">검사 조건과 기본 문구 전환을 자동시험으로 반복 확인할 수 있다</span></p>
         </td>
         <td>
           <p>제어가능성 <span class="stars">★★</span><br><span class="note">개입 수단이 프롬프트 수정뿐이고, 고쳐졌는지 확인이 어렵다</span></p>
@@ -287,8 +287,8 @@
 
   <h3 class="num"><span>2.</span>채택 근거</h3>
   <ul>
-    <li><strong>문제가 생기면 손쓸 수단이 구조 안에 있다.</strong> 어긋난 문장은 기각되고(교정), LLM이 없으면 짧은 문구로 대신하고(보완), 위험 심박이면 LLM을 거치지 않는다(안전전환). 셋 다 사람 손 없이 자동으로 작동한다. 2안에서 손쓸 수단은 프롬프트 수정뿐이고 그 효과는 보장되지 않는다.</li>
-    <li><strong>LLM의 성능과 관계없이 통제가 동작한다.</strong> 출력을 규칙이 다시 검사하고, 기준에 맞지 않으면 기본 문구로 바꾼다. 2안은 LLM이 프롬프트를 잘 따르는지에 더 크게 의존한다.</li>
+    <li><strong>LLM 출력이 기준을 벗어나거나 모델을 사용할 수 없을 때 자동으로 대응한다.</strong> 기준을 벗어난 문장은 기각하고, LLM이 없으면 짧은 기본 문구로 바꾸며, 고심박 권고는 LLM을 거치지 않는다.</li>
+    <li><strong>통제 기준은 LLM 밖에 있다.</strong> 규칙이 방향·형식·숫자를 확인하고 기준에 맞지 않으면 기본 문구로 바꾼다. 2안은 판단과 표현을 모두 LLM에 맡기므로 실패 시 비교할 기준이 약하다.</li>
     <li><strong>실패해도 코칭이 이어진다.</strong> LLM이 없거나 실패했을 때 1안의 최악은 "짧은 문구 코칭"이고, 2안의 최악은 "코칭 중단"이다.</li>
     <li><strong>통제 작동을 데이터로 확인한다.</strong> 어떤 문장이 왜 기각됐고 언제 폴백했는지가 세션마다 기록되어 리포트에서 확인할 수 있다.</li>
     <li><strong>DP1과 같은 구조에서 나온다.</strong> 판단을 규칙에 두었기 때문에 설명이 실제 판단과 일치하고(DP1), 나온 문장을 검사할 정답도 시스템 안에 생긴다(DP2). 하나의 구조 선택이 두 품질을 함께 만든다.</li>
@@ -296,7 +296,7 @@
 
   <h3 class="num"><span>3.</span>보완 계획</h3>
   <ul>
-    <li><strong>이번 과제에서 확인</strong>: 선언한 검증 집합에서 위반 문장 10/10 차단, 정상 문장 5/5 통과, LLM 실패·로딩·모델 없음 경로 시험 통과.</li>
+    <li><strong>이번 과제에서 확인</strong>: 의도적으로 만든 위반 문장 탐지율 100%(10/10), 정상 문장 통과율 100%(5/5), LLM 실패·로딩·모델 없음 경로의 기본 문구 전환 시험 통과.</li>
     <li><strong>향후 확인</strong>: 더 다양한 한국어 표현으로 시험 집합을 늘리고, 자주 차단되는 표현을 바탕으로 프롬프트와 검사 규칙을 다듬는다.</li>
   </ul>
 
@@ -310,15 +310,12 @@
     <span class="sec-no">A</span>
   </div>
 
-  <h3 class="num"><span>A1.</span>문제점이 걸리는 품질 속성</h3>
+  <h3 class="num"><span>A1.</span>이 설계 결정이 다루는 품질 문제</h3>
   <ul>
-    <li>작은 LLM은 프롬프트를 가끔 어긴다 → 제어가능성</li>
-    <li>실시간이라 출력마다 사람이 검수할 수 없다 → 제어가능성</li>
-    <li>미지원 기종, 다운로드 전, 지연, 오류로 LLM이 없을 수 있다 → 강건성</li>
-    <li>위험 심박 권고는 지연과 오작동을 허용할 수 없다 → 제어가능성(안전전환)</li>
-    <li>통제가 작동했는지 사후 확인이 필요하다 → 제어가능성(감사)</li>
-    <li>사용자도 개입할 수 있어야 한다 → 제어가능성(교정, 보완)</li>
-    <li>통제가 과하면 표현이 굳는다 → 기능적응성</li>
+    <li>실시간 출력마다 사람이 검토할 수 없다 → 제어가능성</li>
+    <li>모델 미지원, 다운로드 전, 지연이나 오류에도 코칭이 이어져야 한다 → 강건성</li>
+    <li>판단 근거와 생성 문장이 같은 사실을 사용해야 한다 → 설명용이성</li>
+    <li>가드와 기본 문구 전환을 같은 입력으로 반복 확인해야 한다 → 테스트가능성</li>
   </ul>
 
   <h3 class="num"><span>A2.</span>채택안의 통제 단계 <span class="note" style="font-weight:400">(판단 권한 제한부터 기록까지 순서대로 적용)</span></h3>
@@ -338,7 +335,7 @@
   </table>
   </div>
 
-  <h3 class="num"><span>A3.</span>QA 별점 종합</h3>
+  <h3 class="num"><span>A3.</span>선정 품질에 미치는 영향</h3>
   <div class="tbl">
   <table class="decide">
     <thead>
@@ -348,23 +345,15 @@
       <tr><td>제어가능성</td><td style="text-align:center"><span class="stars">★★★★★</span></td><td style="text-align:center"><span class="stars">★★</span></td></tr>
       <tr><td>강건성</td><td style="text-align:center"><span class="stars">★★★★★</span></td><td style="text-align:center"><span class="stars">★★</span></td></tr>
       <tr><td>설명용이성</td><td style="text-align:center"><span class="stars">★★★★★</span></td><td style="text-align:center"><span class="stars">★★</span></td></tr>
-      <tr><td>수행효율성</td><td style="text-align:center"><span class="stars">★★★★</span></td><td style="text-align:center"><span class="stars">★★★</span></td></tr>
-      <tr><td>기능적응성</td><td style="text-align:center"><span class="stars">★★★</span></td><td style="text-align:center"><span class="stars">★★★★</span></td></tr>
-      <tr><td>기능정확성</td><td style="text-align:center"><span class="stars">★★★★</span></td><td style="text-align:center"><span class="stars">★★★</span> (잠재, 미검증)</td></tr>
+      <tr><td>테스트가능성</td><td style="text-align:center"><span class="stars">★★★★★</span></td><td style="text-align:center"><span class="stars">★★★</span></td></tr>
     </tbody>
   </table>
   </div>
   <p class="note"><strong>평가 조건</strong>: 폰 안에서 실행하고, 실시간으로 문장을 내보내며, LLM을 사용할 수 없는 상황에도 코칭이 이어져야 한다는 조건에서 비교했다. 사람이 모든 출력을 미리 검토할 수 있는 서비스라면 2안의 평가가 달라질 수 있다.</p>
 
-  <h3 class="num"><span>A4.</span>예상 질문</h3>
-  <ul>
-    <li>"프롬프트를 잘 쓰면 2안도 통제되지 않나?" → 프롬프트 규정은 권고이지 강제가 아니다. 물론 2안에도 규칙 판정기를 병렬 검증기로 붙일 수는 있다 — 그러나 그 검증기가 곧 규칙 판정이고, 불일치 때 규칙을 따라야 하는 순간 1안 구조로 수렴한다. 2안 고유의 것은 "규칙 없이 LLM만 믿는 구간"인데, 그 구간이 통제되지 않는다.</li>
-    <li>"검사가 정상 문장까지 기각해 코칭이 굳지 않나?" → 가능하다. 그래서 기각이 전부 기록되고, 기각률이 높으면 기준을 데이터로 조정한다. 기각의 비용은 덜 자연스러운 짧은 문구이지 코칭 중단이 아니다.</li>
-  </ul>
-
-  <h3 class="num"><span>A5.</span>용어 대조(심사용)와 근거 문헌</h3>
+  <h3 class="num"><span>A4.</span>용어 대조(심사용)와 근거 문헌</h3>
   <p class="note">개입 가능성 = intervenability(ISO/IEC 25059 제어가능성의 핵심) / 맡기는 일 자체를 좁히는 통제 = architectural containment(구조적 격리) / 실패 시 무손상 전환 = fail-safe fallback / 사람 개입 = HITL(루프 안 교정), HOTL(루프 위 감독) / 사후 확인 = audit(감사)</p>
-  <p class="note">근거 문헌: ISO/IEC 25059(제어가능성 정의) / LLM 가드레일 계층 방어 서베이(구조적 격리가 가장 강한 층) / LLM 단독 판단 회피 권고 / 소형 모델 지시 이행 한계(이행률 60% 미만 사례)</p>
+  <p class="note">근거 문헌: ISO/IEC 25059(제어가능성 정의) / LLM 가드레일 계층 방어 서베이(구조적 격리가 가장 강한 층) / LLM 단독 판단 회피 권고 / 생성 결과 검사와 실패 경로 분리를 다룬 가드레일 연구</p>
   <p class="note">상세 = <code>arch/dp/dp-02-controllability/</code> (decision / research / counter-catalog)</p>
 
   <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>

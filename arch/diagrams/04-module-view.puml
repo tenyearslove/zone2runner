@@ -53,7 +53,7 @@ ROOT <..> WSVC : Wearable Data Layer\n(프로세스 간 - 코드 의존 아님)
 note bottom of DOM
   domain = 리프(의존 없음, 안드로이드 미의존)
   판정/개인화/분석의 핵심 계산을 기기와 분리
-  → JVM 단위시험 153개를 워치 없이 실행
+  → QAS 자동 회귀시험을 워치 없이 실행
 end note
 
 legend right

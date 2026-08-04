@@ -1,8 +1,8 @@
 # Report HTML — 인증 보고서 화면용 덱
 
-보고서 원고(`report/report-0NN-*.md`)를 슬라이드 형태로 렌더한 HTML. 검토용으로 브라우저에서 바로 열어 보거나, 자체 완결 단일 파일로 뽑아 공유한다.
+AI Specialist 설계 과제의 제출용 HTML 보고서다. 브라우저에서 검토하고, 같은 HTML을 16:9 PDF로 인쇄하거나 자체 완결 단일 파일로 만들어 공유한다.
 
-**정본은 md 원고다.** 이 폴더의 HTML은 그 표현물이므로, 내용을 고칠 때는 원고 md와 `src/` 본문을 함께 고친다.
+**제출 품질의 기준은 `docs/src/` HTML 원본과 빌드 결과다.** `report/`, `spec/`, `docs/review/`의 Markdown은 근거와 작업 결정을 보존하는 보조 문서다. 내용이나 논리를 바꾸면 관련 보조 문서도 함께 확인해 다시 모순이 생기지 않게 한다.
 
 ## 파일
 
@@ -45,11 +45,11 @@ powershell -File docs/build.ps1 -Inline -OutDir C:\temp\zone2runner-deck
 
 ## 고칠 때
 
-1. 원고 md를 고친다(정본).
-2. `src/` 의 대응 본문을 같은 내용으로 고친다. 통합본은 `src/10-full-report-parts.html` 에 각 파트가 `id="part-*"` 앵커와 함께 이어져 있어, 개별 덱과 통합본 두 곳을 모두 고쳐야 한다.
+1. 관련 원고 md가 있으면 근거와 설명을 함께 고친다.
+2. `src/` 의 대응 본문을 고친다. `10-full-report-parts.html`은 빌드할 때 01~09 원본에서 자동 생성되므로 직접 편집하지 않는다.
 3. `build.ps1` 을 돌리고 결과를 커밋한다.
 
-도식 자리표시자는 두 가지다 — `{{IMG1}}` 처럼 이름을 직접 쓰는 방식(DP2~5, 아키텍처, Appendix)과 `<img data-img="키">` 방식(DP1, 통합본). 키와 PNG 경로의 대응, 그리고 덱마다 어떤 자리표시자를 쓰는지는 `src/decks.json` 에 있다. 덱을 새로 추가할 때도 `decks.json` 에 항목 하나를 더하면 되고 스크립트는 손대지 않는다.
+도식은 `<img data-img="키">`로 지정하고, 키와 PNG 경로의 대응은 `src/decks.json`에서 관리한다. 빌더는 이전 `{{IMG1}}` 자리표시자도 호환하지만 새 문서에는 `data-img` 방식을 사용한다. 덱을 추가할 때는 `decks.json`에 항목을 더한다.
 
 ## 배포 (GitHub Pages) 와 구 Artifact 채널
 

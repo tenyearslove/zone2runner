@@ -11,7 +11,7 @@
 <div class="deck">
 
 <div class="deck-head">
-  <h1>구현 / AI 품질 검증 / 결론</h1>
+  <h1>구현 / QAS 검증 / 결론</h1>
   <p>설계가 실제 기능으로 어떻게 구현됐는지 보여 주고, 네 가지 QAS의 자동 검증 결과와 한계를 정리한다.</p>
 </div>
 
@@ -89,15 +89,16 @@
 </section>
 
 <section class="slide">
-  <div class="slide-head"><h2>AI 품질 검증 결과</h2><span class="sec-no">4</span></div>
+  <div class="slide-head"><h2>QAS별 검증 결과</h2><span class="sec-no">4</span></div>
   <p class="note">같은 QAS의 목표와 결과를 비교했다. 아래의 달성은 자동화된 구조 검증 범위에서의 달성을 뜻한다.</p>
   <div class="tbl"><table class="decide">
-    <thead><tr><th style="width:8em">AI QA</th><th style="width:14em">적용한 설계</th><th>합격 기준과 결과</th><th style="width:4em">판정</th></tr></thead>
+    <thead><tr><th style="width:8em">품질 속성</th><th style="width:14em">적용한 설계</th><th>성공 기준과 결과</th><th style="width:4em">판정</th></tr></thead>
     <tbody>
-      <tr><td>QA1<br><strong>설명용이성</strong></td><td>규칙이 사실 확정, 숫자 가드, 근거 기록</td><td>미등록 숫자 전부 차단 → <strong>5/5 차단</strong><br>사실 문장 전부 통과 → <strong>3/3 통과</strong><br>근거 기록 저장·복원 시험 통과</td><td class="ok">달성</td></tr>
-      <tr><td>QA2<br><strong>기능적응성</strong></td><td>말하기 테스트와 제한된 Bayesian 갱신</td><td>15개 사례에서 최종 오차 3bpm 이하 → <strong>0.20~0.77bpm</strong><br>5세션 안착 → <strong>모두 1~2세션</strong><br>경계 폭 4bpm 이하 → <strong>3.04bpm</strong><br>세션 이동 10bpm 이하 → <strong>최대 9.97bpm</strong></td><td class="ok">달성</td></tr>
-      <tr><td>QA3<br><strong>제어가능성</strong></td><td>방향 가드와 기본 문구</td><td>위반 문장 전부 차단 → <strong>10/10 차단</strong><br>정상 문장 전부 통과 → <strong>5/5 통과</strong><br>LLM 실패·로딩·모델 없음 경로 시험 통과</td><td class="ok">달성</td></tr>
-      <tr><td>QA4<br><strong>강건성</strong></td><td>입력 가드와 판정 히스테리시스</td><td>이상치 전부 차단 → <strong>50/50 차단</strong>, 정상 오차단 <strong>0/500</strong><br>번복 60% 이상 감소 → <strong>67.1~74.7%</strong><br>실제 이동 2틱 안에 반영 → <strong>1틱</strong></td><td class="ok">달성</td></tr>
+      <tr><td>QA1<br><strong>설명용이성</strong></td><td>규칙이 사실 확정, 숫자 가드, 근거 기록</td><td>미등록 숫자 차단율 <strong>100%(5/5)</strong><br>사실 문장 통과율 <strong>100%(3/3)</strong><br>근거 기록 저장·복원 시험 통과</td><td class="ok">달성</td></tr>
+      <tr><td>QA2<br><strong>기능적응성</strong></td><td>말하기 테스트와 제한된 Bayesian 갱신</td><td>15개 사례 목표 오차 도달률 <strong>100%(15/15)</strong><br>모의 응답 10회 이내 도달, 응답 40회 뒤 오차 <strong>0.20~0.77bpm</strong><br>기준 사례의 마지막 4세션 폭 <strong>3.04bpm</strong>, 세션 최대 이동 <strong>9.97bpm</strong></td><td class="ok">달성</td></tr>
+      <tr><td>QA3<br><strong>제어가능성</strong></td><td>방향·형식·숫자 가드와 기본 문구</td><td>의도적으로 만든 위반 문장 탐지율 <strong>100%(10/10)</strong><br>정상 문장 통과율 <strong>100%(5/5)</strong><br>LLM 미가용 경로의 기본 문구 전환 시험 통과</td><td class="ok">달성</td></tr>
+      <tr><td>QA4<br><strong>강건성</strong></td><td>입력 가드와 판정 히스테리시스</td><td>이상치 차단율 <strong>100%(50/50)</strong>, 정상 오차단율 <strong>0%(0/500)</strong><br>번복 감소 기준 충족률 <strong>100%(5/5 seed)</strong>, 실제 감소 폭 <strong>67.1~74.7%</strong><br>+10bpm 계단 입력 전환 <strong>1틱</strong></td><td class="ok">달성</td></tr>
+      <tr><td>QA5<br><strong>테스트가능성</strong></td><td>RunSource, seed 기반 가상 러너, 순수 로직 시험</td><td>QA1~QA4 워치 없는 자동 경로 <strong>100%(4/4) 제공</strong><br>동일 seed 재현율 <strong>100%(5/5)</strong><br>전체 JVM 단위시험 <strong>153/153 통과</strong></td><td class="ok">달성</td></tr>
     </tbody>
   </table></div>
   <p class="note">측정 코드는 QaMeasurementTest.kt에 있으며 결과는 app/app/build/qa-measurements에 저장된다.</p>
@@ -113,10 +114,11 @@
       <tr><td>기능적응성</td><td>가상 러너에서 개인화 값이 정해 둔 목표 안으로 수렴하고 안정됐다.</td><td>실제 사람의 유산소 역치를 0.20~0.77bpm 오차로 찾았다는 뜻은 아니다.</td></tr>
       <tr><td>제어가능성</td><td>선언한 위반 문장과 LLM 실패 경로를 규칙이 처리했다.</td><td>세상에 존재하는 모든 잘못된 표현을 막는다는 뜻은 아니다.</td></tr>
       <tr><td>강건성</td><td>정해 둔 이상값과 노이즈 입력에서 판정 규칙이 목표대로 동작했다.</td><td>실제 손목 센서의 정확도와 모든 실외 환경을 검증했다는 뜻은 아니다.</td></tr>
+      <tr><td>테스트가능성</td><td>같은 seed의 난수 입력을 다시 만들고 네 AI QAS를 워치 없이 실행했다.</td><td>시뮬레이션 결과가 실제 사람과 센서의 정확도를 대신한다는 뜻은 아니다.</td></tr>
     </tbody>
   </table></div>
   <h3 class="num"><span>■</span>공통 검증 기반</h3>
-  <p>RunSource 교체, 가상 러너, 고정 시드, JVM 단위시험은 네 QAS를 워치 없이 반복 확인하게 해 준다. 최근 전체 단위시험 153개가 통과했다. 시험 개수는 제품 정확도가 아니라 자동 회귀 범위를 보여 주는 참고 정보다.</p>
+  <p>RunSource 교체, 가상 러너, 고정 seed, JVM 단위시험은 네 AI QAS를 워치 없이 반복 확인하게 해 준다. 전체 단위시험 153/153 통과는 제품 정확도가 아니라 자동 회귀 범위를 보여 주는 참고 정보다.</p>
   <h3 class="num"><span>■</span>보조 성능 확인</h3>
   <p>60분 분량 3600틱의 JVM 로직 비용은 틱당 0.1ms 미만이었다. 워치 통신, 화면, TTS, LLM을 포함하지 않으므로 실기기 전체 성능으로 일반화하지 않는다.</p>
   <div class="crumb">과제 소개 <span>요구사항</span> <span>설계</span> <b>구현/검증</b> <span>결론</span></div>
@@ -126,9 +128,9 @@
   <div class="slide-head"><h2>결론</h2><span class="sec-no">5</span></div>
   <h3 class="num"><span>1.</span>주요 성과</h3>
   <ul>
-    <li><strong>문제와 제약에서 네 가지 AI 품질을 선정했다.</strong> 설명용이성, 기능적응성, 제어가능성, 강건성이 프로젝트의 핵심 설계를 이끌었다.</li>
-    <li><strong>품질 요구를 실제 구조로 구현했다.</strong> 사용자 응답 기반 개인화, 규칙 중심의 판단, LLM 출력 가드, 입력 노이즈 방어가 각각 코드와 화면에 연결된다.</li>
-    <li><strong>같은 기준으로 구현을 검증했다.</strong> 각 QAS에 미리 정한 입력과 합격 기준을 적용했고, 네 항목 모두 자동화된 구조 검증 범위에서 목표를 만족했다.</li>
+    <li><strong>문제와 제약에서 다섯 가지 품질을 선정했다.</strong> 네 가지 AI 품질과 테스트가능성이 프로젝트의 핵심 설계를 이끌었다.</li>
+    <li><strong>품질 요구를 실제 구조로 구현했다.</strong> 사용자 응답 기반 개인화, 규칙 중심의 판단, LLM 출력 가드, 입력 노이즈 방어, 반복 가능한 시뮬레이션이 각각 코드와 화면에 연결된다.</li>
+    <li><strong>같은 기준으로 구현을 검증했다.</strong> 각 QAS에 미리 정한 입력과 성공 기준을 적용했고, 다섯 항목 모두 자동화된 구조 검증 범위에서 목표를 만족했다.</li>
     <li><strong>확인한 범위와 확인하지 않은 범위를 나눴다.</strong> 실제 사람의 생리 정확도나 사용자 효과를 자동시험 결과로 바꾸어 말하지 않았다.</li>
   </ul>
   <h3 class="num"><span>2.</span>과제 규정 충족</h3>
@@ -136,9 +138,9 @@
     <thead><tr><th style="width:10em">규정</th><th style="width:13em">요구</th><th>이 과제</th></tr></thead>
     <tbody>
       <tr><td>기능 요구사항</td><td>4개 이상</td><td><strong>6개</strong>, AI 관련 5개</td></tr>
-      <tr><td>품질속성</td><td>4개 이상, AI 품질 2개 이상</td><td><strong>AI 품질 4개</strong></td></tr>
-      <tr><td>설계 결정</td><td>대안 비교 포함</td><td><strong>5건</strong>: 품질 설계 4건과 공통 검증 구조 1건</td></tr>
-      <tr><td>검증</td><td>품질속성 검증</td><td><strong>QA1~QA4</strong>의 자동 검증 결과 제시</td></tr>
+      <tr><td>품질속성</td><td>4개 이상, AI 품질 2개 이상</td><td><strong>5개</strong>: AI 품질 4개와 일반 품질 1개</td></tr>
+      <tr><td>설계 결정</td><td>대안 비교 포함</td><td><strong>5건</strong>: 다섯 품질에 대한 설계 결정</td></tr>
+      <tr><td>검증</td><td>품질속성 검증</td><td><strong>QA1~QA5</strong>의 자동 검증 결과 제시</td></tr>
     </tbody>
   </table></div>
   <h3 class="num"><span>3.</span>향후 확인 항목</h3>

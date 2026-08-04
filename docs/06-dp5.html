@@ -179,7 +179,7 @@
 <div class="deck">
 
 <div class="deck-head">
-  <h1>DP5. 공통 검증 구조 — 네 QAS를 반복 확인하는 설계</h1>
+  <h1>DP5. 테스트가능성 — 같은 조건을 반복 검증하는 설계</h1>
   <p>인증과제 샘플(씬스틸러) DP 형식 3장 + Appendix 1장 — 2026-08-03 v2(리뷰 반영: 개별화 채택안+상세 도식) — 정본: <code>arch/dp/dp-05-testability/-decision.md</code>, 원고: <code>report/report-012</code></p>
 </div>
 
@@ -194,7 +194,7 @@
   <ul>
     <li>이 시스템은 검증하기 어려운 조건이 겹쳐 있다. 실제 사람의 Zone 2 경계 정답지가 없고, 같은 달리기를 정확히 반복할 수 없으며, 워치와 폰이 함께 동작한다.</li>
     <li>판정, 개인화, 코칭 로직은 개발 중에 계속 바뀐다. 매번 직접 달려야만 확인할 수 있다면 1인 과제에서 충분한 반복 검증이 어렵다.</li>
-    <li>그래서 <strong>실제로 달리지 않아도 입력부터 판정·코칭·리포트까지 같은 코드 경로를 반복 확인하는 구조</strong>를 선택했다. 테스트가능성은 별도 AI QA가 아니라 네 QAS를 검증하게 하는 공통 기반이다.</li>
+    <li>그래서 <strong>실제로 달리지 않아도 입력부터 판정·코칭·리포트까지 같은 코드 경로를 반복 확인하는 구조</strong>를 선택했다. 테스트가능성은 일반 소프트웨어 품질이지만, 실제 달리기를 반복하기 어려운 제약 때문에 이 시스템의 구조를 바꾼 핵심 요구사항이다.</li>
   </ul>
 
   <h3 class="num"><span>2.</span>문제점</h3>
@@ -234,10 +234,10 @@
         <th class="rowh">구조</th>
         <td class="win">
           <div class="fig-frame"><img src="img/dp-05-testability-adopted-simple.png?v=8c051fe8" data-img="dp5-adopted" alt="1안 — 입력 교체와 반복 시뮬레이션 구조"></div>
-          <p class="note" style="margin-top:8px">실제 센서, 가상 러너, 수동 입력이 같은 인터페이스를 사용한다. 뒤의 판정·개인화·분석 로직은 입력 출처와 분리된다. 경계를 정해 둔 가상 러너의 결과를 다음 세션 입력에 다시 반영해 개인화 수렴을 빠르게 확인하고, 기기와 분리한 로직은 153개 JVM 단위시험으로 반복 검사한다. 이 시험 개수는 제품 정확도가 아니라 자동 회귀 범위를 뜻한다</p>
+          <p class="note" style="margin-top:8px">실제 센서, 가상 러너, 수동 입력이 같은 인터페이스를 사용한다. 뒤의 판정·개인화·분석 로직은 입력 출처와 분리된다. 경계를 정해 둔 가상 러너의 결과를 다음 세션 입력에 다시 반영해 개인화 수렴을 빠르게 확인하고, 기기와 분리한 로직은 JVM 단위시험으로 반복 검사한다. QA1~QA4 검증 경로 4개를 모두 워치 없이 실행하고, 같은 seed 5종의 입력이 정확히 재현되는지 확인한다</p>
         </td>
         <td>
-          <div class="fig-frame"><img src="img/dp-05-testability-counter-simple.png?v=6f3c324e" alt="2안 — 실기기 결합 검증 아키텍처 다이어그램"></div>
+          <div class="fig-frame"><img src="img/dp-05-testability-counter-simple.png?v=6f3c324e" data-img="dp5-counter" alt="2안 — 실기기 결합 검증 아키텍처 다이어그램"></div>
           <p class="note" style="margin-top:8px">센서 API를 로직에 직접 연결한다. 실제 기기와 실제 달리기 조건을 확인할 수 있지만, 같은 입력을 반복하기 어렵고 결과를 사람이 비교해야 한다. 위험하거나 드문 상황도 원하는 시점에 만들기 어렵다</p>
         </td>
       </tr>
@@ -248,15 +248,14 @@
           <p>강건성 <span class="stars">★★★★</span><br><span class="note">위험/엣지 시나리오를 안전하게 주입해 방어 로직 검증</span></p>
         </td>
         <td>
-          <p>기능정확성 <span class="stars">★★★★</span><br><span class="note">실환경 충실도 — 센서 특성, 타이밍, OS 제약까지 실제 그대로</span></p>
-          <p>수행효율성 <span class="stars">★★★★</span><br><span class="note">시뮬 자산을 만들고 유지할 필요 없음</span></p>
+          <p>강건성 <span class="stars">★★★</span><br><span class="note">실제 센서 조건을 볼 수 있지만 위험하고 드문 상황은 반복하기 어렵다</span></p>
         </td>
       </tr>
       <tr>
         <th class="rowh">단점</th>
         <td class="win">
-          <p>기능정확성 <span class="stars">★★★★</span><br><span class="note">시뮬 통과가 실제 사람에 대한 정확도를 말하지 못함 — 실주행 검증 별도, 두 안 공통</span></p>
-          <p>수행효율성 <span class="stars">★★★★</span><br><span class="note">시뮬 자산도 만들고 유지해야 한다</span></p>
+          <p>강건성 <span class="stars">★★★★</span><br><span class="note">시뮬레이션 통과가 실제 사람과 센서의 정확도를 증명하지는 않는다</span></p>
+          <p>테스트가능성 <span class="stars">★★★★</span><br><span class="note">가상 러너와 시험 시나리오를 함께 관리해야 한다</span></p>
         </td>
         <td>
           <p>테스트가능성 <span class="stars">★★</span><br><span class="note">재현도 자동화도 안 됨 — 변경 하나 검증이 러닝 한 번</span></p>
@@ -291,12 +290,12 @@
     <li><strong>위험하거나 드문 입력도 안전하게 넣을 수 있다.</strong> 범위 밖 심박이나 신호 두절처럼 실제 달리기로 만들기 어려운 조건을 시험 입력으로 재현할 수 있다.</li>
     <li><strong>짧은 시간에 반복할 수 있다.</strong> 같은 입력으로 수정 전후를 비교하므로, 틈을 내어 진행하는 1인 과제에서도 변경할 때마다 다시 확인할 수 있다.</li>
     <li><strong>여러 세션의 적응을 빠르게 확인한다.</strong> 경계를 정해 둔 가상 러너의 결과를 다음 입력에 다시 반영해, QA2의 8세션 과정을 자동으로 실행한다.</li>
-    <li><strong>시뮬레이션의 한계를 분리했다.</strong> 자동시험은 규칙과 구조가 설계대로 움직이는지 확인한다. 실제 사람의 유산소 역치 정확도와 실제 센서 성능은 이번 제출의 합격 판단에 포함하지 않는다.</li>
+    <li><strong>시뮬레이션의 한계를 분리했다.</strong> 자동시험은 규칙과 구조가 설계대로 움직이는지 확인한다. 실제 사람의 유산소 역치와 실제 센서 성능은 별도의 기기·사용자 평가가 필요한 항목이다.</li>
   </ul>
 
   <h3 class="num"><span>3.</span>보완 계획</h3>
   <ul>
-    <li><strong>이번 과제에서 확인</strong>: 같은 입력과 고정 시드로 QA1~QA4의 합격 기준을 다시 만들 수 있고, 최근 JVM 단위시험 153개가 통과했다.</li>
+    <li><strong>이번 과제에서 확인</strong>: QA1~QA4 자동 검증 경로 4개를 모두 워치 없이 실행했다(4/4). 같은 seed로 다시 만든 입력은 5개 seed 모두 일치했고(100%, 5/5), 서로 다른 seed에서는 다른 심박 시퀀스가 생성됐다. 전체 JVM 단위시험은 153/153 통과했다.</li>
     <li><strong>향후 확인</strong>: 실제 기기 연결, 실제 센서 성능, 사람에 대한 정확도는 자동시험이 답하지 못한다. 제품화를 검토할 때 별도의 기기·사용자 평가로 확인한다.</li>
   </ul>
 
@@ -310,7 +309,7 @@
     <span class="sec-no">A</span>
   </div>
 
-  <h3 class="num"><span>A1.</span>문제점이 걸리는 품질 속성</h3>
+  <h3 class="num"><span>A1.</span>이 설계 결정이 다루는 품질 문제</h3>
   <ul>
     <li>같은 자극을 두 번 줄 수 없다 → 테스트가능성(재현 주입)</li>
     <li>위험/엣지 시나리오를 실주행으로 못 만든다 → 테스트가능성, 강건성</li>
@@ -318,11 +317,11 @@
     <li>정답지가 없어 "정확하다" 채점 불가 → 시뮬 역할을 구조 검증으로 한정</li>
     <li>개인화 수렴에 여러 세션이 필요하다 → 결과를 다음 입력에 반영하는 반복 시뮬레이션</li>
     <li>워치-폰 결합이라 단독 실행이 어렵다 → 테스트가능성(기기 의존 분리)</li>
-    <li>시뮬 자산도 만들고 유지해야 한다 → 수행효율성(비용의 정직한 인정)</li>
+    <li>시뮬레이션 결과를 실제 사람의 정확도로 오해하지 않아야 한다 → 강건성 검증 범위의 한계</li>
   </ul>
 
   <h3 class="num"><span>A2.</span>채택안의 검증 구조 4요소</h3>
-  <figure style="margin:0 0 12px"><div class="fig-frame"><img src="img/dp-05-testability-detail.png?v=ac001e52" data-img="dp5-detail" alt="DP5 채택안 상세 — 검증 경로 하위 모듈 전개" width="1100"></div></figure>
+  <figure style="margin:0 0 12px"><div class="fig-frame"><img src="img/dp-05-testability-detail.png?v=8b56c69e" data-img="dp5-detail" alt="DP5 채택안 상세 — 검증 경로 하위 모듈 전개" width="1100"></div></figure>
   <div class="tbl">
   <table class="decide">
     <thead>
@@ -331,7 +330,7 @@
     <tbody>
       <tr><td><strong>1. 소스 추상화</strong></td><td>실센서/가상 러너/수동 시뮬이 같은 인터페이스로 꽂힌다 — 검증과 운영이 같은 코드 경로</td></tr>
       <tr><td><strong>2. 반복 가상 러너</strong></td><td>경계를 정해 둔 가상 러너의 결과를 다음 세션 입력에 반영해 수렴 과정을 자동 실행</td></tr>
-      <tr><td><strong>3. 순수 로직 분리</strong></td><td>판정 로직을 기기와 분리해 JVM 단위시험 153개로 자동 회귀 확인</td></tr>
+      <tr><td><strong>3. 순수 로직 분리</strong></td><td>판정 로직을 기기와 분리해 JVM 단위시험으로 자동 회귀 확인</td></tr>
       <tr><td><strong>4. 시뮬레이션 계측</strong></td><td>QA별로 정한 입력을 넣고 결과를 같은 지표로 기록</td></tr>
     </tbody>
   </table>
@@ -348,20 +347,12 @@
       <tr><td>강건성</td><td style="text-align:center"><span class="stars">★★★★</span></td><td style="text-align:center"><span class="stars">★★</span></td></tr>
       <tr><td>기능적응성</td><td style="text-align:center"><span class="stars">★★★★★</span></td><td style="text-align:center"><span class="stars">★★★</span></td></tr>
       <tr><td>설명용이성</td><td style="text-align:center"><span class="stars">★★★★</span></td><td style="text-align:center"><span class="stars">★★★</span></td></tr>
-      <tr><td>수행효율성</td><td style="text-align:center"><span class="stars">★★★★</span></td><td style="text-align:center"><span class="stars">★★★★</span></td></tr>
-      <tr><td>기능정확성</td><td style="text-align:center"><span class="stars">★★★★</span></td><td style="text-align:center"><span class="stars">★★★★</span> (실환경 충실)</td></tr>
     </tbody>
   </table>
   </div>
-  <p class="note"><strong>별점의 범위</strong>: 1인 개발, 짧은 제출 일정, 반복해서 확인해야 하는 네 QAS라는 조건에서 비교했다. 테스트가능성은 이번에 선정한 AI QA가 아니라 검증을 돕는 지원 품질이다. 실제 기기 확인과 자동시험은 서로 대체하지 않으며, 이번 제출에서는 자동화된 구조 검증을 합격 판단에 사용한다.</p>
+  <p class="note"><strong>별점의 범위</strong>: 1인 개발, 짧은 제출 일정, 반복해서 확인해야 하는 네 AI QAS라는 조건에서 비교했다. 테스트가능성은 일반 품질이며, 실제 기기 확인과 자동시험은 서로 대체하지 않는다. 이번 과제에서는 자동화된 구조 검증 결과를 제시한다.</p>
 
-  <h3 class="num"><span>A4.</span>예상 질문</h3>
-  <ul>
-    <li>"시뮬로 통과한 게 무슨 의미가 있나?" → 시뮬이 답하는 것은 "로직이 설계대로 동작하는가"이지 "실제 사람에게 정확한가"가 아니다. 후자는 실주행 검증으로만 답해지며 그 계획이 별도로 있다. 이 한계를 설계 문서에 못 박았다.</li>
-    <li>"입력 인터페이스가 과한 설계 아닌가?" → 이 경계 덕분에 워치 없이도 같은 판정 로직에 시험 입력을 넣을 수 있다. 153개 시험은 정확도 점수가 아니라 이 구조가 제공하는 자동 회귀 범위를 보여 준다.</li>
-  </ul>
-
-  <h3 class="num"><span>A5.</span>용어 대조(심사용)와 근거 문헌</h3>
+  <h3 class="num"><span>A4.</span>용어 대조(심사용)와 근거 문헌</h3>
   <p class="note">입력 자리를 인터페이스로 = Ports and Adapters(헥사고날), 의존성 역전(DIP) / 실물을 대신하는 가짜 = test double / 출력이 입력에 되먹임 = closed loop / 수정 후 자동 재확인 = regression test / 시뮬과 실환경의 간극 = sim-to-real gap</p>
   <p class="note">근거 문헌: ISO/IEC 25010(테스트가능성 정의) / Cockburn(포트와 어댑터) / Meszaros(테스트 대역) / 테스트 피라미드(Cohn, Fowler) / 이 저장소의 자체 이력(시뮬 자기 채점 함정을 직접 확인하고 시뮬 역할을 한정 — 실험 기록 §15-3)</p>
   <p class="note">상세 = <code>arch/dp/dp-05-testability/</code> (decision / research / counter-catalog)</p>
