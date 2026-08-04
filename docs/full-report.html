@@ -281,7 +281,7 @@
   </ul>
   <h3 class="num"><span>■</span>이 과제가 Zone 2를 선택한 이유</h3>
   <p>Zone 2가 모든 운동 목표에 가장 좋은 유일한 강도라는 뜻은 아니다. 짧은 시간에 강한 자극을 주는 운동이나 근력운동도 목적에 따라 필요하다. 이 과제는 Zone 2의 <strong>지속하기 쉽고 스스로 확인할 수 있는 유산소 강도</strong>라는 장점에 초점을 둔다.</p>
-  <p class="note">근거 문헌: 미국심장협회(AHA) 유산소 운동 권고 / 미국스포츠의학회(ACSM) 운동 강도와 말하기 테스트 안내 / Zone 2 효과를 검토한 Sports Medicine 2025 내러티브 리뷰(PMID 40560504)</p>
+  <p class="note">근거 문헌: Zone 2 효과 검토 리뷰(PMID 40560504) / 유산소 운동과 체중 감소 메타분석(PMID 39724371) / 고령자 슬로우 조깅 연구(PMID 27848017) / 달리기 속도와 무릎 누적 부하 연구(PMID 25552288)</p>
   <div class="crumb"><b>과제 소개</b> <span>요구사항</span> <span>설계</span> <span>구현/검증</span> <span>결론</span></div>
 </section>
 <section class="slide">
@@ -348,18 +348,18 @@
   <div class="tbl"><table class="decide qas-table">
     <thead><tr><th style="width:3em">ID</th><th style="width:7em">QA</th><th style="width:9em">내용</th><th>시나리오</th><th style="width:4em">중요도</th><th style="width:4em">난이도</th></tr></thead>
     <tbody>
-      <tr><td>QA2</td><td><strong>기능적응성</strong></td><td>사용자 응답을 반영해 개인 경계를 조정한다.</td><td class="qas-scenario"><div>사용자가 초기 공식이나 이전 세션으로 정한 경계를 사용해 달리는 중 말하기 테스트에 답한다.</div><div>시스템은 여러 응답을 누적해 개인의 Zone 2 상한을 조금씩 갱신하되, 한 세션의 변경 폭을 제한한다.</div><div class="measure-line">[측정] 가상 사례 15개 모두 마지막 경계가 설정한 목표에서 3bpm 이내이고, 마지막 4세션의 경계 차이는 4bpm 이하이며, 한 세션의 이동은 10bpm 이하일 것</div></td><td>9</td><td>8</td></tr>
+      <tr><td>QA2</td><td><strong>기능적응성</strong></td><td>사용자 응답을 반영해 개인 경계를 조정한다.</td><td class="qas-scenario"><div>사용자가 초기 공식이나 이전 세션으로 정한 경계를 사용해 달리는 중 말하기 테스트에 답한다.</div><div>시스템은 여러 응답을 누적해 개인의 Zone 2 상한을 조금씩 갱신하되, 한 세션의 변경 폭을 제한한다.</div><div class="measure-line">[측정] 가상 사례 15개 모두 마지막 경계가 설정한 목표에서 3bpm 이내이고, 마지막 4세션에서 가장 큰 경계와 가장 작은 경계의 차이는 4bpm 이하이며, 한 세션 시작부터 끝까지의 이동은 10bpm 이하일 것</div></td><td>9</td><td>8</td></tr>
       <tr><td>QA1</td><td><strong>설명용이성</strong></td><td>판정·개인화·코칭의 근거를 확인할 수 있게 한다.</td><td class="qas-scenario"><div>사용자가 러닝 중 또는 리포트에서 판정과 코칭의 이유를 확인한다.</div><div>시스템은 실제 판정에 사용한 심박, 개인 경계, 사용자 응답과 문장 생성 경로를 보여 주며, 근거에 없는 숫자는 표시하지 않는다.</div><div class="measure-line">[측정] 대표 판정 3가지 모두 근거를 기록하고, 시험 문장 5개 모두에서 근거에 없는 숫자를 차단할 것</div></td><td>8</td><td>7</td></tr>
       <tr><td>QA3</td><td><strong>제어가능성</strong></td><td>LLM이 정해진 판단과 사실의 범위를 벗어나지 않게 한다.</td><td class="qas-scenario"><div>실시간 코칭 중 온디바이스 LLM이 문장을 만들거나 일시적으로 응답하지 못한다.</div><div>시스템은 규칙이 정한 코칭 방향·형식·숫자와 문장을 대조하고, 기준을 벗어나거나 생성에 실패하면 미리 정한 기본 문구를 사용한다.</div><div class="measure-line">[측정] 위반 문장 10개를 모두 탐지하고, 정상 문장 5개를 모두 통과시키며, LLM 실패 시 기본 문구를 제공할 것</div></td><td>8</td><td>7</td></tr>
     </tbody>
   </table></div>
-  <p class="note">QA2·QA1·QA3은 아키텍처에 직접 영향을 주는 핵심 요구사항(ASR)이며, 이 순서대로 DP1·DP2·DP3에서 다룬다.</p>
+  <p class="note">QA2·QA1·QA3은 각각 DP1·DP2·DP3의 설계 결정을 이끈다. QA5도 입력 교체 구조와 시드 기반 시뮬레이션을 필요로 하므로 아키텍처에 영향을 주는 핵심 요구사항(ASR)이다.</p>
   <div class="crumb">과제 소개 <b>요구사항</b> <span>설계</span> <span>구현/검증</span> <span>결론</span></div>
 </section>
 
 <section class="slide">
   <div class="slide-head"><h2>품질 요구사항 — 지원·검증 QAS</h2><span class="sec-no">2</span></div>
-  <p class="note">강건성과 테스트가능성도 요구사항으로 유지한다. 다만 별도 DP로 늘리지 않고, 세 DP가 실제로 동작하고 반복 검증될 수 있게 하는 공통 구조로 반영한다.</p>
+  <p class="note">강건성과 테스트가능성도 요구사항으로 유지한다. 별도 DP로 늘리지는 않지만, 세 DP가 안정적으로 동작하고 반복 검증될 수 있게 하는 공통 구조로 반영한다. QA4는 지원 품질이고 QA5는 ASR이다.</p>
   <div class="tbl"><table class="decide qas-table">
     <thead><tr><th style="width:3em">ID</th><th style="width:7em">QA</th><th style="width:9em">내용</th><th>시나리오</th><th style="width:4em">중요도</th><th style="width:4em">난이도</th></tr></thead>
     <tbody>
@@ -854,7 +854,7 @@
   <div class="tbl"><table class="decide">
     <thead><tr><th>강의 AI System 컴포넌트</th><th>이 시스템의 구현</th><th style="width:5em">모듈</th></tr></thead>
     <tbody>
-      <tr><td>입력 가드레일</td><td>OutlierGuard(허용 범위와 수신 후 오래 지난 값 검사)와 분석 보류 조건</td><td>A2</td></tr>
+      <tr><td>입력 가드레일</td><td>OutlierGuard(허용 범위를 벗어난 값과 너무 늦게 도착한 값 검사)와 분석 보류 조건</td><td>A2</td></tr>
       <tr><td>모델 서빙</td><td>규칙 판정, 베이지안 경계, 관측 분석 엔진, 온디바이스 LLM</td><td>A4~A7</td></tr>
       <tr><td>출력 가드레일</td><td>형식 검사, DirectionGuard, NumberGuard, SafetyGuard</td><td>A8</td></tr>
       <tr><td>추론 제어</td><td>RunEngine(오케스트레이터)</td><td>A9</td></tr>
@@ -874,7 +874,7 @@
 <section class="slide">
   <div class="slide-head"><h2>최종 아키텍처 (2/2) — 입력에서 코칭까지</h2><span class="sec-no">3</span></div>
   <div class="fig-frame"><img src="img/06a-module-inference.png?v=2caef431" data-img="mod-a" alt="모듈 A 추론 서비스 상세"></div>
-  <p class="note">읽는 순서: 실제 센서나 시험 입력(A1) → 허용 범위와 수신 시각 검사(A2) → 최근 신호 정리(A3) → 존 판정·개인 경계·분석(A4~A6) → 코칭 문장 표현(A7) → 방향과 숫자 검사 및 안전 규칙(A8)이다. RunEngine(A9)이 이 순서를 매초 실행한다. 규칙이 판정과 사용할 값을 먼저 확정하고 LLM은 문장만 만든다.</p>
+  <p class="note">읽는 순서: 실제 센서나 시험 입력(A1) → 허용 범위와 수신 시각 검사(A2) → 최근 신호 정리(A3) → 존 판정·개인 경계·분석(A4~A6) → 코칭 문장 표현(A7) → 방향과 숫자 검사 및 안전 규칙(A8)이다. RunEngine(A9)이 이 순서를 매초 실행한다. 규칙이 판정과 문장에 사용할 값을 먼저 확정하고, LLM은 문장만 만든다.</p>
   <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
 </section>
 
@@ -895,7 +895,7 @@
 <section class="slide">
   <div class="slide-head"><h2>모듈 F: 개인화와 반복 검증</h2><span class="sec-no">3</span></div>
   <div class="fig-frame"><img src="img/06d-module-adaptation-verification.png?v=7d787dee" data-img="mod-f" alt="모듈 F 적응 검증 상세"></div>
-  <p class="note">개인 적응(F1)은 말하기 테스트 응답이 들어올 때 베이지안 방식으로 경계를 갱신하고 조정한 경계를 다음 세션의 시작값으로 저장한다. 반복 검증 구조(F2)는 시드 기반 난수 입력으로 QA1~QA4를 반복 확인하고, 같은 시드의 결과가 재현되는지 검증한다. Nano 모델 준비 관리자(A7-1)는 모델 상태를 확인하고 세션 밖에서 다운로드를 요청한다.</p>
+  <p class="note">개인 적응(F1)은 말하기 테스트 응답이 들어올 때 베이지안 방식으로 경계를 갱신하고 조정한 경계를 다음 세션의 시작값으로 저장한다. 반복 검증 구조(F2)는 시드 기반 난수 입력으로 QA1~QA4를 반복 확인하고, 같은 시드의 결과가 재현되는지 검증한다. Nano 모델 관리 모듈(A7-1)은 모델 상태를 확인하고 세션 밖에서 다운로드를 요청한다.</p>
 
   <h3 class="num"><span>■</span>세 설계 결정이 한 아키텍처에 모이는 방식</h3>
   <p>DP1의 개인 경계 갱신, DP2의 규칙 중심 판정과 근거 기록, DP3의 LLM 출력 검사가 하나의 실행 흐름으로 이어진다. QA4 강건성은 입력 검사와 경계 여유 구간에, QA5 테스트가능성은 입력 교체와 시드 기반 시뮬레이션에 공통 구조로 반영했다.</p>
@@ -1009,7 +1009,7 @@
 </section>
 
 <section class="slide">
-  <div class="slide-head"><h2>QAS별 검증 결과 — 지원·검증 QAS</h2><span class="sec-no">4</span></div>
+  <div class="slide-head"><h2>QAS별 검증 결과 — 공통 품질 QAS</h2><span class="sec-no">4</span></div>
   <div class="tbl"><table class="decide qas-table">
     <thead><tr><th style="width:3em">ID</th><th style="width:7em">QA</th><th style="width:7em">내용</th><th>시나리오</th><th style="width:14em">검증 결과</th><th style="width:3.5em">달성</th></tr></thead>
     <tbody>
