@@ -1,5 +1,5 @@
 @startuml
-title DP1 채택안 상세 — 추상 블록을 하위 모듈(실제 클래스)까지 풀어 그린 설명용이성 경로
+title DP2 채택안 상세 — 추상 블록을 하위 모듈(실제 클래스)까지 풀어 그린 설명용이성 경로
 skinparam defaultFontName "AppleGothic"
 skinparam componentStyle rectangle
 skinparam shadowing false

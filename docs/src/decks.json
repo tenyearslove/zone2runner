@@ -1,135 +1,109 @@
 {
-  "_comment": "Deck build configuration. Korean text lives here as UTF-8 data so build.ps1 can stay pure ASCII (no BOM needed).",
-  "images": {
-    "cnc-simple": "arch/diagrams/02b-component-cnc-simple.png",
-    "cnc-detail": "arch/diagrams/02-component-cnc.png",
-    "context": "arch/diagrams/01-context.png",
-    "deployment": "arch/diagrams/03-deployment.png",
-    "module-view": "arch/diagrams/04-module-view.png",
-    "usecase": "arch/diagrams/05-usecase.png",
-    "macro": "arch/diagrams/06-final-architecture.png",
-    "mod-a": "arch/diagrams/06a-module-inference.png",
-    "mod-bc": "arch/diagrams/06b-module-explain-analysis.png",
-    "mod-de": "arch/diagrams/06c-module-operation-storage.png",
-    "mod-f": "arch/diagrams/06d-module-adaptation-verification.png",
-    "dp1-counter": "arch/dp/dp-01-explainability/images/dp-01-explainability-counter-simple.png",
-    "dp2-counter": "arch/dp/dp-02-controllability/images/dp-02-controllability-counter-simple.png",
-    "dp3-counter": "arch/dp/dp-03-adaptability/images/dp-03-adaptability-counter-simple.png",
-    "dp4-counter": "arch/dp/dp-04-robustness/images/dp-04-robustness-counter-simple.png",
-    "dp5-counter": "arch/dp/dp-05-testability/images/dp-05-testability-counter-simple.png",
-    "dp1-detail": "arch/dp/dp-01-explainability/images/dp-01-explainability-detail.png",
-    "dp1-adopted": "arch/dp/dp-01-explainability/images/dp-01-explainability-adopted-simple.png",
-    "dp2-adopted": "arch/dp/dp-02-controllability/images/dp-02-controllability-adopted-simple.png",
-    "dp2-detail": "arch/dp/dp-02-controllability/images/dp-02-controllability-detail.png",
-    "dp3-adopted": "arch/dp/dp-03-adaptability/images/dp-03-adaptability-adopted-simple.png",
-    "dp3-detail": "arch/dp/dp-03-adaptability/images/dp-03-adaptability-detail.png",
-    "dp4-adopted": "arch/dp/dp-04-robustness/images/dp-04-robustness-adopted-simple.png",
-    "dp4-detail": "arch/dp/dp-04-robustness/images/dp-04-robustness-detail.png",
-    "dp5-adopted": "arch/dp/dp-05-testability/images/dp-05-testability-adopted-simple.png",
-    "dp5-detail": "arch/dp/dp-05-testability/images/dp-05-testability-detail.png"
-  },
-  "decks": [
-    {
-      "out": "index.html",
-      "src": "00-index.html",
-      "title": "Zone2Runner 인증 보고서 — 문서 인덱스",
-      "deckCss": false
-    },
-    {
-      "out": "01-intro.html",
-      "src": "01-intro.html",
-      "title": "과제 소개 / 요구사항 — Zone2Runner 인증 보고서",
-      "deckCss": true
-    },
-    {
-      "out": "02-dp1.html",
-      "src": "02-dp1.html",
-      "title": "DP1 설명용이성 — Zone2Runner 인증 보고서 설계 파트",
-      "deckCss": true,
-      "dataImg": true
-    },
-    {
-      "out": "03-dp2.html",
-      "src": "03-dp2.html",
-      "title": "DP2 제어가능성 — Zone2Runner 인증 보고서 설계 파트",
-      "deckCss": true,
-      "dataImg": true,
-      "placeholders": {
-        "IMG2": "dp2-counter"
-      }
-    },
-    {
-      "out": "04-dp3.html",
-      "src": "04-dp3.html",
-      "title": "DP3 기능적응성 — Zone2Runner 인증 보고서 설계 파트",
-      "deckCss": true,
-      "dataImg": true,
-      "placeholders": {
-        "IMG2": "dp3-counter"
-      }
-    },
-    {
-      "out": "05-dp4.html",
-      "src": "05-dp4.html",
-      "title": "DP4 강건성 — Zone2Runner 인증 보고서 설계 파트",
-      "deckCss": true,
-      "dataImg": true,
-      "placeholders": {
-        "IMG2": "dp4-counter"
-      }
-    },
-    {
-      "out": "06-dp5.html",
-      "src": "06-dp5.html",
-      "title": "DP5 테스트가능성 — Zone2Runner 인증 보고서 설계 파트",
-      "deckCss": true,
-      "dataImg": true,
-      "placeholders": {
-        "IMG2": "dp5-counter"
-      }
-    },
-    {
-      "out": "07-arch.html",
-      "src": "07-arch.html",
-      "title": "최종 아키텍처 — Zone2Runner 인증 보고서 설계 파트",
-      "deckCss": true,
-      "dataImg": true,
-      "placeholders": {
-        "IMG_MACRO": "macro",
-        "IMG_A": "mod-a",
-        "IMG_B": "mod-bc",
-        "IMG_C": "mod-de",
-        "IMG_D": "mod-f"
-      }
-    },
-    {
-      "out": "08-impl.html",
-      "src": "08-impl.html",
-      "title": "구현 / 품질속성 검증 / 결론 — Zone2Runner 인증 보고서",
-      "deckCss": true
-    },
-    {
-      "out": "09-appendix.html",
-      "src": "09-appendix.html",
-      "title": "부록 아키텍처 뷰 — Use Case/Context/Module/C&C/Deployment",
-      "deckCss": true,
-      "dataImg": true,
-      "placeholders": {
-        "IMG_UC": "usecase",
-        "IMG_CTX": "context",
-        "IMG_MOD": "module-view",
-        "IMG_CNC": "cnc-simple",
-        "IMG_CNC2": "cnc-detail",
-        "IMG_DEP": "deployment"
-      }
-    },
-    {
-      "out": "full-report.html",
-      "src": "10-full-report-parts.html",
-      "title": "Zone2Runner 인증 보고서 — 전문 (통합본)",
-      "deckCss": true,
-      "dataImg": true,
-      "nav": true
-    }
-  ]
+    "_comment":  "Deck build configuration. Korean text lives here as UTF-8 data so build.ps1 can stay pure ASCII (no BOM needed).",
+    "images":  {
+                   "cnc-simple":  "arch/diagrams/02b-component-cnc-simple.png",
+                   "cnc-detail":  "arch/diagrams/02-component-cnc.png",
+                   "context":  "arch/diagrams/01-context.png",
+                   "deployment":  "arch/diagrams/03-deployment.png",
+                   "module-view":  "arch/diagrams/04-module-view.png",
+                   "usecase":  "arch/diagrams/05-usecase.png",
+                   "macro":  "arch/diagrams/06-final-architecture.png",
+                   "mod-a":  "arch/diagrams/06a-module-inference.png",
+                   "mod-bc":  "arch/diagrams/06b-module-explain-analysis.png",
+                   "mod-de":  "arch/diagrams/06c-module-operation-storage.png",
+                   "mod-f":  "arch/diagrams/06d-module-adaptation-verification.png",
+                   "dp1-counter":  "arch/dp/dp-03-adaptability/images/dp-03-adaptability-counter-simple.png",
+                   "dp2-counter":  "arch/dp/dp-01-explainability/images/dp-01-explainability-counter-simple.png",
+                   "dp3-counter":  "arch/dp/dp-02-controllability/images/dp-02-controllability-counter-simple.png",
+                   "dp1-detail":  "arch/dp/dp-03-adaptability/images/dp-03-adaptability-detail.png",
+                   "dp1-adopted":  "arch/dp/dp-03-adaptability/images/dp-03-adaptability-adopted-simple.png",
+                   "dp2-adopted":  "arch/dp/dp-01-explainability/images/dp-01-explainability-adopted-simple.png",
+                   "dp2-detail":  "arch/dp/dp-01-explainability/images/dp-01-explainability-detail.png",
+                   "dp3-adopted":  "arch/dp/dp-02-controllability/images/dp-02-controllability-adopted-simple.png",
+                   "dp3-detail":  "arch/dp/dp-02-controllability/images/dp-02-controllability-detail.png"
+               },
+    "decks":  [
+                  {
+                      "out":  "index.html",
+                      "src":  "00-index.html",
+                      "title":  "Zone2Runner 인증 보고서 — 문서 인덱스",
+                      "deckCss":  false
+                  },
+                  {
+                      "out":  "01-intro.html",
+                      "src":  "01-intro.html",
+                      "title":  "과제 소개 / 요구사항 — Zone2Runner 인증 보고서",
+                      "deckCss":  true
+                  },
+                  {
+                      "out":  "02-dp1.html",
+                      "src":  "02-dp1.html",
+                      "title":  "DP1 기능적응성 — Zone2Runner 인증 보고서 설계 파트",
+                      "deckCss":  true,
+                      "dataImg":  true
+                  },
+                  {
+                      "out":  "03-dp2.html",
+                      "src":  "03-dp2.html",
+                      "title":  "DP2 설명용이성 — Zone2Runner 인증 보고서 설계 파트",
+                      "deckCss":  true,
+                      "dataImg":  true,
+                      "placeholders":  {
+                                           "IMG2":  "dp2-counter"
+                                       }
+                  },
+                  {
+                      "out":  "04-dp3.html",
+                      "src":  "04-dp3.html",
+                      "title":  "DP3 제어가능성 — Zone2Runner 인증 보고서 설계 파트",
+                      "deckCss":  true,
+                      "dataImg":  true,
+                      "placeholders":  {
+                                           "IMG2":  "dp3-counter"
+                                       }
+                  },
+                  {
+                      "out":  "07-arch.html",
+                      "src":  "07-arch.html",
+                      "title":  "최종 아키텍처 — Zone2Runner 인증 보고서 설계 파트",
+                      "deckCss":  true,
+                      "dataImg":  true,
+                      "placeholders":  {
+                                           "IMG_MACRO":  "macro",
+                                           "IMG_A":  "mod-a",
+                                           "IMG_B":  "mod-bc",
+                                           "IMG_C":  "mod-de",
+                                           "IMG_D":  "mod-f"
+                                       }
+                  },
+                  {
+                      "out":  "08-impl.html",
+                      "src":  "08-impl.html",
+                      "title":  "구현 / 품질속성 검증 / 결론 — Zone2Runner 인증 보고서",
+                      "deckCss":  true
+                  },
+                  {
+                      "out":  "09-appendix.html",
+                      "src":  "09-appendix.html",
+                      "title":  "부록 아키텍처 뷰 — Use Case/Context/Module/C\u0026C/Deployment",
+                      "deckCss":  true,
+                      "dataImg":  true,
+                      "placeholders":  {
+                                           "IMG_UC":  "usecase",
+                                           "IMG_CTX":  "context",
+                                           "IMG_MOD":  "module-view",
+                                           "IMG_CNC":  "cnc-simple",
+                                           "IMG_CNC2":  "cnc-detail",
+                                           "IMG_DEP":  "deployment"
+                                       }
+                  },
+                  {
+                      "out":  "full-report.html",
+                      "src":  "10-full-report-parts.html",
+                      "title":  "Zone2Runner 인증 보고서 — 전문 (통합본)",
+                      "deckCss":  true,
+                      "dataImg":  true,
+                      "nav":  true
+                  }
+              ]
 }

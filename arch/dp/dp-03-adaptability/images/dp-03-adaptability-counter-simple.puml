@@ -34,7 +34,7 @@ REG ..> SERVE : vN+1 배포\n(적응 반영 시점)
 note right of MC
   개인 변화의 반영 =
   수집 → 재학습 → 배포 주기
-  (참값 없어 목적함수 채점 어려움)
+  (실험실 기준값이 없어 목적함수 채점 어려움)
 end note
 
 legend right

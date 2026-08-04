@@ -10,7 +10,7 @@ AI Specialist 설계 과제의 제출용 HTML 보고서다. 브라우저에서 �
 |---|---|---|
 | `index.html` | 전체 문서 인덱스 | — |
 | `01-intro.html` | 01 과제 소개 + 02 요구사항 | report-018 |
-| `02-dp1.html` ~ `06-dp5.html` | 03 설계 — DP1 설명용이성 / DP2 제어가능성 / DP3 기능적응성 / DP4 강건성 / DP5 테스트가능성 | report-008 ~ 012 |
+| `02-dp1.html` ~ `04-dp3.html` | 03 설계 — DP1 기능적응성 / DP2 설명용이성 / DP3 제어가능성 | report-010 / report-008 / report-009 |
 | `07-arch.html` | 03 설계 — 최종 Architecture(거시 + 모듈 4장) | report-013 |
 | `08-impl.html` | 04 구현 + 검증 + 05 결론 | report-014, 015, 016 |
 | `09-appendix.html` | Appendix 뷰 5종 | report-017 |
@@ -60,11 +60,9 @@ powershell -File docs/build.ps1 -Inline -OutDir C:\temp\zone2runner-deck
 | 통합본 | `full-report.html` |
 | 인덱스 | `index.html` |
 | 01 소개/요구 | `01-intro.html` |
-| DP1 | `02-dp1.html` |
-| DP2 | `03-dp2.html` |
-| DP3 | `04-dp3.html` |
-| DP4 | `05-dp4.html` |
-| DP5 | `06-dp5.html` |
+| DP1 기능적응성 | `02-dp1.html` |
+| DP2 설명용이성 | `03-dp2.html` |
+| DP3 제어가능성 | `04-dp3.html` |
 | 최종 아키텍처 | `07-arch.html` |
 | 구현/검증/결론 | `08-impl.html` |
 | Appendix 뷰 | `09-appendix.html` |

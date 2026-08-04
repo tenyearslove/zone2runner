@@ -58,6 +58,8 @@ class RunActivity : AppCompatActivity() {
     private var promptView: TextView? = null // LLM 프롬프트 노출(시뮬/목 모드만, null=라이브)
     private var simLlmEnabled = true // 시뮬 LLM on/off 비교 토글(spec-028 검증) — 세션 시작 시 코치에 적용
     private var simDelayMs = 14L // 시뮬 재생 배속(샘플 간 ms): 14≈×70, 33≈×30, 100=×10, 1000=×1. 재생 중 변경 가능
+    private var simSeed = 42L // 같은 러너·설정·시드에서 같은 입력을 재현하는 검증용 값
+    private var seedChip: TextView? = null
     private val speedChips = LinkedHashMap<Long, TextView>()
 
     /** 시뮬 입력 모드: 자동(가상러너 시나리오) / 수동 페이스 / 수동 러너(케이던스+보폭, spec-022). */
@@ -327,6 +329,24 @@ class RunActivity : AppCompatActivity() {
             manualRow.addView(manualChip)
             dash.addView(manualRow, mt(6))
 
+            val seedRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
+            seedRow.addView(TextView(this).apply {
+                text = "재현 시드"; textSize = 12f; setTextColor(C_MUTED)
+            }, LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f))
+            seedChip = TextView(this).apply {
+                text = simSeed.toString(); textSize = 12f; gravity = Gravity.CENTER; setTextColor(C_TEXT)
+                setPadding(dp(14), dp(6), dp(14), dp(6))
+                background = GradientDrawable().apply { setColor(C_CARD); cornerRadius = dp(14).toFloat(); setStroke(dp(1), C_STROKE) }
+                isClickable = true
+                setOnClickListener { showSeedDialog() }
+            }
+            seedRow.addView(seedChip)
+            dash.addView(seedRow, mt(6))
+            dash.addView(TextView(this).apply {
+                text = "같은 가상 러너·설정·시드를 사용하면 같은 입력을 다시 만들 수 있습니다."
+                textSize = 10f; setTextColor(C_MUTED)
+            }, mt(2))
+
             // 수동 가상러너 조종부(spec-022): 케이던스/보폭/심박 보정/경사. RUNNER 모드에서만 표시.
             vrRows = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
             vrSummary = TextView(this).apply { textSize = 12f; setTextColor(C_TEXT); setTypeface(typeface, Typeface.BOLD) }
@@ -569,16 +589,16 @@ class RunActivity : AppCompatActivity() {
         val src: RunSource = when (mode) {
             MODE_LIVE -> LiveRunSource(this, WatchHrProvider(this).also { watchProvider = it })
             else -> when (simInput) {
-                SimInput.PACE -> com.zone2runner.app.sim.ManualRunSource(profile, manualPace, delayMs = simDelayMs, seed = System.nanoTime())
+                SimInput.PACE -> com.zone2runner.app.sim.ManualRunSource(profile, manualPace, delayMs = simDelayMs, seed = simSeed)
                 SimInput.RUNNER -> com.zone2runner.app.sim.ManualVirtualRunnerSource(
                     manualBody ?: com.zone2runner.app.sim.ManualVirtualRunnerSource.Body(profile.age, profile.restingHr, profile.maxHr, 7.0),
-                    delayMs = simDelayMs, seed = System.nanoTime(),
+                    delayMs = simDelayMs, seed = simSeed,
                 ).also {
                     it.targetSpm = manualSpm; it.targetStrideM = manualStride
                     it.hrOffsetBpm = manualHrOffset; it.slopePct = manualSlope
                 }
                 SimInput.AUTO -> com.zone2runner.app.sim.SimRunnerSource(
-                    virtualRunner, delayMs = simDelayMs, seed = System.nanoTime(),
+                    virtualRunner, delayMs = simDelayMs, seed = simSeed,
                     onTalkTest = { st ->
                         runOnUiThread {
                             eng.observeTalkTest(st)
@@ -607,6 +627,7 @@ class RunActivity : AppCompatActivity() {
                 .put("age", profile.age).put("rhr", profile.restingHr).put("maxHr", profile.maxHr))
             put("model", org.json.JSONObject()
                 .put("type", "rule"))
+            if (mode == MODE_SIM) put("seed", simSeed)
         }
         eng.onCoachingRecorded = { tSec, lineText, tookMs ->
             log.event("coach") { put("t", tSec); put("text", lineText); put("tookMs", tookMs); put("path", c.lastPath) }
@@ -1023,6 +1044,39 @@ class RunActivity : AppCompatActivity() {
         }
     }
 
+    private fun showSeedDialog() {
+        if (running) {
+            Toast.makeText(this, "시작 전에만 바꿀 수 있어요", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val input = android.widget.EditText(this).apply {
+            inputType = android.text.InputType.TYPE_CLASS_NUMBER
+            setText(simSeed.toString())
+            selectAll()
+        }
+        android.app.AlertDialog.Builder(this)
+            .setTitle("재현 시드")
+            .setMessage("같은 가상 러너·설정·시드를 사용하면 같은 입력을 다시 만들 수 있습니다.")
+            .setView(input)
+            .setPositiveButton("적용") { _, _ ->
+                val value = input.text.toString().toLongOrNull()
+                if (value == null) Toast.makeText(this, "숫자를 입력해 주세요", Toast.LENGTH_SHORT).show()
+                else applySimSeed(value)
+            }
+            .setNeutralButton("새 시드") { _, _ -> applySimSeed(System.currentTimeMillis()) }
+            .setNegativeButton("취소", null)
+            .show()
+    }
+
+    private fun applySimSeed(value: Long) {
+        simSeed = value.coerceAtLeast(0L)
+        if (virtualRunner.name.startsWith("랜덤·")) {
+            virtualRunner = com.zone2runner.app.domain.VirtualRunner.randomHuman(simSeed)
+            updateRunnerChip()
+        }
+        seedChip?.text = simSeed.toString()
+    }
+
     private fun updateRunnerChip() {
         runnerChip?.text = virtualRunner.name
         // 수동 모드(페이스/러너)에선 가상러너 프리셋 무의미 → 흐리게
@@ -1053,11 +1107,11 @@ class RunActivity : AppCompatActivity() {
                 text = "🎲 랜덤 러너"; textSize = 15f; setTypeface(typeface, Typeface.BOLD); setTextColor(C_ACCENT)
             })
             addView(TextView(this@RunActivity).apply {
-                text = "누를 때마다 새로운 사람 — 신체/스타일/코스/기온이 매번 다릅니다"
+                text = "현재 시드로 가상 러너를 만듭니다. 같은 시드를 쓰면 같은 사람이 선택됩니다"
                 textSize = 11f; setTextColor(C_MUTED); setPadding(0, dp(4), 0, 0)
             })
             setOnClickListener {
-                virtualRunner = com.zone2runner.app.domain.VirtualRunner.randomHuman(System.nanoTime())
+                virtualRunner = com.zone2runner.app.domain.VirtualRunner.randomHuman(simSeed)
                 updateRunnerChip(); dialog.dismiss()
                 Toast.makeText(this@RunActivity, "새 러너: ${virtualRunner.name} (${virtualRunner.summary})", Toast.LENGTH_SHORT).show()
             }

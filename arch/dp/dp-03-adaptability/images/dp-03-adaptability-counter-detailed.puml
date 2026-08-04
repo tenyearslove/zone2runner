@@ -26,7 +26,7 @@ package "AI Development Subsystem (서버) - 적응의 본체" {
   database "Data Lake\n전체 사용자 세션/라벨\n(코호트 데이터)" as DL #CFD8DC
   component "Feature Store\n학습 특징 관리" as FS #CFD8DC
   component "Model Construction\n개인 + 코호트 재학습\n(일/주 주기)" <<Retraining>> as MC #FFAB91
-  component "모델 테스팅\n홀드아웃/오프라인 지표\n(참값 없어 근사 채점)" as TEST #FFAB91
+  component "모델 테스팅\n홀드아웃/오프라인 지표\n(실험실 기준값이 없어 근사 채점)" as TEST #FFAB91
   database "Model Registry\nvN, vN+1, ..." as REG #CFD8DC
   component "배포 파이프라인\n단계 배포/롤백" as DEPLOY #FFAB91
   DL --> FS

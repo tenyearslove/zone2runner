@@ -75,6 +75,16 @@
   @media (max-width: 640px) { section.slide { padding: 24px 18px 14px; } }
 
   .meas { color: var(--accent); font-weight: 600; }
+  .qas-table { font-size: 12.2px !important; line-height: 1.42 !important; }
+  .qas-table th, .qas-table td { padding: 8px 9px !important; }
+  .qas-scenario > div + div { margin-top: 5px; }
+  .measure-line {
+    border-top: 1px solid #BCD3F2;
+    color: var(--accent);
+    font-weight: 750;
+    margin-top: 7px !important;
+    padding-top: 6px;
+  }
 
   /* 페이지 번호 — 각 슬라이드 하단 우측 (피드백 참조용) */
   body { counter-reset: pageno; }
@@ -221,7 +231,7 @@
   <div class="fig-frame"><img src="img/02b-component-cnc-simple.png?v=93e3eedb" data-img="cnc-simple" alt="C&C View 다이어그램(축약)"></div>
   <ul>
     <li>실행 흐름은 센서 입력 → 입력 검사 → 규칙 판정·개인 경계·분석·LLM 표현 → 출력 검사 → 화면·음성·리포트 순서다. 세션 결과와 개인 경계는 폰에 저장된다.</li>
-    <li>DP1~DP4는 같은 아키텍처에서 각 QAS와 관련된 경로를 강조한 그림이고, DP5는 이 구조를 반복 시험하는 방법을 강조한 그림이다. 서로 다른 다섯 시스템을 제안한 것이 아니다.</li>
+    <li>DP1~DP3은 같은 아키텍처에서 기능적응성·설명용이성·제어가능성과 관련된 경로를 각각 강조한 그림이다. 강건성과 테스트가능성은 이 구조 전반을 받치는 공통 설계로 반영했다.</li>
   </ul>
   <div class="crumb">과제 소개 <span>요구사항</span> <span>설계</span> <span>구현/검증</span> <span>결론</span> <b>Appendix</b></div>
 </section>

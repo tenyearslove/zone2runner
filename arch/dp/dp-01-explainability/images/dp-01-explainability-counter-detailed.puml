@@ -51,7 +51,7 @@ package "AI Development Subsystem (오프라인 대량 학습)" as DEV {
   }
   database "Model Artifact" as MART #CFD8DC
   database "ML Metadata" as MMETA #CFD8DC
-  component "모델 테스팅\n홀드아웃 테스트셋\n(우리 도메인엔 참값 없음)" <<모델 테스팅>> as MTEST #FFCCBC
+  component "모델 테스팅\n홀드아웃 테스트셋\n(이 과제에는 실험실 기준값 없음)" <<모델 테스팅>> as MTEST #FFCCBC
   component "모델 등록 / 승격" as MPROM #FFCCBC
 }
 

@@ -1,5 +1,5 @@
 @startuml
-title DP3 채택안 상세 — 적응 경로를 하위 모듈(실제 클래스)까지 전개
+title DP1 채택안 상세 — 적응 경로를 하위 모듈(실제 클래스)까지 전개
 skinparam defaultFontName "AppleGothic"
 skinparam componentStyle rectangle
 skinparam shadowing false

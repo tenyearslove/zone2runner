@@ -52,7 +52,7 @@
     <li><strong>두 가지 시간 기준</strong>: 화면에는 현재 심박을 빠르게 반영하고, 코칭과 통계에는 일정 시간 유지된 값을 사용한다.</li>
     <li><strong>코칭</strong>: 규칙이 올릴지, 유지할지, 낮출지를 정한다. LLM은 그 뜻을 자연스러운 문장으로 바꾼다.</li>
     <li><strong>말하기 테스트</strong>: 사용자는 편함·보통·벅참 중 하나를 고른다. 이 응답이 개인 경계 갱신에 사용된다.</li>
-    <li><strong>시뮬레이션 모드</strong>: 자동 시나리오, 수동 페이스, 수동 러너를 선택하고 재생 속도를 높여 긴 세션을 짧게 확인할 수 있다.</li>
+    <li><strong>시뮬레이션 모드</strong>: 자동 시나리오, 수동 페이스, 수동 러너를 선택하고 재생 속도를 높여 긴 세션을 짧게 확인할 수 있다. 재현 시드를 직접 지정하면 같은 러너·설정의 입력을 다시 만들 수 있다.</li>
     <li><strong>검증 도구</strong>: LLM을 켜고 끄거나 가상 러너를 바꿔 같은 화면과 처리 흐름을 비교할 수 있다.</li>
   </ul>
   <div class="shot">화면 자료 3: 시뮬레이션 러닝 화면<small>심박, 존 게이지, 코칭 문장, 시뮬레이션 제어가 보이는 상태</small></div>
@@ -64,7 +64,7 @@
   <div class="slide-head"><h2>구현 — 리포트와 설명</h2><span class="sec-no">4</span></div>
   <ul>
     <li><strong>세션 요약</strong>: 존 분포, 심박과 페이스 변화, 경사, 케이던스, 구간 기록을 카드와 그래프로 보여 준다.</li>
-    <li><strong>관측 중심 분석</strong>: 미래를 예측하지 않고, 실제 세션에서 운동 중 심박 상승(심박 드리프트), 회복 심박, 경사 보정 페이스를 계산해 설명한다.</li>
+    <li><strong>관측 중심 분석</strong>: 미래를 예측하지 않고, 실제 세션에서 같은 속도인데도 심박이 오르는 현상(심박 드리프트), 운동 뒤 심박이 내려오는 정도(운동 후 심박 회복), 경사의 영향을 평지 기준으로 바꾼 속도(경사 보정 페이스)를 계산해 설명한다.</li>
     <li><strong>문장별 근거</strong>: 코칭 문장을 누르면 당시 심박과 경계, 사용한 프롬프트, 채택·차단·기본 문구 경로를 확인할 수 있다.</li>
     <li><strong>LLM 사용 기록</strong>: 호출 횟수, 채택과 기본 문구 횟수, 차단 이유를 남겨 생성 모델의 동작을 살펴볼 수 있다.</li>
     <li><strong>저장 후 재사용</strong>: 세션 설명은 종료 시 저장한다. 같은 리포트를 다시 열 때 LLM을 다시 호출하지 않는다.</li>
@@ -89,19 +89,29 @@
 </section>
 
 <section class="slide">
-  <div class="slide-head"><h2>QAS별 검증 결과</h2><span class="sec-no">4</span></div>
-  <p class="note">앞에서 정한 QAS의 성공 기준과 실제 결과를 비교했다. 표의 판정은 자동화된 구조 검증 범위에서만 해석한다.</p>
-  <div class="tbl"><table class="decide">
-    <thead><tr><th style="width:8em">품질 속성</th><th style="width:14em">적용한 설계</th><th>성공 기준과 결과</th><th style="width:4em">판정</th></tr></thead>
+  <div class="slide-head"><h2>QAS별 검증 결과 — 핵심 QAS</h2><span class="sec-no">4</span></div>
+  <p class="note">요구사항에서 쓴 시나리오와 측정 기준을 그대로 두고, 오른쪽에 자동시험 결과를 적었다. 결과는 가상 입력과 구조 검증 범위에서 해석한다.</p>
+  <div class="tbl"><table class="decide qas-table">
+    <thead><tr><th style="width:3em">ID</th><th style="width:7em">QA</th><th style="width:7em">내용</th><th>시나리오</th><th style="width:14em">검증 결과</th><th style="width:3.5em">달성</th></tr></thead>
     <tbody>
-      <tr><td>QA1<br><strong>설명용이성</strong></td><td>규칙이 판정에 쓸 값을 확정하고 근거를 기록</td><td>대표 판정 근거 기록률 <strong>100%(3/3)</strong><br>미등록 숫자 차단율 <strong>100%(5/5)</strong><br>근거에 맞는 문장 통과율 <strong>100%(3/3)</strong><br>관련 기록 시험 통과</td><td class="ok">달성</td></tr>
-      <tr><td>QA2<br><strong>기능적응성</strong></td><td>말하기 테스트와 이동 폭을 제한한 베이지안 갱신</td><td>15개 가상 사례에서 목표 경계와의 오차 3bpm 이내 도달률 <strong>100%(15/15)</strong><br>모의 응답 10회 이내에 오차 3bpm 이내 도달, 응답 40회 뒤 오차 <strong>0.20~0.77bpm</strong><br>기준 사례의 마지막 4세션 경계 범위 <strong>3.04bpm</strong>, 세션 최대 이동 <strong>9.97bpm</strong></td><td class="ok">달성</td></tr>
-      <tr><td>QA3<br><strong>제어가능성</strong></td><td>방향·형식·숫자 검사와 기본 문구</td><td>의도적으로 만든 위반 문장 탐지율 <strong>100%(10/10)</strong><br>정상 문장 통과율 <strong>100%(5/5)</strong><br>LLM을 사용할 수 없는 경로의 기본 문구 전환 시험 통과</td><td class="ok">달성</td></tr>
-      <tr><td>QA4<br><strong>강건성</strong></td><td>입력 검사와 판정 히스테리시스</td><td>이상치 차단율 <strong>100%(50/50)</strong>, 정상 오차단율 <strong>0%(0/500)</strong><br>5개 시드 모두 번복 감소 기준 충족 <strong>100%(5/5)</strong>, 실제 감소 폭 <strong>67.1~74.7%</strong><br>심박이 한 번에 10bpm 높아지는 입력에서 <strong>한 번의 갱신 주기(1틱)</strong> 만에 전환</td><td class="ok">달성</td></tr>
-      <tr><td>QA5<br><strong>테스트가능성</strong></td><td>RunSource, 시드 기반 가상 러너, 순수 로직 시험</td><td>QA1~QA4 자동 검증 경로 <strong>4개 모두 제공(4/4)</strong><br>동일 시드 재현율 <strong>100%(5/5)</strong><br>전체 JVM 단위시험 <strong>153/153 통과</strong></td><td class="ok">달성</td></tr>
+      <tr><td>QA2</td><td><strong>기능적응성</strong></td><td>응답 기반 개인 경계 조정</td><td class="qas-scenario"><div>사용자가 러닝 중 말하기 테스트에 답한다.</div><div>시스템은 응답을 누적해 경계를 갱신하고 한 세션의 변경 폭을 제한한다.</div><div class="measure-line">[측정] 가상 사례 15개 모두 목표와 3bpm 이내, 마지막 4세션 차이 4bpm 이하, 세션 이동 10bpm 이하</div></td><td>15개 중 15개가 목표와 3bpm 이내였다. 마지막 오차는 0.20~0.77bpm, 기준 사례의 마지막 4세션 차이는 3.04bpm, 최대 이동은 9.97bpm이었다.</td><td class="ok">달성</td></tr>
+      <tr><td>QA1</td><td><strong>설명용이성</strong></td><td>판정과 생성 근거 기록</td><td class="qas-scenario"><div>사용자가 판정과 코칭의 이유를 확인한다.</div><div>시스템은 실제 사용한 값과 생성 경로를 보여 주고, 근거에 없는 숫자는 표시하지 않는다.</div><div class="measure-line">[측정] 대표 판정 3가지 모두 근거 기록, 시험 문장 5개 모두 미등록 숫자 차단</div></td><td>대표 판정 3개 중 3개에 근거가 기록됐다. 미등록 숫자가 있는 문장 5개를 모두 차단했고, 근거에 맞는 문장 3개는 모두 통과했다.</td><td class="ok">달성</td></tr>
+      <tr><td>QA3</td><td><strong>제어가능성</strong></td><td>LLM 출력 검사와 기본 문구</td><td class="qas-scenario"><div>LLM이 코칭 문장을 만들거나 응답하지 못한다.</div><div>시스템은 방향·형식·숫자를 검사하고, 기준을 벗어나거나 실패하면 기본 문구를 사용한다.</div><div class="measure-line">[측정] 위반 문장 10개 모두 탐지, 정상 문장 5개 모두 통과, LLM 실패 시 기본 문구 제공</div></td><td>위반 문장 10개를 모두 탐지했고 정상 문장 5개는 모두 통과했다. LLM을 사용할 수 없는 경로에서도 기본 문구가 제공됐다.</td><td class="ok">달성</td></tr>
     </tbody>
   </table></div>
-  <p class="note">QAS 측정 결과는 자동시험을 다시 실행해 같은 형식으로 생성할 수 있다.</p>
+  <div class="crumb">과제 소개 <span>요구사항</span> <span>설계</span> <b>구현/검증</b> <span>결론</span></div>
+</section>
+
+<section class="slide">
+  <div class="slide-head"><h2>QAS별 검증 결과 — 지원·검증 QAS</h2><span class="sec-no">4</span></div>
+  <div class="tbl"><table class="decide qas-table">
+    <thead><tr><th style="width:3em">ID</th><th style="width:7em">QA</th><th style="width:7em">내용</th><th>시나리오</th><th style="width:14em">검증 결과</th><th style="width:3.5em">달성</th></tr></thead>
+    <tbody>
+      <tr><td>QA4</td><td><strong>강건성</strong></td><td>이상값 차단과 판정 안정화</td><td class="qas-scenario"><div>심박에 범위 밖 값이나 경계 부근의 잡음이 섞인다.</div><div>시스템은 이상값을 버리고 경계에 여유 구간을 두어 짧은 판정 번복을 줄인다.</div><div class="measure-line">[측정] 이상치 50개 모두 차단, 정상값 500개 오차단 없음, 5개 시드 모두 번복 60% 이상 감소, 10bpm 변화 2초 안에 반영</div></td><td>이상치 50개를 모두 차단했고 정상값 500개는 차단하지 않았다. 5개 시드 모두 번복이 67.1~74.7% 줄었고, 10bpm 변화는 1초 뒤 판정에 반영됐다.</td><td class="ok">달성</td></tr>
+      <tr><td>QA5</td><td><strong>테스트가능성</strong></td><td>같은 조건의 반복 시험</td><td class="qas-scenario"><div>개발자가 실제 달리기나 워치 없이 핵심 로직을 확인한다.</div><div>시스템은 가상 러너를 실제 센서와 같은 통로에 연결하고, 같은 러너·설정·시드로 같은 입력을 만든다.</div><div class="measure-line">[측정] QA1~QA4 자동 검증 경로 제공, 서로 다른 시드 5개 모두 재실행 결과 일치</div></td><td>QA1~QA4의 자동 검증 경로를 모두 제공했다. 시험한 시드 5개는 각각 다시 실행했을 때 입력이 같았고, JVM 단위시험 153개가 모두 통과했다.</td><td class="ok">달성</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">‘15개 중 15개’처럼 시험 수와 성공 수를 함께 적었다. 100%라는 비율만으로 시험 범위를 크게 보이게 하지 않는다.</p>
   <div class="crumb">과제 소개 <span>요구사항</span> <span>설계</span> <b>구현/검증</b> <span>결론</span></div>
 </section>
 
@@ -118,7 +128,7 @@
     </tbody>
   </table></div>
   <h3 class="num"><span>■</span>공통 검증 기반</h3>
-  <p>RunSource 교체, 가상 러너, 고정 시드, JVM 단위시험은 네 AI QAS를 워치 없이 반복 확인하게 해 준다. 전체 단위시험 153/153 통과는 제품 정확도가 아니라 변경 후 자동으로 다시 확인할 수 있는 범위를 보여 주는 참고 정보다.</p>
+  <p>RunSource 교체, 가상 러너, 고정 시드, JVM 단위시험은 네 AI QAS를 워치 없이 반복 확인하게 해 준다. 전체 단위시험 153개 통과는 제품 정확도가 아니라 변경 후 자동으로 다시 확인할 수 있는 범위를 보여 주는 참고 정보다.</p>
   <h3 class="num"><span>■</span>보조 성능 확인</h3>
   <p>60분 분량인 3600회의 JVM 로직을 실행했으며, 한 번 처리하는 데 걸린 시간은 0.1ms 미만이었다. 워치 통신, 화면, TTS, LLM을 포함하지 않으므로 실제 기기의 전체 성능으로 일반화하지 않는다.</p>
   <div class="crumb">과제 소개 <span>요구사항</span> <span>설계</span> <b>구현/검증</b> <span>결론</span></div>
@@ -139,13 +149,13 @@
     <tbody>
       <tr><td>기능 요구사항</td><td>4개 이상</td><td><strong>6개</strong>, AI 관련 5개</td></tr>
       <tr><td>품질 속성</td><td>4개 이상, AI 품질 2개 이상</td><td><strong>5개</strong>: AI 품질 4개와 일반 품질 1개</td></tr>
-      <tr><td>설계 결정</td><td>대안 비교 포함</td><td><strong>5건</strong>: 다섯 품질에 대한 설계 결정</td></tr>
+      <tr><td>설계 결정</td><td>대안 비교 포함</td><td><strong>3건</strong>: 핵심 QAS 세 가지에 대한 설계 결정</td></tr>
       <tr><td>검증</td><td>품질 속성 검증</td><td><strong>QA1~QA5</strong>의 자동 검증 결과 제시</td></tr>
     </tbody>
   </table></div>
   <h3 class="num"><span>3.</span>향후 확인 항목</h3>
   <p>실제 제품으로 발전시킨다면 사용자가 설명을 얼마나 쉽게 이해하는지와 실제 달리기에서 개인화가 잘 작동하는지를 확인해야 한다. 손목 움직임이 있는 센서 환경과 워치 입력부터 음성 출력까지 걸리는 시간도 측정해야 한다. 이 항목들은 이번 과제 제출의 필수 검증 범위에는 포함하지 않는다.</p>
-  <p class="lead">이 과제의 핵심은 큰 모델이 아니라, 필요한 AI 품질을 정하고 설계·구현·검증을 하나의 흐름으로 연결한 것이다.</p>
+  <p class="lead">이 과제의 핵심은 특정 모델의 규모가 아니라, 필요한 AI 품질을 정하고 설계·구현·검증을 하나의 흐름으로 연결한 것이다.</p>
   <div class="crumb">과제 소개 <span>요구사항</span> <span>설계</span> <span>구현/검증</span> <b>결론</b></div>
 </section>
 

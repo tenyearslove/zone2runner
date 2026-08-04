@@ -55,17 +55,8 @@
   <div class="fig-frame"><img data-img="mod-f" alt="모듈 F 적응 검증 상세"></div>
   <p class="note">개인 적응(F1)은 말하기 테스트 응답이 들어올 때 베이지안 방식으로 경계를 갱신하고 조정한 경계를 다음 세션의 시작값으로 저장한다. 반복 검증 구조(F2)는 시드 기반 난수 입력으로 QA1~QA4를 반복 확인하고, 같은 시드의 결과가 재현되는지 검증한다. Nano 모델 준비 관리자(A7-1)는 모델 상태를 확인하고 세션 밖에서 다운로드를 요청한다.</p>
 
-  <h3 class="num"><span>■</span>DP 도식과의 관계 — 다섯 QAS가 한 아키텍처에 모인다</h3>
-  <div class="tbl"><table class="decide">
-    <thead><tr><th style="width:4em">DP</th><th style="width:8em">QA</th><th>이 아키텍처의 어느 부분에 해당하는가</th><th style="width:13em">비교안(2안)</th></tr></thead>
-    <tbody>
-      <tr><td>DP1</td><td>설명용이성</td><td>규칙 판정(A4·A5), 설명 서비스(B), 판정값과 생성 과정 기록(B2-1)</td><td>블랙박스 판정 뒤에 설명 추가</td></tr>
-      <tr><td>DP2</td><td>제어가능성</td><td>LLM 권한 제한(A7), 출력 검사(A8), 기본 문구, 사용자 설정과 기록(D3)</td><td>LLM에 판단 위임</td></tr>
-      <tr><td>DP3</td><td>기능적응성</td><td>개인 경계 추정(A5), 개인화 과정(F1·E1), 말하기 테스트(D3)</td><td>오프라인 재학습 개인화</td></tr>
-      <tr><td>DP4</td><td>강건성</td><td>입력 검사(A2), 화면·코칭 기준 분리(A4), 구간 통계(A6), 입력 전환(A1)</td><td>즉시 반응 판정</td></tr>
-      <tr><td>DP5</td><td>테스트가능성</td><td>입력 교체(A1), 반복 시뮬레이션(F2), 기기와 분리한 핵심 로직</td><td>실제 기기 중심 검증</td></tr>
-    </tbody>
-  </table></div>
+  <h3 class="num"><span>■</span>세 설계 결정이 한 아키텍처에 모이는 방식</h3>
+  <p>DP1의 개인 경계 갱신, DP2의 규칙 중심 판정과 근거 기록, DP3의 LLM 출력 검사가 하나의 실행 흐름으로 이어진다. QA4 강건성은 입력 검사와 경계 여유 구간에, QA5 테스트가능성은 입력 교체와 시드 기반 시뮬레이션에 공통 구조로 반영했다.</p>
   <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
 </section>
 
