@@ -1100,69 +1100,69 @@
 <div class="deck" id="part-arch">
 
 <div class="deck-head">
-  <h1>최종 Architecture — 인증 보고서 "03. 설계" 마무리 파트</h1>
+  <h1>최종 아키텍처 — 네 QAS를 하나의 구조로 연결</h1>
   <p>거시 1장 + 모듈별 4장 — 최종 구현 상태(as-built)를 강의 AI System 용어로 표현 — 2026-08-01 v1 — 원고: <code>report/report-013</code>, 도식: <code>arch/diagrams/06*</code></p>
 </div>
 
 <section class="slide">
-  <div class="slide-head"><h2>최종 Architecture (1/2) — 거시: 모듈 조립</h2><span class="sec-no">3</span></div>
+  <div class="slide-head"><h2>최종 아키텍처 (1/2) — 전체 구조</h2><span class="sec-no">3</span></div>
   <div class="fig-frame"><img data-img="macro" alt="최종 아키텍처 거시 다이어그램"></div>
   <h3 class="num"><span>■</span>강의 표준 용어 대응</h3>
   <div class="tbl"><table class="decide">
     <thead><tr><th>강의 AI System 컴포넌트</th><th>이 시스템의 구현</th><th style="width:5em">모듈</th></tr></thead>
     <tbody>
-      <tr><td>입력 가드레일</td><td>OutlierGuard(생리범위/신선도) + 분석 게이팅</td><td>A2</td></tr>
+      <tr><td>입력 가드레일</td><td>OutlierGuard(허용 범위와 오래된 값 검사) + 분석 보류 조건</td><td>A2</td></tr>
       <tr><td>모델 서빙</td><td>규칙 판정 + 베이지안 경계 + 관측 분석 엔진 + 온디바이스 LLM</td><td>A4~A7</td></tr>
       <tr><td>출력 가드레일</td><td>형식 가드 + DirectionGuard + NumberGuard + SafetyGuard</td><td>A8</td></tr>
       <tr><td>추론 제어</td><td>RunEngine(오케스트레이터)</td><td>A9</td></tr>
-      <tr><td>설명 서비스</td><td>세션/개인화 설명 생성 + LLM 프로비넌스</td><td>B</td></tr>
+      <tr><td>설명 서비스</td><td>세션·개인화 설명 + 판단에 사용한 값과 LLM 생성 과정 기록</td><td>B</td></tr>
       <tr><td>분석 서비스</td><td>세션 내/세션 간 분석 + 서빙 로그</td><td>C</td></tr>
       <tr><td>운영 서비스 + HITL/HOTL</td><td>대시보드/리포트 UI + 말하기 테스트 + 설정/감사</td><td>D</td></tr>
-      <tr><td>Data Lake / Model Artifact</td><td>SessionStore(이력) / LearnedZone(개인 파라미터)</td><td>E</td></tr>
-      <tr><td>Model Construction / Retraining</td><td>개인 적응 갱신(세션마다 베이지안 + EWMA)</td><td>F1</td></tr>
-      <tr><td>모델 테스팅</td><td>시뮬 검증 도구(참임계 가상 러너 폐루프)</td><td>F2</td></tr>
+      <tr><td>Data Lake / Model Artifact</td><td>SessionStore(세션 이력) / LearnedZone(개인 경계)</td><td>E</td></tr>
+      <tr><td>Model Construction / Retraining</td><td>말하기 테스트 응답으로 개인 경계를 갱신하는 온디바이스 적응</td><td>F1</td></tr>
+      <tr><td>모델 테스팅</td><td>같은 입력을 반복하는 가상 러너와 자동시험</td><td>F2</td></tr>
       <tr><td>Model Registry (인접)</td><td>NanoModelManager(모델 상태/다운로드) + AICore/APK</td><td>A7-1/E4</td></tr>
     </tbody>
   </table></div>
-  <p class="lead">정체성 한 줄: 표준 대비 운영 쪽이 두껍고 오프라인 학습 쪽이 얇다 — 학습이 운영 안의 개인 적응으로 녹아 있다.</p>
+  <p class="lead">이 시스템은 대량 데이터를 서버에서 다시 학습하지 않는다. 폰에서 개인 경계를 조금씩 조정하고, 규칙이 판단을 맡으며, LLM은 문장 표현만 담당한다.</p>
   <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
 </section>
 
 <section class="slide">
-  <div class="slide-head"><h2>최종 Architecture (2/2) — 모듈 A: 추론 서비스</h2><span class="sec-no">3</span></div>
+  <div class="slide-head"><h2>최종 아키텍처 (2/2) — 입력에서 코칭까지</h2><span class="sec-no">3</span></div>
   <div class="fig-frame"><img data-img="mod-a" alt="모듈 A 추론 서비스 상세"></div>
-  <p class="note">입력에서 출력까지 9컴포넌트: 신호 소스(A1, 실센서/시뮬 교체 지점) → 입력 가드레일(A2) → 특징 준비(A3) → 존 판정(A4)/개인 경계(A5)/관측 분석(A6) → 코칭 표현(A7, 규칙이 확정한 사실로 LLM이 문장만) → 출력 가드레일 3종+안전(A8). 오케스트레이터(A9)가 매초 구동.</p>
+  <p class="note">읽는 순서: 실제 센서나 시험 입력(A1) → 허용 범위와 신선도 검사(A2) → 최근 신호 정리(A3) → 존 판정·개인 경계·분석(A4~A6) → 코칭 문장 표현(A7) → 방향과 숫자 검사 및 안전 규칙(A8)이다. RunEngine(A9)이 이 순서를 매초 실행한다. 규칙이 판단과 사실을 먼저 확정하고 LLM은 문장만 만든다.</p>
   <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
 </section>
 
 <section class="slide">
   <div class="slide-head"><h2>모듈 B+C: 설명 + 분석 서비스</h2><span class="sec-no">3</span></div>
   <div class="fig-frame"><img data-img="mod-bc" alt="모듈 B+C 설명 분석 상세"></div>
-  <p class="note">설명 생성기(B1)는 판단에 실제로 쓴 사실로 스토리/설명을 만들고(세션 종료 1회 생성/저장), 프로비넌스(B2-1)는 모든 LLM 호출의 근거/프롬프트/경로를 기록해 리포트에서 문장 단위 추적을 만든다. 분석(C)은 세션 내 구간/경사/워밍업과 세션 간 비교/추세/기록을 도출한다.</p>
+  <p class="note">설명 모듈(B)은 판단에 실제로 사용한 값으로 세션과 개인화 설명을 만들고 저장한다. 세션 중 LLM을 호출하면 입력 사실, 프롬프트, 채택·기각·기본 문구 경로와 걸린 시간을 함께 기록한다. 분석 모듈(C)은 한 세션의 구간·경사·워밍업과 여러 세션의 비교·추세를 계산한다.</p>
   <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
 </section>
 
 <section class="slide">
   <div class="slide-head"><h2>모듈 D+E: 운영 서비스 + 저장</h2><span class="sec-no">3</span></div>
   <div class="fig-frame"><img data-img="mod-de" alt="모듈 D+E 운영 저장 상세"></div>
-  <p class="note">운영(D)은 화면/음성 UI + 폰-워치 인프라 + 사람의 개입 통로(HITL=말하기 테스트, HOTL=설정/감사). 저장(E)은 Data Lake(세션 이력) + Model Artifact(개인 파라미터) + 프로필/설정 + Registry 대응(APK/AICore, 경량).</p>
+  <p class="note">운영 모듈(D)은 폰·워치 화면, 음성, 세션 제어를 제공한다. 사용자는 말하기 테스트로 개인 경계에 영향을 주고, 설정에서 코칭 방식을 바꾸며, 리포트에서 LLM 사용 기록을 확인한다. 저장 모듈(E)은 세션, 개인 경계, 프로필과 설정을 기기에 보관한다.</p>
   <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
 </section>
 
 <section class="slide">
-  <div class="slide-head"><h2>모듈 F: 개인 적응 + 시뮬 검증 (AI Development 대응)</h2><span class="sec-no">3</span></div>
+  <div class="slide-head"><h2>모듈 F: 개인 적응과 공통 검증 구조</h2><span class="sec-no">3</span></div>
   <div class="fig-frame"><img data-img="mod-f" alt="모듈 F 적응 검증 상세"></div>
-  <p class="note">표준의 오프라인 대량 학습이 없는 대신 — 개인 적응 갱신(F1)이 운영 안에서 세션마다 돌고(Retraining 대응), 시뮬 검증 도구(F2)가 참값 없는 조건의 검증을 맡으며(모델 테스팅 대응), 모델 준비 관리자(A7-1)가 Nano 상태/다운로드를 관리한다(Model Registry 인접).</p>
+  <p class="note">개인 적응(F1)은 말하기 테스트 응답이 들어올 때 Bayesian 방식으로 경계를 갱신하고 결과를 다음 세션에 이어 쓴다. 공통 검증 구조(F2)는 같은 입력과 고정 시드로 QA1~QA4를 반복 확인한다. Nano 준비 관리자(A7-1)는 모델 상태를 확인하고 세션 밖에서 다운로드를 요청한다.</p>
 
-  <h3 class="num"><span>■</span>DP 도식과의 관계 — 다섯 DP는 이 한 아키텍처의 다른 QA 단면</h3>
+  <h3 class="num"><span>■</span>DP 도식과의 관계 — 네 QAS와 공통 검증 구조가 한 아키텍처에 모인다</h3>
   <div class="tbl"><table class="decide">
     <thead><tr><th style="width:4em">DP</th><th style="width:8em">QA</th><th>이 아키텍처의 어느 단면인가</th><th style="width:13em">카운터(2안)</th></tr></thead>
     <tbody>
-      <tr><td>DP1</td><td>설명용이성</td><td>투명 판정(A4/A5) + 설명 서비스(B) + 프로비넌스(B2-1)</td><td>사전학습 블랙박스 + 사후 설명</td></tr>
-      <tr><td>DP2</td><td>제어가능성</td><td>구조적 격리(A7) + 출력 가드 3종(A8) + 폴백 + HITL/HOTL(D3) + 감사</td><td>LLM 판단 위임</td></tr>
+      <tr><td>DP1</td><td>설명용이성</td><td>규칙 판정(A4/A5) + 설명 서비스(B) + 판단 값과 생성 과정 기록(B2-1)</td><td>블랙박스 판정 뒤에 설명 추가</td></tr>
+      <tr><td>DP2</td><td>제어가능성</td><td>LLM 권한 제한(A7) + 출력 검사(A8) + 기본 문구 + 사용자 설정과 기록(D3)</td><td>LLM에 판단 위임</td></tr>
       <tr><td>DP3</td><td>기능적응성</td><td>개인 경계 추정(A5) + 적응 루프(F1/E1) + 말하기 테스트(D3)</td><td>오프라인 재학습 개인화</td></tr>
-      <tr><td>DP4</td><td>강건성</td><td>입력 가드레일(A2) + 이중 기준 판정(A4) + 통계 평탄화(A6) + 소스 폴백(A1)</td><td>즉시 반응 판정</td></tr>
-      <tr><td>DP5</td><td>테스트가능성</td><td>소스 추상화(A1) + 시뮬 검증(F2) + 순수 로직 분리</td><td>실기기 결합 검증</td></tr>
+      <tr><td>DP4</td><td>강건성</td><td>입력 검사(A2) + 화면·코칭 기준 분리(A4) + 구간 통계(A6) + 입력 전환(A1)</td><td>즉시 반응 판정</td></tr>
+      <tr><td>DP5</td><td>공통 검증 구조</td><td>입력 교체(A1) + 반복 시뮬레이션(F2) + 기기와 분리한 핵심 로직</td><td>실기기 중심 검증</td></tr>
     </tbody>
   </table></div>
   <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
@@ -1170,15 +1170,6 @@
 
 </div>
 
-<style>
-  .shot {
-    border: 2px dashed var(--accent); border-radius: 6px;
-    background: var(--accent-soft); color: var(--accent);
-    padding: 14px 16px; margin: 8px 0; font-size: 13px; font-weight: 650;
-  }
-  .shot small { display: block; font-weight: 400; color: var(--muted); margin-top: 2px; }
-  .ok { color: #1E8E3E; font-weight: 800; }
-</style>
 
 <div class="deck" id="part-impl">
 
@@ -1324,7 +1315,7 @@
 <div class="deck" id="part-appendix">
 
 <div class="deck-head">
-  <h1>Appendix — Use Case / Context / Module / C&amp;C / Deployment View</h1>
+  <h1>부록 — 아키텍처를 읽는 다섯 가지 관점</h1>
   <p>인증 보고서 부록 뷰 5종(도식 6장 — C&amp;C는 상세/축약 2장) — 2026-08-01 v1 — 원고: <code>report/report-017</code>, 도식: <code>arch/diagrams/</code></p>
 </div>
 
@@ -1332,9 +1323,9 @@
   <div class="slide-head"><h2>Appendix. Use Case</h2><span class="sec-no">A</span></div>
   <div class="fig-frame"><img data-img="usecase" alt="Use Case 다이어그램"></div>
   <ul>
-    <li>액터는 둘 — <strong>러너(사용자)</strong>와 <strong>개발자/검증자</strong>. 검증자가 정식 액터인 것이 이 시스템의 특징이다(시뮬 모드가 제품 기능 — DP5 테스트가능성).</li>
-    <li>러너 중심 흐름: 프로필 등록 → 세션 시작 → 실시간 존/음성 코칭 → <strong>말하기 테스트 응답</strong>(코칭 흐름에 포함 — 답이 그 자리에서 판정 기준을 정정하는 HITL) → 리포트 → <strong>지표 설명/코칭 근거 열람</strong>(리포트에서 확장).</li>
-    <li>부속: 코칭 방식 조정(HOTL), AI 모델 준비(미준비 시 안내로 확장), 이력/추세 확인.</li>
+    <li>그림에는 <strong>러너</strong>와 <strong>개발자·검증자</strong>가 나온다. 러너는 앱 기능을 사용하고, 검증자는 시험 입력으로 네 QAS를 반복 확인한다. 검증 기능을 상용 기능으로 주장하는 것은 아니다.</li>
+    <li>러너의 흐름은 프로필 등록 → 세션 시작 → 존 확인과 음성 코칭 → 말하기 테스트 응답 → 리포트와 코칭 근거 확인 순서다. 말하기 테스트 응답은 개인 경계 갱신에 사용된다.</li>
+    <li>설정에서는 코칭 빈도·음성·말투 등을 바꿀 수 있고, 홈과 설정 화면에서 Nano 모델 상태와 다운로드 필요 여부를 확인할 수 있다.</li>
   </ul>
   <div class="crumb">과제 소개 <span>요구사항</span> <span>설계</span> <span>구현/검증</span> <span>결론</span> <b>Appendix</b></div>
 </section>
@@ -1343,9 +1334,9 @@
   <div class="slide-head"><h2>Appendix. Context View</h2><span class="sec-no">A</span></div>
   <div class="fig-frame"><img data-img="context" alt="Context 다이어그램"></div>
   <ul>
-    <li>시스템 경계: 폰 앱(판정/분석/개인화/코칭의 단일 주체) + 워치 앱(측정/표시). 외부 5종: Health Services / GPS / <strong>Gemini Nano(AICore, 별도 프로세스)</strong> / Open-Meteo(기온, 세션당 1회) / OSM 지도 타일 서버.</li>
-    <li>LLM 왕복에 통제 명시: 나가는 것은 "규칙이 확정한 사실+임무"뿐, 들어오는 문장은 <strong>가드 3종 통과 시 채택, 아니면 단어 폴백</strong>. 모델 다운로드는 세션 밖에서만.</li>
-    <li>사용자에게 나가는 것에 생성 근거(프로비넌스) 포함 — 설명용이성이 컨텍스트 수준에서 보인다.</li>
+    <li>시스템은 폰 앱과 워치 앱이다. 워치는 심박·케이던스를 측정하고 화면에 표시하며, 폰은 판정·분석·개인화·코칭을 담당한다.</li>
+    <li>외부 연결은 Health Services, 폰 GPS, 기기 안의 별도 프로세스인 Gemini Nano/AICore, Open-Meteo, OSM 지도 타일 서버다. 날씨 조회 때 반올림한 위도·경도가 Open-Meteo로 전송되고, 지도 화면은 OSM 타일을 요청한다. 심박·개인화·세션 분석은 자체 서버나 외부 AI API로 보내지 않는다.</li>
+    <li>LLM에는 규칙이 확정한 사실과 문장 작성 임무만 전달한다. 결과가 방향·숫자·형식 검사를 통과하지 못하면 버리고 기본 문구를 사용한다. 리포트에는 판단 값과 생성 경로를 함께 남긴다.</li>
   </ul>
   <div class="crumb">과제 소개 <span>요구사항</span> <span>설계</span> <span>구현/검증</span> <span>결론</span> <b>Appendix</b></div>
 </section>
@@ -1354,9 +1345,9 @@
   <div class="slide-head"><h2>Appendix. 최종 Architecture (Module View)</h2><span class="sec-no">A</span></div>
   <div class="fig-frame"><img data-img="module-view" alt="Module View 다이어그램"></div>
   <ul>
-    <li>코드 정적 구조: 폰 65파일 9패키지 + 워치 9파일. <strong>domain이 리프</strong>(의존 0, 안드로이드 미의존).</li>
-    <li>결정 로직(pipeline/coaching/analysis)이 전부 안드로이드 미의존 → <strong>단위 테스트 153개가 기기 없이 실행</strong> — 테스트가능성의 구조적 근거.</li>
-    <li>sim은 sensor의 RunSource 인터페이스를 구현(의존성 역전) — 검증 입력이 운영과 같은 경로로 흐른다.</li>
+    <li>이 그림은 파일 개수가 아니라 코드 사이의 의존 방향을 보여 준다. 공통 데이터 모델은 안드로이드 기능에 의존하지 않으며, 판정·개인화·분석의 핵심 계산도 기기와 분리돼 있다.</li>
+    <li>이 분리 덕분에 최근 JVM 단위시험 153개를 워치 없이 실행했다. 이 숫자는 제품 정확도가 아니라 자동 회귀 범위를 뜻한다.</li>
+    <li>실제 센서와 시험 입력은 같은 RunSource 인터페이스를 사용한다. 따라서 입력 이후의 판정 경로를 바꾸지 않고 같은 시나리오를 반복할 수 있다.</li>
   </ul>
   <div class="crumb">과제 소개 <span>요구사항</span> <span>설계</span> <span>구현/검증</span> <span>결론</span> <b>Appendix</b></div>
 </section>
@@ -1365,8 +1356,8 @@
   <div class="slide-head"><h2>Appendix. 최종 Architecture (C&amp;C View)</h2><span class="sec-no">A</span></div>
   <div class="fig-frame"><img data-img="cnc-simple" alt="C&C View 다이어그램(축약)"></div>
   <ul>
-    <li>실행 시 컴포넌트와 커넥터: 센서 → 입력 가드레일 → 모델 서빙(규칙+베이지안+분석+LLM) → 출력 가드레일 3종 → 설명/운영, 오른쪽에 Data Lake와 개인 적응 루프. (상세판 = <code>arch/diagrams/02-component-cnc.png</code>)</li>
-    <li>이 축약 뷰가 <strong>DP1~DP5 채택안(1안) 도식의 원본</strong> — 각 DP는 이 그림을 자기 QA 축이 드러나게 개별화해 싣고, 그 경로를 클래스 단위로 전개한 상세 도식을 짝으로 둔다. 다섯 그림은 서로 다른 시스템이 아니라 한 아키텍처의 다섯 단면이다.</li>
+    <li>실행 흐름은 센서 입력 → 입력 검사 → 규칙 판정·개인 경계·분석·LLM 표현 → 출력 검사 → 화면·음성·리포트 순서다. 세션 결과와 개인 경계는 폰에 저장된다.</li>
+    <li>DP1~DP4는 같은 아키텍처에서 각 QAS와 관련된 경로를 강조한 그림이고, DP5는 이 구조를 반복 시험하는 방법을 강조한 그림이다. 서로 다른 다섯 시스템을 제안한 것이 아니다.</li>
   </ul>
   <div class="crumb">과제 소개 <span>요구사항</span> <span>설계</span> <span>구현/검증</span> <span>결론</span> <b>Appendix</b></div>
 </section>
@@ -1375,8 +1366,8 @@
   <div class="slide-head"><h2>Appendix. C&amp;C View — 상세판 (전 컴포넌트)</h2><span class="sec-no">A</span></div>
   <div class="fig-frame"><img data-img="cnc-detail" alt="C&C View 상세 다이어그램"></div>
   <ul>
-    <li>축약판을 컴포넌트 수준으로 편 상세 뷰 — 추론 서비스 내부(신호 소스/입력 가드레일/특징 준비/존 판정/개인 경계/분석 엔진/코칭 표현/출력 가드레일/오케스트레이터)와 설명/분석/운영/저장/적응의 전 컴포넌트, 프로비넌스 엣지까지.</li>
-    <li>컴포넌트별 책임/입출력/구현 파일 = <code>arch/component-catalog.md</code> (A1~A9, B1~B2-1, C1~C3, D1~D3, E1~E4, F1~F2).</li>
+    <li>상세 그림은 입력 출처부터 판정, 개인 경계, 분석, 코칭 문장, 출력 검사, 저장까지의 연결을 모두 보여 준다. 화살표를 따라가면 어떤 값이 판단과 설명 기록에 사용되는지 확인할 수 있다.</li>
+    <li>각 컴포넌트의 책임, 입력·출력, 구현 파일은 <code>arch/component-catalog.md</code>에 정리돼 있다.</li>
   </ul>
   <div class="crumb">과제 소개 <span>요구사항</span> <span>설계</span> <span>구현/검증</span> <span>결론</span> <b>Appendix</b></div>
 </section>
@@ -1385,9 +1376,9 @@
   <div class="slide-head"><h2>Appendix. 최종 Architecture (Deployment View)</h2><span class="sec-no">A</span></div>
   <div class="fig-frame"><img data-img="deployment" alt="Deployment 다이어그램"></div>
   <ul>
-    <li>3노드 + 1클라우드: 워치(UI + 포그라운드 측정 서비스 + Health Services) / 폰(앱 본체 + 원격 제어 서비스 + 저장 5종) / <strong>AICore(별도 프로세스)</strong> / Open-Meteo.</li>
-    <li>폰-워치 커넥터 = Wearable Data Layer 경로 목록 — <strong>/run/live(폰이 확정한 존의 1Hz 푸시)</strong>가 "폰=단일 판정 주체"의 배치상 증거.</li>
-    <li>AICore 주석: LLM 자체 CPU/메모리는 앱에서 계측 불가 → 호출 지연/경로/앱 PSS만 기록(정직한 계측 한계 — 리포트 "LLM 사용" 카드와 일치).</li>
+    <li>배치는 워치, 폰, 기기 안의 AICore와 외부의 Open-Meteo·OSM 타일 서버로 나뉜다. 세션과 개인화 값은 폰에 저장된다.</li>
+    <li>워치가 측정한 심박과 응답은 Wearable Data Layer로 폰에 전달된다. 폰이 확정한 화면용 존은 <strong>/run/live</strong> 경로로 매초 워치에 보내므로, 판정 주체가 폰 하나라는 설계가 배치에서도 드러난다.</li>
+    <li>Nano는 AICore라는 별도 프로세스에서 실행되므로 앱이 그 프로세스의 CPU와 메모리를 직접 측정하지 못한다. 보고서에는 측정 가능한 호출 시간, 처리 경로와 앱 메모리만 기록한다.</li>
   </ul>
   <div class="crumb">과제 소개 <span>요구사항</span> <span>설계</span> <span>구현/검증</span> <span>결론</span> <b>Appendix</b></div>
 </section>

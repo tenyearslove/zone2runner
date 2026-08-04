@@ -10,7 +10,7 @@ actor "사용자 (러너)" as User
 component "추론/설명/분석 (모듈 A/B/C)" as CORE #BBDEFB
 
 package "운영 서비스 (Operation Service)" {
-  component "D1. 대시보드/리포트 UI\n폰: 홈/러닝 대시보드/리포트/이력/프로필/설정\n워치: 존 게이지/러닝 화면\n지표 ⓘ 설명 팝업 + 코칭 프로비넌스 팝업" <<Operation UI>> as D1 #E1BEE7
+  component "D1. 대시보드/리포트 UI\n폰: 홈/러닝 대시보드/리포트/이력/프로필/설정\n워치: 존 게이지/러닝 화면\n지표 ⓘ 설명 팝업 + 코칭 근거 팝업" <<Operation UI>> as D1 #E1BEE7
   component "D2. 인프라/세션 제어\nRunControlService(포그라운드)\nRunLink/RunBus(폰-워치 데이터 계층)\nHR/존/토크/미러 동기화" <<Infrastructure Control>> as D2 #E1BEE7
   component "D3. HITL / HOTL 제어\nHITL: 말하기 테스트(워치 3칩/폰 팝업) → 경계 교정\nHOTL: 코칭 빈도/음성/말투/더위/관절 설정\n+ 일시정지/종료 + LLM 사용 감사" <<HITL / HOTL Control>> as D3 #E1BEE7
 }

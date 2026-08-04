@@ -179,70 +179,70 @@
 <div class="deck">
 
 <div class="deck-head">
-  <h1>Appendix — Use Case / Context / Module / C&amp;C / Deployment View</h1>
+  <h1>부록 — 아키텍처를 읽는 다섯 가지 관점</h1>
   <p>인증 보고서 부록 뷰 5종(도식 6장 — C&amp;C는 상세/축약 2장) — 2026-08-01 v1 — 원고: <code>report/report-017</code>, 도식: <code>arch/diagrams/</code></p>
 </div>
 
 <section class="slide">
   <div class="slide-head"><h2>Appendix. Use Case</h2><span class="sec-no">A</span></div>
-  <div class="fig-frame"><img src="img/05-usecase.png?v=7aca4767" alt="Use Case 다이어그램"></div>
+  <div class="fig-frame"><img src="img/05-usecase.png?v=bfff19db" alt="Use Case 다이어그램"></div>
   <ul>
-    <li>액터는 둘 — <strong>러너(사용자)</strong>와 <strong>개발자/검증자</strong>. 검증자가 정식 액터인 것이 이 시스템의 특징이다(시뮬 모드가 제품 기능 — DP5 테스트가능성).</li>
-    <li>러너 중심 흐름: 프로필 등록 → 세션 시작 → 실시간 존/음성 코칭 → <strong>말하기 테스트 응답</strong>(코칭 흐름에 포함 — 답이 그 자리에서 판정 기준을 정정하는 HITL) → 리포트 → <strong>지표 설명/코칭 근거 열람</strong>(리포트에서 확장).</li>
-    <li>부속: 코칭 방식 조정(HOTL), AI 모델 준비(미준비 시 안내로 확장), 이력/추세 확인.</li>
+    <li>그림에는 <strong>러너</strong>와 <strong>개발자·검증자</strong>가 나온다. 러너는 앱 기능을 사용하고, 검증자는 시험 입력으로 네 QAS를 반복 확인한다. 검증 기능을 상용 기능으로 주장하는 것은 아니다.</li>
+    <li>러너의 흐름은 프로필 등록 → 세션 시작 → 존 확인과 음성 코칭 → 말하기 테스트 응답 → 리포트와 코칭 근거 확인 순서다. 말하기 테스트 응답은 개인 경계 갱신에 사용된다.</li>
+    <li>설정에서는 코칭 빈도·음성·말투 등을 바꿀 수 있고, 홈과 설정 화면에서 Nano 모델 상태와 다운로드 필요 여부를 확인할 수 있다.</li>
   </ul>
   <div class="crumb">과제 소개 <span>요구사항</span> <span>설계</span> <span>구현/검증</span> <span>결론</span> <b>Appendix</b></div>
 </section>
 
 <section class="slide">
   <div class="slide-head"><h2>Appendix. Context View</h2><span class="sec-no">A</span></div>
-  <div class="fig-frame"><img src="img/01-context.png?v=8129a659" alt="Context 다이어그램"></div>
+  <div class="fig-frame"><img src="img/01-context.png?v=09044dc9" alt="Context 다이어그램"></div>
   <ul>
-    <li>시스템 경계: 폰 앱(판정/분석/개인화/코칭의 단일 주체) + 워치 앱(측정/표시). 외부 5종: Health Services / GPS / <strong>Gemini Nano(AICore, 별도 프로세스)</strong> / Open-Meteo(기온, 세션당 1회) / OSM 지도 타일 서버.</li>
-    <li>LLM 왕복에 통제 명시: 나가는 것은 "규칙이 확정한 사실+임무"뿐, 들어오는 문장은 <strong>가드 3종 통과 시 채택, 아니면 단어 폴백</strong>. 모델 다운로드는 세션 밖에서만.</li>
-    <li>사용자에게 나가는 것에 생성 근거(프로비넌스) 포함 — 설명용이성이 컨텍스트 수준에서 보인다.</li>
+    <li>시스템은 폰 앱과 워치 앱이다. 워치는 심박·케이던스를 측정하고 화면에 표시하며, 폰은 판정·분석·개인화·코칭을 담당한다.</li>
+    <li>외부 연결은 Health Services, 폰 GPS, 기기 안의 별도 프로세스인 Gemini Nano/AICore, Open-Meteo, OSM 지도 타일 서버다. 날씨 조회 때 반올림한 위도·경도가 Open-Meteo로 전송되고, 지도 화면은 OSM 타일을 요청한다. 심박·개인화·세션 분석은 자체 서버나 외부 AI API로 보내지 않는다.</li>
+    <li>LLM에는 규칙이 확정한 사실과 문장 작성 임무만 전달한다. 결과가 방향·숫자·형식 검사를 통과하지 못하면 버리고 기본 문구를 사용한다. 리포트에는 판단 값과 생성 경로를 함께 남긴다.</li>
   </ul>
   <div class="crumb">과제 소개 <span>요구사항</span> <span>설계</span> <span>구현/검증</span> <span>결론</span> <b>Appendix</b></div>
 </section>
 
 <section class="slide">
   <div class="slide-head"><h2>Appendix. 최종 Architecture (Module View)</h2><span class="sec-no">A</span></div>
-  <div class="fig-frame"><img src="img/04-module-view.png?v=4bc28ef8" alt="Module View 다이어그램"></div>
+  <div class="fig-frame"><img src="img/04-module-view.png?v=ef2b1204" alt="Module View 다이어그램"></div>
   <ul>
-    <li>코드 정적 구조: 폰 65파일 9패키지 + 워치 9파일. <strong>domain이 리프</strong>(의존 0, 안드로이드 미의존).</li>
-    <li>결정 로직(pipeline/coaching/analysis)이 전부 안드로이드 미의존 → <strong>단위 테스트 153개가 기기 없이 실행</strong> — 테스트가능성의 구조적 근거.</li>
-    <li>sim은 sensor의 RunSource 인터페이스를 구현(의존성 역전) — 검증 입력이 운영과 같은 경로로 흐른다.</li>
+    <li>이 그림은 파일 개수가 아니라 코드 사이의 의존 방향을 보여 준다. 공통 데이터 모델은 안드로이드 기능에 의존하지 않으며, 판정·개인화·분석의 핵심 계산도 기기와 분리돼 있다.</li>
+    <li>이 분리 덕분에 최근 JVM 단위시험 153개를 워치 없이 실행했다. 이 숫자는 제품 정확도가 아니라 자동 회귀 범위를 뜻한다.</li>
+    <li>실제 센서와 시험 입력은 같은 RunSource 인터페이스를 사용한다. 따라서 입력 이후의 판정 경로를 바꾸지 않고 같은 시나리오를 반복할 수 있다.</li>
   </ul>
   <div class="crumb">과제 소개 <span>요구사항</span> <span>설계</span> <span>구현/검증</span> <span>결론</span> <b>Appendix</b></div>
 </section>
 
 <section class="slide">
   <div class="slide-head"><h2>Appendix. 최종 Architecture (C&amp;C View)</h2><span class="sec-no">A</span></div>
-  <div class="fig-frame"><img src="img/02b-component-cnc-simple.png?v=0b55e862" alt="C&C View 다이어그램(축약)"></div>
+  <div class="fig-frame"><img src="img/02b-component-cnc-simple.png?v=93e3eedb" alt="C&C View 다이어그램(축약)"></div>
   <ul>
-    <li>실행 시 컴포넌트와 커넥터: 센서 → 입력 가드레일 → 모델 서빙(규칙+베이지안+분석+LLM) → 출력 가드레일 3종 → 설명/운영, 오른쪽에 Data Lake와 개인 적응 루프. (상세판 = <code>arch/diagrams/02-component-cnc.png</code>)</li>
-    <li>이 축약 뷰가 <strong>DP1~DP5 채택안(1안) 도식의 원본</strong> — 각 DP는 이 그림을 자기 QA 축이 드러나게 개별화해 싣고, 그 경로를 클래스 단위로 전개한 상세 도식을 짝으로 둔다. 다섯 그림은 서로 다른 시스템이 아니라 한 아키텍처의 다섯 단면이다.</li>
+    <li>실행 흐름은 센서 입력 → 입력 검사 → 규칙 판정·개인 경계·분석·LLM 표현 → 출력 검사 → 화면·음성·리포트 순서다. 세션 결과와 개인 경계는 폰에 저장된다.</li>
+    <li>DP1~DP4는 같은 아키텍처에서 각 QAS와 관련된 경로를 강조한 그림이고, DP5는 이 구조를 반복 시험하는 방법을 강조한 그림이다. 서로 다른 다섯 시스템을 제안한 것이 아니다.</li>
   </ul>
   <div class="crumb">과제 소개 <span>요구사항</span> <span>설계</span> <span>구현/검증</span> <span>결론</span> <b>Appendix</b></div>
 </section>
 
 <section class="slide">
   <div class="slide-head"><h2>Appendix. C&amp;C View — 상세판 (전 컴포넌트)</h2><span class="sec-no">A</span></div>
-  <div class="fig-frame"><img src="img/02-component-cnc.png?v=03104511" alt="C&C View 상세 다이어그램"></div>
+  <div class="fig-frame"><img src="img/02-component-cnc.png?v=d4b9e935" alt="C&C View 상세 다이어그램"></div>
   <ul>
-    <li>축약판을 컴포넌트 수준으로 편 상세 뷰 — 추론 서비스 내부(신호 소스/입력 가드레일/특징 준비/존 판정/개인 경계/분석 엔진/코칭 표현/출력 가드레일/오케스트레이터)와 설명/분석/운영/저장/적응의 전 컴포넌트, 프로비넌스 엣지까지.</li>
-    <li>컴포넌트별 책임/입출력/구현 파일 = <code>arch/component-catalog.md</code> (A1~A9, B1~B2-1, C1~C3, D1~D3, E1~E4, F1~F2).</li>
+    <li>상세 그림은 입력 출처부터 판정, 개인 경계, 분석, 코칭 문장, 출력 검사, 저장까지의 연결을 모두 보여 준다. 화살표를 따라가면 어떤 값이 판단과 설명 기록에 사용되는지 확인할 수 있다.</li>
+    <li>각 컴포넌트의 책임, 입력·출력, 구현 파일은 <code>arch/component-catalog.md</code>에 정리돼 있다.</li>
   </ul>
   <div class="crumb">과제 소개 <span>요구사항</span> <span>설계</span> <span>구현/검증</span> <span>결론</span> <b>Appendix</b></div>
 </section>
 
 <section class="slide">
   <div class="slide-head"><h2>Appendix. 최종 Architecture (Deployment View)</h2><span class="sec-no">A</span></div>
-  <div class="fig-frame"><img src="img/03-deployment.png?v=38c3ec44" alt="Deployment 다이어그램"></div>
+  <div class="fig-frame"><img src="img/03-deployment.png?v=a9a66dc4" alt="Deployment 다이어그램"></div>
   <ul>
-    <li>3노드 + 1클라우드: 워치(UI + 포그라운드 측정 서비스 + Health Services) / 폰(앱 본체 + 원격 제어 서비스 + 저장 5종) / <strong>AICore(별도 프로세스)</strong> / Open-Meteo.</li>
-    <li>폰-워치 커넥터 = Wearable Data Layer 경로 목록 — <strong>/run/live(폰이 확정한 존의 1Hz 푸시)</strong>가 "폰=단일 판정 주체"의 배치상 증거.</li>
-    <li>AICore 주석: LLM 자체 CPU/메모리는 앱에서 계측 불가 → 호출 지연/경로/앱 PSS만 기록(정직한 계측 한계 — 리포트 "LLM 사용" 카드와 일치).</li>
+    <li>배치는 워치, 폰, 기기 안의 AICore와 외부의 Open-Meteo·OSM 타일 서버로 나뉜다. 세션과 개인화 값은 폰에 저장된다.</li>
+    <li>워치가 측정한 심박과 응답은 Wearable Data Layer로 폰에 전달된다. 폰이 확정한 화면용 존은 <strong>/run/live</strong> 경로로 매초 워치에 보내므로, 판정 주체가 폰 하나라는 설계가 배치에서도 드러난다.</li>
+    <li>Nano는 AICore라는 별도 프로세스에서 실행되므로 앱이 그 프로세스의 CPU와 메모리를 직접 측정하지 못한다. 보고서에는 측정 가능한 호출 시간, 처리 경로와 앱 메모리만 기록한다.</li>
   </ul>
   <div class="crumb">과제 소개 <span>요구사항</span> <span>설계</span> <span>구현/검증</span> <span>결론</span> <b>Appendix</b></div>
 </section>

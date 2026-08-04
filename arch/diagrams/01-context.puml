@@ -19,13 +19,15 @@ package "외부 시스템 / 센서" {
 }
 
 User --> SYS : 말하기 테스트 응답(HITL)\n설정/일시정지(HOTL)
-SYS --> User : 실시간 존/코칭(음성)\n리포트 / 설명 / 생성 근거(프로비넌스)
+SYS --> User : 실시간 존/코칭(음성)\n리포트 / 설명 / 판단 값과 생성 과정
 HS --> SYS : 심박, 케이던스
 GPS --> SYS : 위치/속도/고도
 SYS --> Nano : 규칙이 확정한 사실 + 임무\n(문장 생성 요청, ML Kit GenAI)
 Nano --> SYS : 코칭 문장/요약\n(가드 3종 통과 시 채택, 아니면 단어 폴백)
 SYS --> Nano : 기능 모델 상태 조회 /\n다운로드(진행률, 세션 밖에서만)
+SYS --> Weather : 반올림한 위도/경도\n기온 조회(세션당 1회)
 Weather --> SYS : 기온 (참고)
+SYS --> Tiles : 현재 지도 영역의 타일 요청
 Tiles --> SYS : 지도 타일 (표시용)
 Dev ..> SYS : 시뮬 입력(가상 러너/수동)\nRunSource 교체 - 검증용
 @enduml

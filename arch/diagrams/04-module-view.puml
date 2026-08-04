@@ -6,7 +6,7 @@ skinparam shadowing false
 skinparam packageStyle rectangle
 skinparam linetype ortho
 
-package "app (폰, com.zone2runner.app - 65파일 9패키지)" {
+package "app (폰, com.zone2runner.app)" {
   component "(root) UI 진입\nHome/Run/Report/History\nProfile/Settings Activity\n+ RunControlService/RunLink" as ROOT #E1BEE7
   component "ui\n커스텀 뷰(게이지/차트/스파크라인)\n+ 공용 팔레트" as UI #E1BEE7
   component "pipeline\nRunEngine(오케스트레이터)\nZoneJudge/Personalization\nOutlierGuard/SafetyGuard\nFeatureExtractor/CoachCadence" as PIPE #BBDEFB
@@ -52,8 +52,8 @@ ROOT <..> WSVC : Wearable Data Layer\n(프로세스 간 - 코드 의존 아님)
 
 note bottom of DOM
   domain = 리프(의존 없음, 안드로이드 미의존)
-  pipeline/coaching/analysis/domain/sim이
-  순수 JVM 모듈 → 단위 테스트 153개가 기기 없이 실행
+  판정/개인화/분석의 핵심 계산을 기기와 분리
+  → JVM 단위시험 153개를 워치 없이 실행
 end note
 
 legend right

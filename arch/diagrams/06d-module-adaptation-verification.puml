@@ -11,12 +11,12 @@ database "저장 (모듈 E)\nLearnedZone / SessionStore" as STORE #CFD8DC
 component "운영 서비스 (모듈 D)\n말하기 테스트(HITL) / 시뮬 대시보드" as OPS #E1BEE7
 
 package "AI Development 대응 (오프라인 대량 학습 없음 - 개인 적응/시뮬로 축소)" {
-  component "F1. 개인 적응 갱신\nPersonalization.update() + NoiseFloor(EWMA)\n표준의 Retraining이 운영 안 세션 단위 갱신으로\n라벨 = 말하기 테스트(검증 가능 실라벨)\n안전장치 = ±10bpm 한도 + 불확실도" <<Model Construction / Retraining>> as F1 #B2DFDB
-  component "F2. 시뮬 검증 도구\nVirtualRunner(참임계 폐루프)\nSimRunnerSource / ManualRunSource / RouteWalk\n워치 없이 전 파이프라인 실행\n(모델 테스팅 대응 - 구조 검증/디버거로 한정)" <<Model Testing>> as F2 #FFAB91
+  component "F1. 개인 적응 갱신\nPersonalization.update()\n말하기 테스트 응답으로 Bayesian 경계 갱신\n결과를 다음 세션에 이어서 사용\n안전장치 = 세션당 최대 10bpm + 불확실성" <<Model Construction / Retraining>> as F1 #B2DFDB
+  component "F2. 공통 검증 구조\n경계를 정해 둔 VirtualRunner\nSimRunnerSource / ManualRunSource / RouteWalk\n워치 없이 같은 코드 경로 실행\n(구조 검증으로 범위 한정)" <<Model Testing>> as F2 #FFAB91
   component "A7-1. 모델 준비 관리자\nNanoModelManager\n기능 2종(생성/요약) 상태/다운로드\n홈 배너 + 설정 AI 모델 카드\n사용 시점 = AVAILABLE만" <<Model Registry 인접>> as REG #FFAB91
 }
 
-OPS ..> F1 : HITL 라벨\n(말하기 테스트 답)
+OPS ..> F1 : 말하기 테스트 응답
 F1 --> STORE : 갱신 파라미터 영속
 STORE --> F1 : 직전 μ/σ (warm-start)
 F1 ..> INF : 다음 세션 prior\n(적응 루프)
@@ -25,10 +25,10 @@ F2 <.. OPS : 시뮬 대시보드 조작\n(시나리오/LLM 켬끔)
 REG ..> INF : Nano AVAILABLE 확인
 REG <.. OPS : 다운로드 트리거\n(세션 밖에서만)
 note bottom of F2
-  시뮬 폐루프 = 참임계를 아는 러너로
-  개인화 수렴을 정량 검증(짜고치기 방지:
-  앱은 참값을 모른 채 수렴해야 함)
-  단위 테스트 + 회귀 검증의 기반
+  가상 러너만 목표 경계를 알고
+  앱은 말하기 테스트 응답만 받아 갱신
+  → QA2 수렴과 안정성을 반복 측정
+  실제 사람의 역치 정확도를 뜻하지 않음
 end note
 
 legend right

@@ -45,7 +45,7 @@ package "AI Development Subsystem (개인 적응으로 축소)" as DEV {
   component "개인 적응 갱신\n베이지안 / k×σ EWMA" <<Retraining>> as ADAPT #B2DFDB
   database "Data Lake\nSessionStore / LearnedZone" as DLAKE #CFD8DC
   database "ML Metadata\n값 출처 태그 A/B/C\n+ LLM 호출 기록(LlmCallLog)" as META #CFD8DC
-  component "시뮬 폐루프 검증\nVirtualRunner" <<모델 테스팅>> as SIM #FFCCBC
+  component "반복 시뮬레이션 검증\nVirtualRunner" <<모델 테스팅>> as SIM #FFCCBC
 }
 
 ' ===== 데이터 흐름 (실선) =====

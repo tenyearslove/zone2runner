@@ -13,7 +13,7 @@ component "Gemini Nano\n(AICore, 온디바이스 LLM)" as Nano #FFF9C4
 
 package "AI Operation Subsystem (폰 + 워치)" {
   component "추론 서비스 (모듈 A)\n입력 가드레일 → 특징 준비\n→ 존 판정 + 개인 경계 + 관측 분석\n→ LLM 코칭 표현 → 출력 가드레일 3종 + 안전\n(오케스트레이터 RunEngine)" <<Inference Service>> as INF #BBDEFB
-  component "설명 서비스 (모듈 B)\n세션 스토리 / 개인화 설명\n+ 값 출처(A/B/C) + LLM 프로비넌스" <<Explanation Service>> as EXP #C8E6C9
+  component "설명 서비스 (모듈 B)\n세션 스토리 / 개인화 설명\n+ 값 출처(A/B/C) + LLM 생성 과정 기록" <<Explanation Service>> as EXP #C8E6C9
   component "분석 서비스 (모듈 C)\n세션 내 구간/경사/워밍업 분석\n세션 간 비교/추세/기록 + 서빙 로그" <<Analysis Service>> as ANA #C8E6C9
   component "운영 서비스 (모듈 D)\n대시보드/리포트/설정 UI + 음성(TTS)\n포그라운드/폰-워치 인프라\nHITL(말하기 테스트) / HOTL(설정+감사)" <<Operation Service>> as OPS #E1BEE7
 }
@@ -21,8 +21,8 @@ package "AI Operation Subsystem (폰 + 워치)" {
 database "저장 (모듈 E)\nData Lake = 세션 이력(SessionStore)\nModel Artifact = 개인 파라미터(LearnedZone)\n프로필/설정 + Registry 대응(APK/AICore)" <<Data Lake / Registry>> as STORE #CFD8DC
 
 package "AI Development Subsystem (개인 적응으로 축소)" {
-  component "개인 적응 갱신 (모듈 F1)\n세션마다 베이지안 경계 갱신\n+ k·σ 노이즈 플로어 EWMA" <<Retraining>> as ADAPT #B2DFDB
-  component "시뮬 검증 도구 (모듈 F2)\n참임계 아는 가상 러너 폐루프\n(모델 테스팅 대응)" <<Model Testing>> as SIM #FFAB91
+  component "개인 적응 갱신 (모듈 F1)\n말하기 테스트 응답으로\nBayesian 개인 경계 갱신" <<Retraining>> as ADAPT #B2DFDB
+  component "공통 검증 구조 (모듈 F2)\n경계를 정해 둔 가상 러너\n+ 고정 시드 자동시험" <<Model Testing>> as SIM #FFAB91
   component "모델 준비 관리자 (A7-1)\nNano 상태/다운로드\n(Model Registry 인접)" <<Model Registry>> as REG #FFAB91
 }
 
@@ -34,10 +34,10 @@ INF --> STORE : RunReport(세션 종료)
 INF --> EXP : 확정 사실/근거
 STORE --> ANA : 세션 이력
 ANA --> OPS : 리포트 카드
-EXP --> OPS : 설명/스토리/프로비넌스
-User ..> OPS : HITL 라벨(말하기 테스트)\nHOTL 설정/일시정지/감사
-OPS ..> INF : 라벨/설정 반영
-STORE --> ADAPT : 관측/라벨
+EXP --> OPS : 설명/스토리/생성 과정 기록
+User ..> OPS : 말하기 테스트 응답\n설정/일시정지/기록 확인
+OPS ..> INF : 응답/설정 반영
+STORE --> ADAPT : 말하기 테스트 응답
 ADAPT ..> INF : 갱신 파라미터\n(다음 세션 prior)
 SIM ..> INF : RunSource 교체\n(검증 시 실센서 대체)
 REG ..> INF : 모델 준비 상태
