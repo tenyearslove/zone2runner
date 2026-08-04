@@ -626,17 +626,17 @@
 
   <h3 class="num"><span>1.</span>배경</h3>
   <ul>
-    <li>Zone 2 코칭의 기준은 그 사람의 <strong>개인 경계</strong>다. 이 경계는 사람마다 다르고, 같은 사람도 체력에 따라 변한다.</li>
+    <li>Zone 2 코칭의 기준은 그 사람의 <strong>개인 경계</strong>다. 이 경계는 사람마다 다르고, 같은 사람도 몸 상태와 훈련 정도에 따라 달라질 수 있다.</li>
     <li>나이로 계산한 값은 개인 측정값이 아니라 첫 추정값이다. 이 값이 실제 상태와 다르면 코칭 기준도 함께 어긋날 수 있다.</li>
-    <li>그래서 이 앱은 <strong>경계를 쓸수록 그 사람에게 맞춰가는 것</strong>(기능적응성)을 핵심 품질로 잡았다. 그 적응을 어떤 구조로 만들지가 이 설계 결정이다.</li>
+    <li>그래서 이 앱은 <strong>앱을 사용할수록 경계를 그 사람에게 맞춰 가는 것</strong>(기능적응성)을 핵심 품질로 잡았다. 그 적응을 어떤 구조로 만들지가 이 설계 결정이다.</li>
   </ul>
 
   <h3 class="num"><span>2.</span>문제점</h3>
   <ul>
-    <li><strong>사람에 대한 정답지가 없다.</strong> 이번 과제에서는 실제 유산소 역치를 별도로 측정하지 않는다. 따라서 사용자의 말하기 테스트 응답을 관측값으로 삼고, 그 응답에 맞게 값이 움직이는지를 확인한다.</li>
-    <li><strong>응답이 적고 주관적이다.</strong> 말하기 테스트는 세션당 몇 번만 받고, 사용자가 잘못 답할 수도 있다. 적은 응답에도 움직이되 한 번에 지나치게 바뀌지 않아야 한다.</li>
-    <li><strong>몸 상태가 계속 변한다.</strong> 한 번 맞춘 경계도 시간이 지나면 낡는다. 적응은 한 번으로 끝나지 않고 계속되어야 한다.</li>
-    <li><strong>서버 없이 폰 안에서 적응해야 한다.</strong> 서버 학습 인프라도, 추가 비용도 쓸 수 없는 조건이다.</li>
+    <li><strong>사람에 대한 정답지가 없다.</strong> 이번 과제에서는 실제 유산소 역치를 별도로 측정하지 않는다. 따라서 사용자의 말하기 테스트 응답을 조정 근거로 삼고, 그 응답에 맞게 값이 움직이는지를 확인한다.</li>
+    <li><strong>응답이 적고 주관적이다.</strong> 말하기 테스트는 세션당 몇 번만 받고, 사용자가 잘못 답할 수도 있다. 적은 응답에도 반응하되 한 번에 지나치게 바뀌지 않아야 한다.</li>
+    <li><strong>몸 상태가 계속 변한다.</strong> 한 번 조정한 경계도 시간이 지나면 현재 몸 상태와 달라질 수 있다. 적응은 한 번으로 끝나지 않고 계속되어야 한다.</li>
+    <li><strong>서버 없이 폰 안에서 적응해야 한다.</strong> 서버 학습 환경이나 추가 비용을 사용할 수 없는 조건이다.</li>
   </ul>
 
   <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
@@ -654,8 +654,8 @@
     <thead>
       <tr>
         <th class="rowh" style="background:var(--accent-soft)"></th>
-        <th>(1안) 온라인 베이지안 개인 적응 아키텍처<span class="pick-badge">채택</span></th>
-        <th>(2안) 오프라인 재학습 개인화 아키텍처</th>
+        <th>(1안) 온라인 베이지안 개인 적응 구조<span class="pick-badge">채택</span></th>
+        <th>(2안) 오프라인 재학습 개인화 구조</th>
       </tr>
     </thead>
     <tbody>
@@ -668,7 +668,7 @@
         <th class="rowh">구조</th>
         <td class="win">
           <div class="fig-frame"><img src="img/dp-03-adaptability-adopted-simple.png?v=981cdda4" data-img="dp3-adopted" alt="1안 — 온라인 베이지안 개인 적응 아키텍처, 기능적응성 관점"></div>
-          <p class="note" style="margin-top:8px">경계를 평균과 불확실성으로 저장한다. 처음에는 나이와 안정심박으로 계산한 값에서 시작하고, 말하기 테스트 응답이 들어오면 베이지안 방식으로 조금씩 갱신한다. 한 세션에 최대 10bpm까지만 움직이게 제한하고, 결과는 다음 세션의 시작값으로 저장한다</p>
+          <p class="note" style="margin-top:8px">개인 경계의 추정값과 불확실성을 함께 저장한다. 처음에는 나이와 안정심박으로 계산한 값에서 시작하고, 말하기 테스트 응답이 들어오면 베이지안 방식으로 조금씩 갱신한다. 한 세션에 최대 10bpm까지만 움직이게 제한하고, 조정한 경계는 다음 세션의 시작값으로 저장한다.</p>
         </td>
         <td>
           <div class="fig-frame"><img src="img/dp-03-adaptability-counter-simple.png?v=db30e4a8" data-img="dp3-counter" alt="2안 — 오프라인 재학습 개인화 아키텍처 다이어그램"></div>
@@ -678,28 +678,28 @@
       <tr>
         <th class="rowh">장점</th>
         <td class="win">
-          <p>기능적응성 <span class="stars">★★★★★</span><br><span class="note">답한 즉시 반영 — 적응 지연이 분 단위</span></p>
-          <p>테스트가능성 <span class="stars">★★★★★</span><br><span class="note">응답과 갱신 결과를 같은 입력으로 반복 확인할 수 있음</span></p>
+          <p>기능적응성 <span class="stars">★★★★★</span><br><span class="note">응답이 들어오면 몇 분 안에 경계에 반영된다.</span></p>
+          <p>테스트가능성 <span class="stars">★★★★★</span><br><span class="note">같은 응답을 넣어 경계가 어떻게 바뀌는지 반복 확인할 수 있다.</span></p>
         </td>
         <td>
-          <p>기능적응성 <span class="stars">★★★★</span><br><span class="note">여러 사용자의 패턴을 함께 배울 잠재력 — 단 배포 전까지 반영되지 않음</span></p>
-          <p>강건성 <span class="stars">★★★★</span><br><span class="note">여러 사용자의 데이터를 함께 보므로 응답 하나의 영향이 작음</span></p>
+          <p>기능적응성 <span class="stars">★★★★</span><br><span class="note">여러 사용자의 패턴을 함께 배울 수 있지만, 새 모델을 배포하기 전에는 반영되지 않는다.</span></p>
+          <p>강건성 <span class="stars">★★★★</span><br><span class="note">여러 사용자의 데이터를 함께 사용하므로 응답 하나의 영향이 작다.</span></p>
         </td>
       </tr>
       <tr>
         <th class="rowh">그 밖의<br>영향</th>
         <td class="win">
-          <p>설명용이성 <span class="stars">★★★★★</span><br><span class="note">응답과 경계 이동을 직접 연결해 보여 줄 수 있음</span></p>
-          <p>강건성 <span class="stars">★★★★</span><br><span class="note">부정확한 응답의 영향이 남을 수 있어 이동 한도와 불확실성으로 제한함</span></p>
+          <p>설명용이성 <span class="stars">★★★★★</span><br><span class="note">어떤 응답으로 경계가 바뀌었는지 직접 보여 줄 수 있다.</span></p>
+          <p>강건성 <span class="stars">★★★★</span><br><span class="note">부정확한 응답의 영향이 남을 수 있어 이동 한도와 불확실성으로 제한한다.</span></p>
         </td>
         <td>
-          <p>기능적응성 <span class="stars">★★</span><br><span class="note">적응이 수집, 재학습, 배포 주기에 묶인다 — 일/주 단위</span></p>
-          <p>테스트가능성 <span class="stars">★★★</span><br><span class="note">수집·재학습·배포까지 포함한 반복 검증이 어려움</span></p>
+          <p>기능적응성 <span class="stars">★★</span><br><span class="note">적응 결과가 수집·재학습·배포 주기에 따라 며칠 이상 늦어질 수 있다.</span></p>
+          <p>테스트가능성 <span class="stars">★★★</span><br><span class="note">수집부터 재학습과 배포까지 전 과정을 반복 검증하기 어렵다.</span></p>
         </td>
       </tr>
       <tr>
         <th class="rowh">절충</th>
-        <td class="win">변화가 즉시 반영되고 근거가 검증 가능하다. 대신 모델이 단순해 복잡한 개인 패턴은 배우지 못한다</td>
+        <td class="win">변화가 즉시 반영되고 경계가 바뀐 이유를 확인할 수 있다. 대신 모델이 단순해 복잡한 개인 패턴은 배우지 못한다</td>
         <td>복잡한 패턴까지 배울 잠재력이 있다. 대신 적응이 배포 주기에 묶이고, 정답지가 없는 이 조건에서는 그 효과를 확인할 기준도 없다</td>
       </tr>
     </tbody>
@@ -717,21 +717,21 @@
   </div>
 
   <h3 class="num"><span>1.</span>최종 채택 구조</h3>
-  <p class="lead">1안: 온라인 베이지안 개인 적응 아키텍처 채택</p>
+  <p class="lead">1안인 온라인 베이지안 개인 적응 구조를 채택했다.</p>
 
   <h3 class="num"><span>2.</span>채택 근거</h3>
   <ul>
-    <li><strong>적응이 즉시 일어난다.</strong> 답한 순간 경계가 움직이고, 얼마나 움직였는지 화면에 보인다. 2안은 같은 답이 다음 재학습과 배포를 기다린다.</li>
+    <li><strong>적응이 즉시 일어난다.</strong> 답한 순간 경계가 움직이고, 얼마나 움직였는지 화면에 보인다. 2안에서는 같은 응답이 반영되려면 다음 재학습과 배포까지 기다려야 한다.</li>
     <li><strong>관측한 응답과 갱신 결과를 연결할 수 있다.</strong> 어떤 응답 때문에 경계가 어느 방향으로 움직였는지 확인할 수 있다. 다만 이것이 실제 유산소 역치의 정확도를 뜻하지는 않는다.</li>
     <li><strong>한 번에 지나치게 움직이지 않는다.</strong> 불확실성을 반영해 이동 폭을 계산하고, 세션당 최대 이동을 10bpm으로 제한한다. 응답이 쌓이면 불확실성이 줄어 변화 폭도 작아진다.</li>
-    <li><strong>과제 제약과 맞는다.</strong> 개인화 갱신은 서버 없이 폰에서 계산하고 저장한다. 심박과 개인화 값을 이 계산 때문에 외부 서버로 보내지 않는다.</li>
-    <li><strong>DP1, DP2와 같은 구조에서 나온다.</strong> 적응 상태(평균과 확신 폭)가 그대로 노출되어 설명이 되고(DP1), 이동 한도와 사용자 응답이 통제 수단이 된다(DP2).</li>
+    <li><strong>과제 제약과 맞는다.</strong> 개인화 갱신은 서버 없이 폰에서 계산하고 저장한다. 개인화를 위해 심박과 개인화 값을 외부 서버로 보내지 않는다.</li>
+    <li><strong>DP1, DP2와 같은 구조에서 나온다.</strong> 개인 경계의 추정값과 불확실성을 그대로 보여 줄 수 있어 설명이 되고(DP1), 이동 한도와 사용자 응답이 통제 수단이 된다(DP2).</li>
   </ul>
 
   <h3 class="num"><span>3.</span>보완 계획</h3>
   <ul>
-    <li><strong>이번 과제에서 확인</strong>: 가상 러너의 목표 상한 5종과 시드 3종을 조합한 15개 사례 모두가 목표 오차에 들어왔다(100%, 15/15). 현재 모의 조건에서는 말하기 테스트 응답 10회 이내(1~2세션)에 도달했고, 응답 40회 뒤 최종 오차는 0.20~0.77bpm이었다. 별도의 기준 사례에서 마지막 4세션의 경계 범위 3.04bpm과 세션당 최대 이동 9.97bpm을 확인했다.</li>
-    <li><strong>향후 확인</strong>: 이 수치는 시뮬레이션 결과다. 실제 사람의 유산소 역치를 같은 오차로 찾았다는 뜻이 아니며, 실사용 평가를 하게 되면 말하기 테스트 안내와 개인화 상수를 다시 조정한다.</li>
+    <li><strong>이번 과제에서 확인</strong>: 가상 러너의 목표 상한 5종과 시드 3종을 조합한 15개 사례 모두가 목표 오차 3bpm 이내에 도달했다(100%, 15/15). 현재 모의 조건에서는 말하기 테스트 응답 10회 이내(1~2세션)에 목표 오차에 도달했고, 응답 40회 뒤 최종 오차는 0.20~0.77bpm이었다. 별도의 기준 사례에서 마지막 4세션의 경계 범위 3.04bpm과 세션당 최대 이동 9.97bpm을 확인했다.</li>
+    <li><strong>향후 확인</strong>: 이 수치는 시뮬레이션 결과다. 실제 사람의 유산소 역치를 같은 오차로 찾았다는 뜻이 아니며, 실사용 평가를 하게 되면 말하기 테스트 안내와 개인화에 사용하는 설정값을 다시 조정한다.</li>
   </ul>
 
   <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
@@ -746,16 +746,16 @@
 
   <h3 class="num"><span>A1.</span>이 설계 결정이 다루는 품질 문제</h3>
   <ul>
-    <li>나이 공식의 개인 오차가 커 고정 경계는 코칭을 틀리게 한다 → 기능적응성</li>
+    <li>나이 공식만으로는 개인차를 충분히 반영하기 어렵다 → 기능적응성</li>
     <li>몸 상태가 변해 한 번 맞춘 경계도 낡는다 → 기능적응성</li>
-    <li>사람에 대한 경계 정답지가 없다 → 관측 가능한 말하기 테스트 응답을 갱신 근거로 사용</li>
+    <li>개인별 경계의 측정 정답이 없다 → 관측 가능한 말하기 테스트 응답을 갱신 근거로 사용</li>
     <li>응답이 적고 주관적이다 → 강건성</li>
-    <li>적응이 왜 그렇게 움직였는지 보여야 한다 → 설명용이성</li>
+    <li>개인 경계가 왜 바뀌었는지 보여야 한다 → 설명용이성</li>
     <li>같은 응답과 시드에서 경계 이동을 반복 확인할 수 있어야 한다 → 테스트가능성</li>
     <li>사용자가 적응을 확인하고 제어할 수 있어야 한다 → 제어가능성</li>
   </ul>
 
-  <h3 class="num"><span>A2.</span>채택안의 적응 루프 5단계</h3>
+  <h3 class="num"><span>A2.</span>채택안의 개인화 과정 5단계</h3>
   <figure style="margin:0 0 12px"><div class="fig-frame"><img src="img/dp-03-adaptability-detail.png?v=1daa8f20" data-img="dp3-detail" alt="DP3 채택안 상세 — 적응 경로 하위 모듈 전개" width="1100"></div></figure>
   <div class="tbl">
   <table class="decide">
@@ -763,11 +763,11 @@
       <tr><th style="width:9em">단계</th><th>하는 일</th></tr>
     </thead>
     <tbody>
-      <tr><td><strong>1. 출발선</strong></td><td>나이/안정심박으로 대략의 경계를 계산하되, 확신 폭을 넓게 잡아 "아직 모른다"를 정직하게 표현</td></tr>
+      <tr><td><strong>1. 출발선</strong></td><td>나이와 안정심박으로 초기 경계를 계산하고, 불확실성을 넓게 두어 아직 정보가 적다는 상태를 표현한다.</td></tr>
       <tr><td><strong>2. 응답 수집</strong></td><td>달리는 중 말하기 테스트("지금 대화가 편한가요?") 응답을 받는다</td></tr>
-      <tr><td><strong>3. 갱신</strong></td><td>응답이 들어오면 현재 값과 응답의 불확실성을 반영해 경계를 옮긴다</td></tr>
-      <tr><td><strong>4. 안전장치</strong></td><td>세션당 이동 한도, 최대심박은 관측 피크로 위로만/안정심박은 아래로만</td></tr>
-      <tr><td><strong>5. 안정</strong></td><td>갱신 결과가 저장돼 다음 세션의 출발선 — 확신이 쌓일수록 덜 흔들림</td></tr>
+      <tr><td><strong>3. 갱신</strong></td><td>응답이 들어오면 현재 경계와 응답의 불확실성을 반영해 경계를 조정한다.</td></tr>
+      <tr><td><strong>4. 안전장치</strong></td><td>한 세션의 경계 이동을 제한한다. 최대심박 추정값은 관측된 최고 심박에 따라 높이는 방향으로만, 안정심박은 낮추는 방향으로만 갱신한다.</td></tr>
+      <tr><td><strong>5. 안정</strong></td><td>조정 결과를 다음 세션의 시작값으로 저장한다. 응답이 쌓일수록 불확실성이 줄어 경계도 덜 흔들린다.</td></tr>
     </tbody>
   </table>
   </div>
@@ -790,9 +790,9 @@
   <p class="note"><strong>별점의 범위</strong>: 1인 과제, 온디바이스 실행, 적은 사용자 응답, 서버 없음이라는 조건에서 두 안을 비교했다. 많은 사용자 데이터와 서버 운영 환경이 있다면 결과가 달라질 수 있다. 별점은 실제 사람의 유산소 역치 정확도를 평가한 점수가 아니다.</p>
 
   <h3 class="num"><span>A4.</span>용어 대조(심사용)와 근거 문헌</h3>
-  <p class="note">첫 짐작 = prior(사전값) / 증거로 짐작을 고치는 통계 방법 = Bayesian update / 데이터 없는 첫 상태 = cold start / 변화 발생에서 반영까지의 시간 = adaptation latency(이 DP의 결정축) / 표본마다 즉시 갱신 vs 모아서 재학습 = online learning vs batch retraining</p>
+  <p class="note">첫 추정값은 prior(사전값), 새 근거로 추정값을 고치는 방법은 Bayesian update(베이지안 갱신)라고 한다. 데이터가 없는 첫 상태는 cold start, 변화가 생긴 뒤 반영되기까지 걸리는 시간은 adaptation latency라고 한다.</p>
   <p class="note">근거 문헌: 베이지안 켤레 갱신(표준 통계 교과, Gelman 외) / 변화 대응 온라인 학습 서베이(Gama 외 2014) / 말하기 테스트 = 제1환기역치 실용 지표(Persinger 2004) / 나이 공식의 개인 오차 ±10~15bpm(Tanaka 2001 기반, spec-001)</p>
-  <p class="note">상세 = <code>arch/dp/dp-03-adaptability/</code> (decision / research / counter-catalog)</p>
+  <p class="note">상세 설계와 참고 문헌은 별도의 DP3 설계 문서에 기록했다.</p>
 
   <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
 </section>
@@ -815,17 +815,17 @@
 
   <h3 class="num"><span>1.</span>배경</h3>
   <ul>
-    <li>이 앱에 들어오는 신호는 깨끗하지 않다. <strong>손목 광학 심박계는 달리는 중 팔 움직임 때문에 값이 튈 수 있다</strong>이고, GPS도 잡음이 섞이며, 연결이 잠깐 끊기기도 한다.</li>
-    <li>판정 결과는 화면 표시로 끝나지 않고 <strong>"속도를 줄이세요" 같은 행동 지시로 이어진다.</strong> 튄 값 하나가 지시가 되면 사용자는 노이즈에 맞춰 달리게 된다.</li>
-    <li>그래서 <strong>항상 잡음이 섞일 수 있는 신호에서 판정과 지시를 안정시키는 구조</strong>를 고르는 것이 이 설계 결정이다.</li>
+    <li>센서 신호에는 잡음이 섞일 수 있다. <strong>손목 광학 심박계는 달리는 중 팔 움직임 때문에 값이 갑자기 튈 수 있고</strong>, GPS에도 오차가 있으며 연결이 잠깐 끊기기도 한다.</li>
+    <li>판정 결과는 화면 표시로 끝나지 않고 <strong>"속도를 줄이세요" 같은 행동 지시로 이어진다.</strong> 튀는 값 하나가 곧바로 지시가 되면 사용자는 잘못된 값에 맞춰 속도를 바꾸게 된다.</li>
+    <li>따라서 <strong>잡음이 섞인 신호에서도 판정과 코칭을 안정적으로 유지하는 구조</strong>가 필요하다.</li>
   </ul>
 
   <h3 class="num"><span>2.</span>문제점</h3>
   <ul>
-    <li><strong>오판의 비용이 비대칭이다.</strong> 판정이 조금 늦는 것보다, 튄 값으로 잘못된 지시를 내보내는 것이 더 나쁘다.</li>
+    <li><strong>잘못된 지시는 늦은 지시보다 영향이 크다.</strong> 판정이 조금 늦더라도, 튀는 값 하나로 잘못된 지시를 내보내지 않는 편이 낫다.</li>
     <li><strong>경계 근처에서 판정이 깜빡인다.</strong> 심박이 경계를 오르내리면 순간값 판정은 초 단위로 뒤집혀 신뢰를 잃는다.</li>
-    <li><strong>노이즈 폭이 사람마다 다르다.</strong> 고정된 필터 하나로 모두를 맞출 수 없다.</li>
-    <li><strong>실제 센서의 정답지가 없다.</strong> 이번 과제에서는 기준 장비와 비교하지 않는다. 따라서 강건성은 정해 둔 이상값을 차단하고 경계 부근의 불필요한 판정 번복을 줄이는지로 평가한다.</li>
+    <li><strong>노이즈 폭이 사람마다 다르다.</strong> 모든 사람에게 같은 필터 기준을 적용하기 어렵다.</li>
+    <li><strong>기준 장비와 비교한 측정값이 없다.</strong> 이번 과제에서는 별도의 기준 심박계와 비교하지 않는다. 따라서 강건성은 정해 둔 이상값을 차단하고 경계 부근의 불필요한 판정 번복을 줄이는지로 평가한다.</li>
   </ul>
 
   <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
@@ -843,21 +843,21 @@
     <thead>
       <tr>
         <th class="rowh" style="background:var(--accent-soft)"></th>
-        <th>(1안) 계층 방어 판정 아키텍처<span class="pick-badge">채택</span></th>
-        <th>(2안) 즉시 반응 판정 아키텍처</th>
+        <th>(1안) 단계별 방어 판정 구조<span class="pick-badge">채택</span></th>
+        <th>(2안) 즉시 반응 판정 구조</th>
       </tr>
     </thead>
     <tbody>
       <tr>
         <th class="rowh">한 줄<br>소개</th>
-        <td class="win">성격이 다른 방어를 네 층으로 겹쳐, 잘못된 지시가 나가지 않게 하는 구조</td>
-        <td>짧은 이동평균 하나로 다듬고 바로 판정해 지시까지 잇는 구조</td>
+        <td class="win">서로 다른 방어 방법을 네 단계로 적용해 잘못된 지시를 줄이는 구조</td>
+        <td>짧은 이동평균으로 신호를 다듬은 뒤 곧바로 판정하고 코칭하는 구조</td>
       </tr>
       <tr>
         <th class="rowh">구조</th>
         <td class="win">
           <div class="fig-frame"><img src="img/dp-04-robustness-adopted-simple.png?v=620a7a0d" data-img="dp4-adopted" alt="1안 — 계층 방어 판정 아키텍처, 강건성 관점"></div>
-          <p class="note" style="margin-top:8px">① 허용 범위 밖 심박과 오래된 값은 버린다. ② 화면 판정은 순간심박과 서로 다른 진입·이탈 기준으로 깜빡임을 줄이고, 코칭은 최근 60초 평균 심박을 사용한다. ③ 추세는 여러 값을 모아 계산하고 신뢰도가 낮으면 보류한다. ④ 센서가 끊기면 사용할 수 있는 다음 입력으로 전환한다</p>
+          <p class="note" style="margin-top:8px">① 허용 범위 밖 심박과 오래된 값은 버린다. ② 화면 판정은 순간 심박에 서로 다른 진입 기준과 이탈 기준을 적용해 깜빡임을 줄이고, 코칭은 최근 60초 평균 심박을 사용한다. ③ 추세는 여러 값을 모아 계산하고 신뢰도가 낮으면 보류한다. ④ 센서가 끊기면 사용할 수 있는 다른 입력으로 전환한다.</p>
         </td>
         <td>
           <div class="fig-frame"><img src="img/dp-04-robustness-counter-simple.png?v=9a7c635d" data-img="dp4-counter" alt="2안 — 즉시 반응 판정 아키텍처 다이어그램"></div>
@@ -867,29 +867,29 @@
       <tr>
         <th class="rowh">장점</th>
         <td class="win">
-          <p>강건성 <span class="stars">★★★★★</span><br><span class="note">이상값 차단, 번복 억제, 입력 두절 대응을 각각 분리</span></p>
-          <p>테스트가능성 <span class="stars">★★★★</span><br><span class="note">층이 독립 모듈이라 층별로 검증할 수 있다</span></p>
+          <p>강건성 <span class="stars">★★★★★</span><br><span class="note">이상값 차단, 판정 번복 억제, 입력 두절 대응을 각각 나누어 처리한다.</span></p>
+          <p>테스트가능성 <span class="stars">★★★★</span><br><span class="note">각 단계가 독립된 모듈이라 따로 검증할 수 있다.</span></p>
         </td>
         <td>
-          <p>기능적응성 <span class="stars">★★★★</span><br><span class="note">큰 변화는 빠르게 반영하지만 노이즈 크기에 맞춰 조정하지 못함</span></p>
-          <p>테스트가능성 <span class="stars">★★★</span><br><span class="note">구조는 단순하지만 위험하거나 드문 입력을 실주행으로 만들기 어려움</span></p>
+          <p>기능적응성 <span class="stars">★★★★</span><br><span class="note">큰 변화는 빠르게 반영하지만, 잡음의 크기에 맞춰 기준을 조정하지 못한다.</span></p>
+          <p>테스트가능성 <span class="stars">★★★</span><br><span class="note">구조는 단순하지만 위험하거나 드문 입력을 실제 달리기로 만들기 어렵다.</span></p>
         </td>
       </tr>
       <tr>
         <th class="rowh">그 밖의<br>영향</th>
         <td class="win">
-          <p>강건성 <span class="stars">★★★★</span><br><span class="note">방어가 강한 만큼 실제 변화도 늦게 반영될 수 있음</span></p>
-          <p>테스트가능성 <span class="stars">★★★★</span><br><span class="note">방어층이 늘어난 만큼 층별 시험을 함께 관리해야 함</span></p>
+          <p>강건성 <span class="stars">★★★★</span><br><span class="note">잡음을 강하게 거르는 만큼 실제 변화도 늦게 반영될 수 있다.</span></p>
+          <p>테스트가능성 <span class="stars">★★★★</span><br><span class="note">방어 단계가 늘어난 만큼 단계별 시험도 함께 관리해야 한다.</span></p>
         </td>
         <td>
-          <p>강건성 <span class="stars">★★</span><br><span class="note">깜빡임과 순간 이상값이 남을 수 있음 — 방어 수단이 짧은 이동평균뿐</span></p>
-          <p>제어가능성 <span class="stars">★★★</span><br><span class="note">잘못된 판정이 바로 행동 지시가 됨 — 이를 막을 별도 단계가 없음</span></p>
+          <p>강건성 <span class="stars">★★</span><br><span class="note">방어 수단이 짧은 이동평균뿐이라 판정 깜빡임과 순간 이상값이 남을 수 있다.</span></p>
+          <p>제어가능성 <span class="stars">★★★</span><br><span class="note">잘못된 판정이 바로 행동 지시가 되며, 이를 막을 별도 단계가 없다.</span></p>
         </td>
       </tr>
       <tr>
         <th class="rowh">절충</th>
-        <td class="win">오판이 지시가 되는 것을 구조로 막는다. 대신 코칭 반응이 최대 60초 늦다(의도적 선택 — 화면 표시는 즉시)</td>
-        <td>변화가 수 초 안에 반영되고 단순하다. 대신 평활이 놓친 노이즈가 그대로 지시가 되고, 경계 근처 번복을 막을 장치가 없다</td>
+        <td class="win">잘못된 판정이 곧바로 지시가 되지 않게 막는다. 화면 표시는 즉시 바뀌지만 코칭은 최대 60초 늦어질 수 있다.</td>
+        <td>변화가 수 초 안에 반영되고 단순하다. 대신 이동평균으로 걸러지지 않은 잡음이 그대로 지시가 되고, 경계 근처 번복을 막을 장치가 없다</td>
       </tr>
     </tbody>
   </table>
@@ -906,21 +906,21 @@
   </div>
 
   <h3 class="num"><span>1.</span>최종 채택 구조</h3>
-  <p class="lead">1안: 계층 방어 판정 아키텍처 채택</p>
+  <p class="lead">1안인 단계별 방어 판정 구조를 채택했다.</p>
 
   <h3 class="num"><span>2.</span>채택 근거</h3>
   <ul>
-    <li><strong>오판의 비용이 비대칭이다.</strong> 코칭은 행동 지시라 잘못된 지시가 늦은 지시보다 비싸다. 표시(빠름)와 코칭(엄격)의 기준을 분리해 이 비대칭에 맞췄다. 2안은 두 출력이 같은 값에 매여 있다.</li>
-    <li><strong>한 층으로는 못 막는다.</strong> 스파이크, 깜빡임, 추세 오독, 두절은 성격이 다른 노이즈다. 평활 창 하나는 이 모두와 싸워야 하고, 어느 쪽으로 조정해도 반대쪽이 뚫린다.</li>
+    <li><strong>화면 표시와 코칭의 기준을 다르게 두었다.</strong> 코칭은 행동 지시이므로 빠른 반응보다 잘못된 지시를 줄이는 것이 중요하다. 화면은 현재 심박을 바로 보여 주고, 코칭은 일정 시간 유지된 심박을 사용한다. 2안은 두 출력 모두 같은 순간값을 사용한다.</li>
+    <li><strong>한 가지 필터로 모든 문제를 해결하기 어렵다.</strong> 순간 이상값, 판정 깜빡임, 잘못된 추세 판단, 연결 두절은 원인이 서로 다르다. 이동평균 하나만 조정해서는 이 문제들을 각각 다루기 어렵다.</li>
     <li><strong>노이즈 크기를 계산에 반영한다.</strong> 추세 판단 기준을 최근 신호의 흔들림에 맞춰 조정해, 고정 기준 하나를 모든 상황에 적용하지 않는다.</li>
     <li><strong>잘 알려진 방법을 조합했다.</strong> 진입과 이탈 기준을 다르게 두는 방법, 시간 구간의 평균, 노이즈 크기를 반영하는 기준처럼 검증된 원리를 각 문제에 맞게 사용했다.</li>
-    <li><strong>이번 과제에서 시험할 범위가 분명하다.</strong> 자동시험은 입력 범위 검사와 화면 판정의 번복 억제를 확인한다. 60초 코칭 판정, 추세 신뢰도, 입력 전환은 구현 구조로 제시하되 이번 QA4 수치가 네 층 전체의 성능을 뜻하지는 않는다.</li>
+    <li><strong>이번 과제에서 시험할 범위가 분명하다.</strong> 자동시험은 입력 범위 검사와 화면 판정의 번복 억제를 확인한다. 60초 코칭 판정, 추세 신뢰도, 입력 전환도 구현했지만 이번 QA4 수치가 네 단계 전체의 성능을 뜻하지는 않는다.</li>
   </ul>
 
   <h3 class="num"><span>3.</span>보완 계획</h3>
   <ul>
-    <li><strong>이번 과제에서 확인</strong>: 범위 밖 입력 차단율 100%(50/50), 정상 입력 오차단율 0%(0/500)였다. 번복 감소 기준은 5개 시드 모두 충족했고(100%, 5/5), 실제 감소 폭은 67.1~74.7%였다. 시험에서 만든 +10bpm 계단 입력에는 한 번의 갱신(1틱) 만에 전환했다.</li>
-    <li><strong>향후 확인</strong>: 이 결과는 결정론적 입력을 사용한 구조 회귀시험이며 실제 워치 센서의 정확도 시험이 아니다. 실제 주행 데이터를 확보하게 되면 60초 평균과 판정 기준을 다시 조정한다.</li>
+    <li><strong>이번 과제에서 확인</strong>: 범위 밖 입력 차단율 100%(50/50), 정상 입력 오차단율 0%(0/500)였다. 번복 감소 기준은 5개 시드 모두 충족했고(100%, 5/5), 실제 감소 폭은 67.1~74.7%였다. 심박이 한 번에 10bpm 높아지는 시험 입력에서는 한 번의 갱신 주기(1틱) 만에 판정이 바뀌었다.</li>
+    <li><strong>향후 확인</strong>: 이 결과는 미리 정해 둔 입력을 사용한 반복 시험이며 실제 워치 센서의 정확도 시험이 아니다. 실제 주행 데이터를 확보하게 되면 60초 평균과 판정 기준을 다시 조정한다.</li>
   </ul>
 
   <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
@@ -935,26 +935,26 @@
 
   <h3 class="num"><span>A1.</span>이 설계 결정이 다루는 품질 문제</h3>
   <ul>
-    <li>손목 심박의 순간 스파이크 → 강건성(입력 차단)</li>
+    <li>손목 심박의 순간 이상값 → 강건성(입력 차단)</li>
     <li>경계 근처 판정 깜빡임 → 강건성(번복 억제)</li>
-    <li>오판이 행동 지시로 직행 → 제어가능성(지시에 더 엄격한 기준)</li>
-    <li>노이즈 폭의 개인차 → 기능적응성(자가 보정 문턱)</li>
+    <li>잘못된 판정이 곧바로 행동 지시로 전달됨 → 제어가능성(지시에 더 엄격한 기준)</li>
+    <li>사람마다 다른 잡음의 크기 → 기능적응성(잡음 크기에 따라 기준 조정)</li>
     <li>신호 두절과 센서 부재 → 강건성(기능 유지)</li>
-    <li>정답지가 없어 채점 불가 → 일관성 지표로 대응</li>
+    <li>기준 장비의 정답이 없어 절대 정확도를 평가하기 어렵다 → 일관성 지표로 대응</li>
     <li>각 방어층을 같은 노이즈 입력으로 반복 확인할 수 있어야 한다 → 테스트가능성</li>
   </ul>
 
-  <h3 class="num"><span>A2.</span>채택안의 방어 4층 <span class="note" style="font-weight:400">(각 층은 서로 다른 노이즈를 막는다)</span></h3>
+  <h3 class="num"><span>A2.</span>채택안의 4단계 방어 <span class="note" style="font-weight:400">(각 층은 서로 다른 노이즈를 막는다)</span></h3>
   <figure style="margin:0 0 12px"><div class="fig-frame"><img src="img/dp-04-robustness-detail.png?v=32aa4de9" data-img="dp4-detail" alt="DP4 채택안 상세 — 방어 4층 하위 모듈 전개" width="1100"></div></figure>
   <div class="tbl">
   <table class="decide">
     <thead>
-      <tr><th style="width:10em">층</th><th>하는 일</th><th style="width:14em">막는 것</th></tr>
+      <tr><th style="width:10em">단계</th><th>하는 일</th><th style="width:14em">막는 것</th></tr>
     </thead>
     <tbody>
-      <tr><td><strong>1. 입력 가드레일</strong></td><td>허용 범위 밖 값과 낡은 값을 처음 단계에서 버린다</td><td>범위 밖 값, 낡은 값</td></tr>
-      <tr><td><strong>2. 이중 기준 판정</strong></td><td>표시는 순간심박+이중 문턱, 코칭은 60초 평균 심박(지속심박)</td><td>깜빡임, 순간 이탈의 지시 직행</td></tr>
-      <tr><td><strong>3. 통계 평탄화</strong></td><td>추세는 창 기울기+신뢰도로, 문턱은 개인 노이즈의 배수로</td><td>잡음의 추세 오독, 노이즈 개인차</td></tr>
+      <tr><td><strong>1. 입력 가드레일</strong></td><td>허용 범위를 벗어난 값과 너무 오래된 값을 처음 단계에서 버린다.</td><td>범위 밖 값, 낡은 값</td></tr>
+      <tr><td><strong>2. 이중 기준 판정</strong></td><td>화면은 순간 심박에 서로 다른 진입·이탈 기준을 적용하고, 코칭은 최근 60초의 평균 심박을 사용한다.</td><td>깜빡임, 순간 이탈의 지시 직행</td></tr>
+      <tr><td><strong>3. 추세 안정화</strong></td><td>여러 심박값으로 추세와 신뢰도를 계산하고, 사람마다 다른 잡음의 크기에 맞춰 판단 기준을 조정한다.</td><td>잘못된 추세 판단, 사람마다 다른 잡음 크기</td></tr>
       <tr><td><strong>4. 입력 전환</strong></td><td>센서가 없거나 끊기면 사용할 수 있는 다음 입력으로 전환한다</td><td>센서 부재와 두절</td></tr>
     </tbody>
   </table>
@@ -977,9 +977,9 @@
   <p class="note"><strong>별점의 범위</strong>: 손목 심박, 야외 사용, 행동 지시가 있는 앱이라는 조건에서 구조를 비교한 점수다. 실제 센서 정확도나 의학적 안전성을 평가한 점수가 아니며, 더 안정적인 센서를 쓰거나 기록만 보여 주는 앱이라면 결과가 달라질 수 있다.</p>
 
   <h3 class="num"><span>A4.</span>용어 대조(심사용)와 근거 문헌</h3>
-  <p class="note">들어올 때/나갈 때 문턱 분리 = hysteresis / 판정 번복 = flicker, chattering / 순간 이탈을 시간축에서 거르기 = 시간 필터(경보 관리 표준 ISA-18.2는 on-delay 타이머와 데드밴드를 제시 — 우리 구현은 60초 평균과 히스테리시스) / 개인 노이즈 배수 문턱 = k·σ(통계적 공정 관리) / 두절 시 갈아타기 = graceful degradation</p>
+  <p class="note">진입 기준과 이탈 기준을 다르게 두는 방법을 hysteresis(히스테리시스)라고 한다. 순간 이탈은 시간 필터로 걸러 내며, 이 구현에서는 60초 평균을 사용한다. 센서가 끊겼을 때 다른 입력으로 전환해 기능을 유지하는 방식은 graceful degradation에 해당한다.</p>
   <p class="note">근거 문헌: 슈미트 트리거(이중 문턱 표준 기법) / ISA-18.2(경보의 시간 필터와 데드밴드) / Shewhart 관리도(산포 배수 관리한계) / 손목 광학 심박의 운동 중 오차(검증 연구들의 일관된 보고)</p>
-  <p class="note">상세 = <code>arch/dp/dp-04-robustness/</code> (decision / research / counter-catalog)</p>
+  <p class="note">상세 설계와 참고 문헌은 별도의 DP4 설계 문서에 기록했다.</p>
 
   <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
 </section>
@@ -1002,16 +1002,16 @@
 
   <h3 class="num"><span>1.</span>배경</h3>
   <ul>
-    <li>이 시스템은 검증하기 어려운 조건이 겹쳐 있다. 실제 사람의 Zone 2 경계 정답지가 없고, 같은 달리기를 정확히 반복할 수 없으며, 워치와 폰이 함께 동작한다.</li>
+    <li>이 시스템은 검증하기 어려운 조건이 겹쳐 있다. 실제 사람의 Zone 2 경계를 측정한 정답이 없고, 같은 달리기를 정확히 반복할 수 없으며, 워치와 폰이 함께 동작한다.</li>
     <li>판정, 개인화, 코칭 로직은 개발 중에 계속 바뀐다. 매번 직접 달려야만 확인할 수 있다면 1인 과제에서 충분한 반복 검증이 어렵다.</li>
     <li>그래서 <strong>실제로 달리지 않아도 입력부터 판정·코칭·리포트까지 같은 코드 경로를 반복 확인하는 구조</strong>를 선택했다. 테스트가능성은 일반 소프트웨어 품질이지만, 실제 달리기를 반복하기 어려운 제약 때문에 이 시스템의 구조를 바꾼 핵심 요구사항이다.</li>
   </ul>
 
   <h3 class="num"><span>2.</span>문제점</h3>
   <ul>
-    <li><strong>자극을 재현할 수 없다.</strong> 같은 심박 곡선을 두 번 만들 수 없으니 수정 전후를 같은 조건에서 비교할 수 없다.</li>
-    <li><strong>위험한 시나리오를 만들 수 없다.</strong> 위험 심박, 신호 두절 같은 중요한 상황은 실주행으로 만들기 어렵거나 위험하다.</li>
-    <li><strong>변경마다 실주행이면 검증이 생략된다.</strong> 변경 하나의 검증 비용이 러닝 한 번이면 자동화가 불가능하다.</li>
+    <li><strong>같은 입력 조건을 재현할 수 없다.</strong> 같은 심박 변화를 두 번 만들 수 없으니 수정 전후를 같은 조건에서 비교할 수 없다.</li>
+    <li><strong>위험한 상황을 직접 만들기 어렵다.</strong> 위험 심박, 신호 두절 같은 중요한 상황은 실제 달리기로 만들기 어렵거나 위험하다.</li>
+    <li><strong>변경할 때마다 직접 달려야 하면 검증을 반복하기 어렵다.</strong> 변경 하나를 확인할 때마다 한 번씩 달려야 한다면 자동화할 수 없다.</li>
     <li><strong>시뮬레이션에는 한계가 있다.</strong> 데이터를 만든 규칙으로 같은 데이터를 채점하면 좋은 결과가 당연히 나오기 쉽다. 따라서 시뮬레이션으로 확인할 수 있는 범위를 분명히 해야 한다.</li>
   </ul>
 
@@ -1030,32 +1030,32 @@
     <thead>
       <tr>
         <th class="rowh" style="background:var(--accent-soft)"></th>
-        <th>(1안) 입력 교체 + 반복 시뮬레이션 구조<span class="pick-badge">채택</span></th>
-        <th>(2안) 실기기 결합 검증 아키텍처</th>
+        <th>(1안) 입력 교체와 반복 시뮬레이션 구조<span class="pick-badge">채택</span></th>
+        <th>(2안) 실제 기기 중심 검증 구조</th>
       </tr>
     </thead>
     <tbody>
       <tr>
         <th class="rowh">한 줄<br>소개</th>
         <td class="win">입력 부분을 공통 인터페이스로 분리해 실제 센서와 가상 입력을 바꿔 끼우는 구조</td>
-        <td>센서를 직결하고 검증은 실기기 실주행으로 하는 구조</td>
+        <td>센서 API를 로직에 직접 연결하고 실제 기기와 달리기로 검증하는 구조</td>
       </tr>
       <tr>
         <th class="rowh">구조</th>
         <td class="win">
           <div class="fig-frame"><img src="img/dp-05-testability-adopted-simple.png?v=8c051fe8" data-img="dp5-adopted" alt="1안 — 입력 교체와 반복 시뮬레이션 구조"></div>
-          <p class="note" style="margin-top:8px">실제 센서, 가상 러너, 수동 입력이 같은 인터페이스를 사용한다. 뒤의 판정·개인화·분석 로직은 입력 출처와 분리된다. 경계를 정해 둔 가상 러너의 결과를 다음 세션 입력에 다시 반영해 개인화 수렴을 빠르게 확인하고, 기기와 분리한 로직은 JVM 단위시험으로 반복 검사한다. QA1~QA4 검증 경로 4개를 모두 워치 없이 실행하고, 같은 시드 5종의 입력이 정확히 재현되는지 확인한다</p>
+          <p class="note" style="margin-top:8px">실제 센서, 가상 러너, 수동 입력이 같은 인터페이스를 사용한다. 뒤의 판정·개인화·분석 로직은 입력 출처와 분리된다. 경계를 정해 둔 가상 러너의 결과를 다음 세션 입력에 다시 반영해 개인 경계가 목표에 가까워지는 과정을 빠르게 확인하고, 기기와 분리한 로직은 JVM 단위시험으로 반복 확인한다. QA1~QA4 검증 경로 4개를 모두 워치 없이 실행하고, 같은 시드 5종의 입력이 정확히 재현되는지 확인한다.</p>
         </td>
         <td>
-          <div class="fig-frame"><img src="img/dp-05-testability-counter-simple.png?v=6f3c324e" data-img="dp5-counter" alt="2안 — 실기기 결합 검증 아키텍처 다이어그램"></div>
+          <div class="fig-frame"><img src="img/dp-05-testability-counter-simple.png?v=6f3c324e" data-img="dp5-counter" alt="2안 — 실제 기기 중심 검증 구조 다이어그램"></div>
           <p class="note" style="margin-top:8px">센서 API를 로직에 직접 연결한다. 실제 기기와 실제 달리기 조건을 확인할 수 있지만, 같은 입력을 반복하기 어렵고 결과를 사람이 비교해야 한다. 위험하거나 드문 상황도 원하는 시점에 만들기 어렵다</p>
         </td>
       </tr>
       <tr>
         <th class="rowh">장점</th>
         <td class="win">
-          <p>테스트가능성 <span class="stars">★★★★★</span><br><span class="note">같은 자극 반복 주입 + 자동 회귀 + 분 단위 수렴 검증</span></p>
-          <p>강건성 <span class="stars">★★★★</span><br><span class="note">위험/극단·예외 상황를 안전하게 주입해 방어 로직 검증</span></p>
+          <p>테스트가능성 <span class="stars">★★★★★</span><br><span class="note">같은 입력을 반복하고 변경 전후를 자동 비교하며, 여러 세션의 개인화 과정을 짧은 시간에 검증할 수 있다.</span></p>
+          <p>강건성 <span class="stars">★★★★</span><br><span class="note">위험하거나 드문 입력을 안전하게 넣어 방어 로직을 검증할 수 있다.</span></p>
         </td>
         <td>
           <p>강건성 <span class="stars">★★★</span><br><span class="note">실제 센서 조건을 볼 수 있지만 위험하고 드문 상황은 반복하기 어렵다</span></p>
@@ -1068,13 +1068,13 @@
           <p>테스트가능성 <span class="stars">★★★★</span><br><span class="note">가상 러너와 시험 시나리오를 함께 관리해야 한다</span></p>
         </td>
         <td>
-          <p>테스트가능성 <span class="stars">★★</span><br><span class="note">재현도 자동화도 안 됨 — 변경 하나 검증이 러닝 한 번</span></p>
-          <p>강건성 <span class="stars">★★</span><br><span class="note">위험/극단·예외 상황를 검증 못 한 채 남는다</span></p>
+          <p>테스트가능성 <span class="stars">★★</span><br><span class="note">같은 입력을 재현하거나 자동화하기 어렵고, 변경할 때마다 직접 달려야 한다.</span></p>
+          <p>강건성 <span class="stars">★★</span><br><span class="note">위험하거나 드문 상황을 충분히 검증하지 못할 수 있다.</span></p>
         </td>
       </tr>
       <tr>
         <th class="rowh">절충</th>
-        <td class="win">재현, 자동화, 안전한 예외 상황 검증을 얻는다. 대신 시뮬의 결론을 "구조 검증"으로 정직하게 한정해야 하고, 실기기 확인이 사라지지는 않는다</td>
+        <td class="win">같은 입력의 재현과 자동화, 안전한 예외 상황 검증이 가능하다. 다만 시뮬레이션 결과는 구조 검증 범위로 한정해야 하며 실제 기기 확인도 별도로 필요하다.</td>
         <td>실제 기기에서 확인한다는 장점이 있다. 대신 같은 조건의 재현과 자동화가 어렵고, 위험하거나 드문 상황은 충분히 확인하기 어렵다</td>
       </tr>
     </tbody>
@@ -1092,21 +1092,21 @@
   </div>
 
   <h3 class="num"><span>1.</span>최종 채택 구조</h3>
-  <p class="lead">1안: 입력 교체 + 반복 시뮬레이션 구조 채택</p>
+  <p class="lead">1안인 입력 교체와 반복 시뮬레이션 구조를 채택했다.</p>
 
   <h3 class="num"><span>2.</span>채택 근거</h3>
   <ul>
-    <li><strong>재현이 검증의 전제다.</strong> 수정 전후를 같은 자극으로 비교할 수 없으면 회귀를 잡을 수 없다. 1안은 시나리오 재생으로 이것을 얻는다.</li>
+    <li><strong>같은 입력을 반복할 수 있어야 변경 전후를 비교할 수 있다.</strong> 1안은 시험 시나리오를 다시 실행해 변경으로 생긴 문제를 찾을 수 있다.</li>
     <li><strong>위험하거나 드문 입력도 안전하게 넣을 수 있다.</strong> 범위 밖 심박이나 신호 두절처럼 실제 달리기로 만들기 어려운 조건을 시험 입력으로 재현할 수 있다.</li>
     <li><strong>짧은 시간에 반복할 수 있다.</strong> 같은 입력으로 수정 전후를 비교하므로, 틈을 내어 진행하는 1인 과제에서도 변경할 때마다 다시 확인할 수 있다.</li>
-    <li><strong>여러 세션의 적응을 빠르게 확인한다.</strong> 경계를 정해 둔 가상 러너의 결과를 다음 입력에 다시 반영해, QA2의 8세션 과정을 자동으로 실행한다.</li>
+    <li><strong>여러 세션의 적응을 빠르게 확인한다.</strong> 경계를 정해 둔 가상 러너의 결과를 다음 입력에 다시 반영해, QA2의 여러 세션에 걸친 개인화 과정을 자동으로 실행한다.</li>
     <li><strong>시뮬레이션의 한계를 분리했다.</strong> 자동시험은 규칙과 구조가 설계대로 움직이는지 확인한다. 실제 사람의 유산소 역치와 실제 센서 성능은 별도의 기기·사용자 평가가 필요한 항목이다.</li>
   </ul>
 
   <h3 class="num"><span>3.</span>보완 계획</h3>
   <ul>
-    <li><strong>이번 과제에서 확인</strong>: QA1~QA4 자동 검증 경로 4개를 모두 워치 없이 실행했다(4/4). 같은 시드로 다시 만든 입력은 5개 시드 모두 일치했고(100%, 5/5), 서로 다른 시드에서는 다른 심박 시퀀스가 생성됐다. 전체 JVM 단위시험은 153/153 통과했다.</li>
-    <li><strong>향후 확인</strong>: 실제 기기 연결, 실제 센서 성능, 사람에 대한 정확도는 자동시험이 답하지 못한다. 제품화를 검토할 때 별도의 기기·사용자 평가로 확인한다.</li>
+    <li><strong>이번 과제에서 확인</strong>: QA1~QA4 자동 검증 경로 4개를 모두 워치 없이 실행했다(4/4). 같은 시드로 다시 만든 입력은 5개 시드 모두 일치했고(100%, 5/5), 서로 다른 시드에서는 서로 다른 심박값의 순서가 생성됐다. 전체 JVM 단위시험은 153/153 통과했다.</li>
+    <li><strong>향후 확인</strong>: 실제 기기 연결, 실제 센서 성능, 사람에 대한 정확도는 자동시험만으로 확인할 수 없다. 제품화를 검토할 때 별도의 기기·사용자 평가로 확인한다.</li>
   </ul>
 
   <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
@@ -1121,12 +1121,12 @@
 
   <h3 class="num"><span>A1.</span>이 설계 결정이 다루는 품질 문제</h3>
   <ul>
-    <li>같은 자극을 두 번 줄 수 없다 → 테스트가능성(재현 주입)</li>
-    <li>위험/극단·예외 상황를 실주행으로 못 만든다 → 테스트가능성, 강건성</li>
-    <li>변경마다 실주행 검증은 비용이 감당 불가 → 테스트가능성(자동 회귀)</li>
-    <li>정답지가 없어 "정확하다" 채점 불가 → 시뮬 역할을 구조 검증으로 한정</li>
+    <li>같은 입력을 두 번 만들기 어렵다 → 테스트가능성(입력 재현)</li>
+    <li>위험하거나 드문 상황을 실제 달리기로 만들기 어렵다 → 테스트가능성, 강건성</li>
+    <li>변경할 때마다 직접 달려 검증하기 어렵다 → 테스트가능성(자동 회귀)</li>
+    <li>측정 정답이 없어 실제 정확도를 평가하기 어렵다 → 시뮬 역할을 구조 검증으로 한정</li>
     <li>개인화 수렴에 여러 세션이 필요하다 → 결과를 다음 입력에 반영하는 반복 시뮬레이션</li>
-    <li>워치-폰 결합이라 단독 실행이 어렵다 → 테스트가능성(기기 의존 분리)</li>
+    <li>워치와 폰이 함께 동작해 단독 실행이 어렵다 → 테스트가능성(기기 의존 분리)</li>
     <li>시뮬레이션 결과를 실제 사람의 정확도로 오해하지 않아야 한다 → 강건성 검증 범위의 한계</li>
   </ul>
 
@@ -1138,10 +1138,10 @@
       <tr><th style="width:11em">요소</th><th>하는 일</th></tr>
     </thead>
     <tbody>
-      <tr><td><strong>1. 소스 추상화</strong></td><td>실제 센서/가상 러너/수동 입력이 같은 인터페이스로 꽂힌다 — 검증과 운영이 같은 코드 경로</td></tr>
-      <tr><td><strong>2. 반복 가상 러너</strong></td><td>경계를 정해 둔 가상 러너의 결과를 다음 세션 입력에 반영해 수렴 과정을 자동 실행</td></tr>
-      <tr><td><strong>3. 순수 로직 분리</strong></td><td>판정 로직을 기기와 분리해 JVM 단위시험으로 자동 회귀 확인</td></tr>
-      <tr><td><strong>4. 시뮬레이션 계측</strong></td><td>QA별로 정한 입력을 넣고 결과를 같은 지표로 기록</td></tr>
+      <tr><td><strong>1. 입력 분리</strong></td><td>실제 센서, 가상 러너, 수동 입력을 같은 인터페이스에서 교체할 수 있다. 운영과 시험이 같은 코드 경로를 사용한다.</td></tr>
+      <tr><td><strong>2. 반복 가상 러너</strong></td><td>경계를 정해 둔 가상 러너의 결과를 다음 세션 입력에 반영해 개인화 과정을 자동으로 실행한다.</td></tr>
+      <tr><td><strong>3. 순수 로직 분리</strong></td><td>판정 로직을 기기와 분리해 JVM 단위시험으로 변경 전후를 자동 확인한다.</td></tr>
+      <tr><td><strong>4. 결과 측정</strong></td><td>QA별로 정한 입력을 넣고 결과를 같은 지표로 기록한다.</td></tr>
     </tbody>
   </table>
   </div>
@@ -1150,7 +1150,7 @@
   <div class="tbl">
   <table class="decide">
     <thead>
-      <tr><th>품질 속성</th><th>(1안) 소스 추상화 + 시뮬 계측</th><th>(2안) 실기기 결합 검증</th></tr>
+      <tr><th>품질 속성</th><th>(1안) 입력 분리와 시뮬레이션 측정</th><th>(2안) 실제 기기 중심 검증</th></tr>
     </thead>
     <tbody>
       <tr><td>테스트가능성</td><td style="text-align:center"><span class="stars">★★★★★</span></td><td style="text-align:center"><span class="stars">★★</span></td></tr>
@@ -1163,9 +1163,9 @@
   <p class="note"><strong>별점의 범위</strong>: 1인 개발, 짧은 제출 일정, 반복해서 확인해야 하는 네 AI QAS라는 조건에서 비교했다. 테스트가능성은 일반 품질이며, 실제 기기 확인과 자동시험은 서로 대체하지 않는다. 이번 과제에서는 자동화된 구조 검증 결과를 제시한다.</p>
 
   <h3 class="num"><span>A4.</span>용어 대조(심사용)와 근거 문헌</h3>
-  <p class="note">입력 자리를 인터페이스로 = Ports and Adapters(헥사고날), 의존성 역전(DIP) / 실물을 대신하는 가짜 = test double / 출력이 입력에 되먹임 = closed loop / 수정 후 자동 재확인 = regression test / 시뮬과 실환경의 간극 = sim-to-real gap</p>
+  <p class="note">입력을 인터페이스로 분리하는 방식은 Ports and Adapters와 의존성 역전 원칙에 해당한다. 실제 센서를 대신하는 입력은 test double, 수정 뒤 같은 시험을 자동으로 다시 실행하는 것은 regression test라고 한다. 시뮬레이션과 실제 환경의 차이는 sim-to-real gap이라고 부른다.</p>
   <p class="note">근거 문헌: ISO/IEC 25010(테스트가능성 정의) / Cockburn(포트와 어댑터) / Meszaros(테스트 대역) / 테스트 피라미드(Cohn, Fowler) / 이 저장소의 자체 이력(시뮬 자기 채점 함정을 직접 확인하고 시뮬 역할을 한정 — 실험 기록 §15-3)</p>
-  <p class="note">상세 = <code>arch/dp/dp-05-testability/</code> (decision / research / counter-catalog)</p>
+  <p class="note">상세 설계와 참고 문헌은 별도의 DP5 설계 문서에 기록했다.</p>
 
   <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
 </section>
