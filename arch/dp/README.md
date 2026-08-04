@@ -45,6 +45,6 @@ arch/dp/
 | DP-05 | 테스트가능성(Testability) | v2 (2026-08-03, 리뷰 반영) | 1안 = 소스 추상화 + 폐루프 시뮬 계측(RunSource 교체 + 참임계 가상 러너 + 순수 로직 자동 테스트) | `dp-05-testability/` |
 
 - **보고서 원고/HTML**: 각 DP의 PPT 원고 = `report/report-008`(DP1)~`report-012`(DP5). HTML 렌더 = `docs/`(GitHub Pages, 인덱스 `docs/index.html`).
-- **DP 도식 렌더 환경**: plantuml 1.2025.2 + smetana 레이아웃(graphviz 불필요), 폰트 = 렌더 머신의 한글 폰트(Mac=AppleGothic, Windows=Malgun Gothic — puml 안 `skinparam defaultFontName`이 그 머신 기준으로 박혀 있으니 수정 시 유지). 명령 = `java "-Dfile.encoding=UTF-8" -jar plantuml.jar -charset UTF-8 -Playout=smetana -tpng <files>`.
+- **DP 도식 렌더 환경**: PlantUML 1.2026.6 + Smetana 레이아웃(Graphviz 불필요), JAR = `D:\Applications\plantuml\plantuml-1.2026.6.jar`, 폰트 = 렌더 머신의 한글 폰트(Mac=AppleGothic, Windows=Malgun Gothic — puml 안 `skinparam defaultFontName`이 그 머신 기준으로 박혀 있으니 수정 시 유지). 명령 = `java "-Dfile.encoding=UTF-8" -jar D:\Applications\plantuml\plantuml-1.2026.6.jar -charset UTF-8 -Playout=smetana -tpng <files>`.
 
 > 관련: `framework/ai-8-qa.md`(8대 QA), `framework/assignment/`(과제 규정 = QA 4개+ / AI 특화 2개+), `arch/diagrams/`(일반 아키텍처), `arch/component-catalog.md`(우리 컴포넌트).

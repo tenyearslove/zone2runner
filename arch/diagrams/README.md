@@ -50,7 +50,7 @@
 - 모듈 F 적응+검증: ![](06d-module-adaptation-verification.png)
 
 > 이 폴더 = **일반 시스템 아키텍처**(우리 실제 시스템) 전용. 컨텍스트(01) / 우리 C&C(02, 02b) / 배포(03) / Module View(04) / Use Case(05) / 최종 아키텍처(06, 06a~d).
-> **Windows 렌더**: plantuml 1.2025.2 jar + `java "-Dfile.encoding=UTF-8" -jar plantuml.jar -charset UTF-8 -Playout=smetana -tpng <files>` (graphviz 불필요). 신규 puml 폰트 = "Malgun Gothic"(Windows), 기존 = "AppleGothic"(Mac).
+> **Windows 렌더**: PlantUML 1.2026.6 JAR = `D:\Applications\plantuml\plantuml-1.2026.6.jar`. 명령은 `java "-Dfile.encoding=UTF-8" -jar D:\Applications\plantuml\plantuml-1.2026.6.jar -charset UTF-8 -Playout=smetana -tpng <files>`이며 Graphviz는 필요 없다. native 실행 파일도 `D:\Applications\plantuml\native-plantuml-windows-amd64-1.2026.6\plantuml.exe`에 있다. 신규 puml 폰트 = "Malgun Gothic"(Windows), 기존 = "AppleGothic"(Mac).
 > **DP 전용 도식**(카운터 등 가정 설계)은 여기 두지 않고 각 DP 폴더 `arch/dp/dp-{NN}-{qa}/images/`에 둔다 — 예: 설명용이성 DP의 카운터 = `arch/dp/dp-01-explainability/images/`.
 
 ---

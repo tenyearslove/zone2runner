@@ -46,6 +46,8 @@ Zone2Runner의 설계 과제는 "정답이 없는 개인 운동 강도 문제에
 
 - Android SDK: `D:\Android\Sdk`
 - Poppler: `D:\Applications\poppler-26.02.0\Library\bin`
+- PlantUML JAR: `D:\Applications\plantuml\plantuml-1.2026.6.jar`
+- PlantUML native: `D:\Applications\plantuml\native-plantuml-windows-amd64-1.2026.6\plantuml.exe`
 - Android 테스트 실행 시 현재 셸에 `ANDROID_HOME`과 `ANDROID_SDK_ROOT`를 모두 위 SDK 경로로 지정한다.
 
 ## 다이어그램 규칙
