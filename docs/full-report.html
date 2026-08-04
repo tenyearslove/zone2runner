@@ -236,6 +236,21 @@
 </section>
 
 <section class="slide">
+  <div class="slide-head"><h2>왜 요즘 Zone 2가 주목받는가?</h2><span class="sec-no">1</span></div>
+  <p class="lead">Zone 2는 대화할 수 있을 정도의 낮은 유산소 운동 강도다. 스마트워치로 심박 구간을 쉽게 확인하게 되고, 천천히 달리는 슬로우 조깅이 널리 알려지면서 함께 주목받고 있다.</p>
+  <div class="tbl"><table class="decide">
+    <thead><tr><th style="width:10em">관심을 끄는 이유</th><th>쉽게 풀어쓴 설명</th></tr></thead>
+    <tbody>
+      <tr><td><strong>체중 관리</strong></td><td>비교적 낮은 강도로 오래 운동하기 쉬워 체중 관리를 위한 유산소 운동으로 활용하기 좋다.</td></tr>
+      <tr><td><strong>초보 러너의 접근성</strong></td><td>말할 수 있는 속도로 시작하므로 달리기를 처음 시작하거나 고강도 운동이 부담스러운 사람도 접근하기 쉽다.</td></tr>
+      <tr><td><strong>부담 조절</strong></td><td>속도와 운동 강도를 낮게 조절할 수 있어 빠르게 달리는 운동보다 신체 부담을 관리하기 쉽다.</td></tr>
+      <tr><td><strong>슬로우 조깅</strong></td><td>천천히 달리는 슬로우 조깅은 달리는 사람의 심박이 Zone 2 범위에 머무는 경우 Zone 2 러닝의 대표적인 실천 예가 될 수 있다.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="crumb"><b>과제 소개</b> <span>요구사항</span> <span>설계</span> <span>구현/검증</span> <span>결론</span></div>
+</section>
+
+<section class="slide">
   <div class="slide-head"><h2>Zone 2와 말하기 테스트</h2><span class="sec-no">1</span></div>
   <h3 class="num"><span>■</span>Zone 2란?</h3>
   <ul>
@@ -252,23 +267,6 @@
   <p class="note">쉽게 말하면, 평균 공식으로 시작하되 달리는 사람의 실제 느낌을 물어 그 사람에게 맞춰 가는 방식이다.</p>
   <div class="crumb"><b>과제 소개</b> <span>요구사항</span> <span>설계</span> <span>구현/검증</span> <span>결론</span></div>
 </section>
-
-<section class="slide">
-  <div class="slide-head"><h2>왜 요즘 Zone 2가 주목받는가?</h2><span class="sec-no">1</span></div>
-  <p class="lead">스마트워치로 심박 구간을 쉽게 확인하게 되고, 천천히 오래 달리는 ‘슬로우 조깅’이 알려지면서 Zone 2 운동도 함께 주목받고 있다.</p>
-  <div class="tbl"><table class="decide">
-    <thead><tr><th style="width:10em">관심을 끄는 이유</th><th>쉽게 풀어쓴 설명</th></tr></thead>
-    <tbody>
-      <tr><td><strong>체지방 관리</strong></td><td>낮거나 중간 정도의 강도에서는 운동 중 지방이 쓰이는 비율이 비교적 높고 오래 지속하기 쉽다. 다만 장기적인 체지방 감소는 Zone 2 하나가 아니라 전체 운동량과 식습관의 영향을 함께 받는다.</td></tr>
-      <tr><td><strong>진입 장벽이 낮음</strong></td><td>말할 수 있는 속도로 시작하므로 초보자나 고강도 운동이 부담스러운 사람도 접근하기 쉽다. 고령자를 대상으로 한 슬로우 조깅 연구에서도 체력과 신체 구성 개선 가능성이 보고되었다.</td></tr>
-      <tr><td><strong>부담을 조절하기 쉬움</strong></td><td>빠르게 달릴 때보다 한 걸음의 충격은 작을 수 있다. 그러나 같은 거리를 더 많은 걸음으로 달리면 누적 부하는 늘 수 있어, 관절 부담이나 부상 위험이 항상 더 낮다고 단정할 수는 없다.</td></tr>
-      <tr><td><strong>슬로우 조깅과의 접점</strong></td><td>둘 다 천천히 달리는 경우가 많지만 같은 뜻은 아니다. 슬로우 조깅은 속도와 달리는 방법을, Zone 2는 개인의 생리적 운동 강도를 기준으로 한다.</td></tr>
-    </tbody>
-  </table></div>
-  <p class="note">따라서 이 보고서는 유행을 소개하되, Zone 2가 체지방 감량이나 부상 예방에 언제나 가장 좋다고 주장하지 않는다.</p>
-  <div class="crumb"><b>과제 소개</b> <span>요구사항</span> <span>설계</span> <span>구현/검증</span> <span>결론</span></div>
-</section>
-
 <section class="slide">
   <div class="slide-head"><h2>왜 Zone 2로 운동하는가?</h2><span class="sec-no">1</span></div>
   <p class="lead">Zone 2는 <strong>무리하지 않으면서 유산소 운동을 충분히 오래, 꾸준히 반복하기 좋은 강도</strong>라는 점에서 실용적이다.</p>
@@ -280,8 +278,7 @@
     <li><strong>강도를 스스로 확인할 수 있다.</strong> 워치 심박뿐 아니라 말하기 테스트로도 현재 강도가 지나치게 높지 않은지 확인할 수 있다.</li>
   </ul>
   <h3 class="num"><span>■</span>이 과제가 Zone 2를 선택한 이유</h3>
-  <p>Zone 2가 모든 운동 목표에 가장 좋은 유일한 강도라는 뜻은 아니다. 짧은 시간에 강한 자극을 주는 운동이나 근력운동도 목적에 따라 필요하다. 이 과제는 Zone 2의 <strong>지속하기 쉽고 스스로 확인할 수 있는 유산소 강도</strong>라는 장점에 초점을 둔다.</p>
-  <p class="note">근거 문헌: Zone 2 효과 검토 리뷰(PMID 40560504) / 유산소 운동과 체중 감소 메타분석(PMID 39724371) / 고령자 슬로우 조깅 연구(PMID 27848017) / 달리기 속도와 무릎 누적 부하 연구(PMID 25552288)</p>
+  <p>Zone 2는 체중 관리를 위해 유산소 운동을 시작하려는 사람과 초보 러너가 접근하기 좋은 운동 강도로 주목받고 있다. 이 과제는 <strong>운동 중 Zone 2를 유지하도록 돕고, 개인에게 적용된 심박 범위의 근거를 설명하는 것</strong>에 초점을 둔다.</p>
   <div class="crumb"><b>과제 소개</b> <span>요구사항</span> <span>설계</span> <span>구현/검증</span> <span>결론</span></div>
 </section>
 <section class="slide">
@@ -323,7 +320,7 @@
     <thead><tr><th style="width:3.5em">ID</th><th style="width:13em">기능</th><th>설명</th><th style="width:3em">AI</th></tr></thead>
     <tbody>
       <tr><td>FR1</td><td>프로필과 초기 경계</td><td>나이와 안정심박 등으로 첫 러닝에 사용할 Zone 2 범위를 계산한다.</td><td></td></tr>
-      <tr><td>FR2</td><td>심박 수집과 존 판정</td><td>워치 심박을 1초마다 받아 현재 존을 판정한다. 범위 밖 값과 경계 부근의 짧은 흔들림을 걸러낸다.</td><td style="text-align:center">●</td></tr>
+      <tr><td>FR2</td><td>심박 수집과 존 판정</td><td>워치 심박을 주기적으로 받아 현재 존을 판정한다. 범위 밖 값과 경계 부근의 짧은 흔들림을 걸러낸다.</td><td style="text-align:center">●</td></tr>
       <tr><td>FR3</td><td>관측 데이터 분석</td><td>같은 속도에서도 운동 중 심박이 서서히 오르는 현상(심박 드리프트), 운동을 멈춘 뒤 심박이 내려오는 정도(운동 후 심박 회복), 오르막·내리막 영향을 평지 기준 속도로 바꾼 값(경사 보정 페이스)을 계산한다.</td><td style="text-align:center">●</td></tr>
       <tr><td>FR4</td><td>개인화</td><td>러닝 중 받은 말하기 테스트 응답을 이용해 개인의 Zone 2 상한을 조금씩 갱신한다.</td><td style="text-align:center">●</td></tr>
       <tr><td>FR5</td><td>실시간 코칭과 가드</td><td>규칙이 코칭 방향과 사실을 정하고 LLM이 문장을 만든다. 문장이 규칙과 어긋나면 기본 문구로 바꾼다.</td><td style="text-align:center">●</td></tr>
@@ -343,31 +340,31 @@
 </section>
 
 <section class="slide">
-  <div class="slide-head"><h2>품질 요구사항 — 핵심 QAS</h2><span class="sec-no">2</span></div>
-  <p class="note">QAS는 ‘누가 어떤 상황에서 무엇을 요구하고, 시스템이 어떻게 응답하며, 무엇으로 성공을 판단하는가’를 한 시나리오로 적었다. 중요도와 난이도는 10점 기준의 과제 내 상대평가다.</p>
+  <div class="slide-head"><h2>품질 요구사항 — QAS (1/2)</h2><span class="sec-no">2</span></div>
+  <p class="note">내용 열은 Description을, 시나리오의 흰색 영역은 Source·Stimulus·Artifact·Environment를 설명한다. 파란색 영역에는 Response와 Response Measure를 적었다. QA 번호는 우선순위가 아니라 식별 번호다.</p>
   <div class="tbl"><table class="decide qas-table">
     <thead><tr><th style="width:3em">ID</th><th style="width:7em">QA</th><th style="width:9em">내용</th><th>시나리오</th><th style="width:4em">중요도</th><th style="width:4em">난이도</th></tr></thead>
     <tbody>
-      <tr><td>QA2</td><td><strong>기능적응성</strong></td><td>사용자 응답을 반영해 개인 경계를 조정한다.</td><td class="qas-scenario"><div>사용자가 초기 공식이나 이전 세션으로 정한 경계를 사용해 달리는 중 말하기 테스트에 답한다.</div><div>시스템은 여러 응답을 누적해 개인의 Zone 2 상한을 조금씩 갱신하되, 한 세션의 변경 폭을 제한한다.</div><div class="measure-line">[측정] 가상 사례 15개 모두 마지막 경계가 설정한 목표에서 3bpm 이내이고, 마지막 4세션에서 가장 큰 경계와 가장 작은 경계의 차이는 4bpm 이하이며, 한 세션 시작부터 끝까지의 이동은 10bpm 이하일 것</div></td><td>9</td><td>8</td></tr>
-      <tr><td>QA1</td><td><strong>설명용이성</strong></td><td>판정·개인화·코칭의 근거를 확인할 수 있게 한다.</td><td class="qas-scenario"><div>사용자가 러닝 중 또는 리포트에서 판정과 코칭의 이유를 확인한다.</div><div>시스템은 실제 판정에 사용한 심박, 개인 경계, 사용자 응답과 문장 생성 경로를 보여 주며, 근거에 없는 숫자는 표시하지 않는다.</div><div class="measure-line">[측정] 대표 판정 3가지 모두 근거를 기록하고, 시험 문장 5개 모두에서 근거에 없는 숫자를 차단할 것</div></td><td>8</td><td>7</td></tr>
-      <tr><td>QA3</td><td><strong>제어가능성</strong></td><td>LLM이 정해진 판단과 사실의 범위를 벗어나지 않게 한다.</td><td class="qas-scenario"><div>실시간 코칭 중 온디바이스 LLM이 문장을 만들거나 일시적으로 응답하지 못한다.</div><div>시스템은 규칙이 정한 코칭 방향·형식·숫자와 문장을 대조하고, 기준을 벗어나거나 생성에 실패하면 미리 정한 기본 문구를 사용한다.</div><div class="measure-line">[측정] 위반 문장 10개를 모두 탐지하고, 정상 문장 5개를 모두 통과시키며, LLM 실패 시 기본 문구를 제공할 것</div></td><td>8</td><td>7</td></tr>
+      <tr><td>QA1</td><td><strong>설명용이성</strong></td><td>판정·개인화·코칭의 근거를 사용자가 확인할 수 있게 한다.</td><td class="qas-scenario"><div>러닝 중 사용자가 판정이나 코칭의 이유 확인을 요청하면, 요청이 설명 서비스에 전달된다.</div><div class="measure-line"><strong>[응답]</strong> 시스템은 실제 판정에 사용한 근거만 보여 주고, 근거에 없는 숫자가 포함된 문장은 화면이나 음성으로 내보내지 않는다.<br><strong>[측정]</strong> 판정 근거 기록률 100%, 근거 없는 숫자 표시율 0%</div></td><td>8</td><td>7</td></tr>
+      <tr><td>QA2</td><td><strong>기능적응성</strong></td><td>말하기 테스트 응답을 반영해 개인의 Zone 2 경계를 조정한다.</td><td class="qas-scenario"><div>초기 경계 또는 이전 세션에서 조정한 경계를 사용하는 러닝 중, 사용자가 말하기 테스트에 답하면 당시 심박과 응답이 개인화 모듈에 전달된다.</div><div class="measure-line"><strong>[응답]</strong> 시스템은 사용자 응답에 따라 개인 경계를 조정하고, 변경된 값을 다음 세션의 시작값으로 저장한다. 한 세션의 경계 변경 폭은 제한한다.<br><strong>[측정]</strong> 가상 러너의 설정 경계 도달률 100%(오차 3bpm 이하), 세션당 경계 변경 폭 10bpm 이하</div></td><td>9</td><td>8</td></tr>
+      <tr><td>QA3</td><td><strong>제어가능성</strong></td><td>LLM이 정해진 판단과 사실의 범위를 벗어난 코칭을 내보내지 않게 한다.</td><td class="qas-scenario"><div>실시간 코칭 중 LLM이 만든 문장이나 모델 준비·지연·오류 상태가 출력 검사 모듈에 전달된다.</div><div class="measure-line"><strong>[응답]</strong> 시스템은 규칙이 정한 방향·형식·숫자와 문장을 대조한다. 기준을 벗어난 문장은 차단하고, LLM을 사용할 수 없으면 기본 문구를 제공한다.<br><strong>[측정]</strong> 규칙 위반 문장 표시율 0%, LLM 실패 시 기본 문구 제공률 100%</div></td><td>8</td><td>7</td></tr>
     </tbody>
   </table></div>
-  <p class="note">QA2·QA1·QA3은 각각 DP1·DP2·DP3의 설계 결정을 이끈다. QA5도 입력 교체 구조와 시드 기반 시뮬레이션을 필요로 하므로 아키텍처에 영향을 주는 핵심 요구사항(ASR)이다.</p>
+  <p class="note">QA1·QA2·QA3은 각각 DP2·DP1·DP3의 설계 결정을 이끈다. QAS 번호와 DP 번호는 서로 다른 목적의 식별자다.</p>
   <div class="crumb">과제 소개 <b>요구사항</b> <span>설계</span> <span>구현/검증</span> <span>결론</span></div>
 </section>
 
 <section class="slide">
-  <div class="slide-head"><h2>품질 요구사항 — 지원·검증 QAS</h2><span class="sec-no">2</span></div>
-  <p class="note">강건성과 테스트가능성도 요구사항으로 유지한다. 별도 DP로 늘리지는 않지만, 세 DP가 안정적으로 동작하고 반복 검증될 수 있게 하는 공통 구조로 반영한다. QA4는 지원 품질이고 QA5는 ASR이다.</p>
+  <div class="slide-head"><h2>품질 요구사항 — QAS (2/2)</h2><span class="sec-no">2</span></div>
+  <p class="note">QA4는 세 DP를 안정적으로 동작하게 하는 지원 품질이다. QA5는 입력 교체와 반복 가능한 시뮬레이션 구조를 요구하므로 ASR로 유지한다.</p>
   <div class="tbl"><table class="decide qas-table">
     <thead><tr><th style="width:3em">ID</th><th style="width:7em">QA</th><th style="width:9em">내용</th><th>시나리오</th><th style="width:4em">중요도</th><th style="width:4em">난이도</th></tr></thead>
     <tbody>
-      <tr><td>QA4</td><td><strong>강건성</strong></td><td>센서 잡음과 경계 부근의 흔들림에도 판정을 안정시킨다.</td><td class="qas-scenario"><div>1초마다 들어오는 심박에 측정 범위를 벗어난 값이 섞이거나, 값이 경계 부근을 오간다.</div><div>시스템은 범위를 벗어난 값을 버리고, 경계에 여유 구간을 두어 짧은 판정 번복을 줄이면서도 실제 변화에는 늦지 않게 반응한다.</div><div class="measure-line">[측정] 이상치 50개를 모두 차단하고, 정상값 500개는 잘못 차단하지 않으며, 5개 시드 모두에서 판정 번복을 60% 이상 줄이고, 10bpm의 실제 변화는 2초 안에 반영할 것</div></td><td>7</td><td>6</td></tr>
-      <tr><td>QA5</td><td><strong>테스트가능성</strong></td><td>실제 달리기 없이 같은 조건을 반복 시험한다.</td><td class="qas-scenario"><div>1인 개발자가 워치나 실제 달리기 없이 판정·개인화·코칭 로직을 반복 확인한다.</div><div>시스템은 실제 센서와 같은 입력 통로에 가상 러너를 연결하고, 같은 러너·설정·시드를 선택하면 같은 입력을 다시 만든다.</div><div class="measure-line">[측정] QA1~QA4의 자동 검증 경로를 모두 제공하고, 서로 다른 시드 5개를 각각 다시 실행했을 때 입력이 모두 같을 것</div></td><td>8</td><td>6</td></tr>
+      <tr><td>QA4</td><td><strong>강건성</strong></td><td>센서 이상값과 경계 부근의 잡음에도 판정을 안정적으로 유지한다.</td><td class="qas-scenario"><div>러닝 중 주기적으로 들어오는 심박에 측정 범위를 벗어난 값이나 경계 부근의 흔들림이 포함되면, 입력 검사와 Zone 판정 모듈에 전달된다.</div><div class="measure-line"><strong>[응답]</strong> 시스템은 센서 이상값을 판정에서 제외하고, 경계에 여유 구간을 두어 짧은 시간 동안 Zone 판정이 반복해서 바뀌는 현상을 줄인다.<br><strong>[측정]</strong> 센서 입력 판별 정확도 100%, 경계 부근 판정 번복 감소율 60% 이상</div></td><td>7</td><td>6</td></tr>
+      <tr><td>QA5</td><td><strong>테스트가능성</strong></td><td>실제 달리기나 워치 없이도 같은 조건으로 핵심 로직을 반복 검증한다.</td><td class="qas-scenario"><div>1인 개발자가 실제 달리기나 워치를 사용하기 어려운 개발 환경에서 자동시험을 실행한다. 가상 입력은 실제 센서와 같은 입력 통로를 사용한다.</div><div class="measure-line"><strong>[응답]</strong> 자동시험은 같은 가상 러너·설정·시드로 같은 입력을 만들고, QA1~QA4의 측정 코드를 실행해 QA별 결과 파일을 저장한다.<br><strong>[측정]</strong> 동일 조건 입력 재현율 100%, QA1~QA4 자동 측정 실행 성공률 100%</div></td><td>8</td><td>6</td></tr>
     </tbody>
   </table></div>
-  <p class="note">예를 들어 ‘3개 중 3개’는 시험한 대표 판정 세 가지가 모두 기준을 만족했다는 뜻이다. 뒤의 검증 결과에서도 비율만 쓰지 않고 시험 수와 결과를 함께 적는다.</p>
+  <p class="note">QAS에는 대표 지표만 적고, 시험 사례 수와 실제 측정값은 검증 결과에서 설명한다.</p>
   <div class="crumb">과제 소개 <b>요구사항</b> <span>설계</span> <span>구현/검증</span> <span>결론</span></div>
 </section>
 
@@ -493,7 +490,7 @@
 
   <h3 class="num"><span>3.</span>보완 계획</h3>
   <ul>
-    <li><strong>이번 과제에서 확인</strong>: 가상 러너의 목표 Zone 2 상한 5종과 시드 3종을 조합한 15개 사례가 모두 목표 경계와의 오차 3bpm 이내에 도달했다. 현재 모의 조건에서는 말하기 테스트 응답 10회 이내(1~2세션)에 목표 경계와의 오차 3bpm 이내에 도달했고, 응답 40회 뒤 최종 오차는 0.20~0.77bpm이었다. 별도의 기준 사례에서 마지막 4세션의 경계 범위 3.04bpm과 세션당 최대 이동 9.97bpm을 확인했다.</li>
+    <li><strong>이번 과제에서 확인</strong>: 가상 러너의 설정 경계 5개와 시드 3개를 조합한 시험에서 모두 목표 경계와의 오차 3bpm 이내에 도달해 도달률은 100%였다. 세션당 최대 경계 변경 폭은 9.97bpm으로 제한값 10bpm 이하였다.</li>
     <li><strong>향후 확인</strong>: 이 수치는 시뮬레이션 결과다. 실제 사람의 유산소 역치를 같은 오차로 찾았다는 뜻이 아니며, 실사용 평가를 하게 되면 말하기 테스트 안내와 개인화에 사용하는 설정값을 다시 조정한다.</li>
   </ul>
 
@@ -618,9 +615,8 @@
   </ol>
   <h3 class="num"><span>3.</span>이번 과제에서 확인한 범위</h3>
   <ul>
-    <li>Zone 2 아래·범위 안·위의 대표 판정 3종에서 <strong>판정·심박·개인 경계의 근거를 3개 모두 기록했다</strong>.</li>
-    <li>근거에 없는 숫자가 포함된 문장 <strong>5개를 모두 차단</strong>했고, 근거가 있는 문장 <strong>3개는 모두 통과</strong>했다.</li>
-    <li>코칭 문장과 근거 기록의 저장·복원 시험을 통과했다.</li>
+    <li>Zone 2 아래·범위 안·위의 판정에 사용한 심박과 개인 경계를 모두 기록해 <strong>판정 근거 기록률 100%</strong>를 확인했다.</li>
+    <li>근거에 없는 숫자가 포함된 시험 문장 5개를 모두 차단해 <strong>근거 없는 숫자 표시율 0%</strong>를 확인했다.</li>
   </ul>
   <p class="note">이 결과는 설명이 실제 내부 판단의 근거와 연결돼 있음을 확인한 것이다. 실제 Zone 2의 생리학적 정확도나 사용자가 느끼는 이해도까지 증명한 것은 아니다.</p>
   <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
@@ -775,7 +771,7 @@
 
   <h3 class="num"><span>3.</span>보완 계획</h3>
   <ul>
-    <li><strong>이번 과제에서 확인</strong>: 의도적으로 만든 위반 문장 10개를 모두 탐지했고, 정상 문장 5개는 모두 통과했다. LLM 실패·로딩·모델 없음 경로에서는 기본 문구로 전환됐다.</li>
+    <li><strong>이번 과제에서 확인</strong>: 규칙 위반 문장 10개를 모두 차단해 <strong>규칙 위반 문장 표시율 0%</strong>를 확인했다. LLM 실패·로딩·모델 없음 경로에서는 모두 기본 문구로 전환돼 <strong>기본 문구 제공률 100%</strong>를 확인했다.</li>
     <li><strong>향후 확인</strong>: 더 다양한 한국어 표현으로 시험 집합을 늘리고, 자주 차단되는 표현을 바탕으로 프롬프트와 검사 규칙을 다듬는다.</li>
   </ul>
 
@@ -995,29 +991,29 @@
 </section>
 
 <section class="slide">
-  <div class="slide-head"><h2>QAS별 검증 결과 — 핵심 QAS</h2><span class="sec-no">4</span></div>
-  <p class="note">요구사항에서 쓴 시나리오와 측정 기준을 그대로 두고, 오른쪽에 자동시험 결과를 적었다. 결과는 가상 입력과 구조 검증 범위에서 해석한다.</p>
+  <div class="slide-head"><h2>QAS별 검증 결과 (1/2)</h2><span class="sec-no">4</span></div>
+  <p class="note">QAS와 같은 순서로 시나리오와 대표 지표를 반복하고, 오른쪽에 시험 조건과 실제 결과를 적었다.</p>
   <div class="tbl"><table class="decide qas-table">
     <thead><tr><th style="width:3em">ID</th><th style="width:7em">QA</th><th style="width:7em">내용</th><th>시나리오</th><th style="width:14em">검증 결과</th><th style="width:3.5em">달성</th></tr></thead>
     <tbody>
-      <tr><td>QA2</td><td><strong>기능적응성</strong></td><td>응답 기반 개인 경계 조정</td><td class="qas-scenario"><div>사용자가 러닝 중 말하기 테스트에 답한다.</div><div>시스템은 응답을 누적해 경계를 갱신하고 한 세션의 변경 폭을 제한한다.</div><div class="measure-line">[측정] 가상 사례 15개 모두 목표와 3bpm 이내, 마지막 4세션 차이 4bpm 이하, 세션 이동 10bpm 이하</div></td><td>15개 중 15개가 목표와 3bpm 이내였다. 마지막 오차는 0.20~0.77bpm, 기준 사례의 마지막 4세션 차이는 3.04bpm, 최대 이동은 9.97bpm이었다.</td><td class="ok">달성</td></tr>
-      <tr><td>QA1</td><td><strong>설명용이성</strong></td><td>판정과 생성 근거 기록</td><td class="qas-scenario"><div>사용자가 판정과 코칭의 이유를 확인한다.</div><div>시스템은 실제 사용한 값과 생성 경로를 보여 주고, 근거에 없는 숫자는 표시하지 않는다.</div><div class="measure-line">[측정] 대표 판정 3가지 모두 근거 기록, 시험 문장 5개 모두 미등록 숫자 차단</div></td><td>대표 판정 3개 중 3개에 근거가 기록됐다. 미등록 숫자가 있는 문장 5개를 모두 차단했고, 근거에 맞는 문장 3개는 모두 통과했다.</td><td class="ok">달성</td></tr>
-      <tr><td>QA3</td><td><strong>제어가능성</strong></td><td>LLM 출력 검사와 기본 문구</td><td class="qas-scenario"><div>LLM이 코칭 문장을 만들거나 응답하지 못한다.</div><div>시스템은 방향·형식·숫자를 검사하고, 기준을 벗어나거나 실패하면 기본 문구를 사용한다.</div><div class="measure-line">[측정] 위반 문장 10개 모두 탐지, 정상 문장 5개 모두 통과, LLM 실패 시 기본 문구 제공</div></td><td>위반 문장 10개를 모두 탐지했고 정상 문장 5개는 모두 통과했다. LLM을 사용할 수 없는 경로에서도 기본 문구가 제공됐다.</td><td class="ok">달성</td></tr>
+      <tr><td>QA1</td><td><strong>설명용이성</strong></td><td>판정과 생성 근거 확인</td><td class="qas-scenario"><div>러닝 중 사용자가 판정이나 코칭의 이유 확인을 요청하면, 요청이 설명 서비스에 전달된다.</div><div class="measure-line"><strong>[응답]</strong> 시스템은 실제 판정에 사용한 근거만 보여 주고, 근거에 없는 숫자가 포함된 문장은 화면이나 음성으로 내보내지 않는다.<br><strong>[측정]</strong> 판정 근거 기록률 100%, 근거 없는 숫자 표시율 0%</div></td><td>Zone 2 아래·범위 안·위의 판정에서 근거가 모두 기록돼 기록률은 100%였다. 근거 없는 숫자를 넣은 시험 문장 5개는 모두 차단돼 표시율은 0%였다.</td><td class="ok">달성</td></tr>
+      <tr><td>QA2</td><td><strong>기능적응성</strong></td><td>응답 기반 개인 경계 조정</td><td class="qas-scenario"><div>초기 경계 또는 이전 세션에서 조정한 경계를 사용하는 러닝 중, 사용자가 말하기 테스트에 답하면 당시 심박과 응답이 개인화 모듈에 전달된다.</div><div class="measure-line"><strong>[응답]</strong> 시스템은 사용자 응답에 따라 개인 경계를 조정하고, 변경된 값을 다음 세션의 시작값으로 저장한다. 한 세션의 경계 변경 폭은 제한한다.<br><strong>[측정]</strong> 가상 러너의 설정 경계 도달률 100%(오차 3bpm 이하), 세션당 경계 변경 폭 10bpm 이하</div></td><td>설정 경계 5개와 시드 3개를 조합한 시험에서 모두 오차 3bpm 이내에 도달해 도달률은 100%였다. 세션당 최대 변경 폭은 9.97bpm이었다.</td><td class="ok">달성</td></tr>
+      <tr><td>QA3</td><td><strong>제어가능성</strong></td><td>LLM 출력 검사와 기본 문구</td><td class="qas-scenario"><div>실시간 코칭 중 LLM이 만든 문장이나 모델 준비·지연·오류 상태가 출력 검사 모듈에 전달된다.</div><div class="measure-line"><strong>[응답]</strong> 시스템은 규칙이 정한 방향·형식·숫자와 문장을 대조한다. 기준을 벗어난 문장은 차단하고, LLM을 사용할 수 없으면 기본 문구를 제공한다.<br><strong>[측정]</strong> 규칙 위반 문장 표시율 0%, LLM 실패 시 기본 문구 제공률 100%</div></td><td>규칙 위반 문장 10개가 모두 차단돼 표시율은 0%였다. LLM 실패·로딩·모델 없음 경로에서는 모두 기본 문구로 전환됐다.</td><td class="ok">달성</td></tr>
     </tbody>
   </table></div>
   <div class="crumb">과제 소개 <span>요구사항</span> <span>설계</span> <b>구현/검증</b> <span>결론</span></div>
 </section>
 
 <section class="slide">
-  <div class="slide-head"><h2>QAS별 검증 결과 — 공통 품질 QAS</h2><span class="sec-no">4</span></div>
+  <div class="slide-head"><h2>QAS별 검증 결과 (2/2)</h2><span class="sec-no">4</span></div>
   <div class="tbl"><table class="decide qas-table">
     <thead><tr><th style="width:3em">ID</th><th style="width:7em">QA</th><th style="width:7em">내용</th><th>시나리오</th><th style="width:14em">검증 결과</th><th style="width:3.5em">달성</th></tr></thead>
     <tbody>
-      <tr><td>QA4</td><td><strong>강건성</strong></td><td>이상값 차단과 판정 안정화</td><td class="qas-scenario"><div>심박에 범위 밖 값이나 경계 부근의 잡음이 섞인다.</div><div>시스템은 이상값을 버리고 경계에 여유 구간을 두어 짧은 판정 번복을 줄인다.</div><div class="measure-line">[측정] 이상치 50개 모두 차단, 정상값 500개 오차단 없음, 5개 시드 모두 번복 60% 이상 감소, 10bpm 변화 2초 안에 반영</div></td><td>이상치 50개를 모두 차단했고 정상값 500개는 차단하지 않았다. 5개 시드 모두 번복이 67.1~74.7% 줄었고, 10bpm 변화는 1초 뒤 판정에 반영됐다.</td><td class="ok">달성</td></tr>
-      <tr><td>QA5</td><td><strong>테스트가능성</strong></td><td>같은 조건의 반복 시험</td><td class="qas-scenario"><div>개발자가 실제 달리기나 워치 없이 핵심 로직을 확인한다.</div><div>시스템은 가상 러너를 실제 센서와 같은 통로에 연결하고, 같은 러너·설정·시드로 같은 입력을 만든다.</div><div class="measure-line">[측정] QA1~QA4 자동 검증 경로 제공, 서로 다른 시드 5개 모두 재실행 결과 일치</div></td><td>QA1~QA4의 자동 검증 경로를 모두 제공했다. 시험한 시드 5개는 각각 다시 실행했을 때 입력이 같았고, JVM 단위시험 153개가 모두 통과했다.</td><td class="ok">달성</td></tr>
+      <tr><td>QA4</td><td><strong>강건성</strong></td><td>이상값 차단과 판정 안정화</td><td class="qas-scenario"><div>러닝 중 주기적으로 들어오는 심박에 측정 범위를 벗어난 값이나 경계 부근의 흔들림이 포함되면, 입력 검사와 Zone 판정 모듈에 전달된다.</div><div class="measure-line"><strong>[응답]</strong> 시스템은 센서 이상값을 판정에서 제외하고, 경계에 여유 구간을 두어 짧은 시간 동안 Zone 판정이 반복해서 바뀌는 현상을 줄인다.<br><strong>[측정]</strong> 센서 입력 판별 정확도 100%, 경계 부근 판정 번복 감소율 60% 이상</div></td><td>이상값 50개와 정상값 500개를 모두 올바르게 구분해 판별 정확도는 100%였다. 5개 시드에서 판정 번복이 67.1~74.7% 줄었다.</td><td class="ok">달성</td></tr>
+      <tr><td>QA5</td><td><strong>테스트가능성</strong></td><td>같은 조건의 반복 시험</td><td class="qas-scenario"><div>1인 개발자가 실제 달리기나 워치를 사용하기 어려운 개발 환경에서 자동시험을 실행한다. 가상 입력은 실제 센서와 같은 입력 통로를 사용한다.</div><div class="measure-line"><strong>[응답]</strong> 자동시험은 같은 가상 러너·설정·시드로 같은 입력을 만들고, QA1~QA4의 측정 코드를 실행해 QA별 결과 파일을 저장한다.<br><strong>[측정]</strong> 동일 조건 입력 재현율 100%, QA1~QA4 자동 측정 실행 성공률 100%</div></td><td>서로 다른 시드 5개를 각각 다시 실행했을 때 입력이 모두 같아 재현율은 100%였다. QA1~QA4의 측정 코드가 모두 실행되고 결과 파일이 생성됐다.</td><td class="ok">달성</td></tr>
     </tbody>
   </table></div>
-  <p class="note">‘15개 중 15개’처럼 시험 수와 성공 수를 함께 적었다. 100%라는 비율만으로 시험 범위를 크게 보이게 하지 않는다.</p>
+  <p class="note">시험 사례 수는 지표의 의미를 설명하기 위해 검증 결과에만 적었다. 전체 JVM 단위시험 153개도 실패 없이 통과했다.</p>
   <div class="crumb">과제 소개 <span>요구사항</span> <span>설계</span> <b>구현/검증</b> <span>결론</span></div>
 </section>
 
@@ -1027,10 +1023,10 @@
     <thead><tr><th style="width:9em">항목</th><th>확인한 내용</th><th>이 결과로는 말할 수 없는 내용</th></tr></thead>
     <tbody>
       <tr><td>설명용이성</td><td>대표 판정의 심박·개인 경계를 기록했고, 미리 정한 시험 문장에서 근거에 없는 숫자를 차단했다.</td><td>모든 한국어 문장을 완벽하게 검사하거나 모든 사용자가 설명을 쉽게 이해한다는 뜻은 아니다.</td></tr>
-      <tr><td>기능적응성</td><td>가상 러너에서 개인 경계가 목표 범위에 도달한 뒤 안정적으로 유지됐다.</td><td>실제 사람의 유산소 역치를 0.20~0.77bpm 오차로 찾았다는 뜻은 아니다.</td></tr>
+      <tr><td>기능적응성</td><td>가상 러너에서 개인 경계가 설정한 목표 범위에 도달했고, 세션당 변경 한도를 지켰다.</td><td>실제 사람의 유산소 역치를 오차 3bpm 이내로 찾았다는 뜻은 아니다.</td></tr>
       <tr><td>제어가능성</td><td>미리 정한 위반 문장과 LLM 실패 경로를 규칙이 처리했다.</td><td>세상에 존재하는 모든 잘못된 표현을 막는다는 뜻은 아니다.</td></tr>
       <tr><td>강건성</td><td>정해 둔 이상값과 잡음이 섞인 입력에서 판정 규칙이 목표대로 동작했다.</td><td>실제 손목 센서의 정확도와 모든 실외 환경을 검증했다는 뜻은 아니다.</td></tr>
-      <tr><td>테스트가능성</td><td>같은 시드의 난수 입력을 다시 만들고 네 AI QAS를 워치 없이 실행했다.</td><td>시뮬레이션 결과가 실제 사람과 센서의 정확도를 대신한다는 뜻은 아니다.</td></tr>
+      <tr><td>테스트가능성</td><td>같은 조건의 입력을 다시 만들고, 개발용 자동시험으로 QA1~QA4의 측정 코드와 결과 파일 생성을 확인했다.</td><td>시뮬레이션 결과가 실제 사람과 센서의 정확도를 대신한다는 뜻은 아니다.</td></tr>
     </tbody>
   </table></div>
   <h3 class="num"><span>■</span>공통 검증 기반</h3>
