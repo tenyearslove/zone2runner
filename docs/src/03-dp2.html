@@ -42,7 +42,7 @@
     <thead>
       <tr>
         <th class="rowh" style="background:var(--accent-soft)"></th>
-        <th>(1안) 규칙 판단 + LLM 표현 한정 구조<span class="pick-badge">채택</span></th>
+        <th>(1안) 규칙 판정과 LLM 표현 한정 구조<span class="pick-badge">채택</span></th>
         <th>(2안) LLM 판단 위임 구조</th>
       </tr>
     </thead>
@@ -55,7 +55,7 @@
       <tr>
         <th class="rowh">구조</th>
         <td class="win">
-          <div class="fig-frame"><img data-img="dp2-adopted" alt="1안 — 규칙 확정 + LLM 표현 한정 아키텍처, 제어가능성 관점"></div>
+          <div class="fig-frame"><img data-img="dp2-adopted" alt="1안 — 규칙 판정과 LLM 표현 한정 아키텍처, 제어가능성 관점"></div>
           <p class="note" style="margin-top:8px">규칙이 코칭 방향과 사용할 숫자를 확정하면 LLM은 그 내용을 문장으로 표현한다. 생성된 문장은 형식, 방향, 숫자 검사를 거치며, 검사를 통과하지 못하거나 LLM을 사용할 수 없으면 "속도 줄이기" 같은 짧은 문구로 바꿔 내보낸다. 고심박 경고는 LLM을 거치지 않으며, 모든 LLM 호출 경로와 차단 사유를 기록한다.</p>
         </td>
         <td>
@@ -67,28 +67,28 @@
         <th class="rowh">장점</th>
         <td class="win">
           <p>제어가능성 <span class="stars">★★★★★</span><br><span class="note">문장 차단, 기본 문구 전환, 고심박 시 LLM 우회가 자동으로 작동한다.</span></p>
-          <p>강건성 <span class="stars">★★★★★</span><br><span class="note">LLM이 실패해도 짧은 문구로 코칭이 이어진다</span></p>
+          <p>강건성 <span class="stars">★★★★★</span><br><span class="note">LLM이 실패해도 짧은 문구로 코칭이 이어진다.</span></p>
         </td>
         <td>
-          <p>기능적응성 <span class="stars">★★★★</span><br><span class="note">규칙에 없는 상황에도 문맥을 읽은 코칭을 만들 잠재력</span></p>
-          <p>설명용이성 <span class="stars">★★★</span><br><span class="note">문맥을 풍부하게 표현할 수 있지만 판단 근거와의 연결은 별도 확인이 필요</span></p>
+          <p>기능적응성 <span class="stars">★★★★</span><br><span class="note">규칙에 없는 상황에도 문맥을 반영한 코칭을 만들 가능성이 있다.</span></p>
+          <p>설명용이성 <span class="stars">★★★</span><br><span class="note">문맥을 풍부하게 표현할 수 있지만 판단 근거와의 연결은 별도로 확인해야 한다.</span></p>
         </td>
       </tr>
       <tr>
         <th class="rowh">그 밖의<br>영향</th>
         <td class="win">
-          <p>기능적응성 <span class="stars">★★★</span><br><span class="note">언제 무엇을 코칭할지는 규칙에 묶여, 새 상황은 규칙을 추가해야 한다</span></p>
-          <p>테스트가능성 <span class="stars">★★★★★</span><br><span class="note">검사 조건과 기본 문구 전환을 자동시험으로 반복 확인할 수 있다</span></p>
+          <p>기능적응성 <span class="stars">★★★</span><br><span class="note">언제 무엇을 코칭할지는 규칙에 묶여, 새 상황에는 규칙을 추가해야 한다.</span></p>
+          <p>테스트가능성 <span class="stars">★★★★★</span><br><span class="note">검사 조건과 기본 문구 전환을 자동시험으로 반복 확인할 수 있다.</span></p>
         </td>
         <td>
-          <p>제어가능성 <span class="stars">★★</span><br><span class="note">개입 수단이 프롬프트 수정뿐이고, 고쳐졌는지 확인이 어렵다</span></p>
-          <p>강건성 <span class="stars">★★</span><br><span class="note">LLM이 실패하면 판단을 대신할 것이 없다</span></p>
+          <p>제어가능성 <span class="stars">★★</span><br><span class="note">개입 수단이 프롬프트 수정뿐이고, 고쳐졌는지 확인하기 어렵다.</span></p>
+          <p>강건성 <span class="stars">★★</span><br><span class="note">LLM이 실패하면 판단을 대신할 수단이 없다.</span></p>
         </td>
       </tr>
       <tr>
         <th class="rowh">절충</th>
         <td class="win">어긋난 문장은 걸러지고 실패해도 코칭이 이어진다. 대신 표현할 수 있는 코칭 내용이 제한된다.</td>
-        <td>문맥이 풍부한 코칭이 나올 수 있다. 대신 통제가 프롬프트 준수에 크게 의존하고, 실패에 대비한 별도 판단 경로가 필요하다</td>
+        <td>문맥이 풍부한 코칭이 나올 수 있다. 대신 통제가 프롬프트 준수에 크게 의존하고, 실패에 대비한 별도 판단 경로가 필요하다.</td>
       </tr>
     </tbody>
   </table>
@@ -105,7 +105,7 @@
   </div>
 
   <h3 class="num"><span>1.</span>최종 채택 구조</h3>
-  <p class="lead">1안인 규칙 판단 + LLM 표현 한정 구조를 채택했다.</p>
+  <p class="lead">1안인 규칙 판정과 LLM 표현 한정 구조를 채택했다.</p>
 
   <h3 class="num"><span>2.</span>채택 근거</h3>
   <ul>
@@ -151,7 +151,7 @@
       <tr><td><strong>1. 격리</strong></td><td>판단은 규칙에 맡기고 LLM은 문장만 만들도록 권한을 제한한다.</td><td>예방</td></tr>
       <tr><td><strong>2. 출력 검사</strong></td><td>형식(길이), 방향(판정과 모순이면 차단), 숫자(관측에 없는 숫자면 차단)</td><td>교정</td></tr>
       <tr><td><strong>3. 기본 문구</strong></td><td>검사에 걸리거나 LLM이 실패하면 "속도 줄이기" 같은 짧은 문구로 바꿔 내보낸다</td><td>보완</td></tr>
-      <tr><td><strong>4. 안전 분리</strong></td><td>위험 심박 권고는 LLM을 거치지 않는다</td><td>안전 전환</td></tr>
+      <tr><td><strong>4. 안전 분리</strong></td><td>위험 심박 권고는 LLM을 거치지 않는다.</td><td>안전 전환</td></tr>
       <tr><td><strong>5. 사용자 개입과 기록</strong></td><td>말하기 테스트로 판정 기준을 조정하고, 설정에서 LLM 사용을 켜고 끄며, 모든 호출 경로와 차단 사유를 세션에 기록한다.</td><td>교정, 보완, 사후 확인</td></tr>
     </tbody>
   </table>
@@ -161,7 +161,7 @@
   <div class="tbl">
   <table class="decide">
     <thead>
-      <tr><th>품질 속성</th><th>(1안) 규칙 확정 + LLM 표현 한정</th><th>(2안) LLM 판단 위임</th></tr>
+      <tr><th>품질 속성</th><th>(1안) 규칙 판정과 LLM 표현 한정</th><th>(2안) LLM 판단 위임</th></tr>
     </thead>
     <tbody>
       <tr><td>제어가능성</td><td style="text-align:center"><span class="stars">★★★★★</span></td><td style="text-align:center"><span class="stars">★★</span></td></tr>

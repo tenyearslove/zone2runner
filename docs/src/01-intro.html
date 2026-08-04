@@ -111,9 +111,9 @@
     <thead><tr><th style="width:3.2em">ID</th><th style="width:8em">품질 속성</th><th style="width:14em">선정 이유</th><th>상황과 성공 기준</th><th style="width:4em">역할</th></tr></thead>
     <tbody>
       <tr><td>QA1</td><td><strong>설명용이성</strong><br><span class="note">AI 품질</span></td><td>판단과 개인화에 사용한 근거를 확인할 수 있어야 한다.</td><td>대표 판정 근거 기록률 <span class="meas">100%(3/3)</span>, 미등록 숫자 차단율 <span class="meas">100%(5/5)</span></td><td>ASR</td></tr>
-      <tr><td>QA2</td><td><strong>기능적응성</strong><br><span class="note">AI 품질</span></td><td>사용자 응답으로 개인 경계를 조정해야 한다.</td><td>15개 사례의 목표 오차 도달률 <span class="meas">100%(15/15)</span>, 기준 사례의 안정성과 이동 한도 충족</td><td>ASR</td></tr>
+      <tr><td>QA2</td><td><strong>기능적응성</strong><br><span class="note">AI 품질</span></td><td>사용자 응답으로 개인 경계를 조정해야 한다.</td><td>15개 가상 사례에서 목표 경계와의 오차 3bpm 이내 도달률 <span class="meas">100%(15/15)</span>, 마지막 4세션 경계 범위 4bpm 이하, 세션 최대 이동 10bpm 이하</td><td>ASR</td></tr>
       <tr><td>QA3</td><td><strong>제어가능성</strong><br><span class="note">AI 품질</span></td><td>LLM이 판단 권한을 가져서는 안 된다.</td><td>의도적으로 만든 위반 문장 탐지율 <span class="meas">100%(10/10)</span>, 정상 통과율 <span class="meas">100%(5/5)</span></td><td>ASR</td></tr>
-      <tr><td>QA4</td><td><strong>강건성</strong><br><span class="note">AI 품질</span></td><td>센서값이 흔들려도 판정이 안정적이어야 한다.</td><td>이상치 차단율 <span class="meas">100%(50/50)</span>, 정상 오차단율 <span class="meas">0%(0/500)</span>, 5개 시드 모두 번복 감소 기준 충족 <span class="meas">100%(5/5)</span></td><td>지원 품질</td></tr>
+      <tr><td>QA4</td><td><strong>강건성</strong><br><span class="note">AI 품질</span></td><td>센서값이 흔들려도 판정이 안정적이어야 한다.</td><td>이상치 차단율 <span class="meas">100%(50/50)</span>, 정상 오차단율 <span class="meas">0%(0/500)</span>, 5개 시드 모두 판정 번복 60% 이상 감소 <span class="meas">100%(5/5)</span></td><td>지원 품질</td></tr>
       <tr><td>QA5</td><td><strong>테스트가능성</strong><br><span class="note">일반 품질</span></td><td>실제 달리기 없이 같은 조건을 반복해야 한다.</td><td>QA1~QA4 자동 검증 경로 4개 모두 제공 <span class="meas">(4/4)</span>, 동일 시드 재현율 <span class="meas">100%(5/5)</span></td><td>ASR</td></tr>
     </tbody>
   </table></div>
@@ -128,7 +128,7 @@
       <tr><td>QA5 테스트가능성</td><td>DP5: 입력 교체와 시드 기반 가상 러너</td><td>검증 표 QA5</td></tr>
     </tbody>
   </table></div>
-  <p class="note">ASR(Architecture Significant Requirement)은 아키텍처에 큰 영향을 주는 핵심 요구사항을 뜻한다. QA1~QA3과 QA5를 ASR로 선정했고, QA4는 핵심 요구가 안정적으로 동작하도록 돕는 지원 품질로 두었다. 수행효율성은 실기기 측정이 필요한 보조 제약으로 관리한다.</p>
+  <p class="note">ASR(Architecture Significant Requirement)은 아키텍처에 큰 영향을 주는 핵심 요구사항을 뜻한다. QA1~QA3과 QA5를 ASR로 선정했고, QA4는 핵심 요구가 안정적으로 동작하도록 돕는 지원 품질로 두었다. 수행효율성은 실제 기기에서 측정해야 하는 보조 제약으로 관리한다.</p>
   <div class="crumb">과제 소개 <b>요구사항</b> <span>설계</span> <span>구현/검증</span> <span>결론</span></div>
 </section>
 
