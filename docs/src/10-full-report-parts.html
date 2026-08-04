@@ -146,7 +146,7 @@
       <tr><td>QA5</td><td>—</td><td><strong>테스트가능성</strong></td><td>실제 달리기나 워치 없이도 같은 조건으로 핵심 로직을 반복 검증한다.</td><td class="qas-scenario"><div>1인 개발자가 실제 달리기나 워치를 사용하기 어려운 개발 환경에서 자동시험을 실행한다. 가상 입력은 실제 센서와 같은 입력 통로를 사용한다.</div><div class="measure-line"><strong>[응답]</strong> 자동시험은 같은 가상 러너·설정·시드로 같은 입력을 만들고, QA1~QA4의 측정 코드를 실행해 QA별 결과 파일을 저장한다.<br><strong>[측정]</strong> 동일 조건 입력 재현율 100%, QA1~QA4 자동 측정 결과 생성 성공</div></td><td>8</td><td>6</td></tr>
     </tbody>
   </table></div>
-  <p class="note">●는 AI 기능의 품질을 직접 다루는 항목이다. QA1~QA4는 AI QA이고, QA5는 반복 검증을 위한 일반 품질속성이다. QAS에는 대표 지표만 적고 실제 측정값은 검증 결과에서 설명한다.</p>
+  <p class="note">●는 AI 기능의 품질을 직접 다루는 항목이다. QA1~QA4는 AI QA이고, QA5는 반복 검증을 위한 일반 품질속성이다. 중요도와 난이도는 10점 기준이다. QA 번호와 DP 번호는 용도가 다르며, 핵심 연결은 QA2→DP1, QA1→DP2, QA3→DP3이다.</p>
   <div class="crumb">과제 소개 <b>요구사항</b> <span>설계</span> <span>구현/검증</span> <span>결론</span></div>
 </section>
 
@@ -348,7 +348,7 @@
 </div>
 
 <section class="slide">
-  <div class="slide-head"><h2>DP2. ML 대안을 검토하고 운영 구조를 선택한 과정</h2><span class="sec-no">3</span></div>
+  <div class="slide-head"><h2>DP2. ML 대안을 검토하고 최종 구조를 선택한 과정</h2><span class="sec-no">3</span></div>
   <h3 class="num"><span>1.</span>초기에는 ML의 적용 가능성을 검토했다</h3>
   <ul>
     <li>가상 러너로 학습 데이터를 만들어 <strong>Zone 판정, 개인 경계 추정, 30~60초 뒤 심박 예측</strong>에 작은 신경망을 적용했다.</li>
@@ -828,7 +828,7 @@
     </tbody>
   </table></div>
   <h3 class="num"><span>3.</span>향후 확인 항목</h3>
-  <p>실제 제품으로 발전시킨다면 사용자가 설명을 얼마나 쉽게 이해하는지와 실제 달리기에서 개인화가 잘 작동하는지를 확인해야 한다. 손목 움직임이 있는 센서 환경과 워치 입력부터 음성 출력까지 걸리는 시간도 측정해야 한다. 이 항목들은 이번 과제 제출의 필수 검증 범위에는 포함하지 않는다.</p>
+  <p>추가 검증을 진행한다면 사용자가 설명을 얼마나 쉽게 이해하는지와 실제 달리기에서 개인화가 잘 작동하는지를 확인해야 한다. 손목 움직임이 있는 센서 환경과 워치 입력부터 음성 출력까지 걸리는 시간도 측정할 수 있다. 이 항목들은 이번 과제에서는 확인하지 않았다.</p>
   <p class="lead">이 과제의 핵심은 새로운 AI 모델을 만드는 것이 아니라, 필요한 AI 품질을 정하고 설계·구현·검증을 하나의 흐름으로 연결한 것이다.</p>
   <div class="crumb">과제 소개 <span>요구사항</span> <span>설계</span> <span>구현/검증</span> <b>결론</b></div>
 </section>
