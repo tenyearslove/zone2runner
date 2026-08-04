@@ -180,7 +180,7 @@
 
 <div class="deck-head">
   <h1>DP5. 테스트가능성 — 같은 조건을 반복 검증하는 설계</h1>
-  <p>인증과제 샘플(씬스틸러) DP 형식 3장 + Appendix 1장 — 2026-08-03 v2(리뷰 반영: 개별화 채택안+상세 도식) — 정본: <code>arch/dp/dp-05-testability/-decision.md</code>, 원고: <code>report/report-012</code></p>
+  <p>실제 달리기를 반복하지 않고도 같은 조건을 시험하는 방법을 비교한다.</p>
 </div>
 
 <!-- ======================= 슬라이드 1 ======================= -->
@@ -202,7 +202,7 @@
     <li><strong>자극을 재현할 수 없다.</strong> 같은 심박 곡선을 두 번 만들 수 없으니 수정 전후를 같은 조건에서 비교할 수 없다.</li>
     <li><strong>위험한 시나리오를 만들 수 없다.</strong> 위험 심박, 신호 두절 같은 중요한 상황은 실주행으로 만들기 어렵거나 위험하다.</li>
     <li><strong>변경마다 실주행이면 검증이 생략된다.</strong> 변경 하나의 검증 비용이 러닝 한 번이면 자동화가 불가능하다.</li>
-    <li><strong>시뮬에는 함정이 있다.</strong> 시뮬을 만든 가정으로 시뮬을 채점하면 "정확하다"는 결론이 정의상 나온다. 시뮬의 역할 한계를 정직하게 그어야 한다.</li>
+    <li><strong>시뮬레이션에는 한계가 있다.</strong> 데이터를 만든 규칙으로 같은 데이터를 채점하면 좋은 결과가 당연히 나오기 쉽다. 따라서 시뮬레이션으로 확인할 수 있는 범위를 분명히 해야 한다.</li>
   </ul>
 
   <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
@@ -227,14 +227,14 @@
     <tbody>
       <tr>
         <th class="rowh">한 줄<br>소개</th>
-        <td class="win">입력 자리를 인터페이스로 만들어 실센서와 시뮬을 갈아끼우는 구조</td>
+        <td class="win">입력 부분을 공통 인터페이스로 분리해 실제 센서와 가상 입력을 바꿔 끼우는 구조</td>
         <td>센서를 직결하고 검증은 실기기 실주행으로 하는 구조</td>
       </tr>
       <tr>
         <th class="rowh">구조</th>
         <td class="win">
           <div class="fig-frame"><img src="img/dp-05-testability-adopted-simple.png?v=8c051fe8" data-img="dp5-adopted" alt="1안 — 입력 교체와 반복 시뮬레이션 구조"></div>
-          <p class="note" style="margin-top:8px">실제 센서, 가상 러너, 수동 입력이 같은 인터페이스를 사용한다. 뒤의 판정·개인화·분석 로직은 입력 출처와 분리된다. 경계를 정해 둔 가상 러너의 결과를 다음 세션 입력에 다시 반영해 개인화 수렴을 빠르게 확인하고, 기기와 분리한 로직은 JVM 단위시험으로 반복 검사한다. QA1~QA4 검증 경로 4개를 모두 워치 없이 실행하고, 같은 seed 5종의 입력이 정확히 재현되는지 확인한다</p>
+          <p class="note" style="margin-top:8px">실제 센서, 가상 러너, 수동 입력이 같은 인터페이스를 사용한다. 뒤의 판정·개인화·분석 로직은 입력 출처와 분리된다. 경계를 정해 둔 가상 러너의 결과를 다음 세션 입력에 다시 반영해 개인화 수렴을 빠르게 확인하고, 기기와 분리한 로직은 JVM 단위시험으로 반복 검사한다. QA1~QA4 검증 경로 4개를 모두 워치 없이 실행하고, 같은 시드 5종의 입력이 정확히 재현되는지 확인한다</p>
         </td>
         <td>
           <div class="fig-frame"><img src="img/dp-05-testability-counter-simple.png?v=6f3c324e" data-img="dp5-counter" alt="2안 — 실기기 결합 검증 아키텍처 다이어그램"></div>
@@ -245,26 +245,26 @@
         <th class="rowh">장점</th>
         <td class="win">
           <p>테스트가능성 <span class="stars">★★★★★</span><br><span class="note">같은 자극 반복 주입 + 자동 회귀 + 분 단위 수렴 검증</span></p>
-          <p>강건성 <span class="stars">★★★★</span><br><span class="note">위험/엣지 시나리오를 안전하게 주입해 방어 로직 검증</span></p>
+          <p>강건성 <span class="stars">★★★★</span><br><span class="note">위험/극단·예외 상황를 안전하게 주입해 방어 로직 검증</span></p>
         </td>
         <td>
           <p>강건성 <span class="stars">★★★</span><br><span class="note">실제 센서 조건을 볼 수 있지만 위험하고 드문 상황은 반복하기 어렵다</span></p>
         </td>
       </tr>
       <tr>
-        <th class="rowh">단점</th>
+        <th class="rowh">그 밖의<br>영향</th>
         <td class="win">
           <p>강건성 <span class="stars">★★★★</span><br><span class="note">시뮬레이션 통과가 실제 사람과 센서의 정확도를 증명하지는 않는다</span></p>
           <p>테스트가능성 <span class="stars">★★★★</span><br><span class="note">가상 러너와 시험 시나리오를 함께 관리해야 한다</span></p>
         </td>
         <td>
           <p>테스트가능성 <span class="stars">★★</span><br><span class="note">재현도 자동화도 안 됨 — 변경 하나 검증이 러닝 한 번</span></p>
-          <p>강건성 <span class="stars">★★</span><br><span class="note">위험/엣지 시나리오를 검증 못 한 채 남는다</span></p>
+          <p>강건성 <span class="stars">★★</span><br><span class="note">위험/극단·예외 상황를 검증 못 한 채 남는다</span></p>
         </td>
       </tr>
       <tr>
-        <th class="rowh">Trade<br>Off</th>
-        <td class="win">재현, 자동화, 안전한 엣지 검증을 얻는다. 대신 시뮬의 결론을 "구조 검증"으로 정직하게 한정해야 하고, 실기기 확인이 사라지지는 않는다</td>
+        <th class="rowh">절충</th>
+        <td class="win">재현, 자동화, 안전한 예외 상황 검증을 얻는다. 대신 시뮬의 결론을 "구조 검증"으로 정직하게 한정해야 하고, 실기기 확인이 사라지지는 않는다</td>
         <td>실제 기기에서 확인한다는 장점이 있다. 대신 같은 조건의 재현과 자동화가 어렵고, 위험하거나 드문 상황은 충분히 확인하기 어렵다</td>
       </tr>
     </tbody>
@@ -277,12 +277,12 @@
 <!-- ======================= 슬라이드 3 ======================= -->
 <section class="slide">
   <div class="slide-head">
-    <h2>DP5. 설계결정 및 근거</h2>
+    <h2>DP5. 설계 결정과 근거</h2>
     <span class="sec-no">3</span>
   </div>
 
   <h3 class="num"><span>1.</span>최종 채택 구조</h3>
-  <p class="lead">후보 1: 입력 교체 + 반복 시뮬레이션 구조 채택</p>
+  <p class="lead">1안: 입력 교체 + 반복 시뮬레이션 구조 채택</p>
 
   <h3 class="num"><span>2.</span>채택 근거</h3>
   <ul>
@@ -295,7 +295,7 @@
 
   <h3 class="num"><span>3.</span>보완 계획</h3>
   <ul>
-    <li><strong>이번 과제에서 확인</strong>: QA1~QA4 자동 검증 경로 4개를 모두 워치 없이 실행했다(4/4). 같은 seed로 다시 만든 입력은 5개 seed 모두 일치했고(100%, 5/5), 서로 다른 seed에서는 다른 심박 시퀀스가 생성됐다. 전체 JVM 단위시험은 153/153 통과했다.</li>
+    <li><strong>이번 과제에서 확인</strong>: QA1~QA4 자동 검증 경로 4개를 모두 워치 없이 실행했다(4/4). 같은 시드로 다시 만든 입력은 5개 시드 모두 일치했고(100%, 5/5), 서로 다른 시드에서는 다른 심박 시퀀스가 생성됐다. 전체 JVM 단위시험은 153/153 통과했다.</li>
     <li><strong>향후 확인</strong>: 실제 기기 연결, 실제 센서 성능, 사람에 대한 정확도는 자동시험이 답하지 못한다. 제품화를 검토할 때 별도의 기기·사용자 평가로 확인한다.</li>
   </ul>
 
@@ -312,7 +312,7 @@
   <h3 class="num"><span>A1.</span>이 설계 결정이 다루는 품질 문제</h3>
   <ul>
     <li>같은 자극을 두 번 줄 수 없다 → 테스트가능성(재현 주입)</li>
-    <li>위험/엣지 시나리오를 실주행으로 못 만든다 → 테스트가능성, 강건성</li>
+    <li>위험/극단·예외 상황를 실주행으로 못 만든다 → 테스트가능성, 강건성</li>
     <li>변경마다 실주행 검증은 비용이 감당 불가 → 테스트가능성(자동 회귀)</li>
     <li>정답지가 없어 "정확하다" 채점 불가 → 시뮬 역할을 구조 검증으로 한정</li>
     <li>개인화 수렴에 여러 세션이 필요하다 → 결과를 다음 입력에 반영하는 반복 시뮬레이션</li>
@@ -328,7 +328,7 @@
       <tr><th style="width:11em">요소</th><th>하는 일</th></tr>
     </thead>
     <tbody>
-      <tr><td><strong>1. 소스 추상화</strong></td><td>실센서/가상 러너/수동 시뮬이 같은 인터페이스로 꽂힌다 — 검증과 운영이 같은 코드 경로</td></tr>
+      <tr><td><strong>1. 소스 추상화</strong></td><td>실제 센서/가상 러너/수동 입력이 같은 인터페이스로 꽂힌다 — 검증과 운영이 같은 코드 경로</td></tr>
       <tr><td><strong>2. 반복 가상 러너</strong></td><td>경계를 정해 둔 가상 러너의 결과를 다음 세션 입력에 반영해 수렴 과정을 자동 실행</td></tr>
       <tr><td><strong>3. 순수 로직 분리</strong></td><td>판정 로직을 기기와 분리해 JVM 단위시험으로 자동 회귀 확인</td></tr>
       <tr><td><strong>4. 시뮬레이션 계측</strong></td><td>QA별로 정한 입력을 넣고 결과를 같은 지표로 기록</td></tr>

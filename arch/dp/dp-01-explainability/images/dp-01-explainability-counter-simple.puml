@@ -1,5 +1,5 @@
 @startuml
-title 사전학습 블랙박스 아키텍처
+title (2안) 합성·공개 데이터 기반 ML + 사후 설명
 skinparam defaultFontName "AppleGothic"
 skinparam componentStyle rectangle
 skinparam shadowing false
@@ -7,44 +7,41 @@ skinparam packageStyle rectangle
 skinparam linetype ortho
 
 actor "사용자" as User
-component "센서\nHR / GPS / 케이던스" as Sensors #FFF9C4
+component "센서\n심박 / GPS / 케이던스" as Sensors #FFF9C4
 
-package "AI Operation Subsystem" {
-  package "추론 서비스 (Inference)" as INF {
-    component "이상값 필터" <<입력 가드레일>> as IG #FFE0B2
-    component "블랙박스 결정 모델\n학습된 NN/부스팅 (+개인 어댑터)\n판정/코칭 직접 출력" <<모델 서빙: 블랙박스>> as MODEL #90A4AE
-    component "사후 값 제한\n(결과 범위만 자름)" <<출력 가드레일>> as OG #FFE0B2
-    IG --> MODEL
-    MODEL --> OG
-  }
-  component "사후 설명 서비스\nLLM이 결정 뒤 이유 생성\n(원결정의 근사)" as POST #C8E6C9
-  component "운영 서비스\nOperation UI + HITL/HOTL\n(결정 근거 불투명 → 수정 어려움)" as OPS #E1BEE7
+package "학습 단계" {
+  database "합성·공개 데이터\n개인별 측정 정답 부족" as DATA #CFD8DC
+  component "ML 학습\nZone 판정 / 경계 추정\n심박 예측" as TRAIN #FFCCBC
+  component "학습 모델" as MODEL #90A4AE
+  DATA --> TRAIN
+  TRAIN --> MODEL
 }
 
-package "AI Development (오프라인 대량 학습)" as DEV {
-  database "Data Lake\n공개데이터 + 수집" as DL #CFD8DC
-  component "오프라인 대량 학습\n+ 검증 + 배포" <<모델 학습>> as TRAIN #FFCCBC
-  component "Model Registry\n학습된 모델 아티팩트" as REG #CFD8DC
-  DL --> TRAIN
-  TRAIN --> REG
+package "실행 단계" {
+  component "입력 검사" as INPUT #FFE0B2
+  component "ML 판정·예측\n내부 계산은 직접 확인하기 어려움" as INFER #90A4AE
+  component "사후 설명\n결정 뒤에 이유를 해석" as POST #C8E6C9
+  component "코칭 화면" as UI #E1BEE7
+  INPUT --> INFER
+  INFER --> UI : 판정 / 예측
+  INFER ..> POST : 입력 + 결과
+  POST --> UI : 추정한 설명
 }
 
-Sensors --> IG
-OG --> OPS
-MODEL ..> POST : 결정 + 입력
-POST --> OPS
-User ..> OPS
-REG ..> MODEL : 배포
-OPS ..> MODEL : 미세조정 신호(약)
+Sensors --> INPUT
+MODEL ..> INFER : 배포
+User ..> UI
+UI ..> INFER : 말하기 테스트 응답
 
-legend right
-|= 색 |= 컴포넌트 성격 |
-|<#FFE0B2>| 가드레일 (입출력 통제) |
-|<#90A4AE>| 모델 서빙 (블랙박스) |
-|<#C8E6C9>| 사후 설명 서비스 |
-|<#E1BEE7>| 운영 서비스 (HITL/HOTL) |
-|<#CFD8DC>| 저장 (Data Lake / Registry) |
-|<#FFCCBC>| 오프라인 학습 (개발) |
-|<#FFF9C4>| 외부 (센서) |
-endlegend
+note right of DATA
+  가상 러너의 정답을 잘 맞혀도
+  실제 사람에게 맞는지는
+  별도 데이터로 검증해야 함
+end note
+
+note right of INFER
+  말하기 테스트로 조정한 경계와
+  ML 판정이 서로 다른 기준이
+  될 수 있음
+end note
 @enduml

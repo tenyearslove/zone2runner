@@ -53,7 +53,7 @@
   <ul>
     <li><strong>유지하기 어려운 운동 강도</strong>: 초보 러너는 Zone 2로 달리려 해도 자신도 모르게 속도와 심박을 올리기 쉽다.</li>
     <li><strong>사람마다 다른 심박 경계</strong>: 나이와 평균 비율만으로는 개인차를 충분히 반영하기 어렵다. 같은 숫자가 모든 사람에게 같은 운동 강도를 뜻하지 않는다.</li>
-    <li><strong>기기 안에서 실행하는 AI</strong>: 워치 센서와 온디바이스 LLM을 이용하면 자체 서버 없이도 개인화와 자연어 코칭을 제공할 수 있다.</li>
+    <li><strong>기기 안에서 실행하는 AI</strong>: 워치 센서와 기기 안에서 실행되는 AI를 이용하면 자체 서버 없이도 개인화와 자연어 코칭을 제공할 수 있다.</li>
   </ul>
   <h3 class="num"><span>■</span>왜 설계가 중요한가</h3>
   <ul>
@@ -71,7 +71,7 @@
       <tr><th class="rowh">과제명</th><td><strong>Zone2Runner</strong> — 개인화 Zone 2 러닝 코칭 앱</td></tr>
       <tr><th class="rowh">목표</th><td>워치에서 받은 심박을 개인 경계와 비교해 운동 강도를 알려 주고, 사용자 응답으로 그 경계를 조정한다. 코칭과 리포트에는 판단 근거를 함께 제공한다.</td></tr>
       <tr><th class="rowh">구성</th><td>시스템은 폰 앱과 워치 앱으로 구성된다. 폰은 판정·분석·개인화·코칭을 맡고, 워치는 심박을 측정해 결과를 보여 준다. 별도의 자체 서버는 운영하지 않는다.</td></tr>
-      <tr><th class="rowh">AI 적용</th><td>판정은 규칙, 개인화는 온라인 Bayesian 갱신, 분석은 관측 통계, 문장 표현은 온디바이스 LLM이 맡는다.</td></tr>
+      <tr><th class="rowh">AI 적용</th><td>판정은 규칙, 개인화는 온라인 베이지안 갱신, 분석은 관측 통계, 문장 표현은 온디바이스 LLM이 맡는다.</td></tr>
       <tr><th class="rowh">데이터 경계</th><td>심박·개인화 값·세션 분석은 자체 서버나 외부 AI API로 보내지 않는다. 날씨 조회와 지도 표시는 외부 서비스를 사용한다.</td></tr>
       <tr><th class="rowh">검증 방법</th><td>시드로 재현 가능한 난수 기반 가상 러너와 자동시험을 사용한다. 사람·지형·센서 잡음을 바꾸면서도 같은 시드의 입력은 다시 만들 수 있다. 확인 범위는 설계와 로직의 동작이며, 사람의 생리 정확도는 주장하지 않는다.</td></tr>
     </tbody>
@@ -110,11 +110,11 @@
   <div class="tbl"><table class="decide">
     <thead><tr><th style="width:3.2em">ID</th><th style="width:8em">품질 속성</th><th style="width:14em">선정 이유</th><th>상황과 성공 기준</th><th style="width:4em">역할</th></tr></thead>
     <tbody>
-      <tr><td>QA1</td><td><strong>설명용이성</strong><br><span class="note">AI 품질</span></td><td>판단에 사용한 사실을 확인할 수 있어야 한다.</td><td>미등록 숫자 차단율 <span class="meas">100%(5/5)</span>, 사실 문장 통과율 <span class="meas">100%(3/3)</span></td><td>핵심 ASR</td></tr>
-      <tr><td>QA2</td><td><strong>기능적응성</strong><br><span class="note">AI 품질</span></td><td>사용자 응답으로 개인 경계를 조정해야 한다.</td><td>15개 사례의 목표 오차 도달률 <span class="meas">100%(15/15)</span>; 기준 사례의 안정성과 이동 한도 충족</td><td>핵심 ASR</td></tr>
-      <tr><td>QA3</td><td><strong>제어가능성</strong><br><span class="note">AI 품질</span></td><td>LLM이 판단 권한을 가져서는 안 된다.</td><td>의도적으로 만든 위반 문장 탐지율 <span class="meas">100%(10/10)</span>, 정상 통과율 <span class="meas">100%(5/5)</span></td><td>핵심 ASR</td></tr>
+      <tr><td>QA1</td><td><strong>설명용이성</strong><br><span class="note">AI 품질</span></td><td>판단과 개인화에 사용한 근거를 확인할 수 있어야 한다.</td><td>대표 판정 근거 기록률 <span class="meas">100%(3/3)</span>, 미등록 숫자 차단율 <span class="meas">100%(5/5)</span></td><td>ASR</td></tr>
+      <tr><td>QA2</td><td><strong>기능적응성</strong><br><span class="note">AI 품질</span></td><td>사용자 응답으로 개인 경계를 조정해야 한다.</td><td>15개 사례의 목표 오차 도달률 <span class="meas">100%(15/15)</span>; 기준 사례의 안정성과 이동 한도 충족</td><td>ASR</td></tr>
+      <tr><td>QA3</td><td><strong>제어가능성</strong><br><span class="note">AI 품질</span></td><td>LLM이 판단 권한을 가져서는 안 된다.</td><td>의도적으로 만든 위반 문장 탐지율 <span class="meas">100%(10/10)</span>, 정상 통과율 <span class="meas">100%(5/5)</span></td><td>ASR</td></tr>
       <tr><td>QA4</td><td><strong>강건성</strong><br><span class="note">AI 품질</span></td><td>센서값이 흔들려도 판정이 안정적이어야 한다.</td><td>이상치 차단율 <span class="meas">100%(50/50)</span>, 정상 오차단율 <span class="meas">0%(0/500)</span>, 번복 감소 기준 <span class="meas">100%(5/5 시드)</span></td><td>지원 QA</td></tr>
-      <tr><td>QA5</td><td><strong>테스트가능성</strong><br><span class="note">일반 품질</span></td><td>실제 달리기 없이 같은 조건을 반복해야 한다.</td><td>QA1~QA4 자동 경로 <span class="meas">100%(4/4) 제공</span>, 동일 시드 재현율 <span class="meas">100%(5/5)</span></td><td>핵심 ASR</td></tr>
+      <tr><td>QA5</td><td><strong>테스트가능성</strong><br><span class="note">일반 품질</span></td><td>실제 달리기 없이 같은 조건을 반복해야 한다.</td><td>QA1~QA4 자동 경로 <span class="meas">100%(4/4) 제공</span>, 동일 시드 재현율 <span class="meas">100%(5/5)</span></td><td>ASR</td></tr>
     </tbody>
   </table></div>
   <h3 class="num"><span>■</span>QAS가 설계와 검증으로 이어지는 과정</h3>
@@ -125,7 +125,7 @@
       <tr><td>QA2 기능적응성</td><td>DP3: 제한된 온라인 개인화</td><td>검증 표 QA2</td></tr>
       <tr><td>QA3 제어가능성</td><td>DP2: 출력 가드와 기본 문구</td><td>검증 표 QA3</td></tr>
       <tr><td>QA4 강건성</td><td>DP4: 입력 가드와 히스테리시스(경계에 약간의 여유를 두어 판정이 자주 바뀌지 않게 하는 규칙)</td><td>검증 표 QA4</td></tr>
-      <tr><td>QA5 테스트가능성</td><td>DP5: 입력 교체와 seed 기반 가상 러너</td><td>검증 표 QA5</td></tr>
+      <tr><td>QA5 테스트가능성</td><td>DP5: 입력 교체와 시드 기반 가상 러너</td><td>검증 표 QA5</td></tr>
     </tbody>
   </table></div>
   <p class="note">ASR(Architecture Significant Requirement)은 아키텍처에 큰 영향을 주는 핵심 요구사항을 뜻한다. QA1~QA3과 QA5를 ASR로 선정했고, QA4는 이를 지지하는 품질로 두었다. 수행효율성은 실기기 측정이 필요한 보조 제약으로 관리한다.</p>
@@ -135,189 +135,96 @@
 </div>
 
 <div class="deck" id="part-dp1">
-
 <div class="deck-head">
-  <h1>DP1. 설명용이성 — 판단 근거를 그대로 설명하는 구조</h1>
-  <p>설명이 실제 판단과 일치하도록 만드는 두 가지 설계안을 비교하고 선택한다.</p>
+  <h1>DP1. 설명용이성 — 검증할 수 있는 판단과 설명</h1>
+  <p>ML을 직접 적용했던 과정에서 무엇을 확인했고, 왜 현재 구조로 바꾸었는지 설명한다.</p>
 </div>
 
-<!-- ======================= 슬라이드 1 ======================= -->
 <section class="slide">
-  <div class="slide-head">
-    <h2>DP1. 설계 문제 정의</h2>
-    <span class="sec-no">3</span>
-  </div>
-
-  <h3 class="num"><span>1.</span>배경</h3>
+  <div class="slide-head"><h2>DP1. ML 시도에서 발견한 설계 문제</h2><span class="sec-no">3</span></div>
+  <h3 class="num"><span>1.</span>처음에는 ML로 판단과 예측을 시도했다</h3>
   <ul>
-    <li>이 앱은 심박을 보며 달리기를 실시간으로 코칭한다 — "지금 존을 벗어났어요", "속도를 조금 낮춰볼까요".</li>
-    <li>핵심 품질은 <strong>설명용이성</strong>이다. 사용자는 앱이 어떤 심박과 경계를 사용해 판정했는지 확인할 수 있어야 한다.</li>
-    <li>문장이 자연스러운 것보다 먼저 지켜야 할 조건이 있다. <strong>설명에 나온 사실이 실제 판단에 사용한 사실과 같아야 한다.</strong></li>
+    <li>가상 러너로 학습 데이터를 만들어 <strong>Zone 판정, 개인 경계 추정, 30~60초 뒤 심박 예측</strong>에 작은 신경망을 적용했다.</li>
+    <li>시뮬레이션에서는 좋은 점수가 나왔지만, 실제 기기 시험에서 심박이 상한보다 42bpm 높은데도 ‘아래’로 판정한 사례가 나왔다.</li>
+    <li>원인을 살펴보니 모델은 실제 사람의 생리를 배운 것이 아니라, 가상 러너가 정한 규칙과 데이터 생성 공식을 다시 배운 것이었다.</li>
   </ul>
-
-  <h3 class="num"><span>2.</span>문제점</h3>
+  <h3 class="num"><span>2.</span>핵심 문제는 설명 이전에 ‘검증할 정답이 없다’는 점이었다</h3>
   <ul>
-    <li><strong>생리적인 정답을 알기 어렵다.</strong> 실제 Zone 2 경계가 맞는지는 실험실 장비 없이 확인하기 어렵다. 대신 설명이 앱 내부의 판단 과정과 일치하는지는 확인할 수 있다.</li>
-    <li><strong>판단과 설명을 같은 사실에서 만들어야 한다.</strong> 설명을 나중에 추측해서 붙이면 실제 판단과 다른 이유가 나올 수 있다.</li>
-    <li><strong>판단 기준이 계속 바뀐다.</strong> 개인 경계는 러닝마다 갱신되고, 설명은 늘 그 최신 값을 보여줘야 한다.</li>
-    <li><strong>생성된 설명은 확인이 필요하다.</strong> LLM은 이미 정해진 사실을 자연스럽게 표현하는 역할만 맡고, 문장에 나온 숫자와 방향은 규칙이 다시 확인한다.</li>
+    <li><strong>학습할 실제 데이터가 부족했다.</strong> 개인별 Zone 2 경계와 미래 심박을 함께 기록한 데이터가 없었다.</li>
+    <li><strong>정답을 확인하기 어려웠다.</strong> 실험실 장비로 측정한 유산소 역치가 없어 ML의 출력이 맞는지 검증할 수 없었다.</li>
+    <li><strong>판정 기준이 둘로 갈렸다.</strong> 말하기 테스트로 조정한 개인 경계와 ML 판정이 서로 다른 답을 낼 수 있었다.</li>
+    <li>따라서 이번 과제에서는 정확하다고 입증할 수 없는 ML 판정보다, <strong>판단 근거를 기록하고 반복 시험할 수 있는 구조</strong>가 필요했다.</li>
   </ul>
-
   <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
 </section>
 
-<!-- ======================= 슬라이드 2 ======================= -->
 <section class="slide">
-  <div class="slide-head">
-    <h2>DP1. 설계안 결정</h2>
-    <span class="sec-no">3</span>
-  </div>
-
-  <div class="tbl">
-  <table class="decide">
-    <thead>
-      <tr>
-        <th class="rowh" style="background:var(--accent-soft)"></th>
-        <th>(1안) 규칙/통계 기반 개인화 아키텍처<span class="pick-badge">채택</span></th>
-        <th>(2안) 사전학습 블랙박스 아키텍처</th>
-      </tr>
-    </thead>
+  <div class="slide-head"><h2>DP1. 두 설계안의 비교</h2><span class="sec-no">3</span></div>
+  <div class="tbl"><table class="decide">
+    <thead><tr><th class="rowh" style="background:var(--accent-soft)"></th><th>(1안) 투명한 규칙·관측 통계 + 사용자 응답<span class="pick-badge">채택</span></th><th>(2안) 합성·공개 데이터 기반 ML + 사후 설명</th></tr></thead>
     <tbody>
-      <tr>
-        <th class="rowh">한 줄<br>소개</th>
-        <td class="win">판단에 사용한 숫자와 규칙으로 설명을 함께 만드는 구조</td>
-        <td>학습 모델이 판정하고, 별도 도구가 나중에 판단 이유를 추정하는 구조</td>
+      <tr><th class="rowh">한 줄<br>소개</th><td class="win">판단에 쓴 값과 규칙을 기록하고, 사용자의 말하기 테스트 응답으로 개인 경계를 조정한다.</td><td>ML이 판정하거나 값을 예측하고, 결정이 끝난 뒤 별도 방법으로 이유를 설명한다.</td></tr>
+      <tr><th class="rowh">구조</th>
+        <td class="win"><div class="fig-frame"><img data-img="dp1-adopted" alt="투명한 규칙과 관측 통계, 사용자 응답을 이용하는 구조" width="1400"></div><p class="struct-note">현재 심박과 개인 경계를 직접 비교해 판정한다. 관측한 통계와 말하기 테스트 응답만 개인화에 사용한다. LLM은 이미 정해진 사실을 자연스러운 문장으로 바꾸며, 출력 전에는 숫자와 방향을 다시 확인한다.</p></td>
+        <td><div class="fig-frame"><img data-img="dp1-counter" alt="합성 또는 공개 데이터로 학습한 ML과 사후 설명 구조" width="1400"></div><p class="struct-note">Zone 판정과 경계·심박 예측에 ML을 사용한다. 실제 사용자 데이터와 측정 정답이 충분하다면 규칙에 없는 관계도 배울 수 있다. 그러나 이번 과제의 데이터로는 실제 사람에게도 맞는지 확인하기 어렵고, 말하기 테스트 경계와 판정이 충돌할 수 있다.</p></td>
       </tr>
-      <tr>
-        <th class="rowh">구조</th>
-        <td class="win">
-          <div class="fig-frame"><img data-img="dp1-adopted" alt="1안 규칙/통계 기반 개인화 아키텍처 — 설명용이성 관점" width="1400"></div>
-          <p class="struct-note">판정은 "심박 145가 상한 132보다 높다"처럼 단순한 비교 규칙으로 내린다. 개인 경계는 러닝 중 말하기 테스트 답을 따라 조금씩 옮겨 간다. LLM은 이렇게 정해진 내용을 자연스러운 문장으로 바꾸는 일만 하고, 나가는 문장은 형식, 방향, 숫자 검사를 한 번 더 거친다.</p>
-        </td>
-        <td>
-          <div class="fig-frame"><img data-img="dp1-counter" alt="2안 사전학습 블랙박스 아키텍처 다이어그램" width="1400"></div>
-          <p class="struct-note">많은 사람의 데이터로 미리 학습한 모델이 판정과 코칭을 직접 내놓는다. 판단 과정은 수많은 내부 숫자에 흩어져 있어 사람이 읽을 수 없다. 그래서 설명은 결정이 난 뒤에 별도 분석 도구나 LLM이 추정해서 만들어 붙인다.</p>
-        </td>
-      </tr>
-      <tr>
-        <th class="rowh">장점</th>
-        <td class="win">
-          <div class="qa-line"><span>설명용이성 <span class="dim">(판단 근거가 그대로 설명이 된다)</span></span><span class="stars">★★★★★</span></div>
-          <div class="qa-line"><span>제어가능성 <span class="dim">(사용자의 정정이 그 자리에서 반영되고 확인된다)</span></span><span class="stars">★★★★★</span></div>
-        </td>
-        <td>
-          <div class="qa-line"><span>기능적응성 <span class="dim">(데이터가 많으면 복잡한 패턴까지 배울 수 있다)</span></span><span class="stars">★★★★</span></div>
-          <div class="qa-line"><span>설명용이성 <span class="dim">(설명이 실제 판단을 그대로 보여 주지는 못한다)</span></span><span class="stars">★★</span></div>
-        </td>
-      </tr>
-      <tr>
-        <th class="rowh">단점</th>
-        <td class="win">
-          <div class="qa-line"><span>기능적응성 <span class="dim">(경계를 그 사람에게 맞추는 적응은 하지만, 규칙에 없는 복잡한 패턴까지 스스로 배우지는 못한다 — 이 축은 DP3에서 다룸)</span></span><span class="stars">★★★</span></div>
-          <div class="qa-line"><span>테스트가능성 <span class="dim">(규칙과 근거 값의 연결을 자동시험으로 직접 확인할 수 있다)</span></span><span class="stars">★★★★★</span></div>
-        </td>
-        <td>
-          <div class="qa-line"><span>설명용이성 <span class="dim">(설명이 나중에 붙인 추정이라 실제 판단과 다를 수 있다)</span></span><span class="stars">★★</span></div>
-          <div class="qa-line"><span>제어가능성 <span class="dim">(사용자의 정정을 즉시 반영하기 어렵고, 반영됐는지 확인도 어렵다)</span></span><span class="stars">★★</span></div>
-        </td>
-      </tr>
-      <tr>
-        <th class="rowh">Trade<br>Off</th>
-        <td class="win">
-          판단 근거를 언제든 따라가 볼 수 있고 정정이 바로 반영된다. 대신 규칙 밖의 복잡한 패턴은 배우지 못한다.
-        </td>
-        <td>
-          데이터가 많으면 더 복잡한 것까지 배울 수 있다. 대신 왜 그렇게 판단했는지 보여주기 어렵고, 정답지가 없는 이 조건에서는 그 잠재력을 확인할 방법도 없다.
-        </td>
-      </tr>
+      <tr><th class="rowh">확인 가능한 것</th><td class="win">판정에 사용한 심박·경계·규칙, 개인 경계가 바뀐 이유, 설명 문장의 숫자와 방향</td><td>가상 러너가 만든 정답에 대한 점수와 학습 손실. 실제 사람에 대한 정확도는 별도 데이터가 있어야 확인 가능</td></tr>
+      <tr><th class="rowh">장점</th><td class="win">판단 근거를 따라갈 수 있고, 사용자 응답이 다음 판정에 어떻게 반영됐는지 확인하기 쉽다.</td><td>실제 데이터가 충분하면 사람이 정한 규칙보다 복잡한 관계를 학습할 가능성이 있다.</td></tr>
+      <tr><th class="rowh">한계</th><td class="win">규칙과 관측 범위를 벗어난 복잡한 관계를 스스로 배우지는 못한다.</td><td>현재 데이터로 얻은 높은 점수가 실제 사용자에게도 이어진다고 말할 수 없다. 판단과 개인화의 기준이 둘로 나뉠 수 있다.</td></tr>
+      <tr><th class="rowh">절충</th><td class="win">현재 검증할 수 있는 범위를 분명히 하는 대신, ML이 가질 수 있는 학습 능력은 뒤로 미룬다.</td><td>학습 가능성을 얻는 대신, 실제 사용자 데이터와 검증용 정답을 먼저 확보해야 한다.</td></tr>
     </tbody>
-  </table>
-  </div>
-
+  </table></div>
   <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
 </section>
 
-<!-- ======================= 슬라이드 3 ======================= -->
 <section class="slide">
-  <div class="slide-head">
-    <h2>DP1. 설계결정 및 근거</h2>
-    <span class="sec-no">3</span>
-  </div>
-
-  <h3 class="num"><span>1.</span>최종 채택 구조</h3>
-  <p class="lead">후보 1: 규칙/통계 기반 개인화 아키텍처 채택</p>
-
-  <h3 class="num"><span>2.</span>채택 근거</h3>
+  <div class="slide-head"><h2>DP1. 설계 결정과 검증</h2><span class="sec-no">3</span></div>
+  <h3 class="num"><span>1.</span>최종 결정</h3>
+  <p class="lead">이번 과제에서는 1안인 ‘투명한 규칙·관측 통계 + 사용자 응답’ 구조를 채택했다.</p>
+  <h3 class="num"><span>2.</span>결정 근거</h3>
+  <ol>
+    <li><strong>실제 정답으로 검증할 수 있는 ML 모델이 없었다.</strong> 합성 데이터 점수만으로 사람의 Zone 2 판정이 정확하다고 주장하지 않는다.</li>
+    <li><strong>판정 기준을 하나로 모았다.</strong> 현재 심박과 말하기 테스트로 조정한 개인 경계를 모든 판정과 설명이 함께 사용한다.</li>
+    <li><strong>판단에서 설명까지 같은 근거를 이어 쓴다.</strong> 판정, 심박, 개인 경계, 경계가 바뀐 이유를 한 기록에 남긴다. 설명을 나중에 추측해 붙이지 않는다.</li>
+    <li><strong>나중에 ML을 다시 검토할 길은 남겼다.</strong> 실제 러닝 데이터가 충분히 쌓이면, 전체 판단을 바꾸기보다 규칙이 놓친 오차만 보정하는 작은 모델부터 검증할 수 있다.</li>
+  </ol>
+  <h3 class="num"><span>3.</span>이번 과제에서 확인한 범위</h3>
   <ul>
-    <li><strong>판정과 설명이 같은 사실을 사용한다.</strong> "심박 145가 상한 132를 넘었다"처럼 판정에 사용한 숫자와 규칙이 설명의 재료가 된다. 코칭 문장마다 근거와 생성 경로를 기록해 리포트에서 다시 확인할 수 있다.</li>
-    <li><strong>사용자의 정정이 바로 반영된다(제어가능성).</strong> 러닝 중 "그건 내 느낌과 달라"라고 답하면(말하기 테스트) 그 자리에서 개인 경계가 움직이고, 얼마나 움직였는지 화면에 보인다. 2안은 이런 정정을 모아 모델을 다시 학습해야 반영되고, 제대로 반영됐는지 확인하기도 어렵다.</li>
-    <li><strong>이 과제의 조건에 맞는다.</strong> 2안은 충분한 학습 데이터와 정답이 있을 때 장점을 확인할 수 있다. 이 과제에는 두 가지가 모두 없으므로, 동작을 직접 확인할 수 있는 1안이 더 적합하다.</li>
-    <li><strong>설명 근거를 따로 추정하지 않는다.</strong> 설명에 필요한 숫자와 판정 이유는 이미 계산된 값에서 가져온다. LLM 문장 생성은 별도로 실행해 실시간 판정을 막지 않는다.</li>
+    <li>아래·범위 안·위 판정 3종에서 <strong>판정, 심박, 개인 경계의 근거 기록률 100%(3/3)</strong></li>
+    <li>근거에 없는 숫자 차단율 <strong>100%(5/5)</strong>, 근거가 있는 문장 통과율 <strong>100%(3/3)</strong></li>
+    <li>코칭 문장과 근거 기록의 저장·복원 시험 통과</li>
   </ul>
-
-  <h3 class="num"><span>3.</span>보완 계획</h3>
-  <ul>
-    <li><strong>이번 과제에서 확인</strong>: 선언한 문장 집합에서 미등록 숫자 차단율 100%(5/5), 사실 문장 통과율 100%(3/3), 근거 기록 저장·복원 시험 통과.</li>
-    <li><strong>향후 확인</strong>: 실제 사용자가 설명을 쉽게 이해하는지는 향후 사용자 평가로 확인한다.</li>
-  </ul>
-
+  <p class="note">이 결과는 설명과 내부 판단이 이어져 있음을 확인한 것이다. 실제 Zone 2의 생리학적 정확도나 사용자가 느끼는 이해도까지 증명한 것은 아니다.</p>
   <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
 </section>
 
-<!-- ======================= Appendix ======================= -->
 <section class="slide">
-  <div class="slide-head">
-    <h2>Appendix. DP1 상세 설계 내역</h2>
-    <span class="sec-no">A</span>
-  </div>
-
-  <h3 class="num"><span>1.</span>이 설계 결정이 다루는 품질 문제</h3>
-  <ul>
-    <li>판단과 설명이 서로 다른 값에서 만들어지면 근거를 믿기 어렵다 → 설명용이성</li>
-    <li>개인 경계가 바뀌면 설명도 최신 경계를 사용해야 한다 → 기능적응성</li>
-    <li>설명 문장의 숫자와 방향을 시스템이 확인할 수 있어야 한다 → 제어가능성</li>
-    <li>판정과 근거 값의 연결을 같은 입력으로 반복 확인할 수 있어야 한다 → 테스트가능성</li>
-  </ul>
-
-  <h3 class="num"><span>2.</span>채택안 상세 설계 — 추상 블록을 하위 모듈(실제 클래스)까지 전개</h3>
-  <figure style="margin:0 0 12px"><div class="fig-frame"><img data-img="dp1-detail" alt="DP1 채택안 상세 — 하위 모듈 전개" width="1100"></div></figure>
-  <div class="tbl">
-  <table class="decide">
+  <div class="slide-head"><h2>Appendix. DP1 개발 이력과 상세 구조</h2><span class="sec-no">A</span></div>
+  <h3 class="num"><span>1.</span>ML 적용 범위를 단계적으로 줄인 과정</h3>
+  <div class="tbl"><table class="decide">
+    <thead><tr><th style="width:10em">시도</th><th>확인한 문제</th><th>현재 결정</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Zone 판정 MLP</strong></td><td>합성 정답을 잘 맞혔지만 실제 기기 사례에서 명백한 오판이 나왔다. 개인 경계와 ML 판정도 서로 다른 기준이 됐다.</td><td>현재 심박과 개인 경계를 직접 비교</td></tr>
+      <tr><td><strong>개인 경계 추정 MLP</strong></td><td>개인의 측정 정답과 학습 데이터가 없었다.</td><td>말하기 테스트 응답으로 경계를 조금씩 갱신</td></tr>
+      <tr><td><strong>심박 예측 MLP</strong></td><td>가상 러너의 생리 공식을 다시 학습해 실제 사람에 대한 정확도를 확인할 수 없었다.</td><td>실제 관측값 분석으로 범위를 축소</td></tr>
+      <tr><td><strong>규칙 오차 보정 NN</strong></td><td>합성 시험에서는 오차가 약 10% 줄었지만 실제 데이터로 검증하지 못했다.</td><td>배포하지 않고 향후 후보로 보관</td></tr>
+    </tbody>
+  </table></div>
+  <h3 class="num"><span>2.</span>채택안의 근거 흐름</h3>
+  <figure style="margin:0 0 10px"><div class="fig-frame"><img data-img="dp1-detail" alt="DP1 채택안의 판단과 근거 기록 흐름" width="1100"></div></figure>
+  <div class="tbl"><table class="decide">
     <thead><tr><th style="width:9em">단계</th><th>하는 일</th></tr></thead>
     <tbody>
-      <tr><td><strong>1. 사실 확정</strong></td><td>규칙/통계가 판정과 근거 숫자를 확정한다 — 설명의 재료는 전부 여기서 나온다</td></tr>
-      <tr><td><strong>2. 근거 기록</strong></td><td>각 수치의 출처(관측/학습/설계)와 코칭의 근거 관측이 그 자리에서 기록된다</td></tr>
-      <tr><td><strong>3. 표현 한정</strong></td><td>LLM은 확정된 사실을 문장으로 바꾸는 일만 한다 — 이유를 지어내지 않는다</td></tr>
-      <tr><td><strong>4. 표현 검사</strong></td><td>나가는 문장의 형식, 방향, 숫자를 규칙이 다시 검사한다</td></tr>
-      <tr><td><strong>5. 추적 열람</strong></td><td>리포트에서 문장을 누르면 근거 관측과 생성 과정을 그대로 볼 수 있다</td></tr>
+      <tr><td><strong>1. 사실 확정</strong></td><td>규칙과 관측 통계가 판정, 심박, 개인 경계를 확정한다.</td></tr>
+      <tr><td><strong>2. 근거 기록</strong></td><td>판정에 사용한 값과 개인 경계가 바뀐 이유를 함께 저장한다.</td></tr>
+      <tr><td><strong>3. 문장 생성</strong></td><td>LLM은 확정된 사실을 자연스러운 문장으로 표현한다.</td></tr>
+      <tr><td><strong>4. 출력 검사</strong></td><td>문장의 형식, 방향, 숫자가 허용 범위에 있는지 다시 확인한다.</td></tr>
+      <tr><td><strong>5. 근거 확인</strong></td><td>리포트에서 코칭 문장과 그때 사용한 근거를 함께 확인한다.</td></tr>
     </tbody>
-  </table>
-  </div>
-
-  <h3 class="num"><span>3.</span>선정 품질에 미치는 영향</h3>
-  <div class="tbl">
-  <table class="decide">
-    <thead><tr><th style="text-align:left">품질 속성</th><th>(1안) 규칙/통계 기반 개인화</th><th>(2안) 사전학습 블랙박스</th></tr></thead>
-    <tbody>
-      <tr><td>설명용이성</td><td style="text-align:center"><span class="stars">★★★★★</span></td><td style="text-align:center"><span class="stars">★★</span></td></tr>
-      <tr><td>제어가능성</td><td style="text-align:center"><span class="stars">★★★★★</span></td><td style="text-align:center"><span class="stars">★★</span></td></tr>
-      <tr><td>기능적응성</td><td style="text-align:center"><span class="stars">★★★</span></td><td style="text-align:center"><span class="stars">★★★★</span></td></tr>
-      <tr><td>테스트가능성</td><td style="text-align:center"><span class="stars">★★★★★</span></td><td style="text-align:center"><span class="stars">★★★</span></td></tr>
-    </tbody>
-  </table>
-  </div>
-  <p class="note">별점은 이 과제에서 선정한 품질만 비교한 결과다. 충분한 학습 데이터와 검증용 정답이 있다면 2안의 기능적응성 평가는 달라질 수 있다.</p>
-
-  <h3 class="num"><span>4.</span>용어와 문헌</h3>
-  <ul>
-    <li><strong>용어 대조(심사용)</strong>: 1안의 설명 방식 = intrinsic interpretability(모델 자체가 해석 가능), 2안의 설명 방식 = post-hoc explanation(사후 설명), 설명과 실제 판단의 일치 = fidelity(충실도), 값의 출처 추적 = provenance, data lineage</li>
-    <li><strong>근거 문헌</strong>: Rudin(2019, Nature Machine Intelligence) — 신뢰가 필요한 결정에는 해석 가능한 모델을 쓰라 / XAI 충실도 문헌(2024, 상세 서지는 설계문서 부록 A) / 웨어러블 XAI 체계적 리뷰(JMIR 2024, 사후 설명이 88%) / DARPA XAI 프로그램</li>
-    <li class="note">상세 = <code>arch/dp/dp-01-explainability/</code> (decision / research / counter-catalog)</li>
-  </ul>
-
+  </table></div>
+  <p class="note">모델별 시험 결과와 전환 근거는 별도의 개발 이력 문서에 기록했다.</p>
   <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
 </section>
-
 </div>
 
 <div class="deck" id="part-dp2">
@@ -346,7 +253,7 @@
     <li><strong>판단과 표현의 책임을 나눠야 한다.</strong> 코칭 방향과 근거 숫자는 규칙이 먼저 정하고, LLM은 그 범위 안에서 문장만 만든다.</li>
     <li><strong>LLM을 사용할 수 없는 상황도 있다.</strong> 지원하지 않는 기종, 첫 모델 다운로드 전, 응답 지연이나 실행 실패에도 코칭이 끊기지 않아야 한다.</li>
     <li><strong>정해 둔 고심박 규칙은 먼저 동작해야 한다.</strong> 설정된 임계값을 넘으면 LLM을 기다리지 않고 규칙 문구를 사용한다.</li>
-    <li><strong>자동 대응을 나중에 확인할 수 있어야 한다.</strong> 문장이 왜 기각되거나 기본 문구로 바뀌었는지 기록으로 남겨야 한다.</li>
+    <li><strong>자동 대응을 나중에 확인할 수 있어야 한다.</strong> 문장이 왜 차단되거나 기본 문구로 바뀌었는지 기록으로 남겨야 한다.</li>
   </ul>
 
   <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
@@ -378,7 +285,7 @@
         <th class="rowh">구조</th>
         <td class="win">
           <div class="fig-frame"><img data-img="dp2-adopted" alt="1안 — 규칙 확정 + LLM 표현 한정 아키텍처, 제어가능성 관점"></div>
-          <p class="note" style="margin-top:8px">규칙이 방향과 사실 숫자를 확정하면 LLM은 그 재료로 문장만 만든다. 나온 문장은 형식, 방향, 숫자 세 가지 검사를 거치고, 걸리거나 LLM이 실패하면 "속도 줄이기" 같은 짧은 문구로 바꿔 내보낸다. 위험 심박 권고는 LLM을 거치지 않고, 모든 호출의 경로와 기각 사유가 기록된다</p>
+          <p class="note" style="margin-top:8px">규칙이 방향과 사실 숫자를 확정하면 LLM은 그 재료로 문장만 만든다. 나온 문장은 형식, 방향, 숫자 세 가지 검사를 거치고, 걸리거나 LLM이 실패하면 "속도 줄이기" 같은 짧은 문구로 바꿔 내보낸다. 위험 심박 권고는 LLM을 거치지 않고, 모든 호출의 경로와 차단 사유가 기록된다</p>
         </td>
         <td>
           <div class="fig-frame"><img data-img="dp2-counter" alt="2안 — LLM 판단 위임 아키텍처 다이어그램"></div>
@@ -388,7 +295,7 @@
       <tr>
         <th class="rowh">장점</th>
         <td class="win">
-          <p>제어가능성 <span class="stars">★★★★★</span><br><span class="note">문장 기각(교정), 폴백(보완), 위험 시 LLM 우회(안전전환)가 구조에 있고 자동으로 작동한다</span></p>
+          <p>제어가능성 <span class="stars">★★★★★</span><br><span class="note">문장 차단(교정), 기본 문구 전환(보완), 위험 시 LLM 우회(안전전환)가 구조에 있고 자동으로 작동한다</span></p>
           <p>강건성 <span class="stars">★★★★★</span><br><span class="note">LLM이 실패해도 짧은 문구로 코칭이 이어진다</span></p>
         </td>
         <td>
@@ -397,7 +304,7 @@
         </td>
       </tr>
       <tr>
-        <th class="rowh">단점</th>
+        <th class="rowh">그 밖의<br>영향</th>
         <td class="win">
           <p>기능적응성 <span class="stars">★★★</span><br><span class="note">언제 무엇을 코칭할지는 규칙에 묶여, 새 상황은 규칙을 추가해야 한다</span></p>
           <p>테스트가능성 <span class="stars">★★★★★</span><br><span class="note">검사 조건과 기본 문구 전환을 자동시험으로 반복 확인할 수 있다</span></p>
@@ -408,9 +315,9 @@
         </td>
       </tr>
       <tr>
-        <th class="rowh">Trade<br>Off</th>
+        <th class="rowh">절충</th>
         <td class="win">어긋난 문장은 걸러지고 실패해도 코칭이 이어진다. 대신 코칭 내용의 자유도에 상한이 있다</td>
-        <td>문맥이 풍부한 코칭이 나올 수 있다. 대신 통제가 "LLM이 규정을 따라 준다"는 기대에 의존하고, 실패하면 갈아탈 판단 주체가 없다</td>
+        <td>문맥이 풍부한 코칭이 나올 수 있다. 대신 통제가 "LLM이 규정을 따라 준다"는 기대에 의존하고, 실패에 대비한 별도 판단 경로가 필요하다</td>
       </tr>
     </tbody>
   </table>
@@ -422,19 +329,19 @@
 <!-- ======================= 슬라이드 3 ======================= -->
 <section class="slide">
   <div class="slide-head">
-    <h2>DP2. 설계결정 및 근거</h2>
+    <h2>DP2. 설계 결정과 근거</h2>
     <span class="sec-no">3</span>
   </div>
 
   <h3 class="num"><span>1.</span>최종 채택 구조</h3>
-  <p class="lead">후보 1: 규칙 확정 + LLM 표현 한정 아키텍처 채택</p>
+  <p class="lead">1안: 규칙 확정 + LLM 표현 한정 아키텍처 채택</p>
 
   <h3 class="num"><span>2.</span>채택 근거</h3>
   <ul>
-    <li><strong>LLM 출력이 기준을 벗어나거나 모델을 사용할 수 없을 때 자동으로 대응한다.</strong> 기준을 벗어난 문장은 기각하고, LLM이 없으면 짧은 기본 문구로 바꾸며, 고심박 권고는 LLM을 거치지 않는다.</li>
+    <li><strong>LLM 출력이 기준을 벗어나거나 모델을 사용할 수 없을 때 자동으로 대응한다.</strong> 기준을 벗어난 문장은 차단하고, LLM이 없으면 짧은 기본 문구로 바꾸며, 고심박 권고는 LLM을 거치지 않는다.</li>
     <li><strong>통제 기준은 LLM 밖에 있다.</strong> 규칙이 방향·형식·숫자를 확인하고 기준에 맞지 않으면 기본 문구로 바꾼다. 2안은 판단과 표현을 모두 LLM에 맡기므로 실패 시 비교할 기준이 약하다.</li>
-    <li><strong>실패해도 코칭이 이어진다.</strong> LLM이 없거나 실패했을 때 1안의 최악은 "짧은 문구 코칭"이고, 2안의 최악은 "코칭 중단"이다.</li>
-    <li><strong>통제 작동을 데이터로 확인한다.</strong> 어떤 문장이 왜 기각됐고 언제 폴백했는지가 세션마다 기록되어 리포트에서 확인할 수 있다.</li>
+    <li><strong>실패해도 코칭이 이어진다.</strong> LLM이 없거나 실패했을 때 1안은 짧은 기본 문구로 코칭을 이어 간다. 2안은 별도 대체 경로를 두지 않으면 코칭이 중단될 수 있다.</li>
+    <li><strong>통제 작동을 데이터로 확인한다.</strong> 어떤 문장이 왜 차단됐고 언제 기본 문구로 바뀌었는지가 세션마다 기록되어 리포트에서 확인할 수 있다.</li>
     <li><strong>DP1과 같은 구조에서 나온다.</strong> 판단을 규칙에 두었기 때문에 설명이 실제 판단과 일치하고(DP1), 나온 문장을 검사할 정답도 시스템 안에 생긴다(DP2). 하나의 구조 선택이 두 품질을 함께 만든다.</li>
   </ul>
 
@@ -471,10 +378,10 @@
     </thead>
     <tbody>
       <tr><td><strong>1. 격리</strong></td><td>판단은 규칙, LLM은 문장만 — 맡기는 권한 자체를 좁힌다</td><td>예방</td></tr>
-      <tr><td><strong>2. 출력 검사</strong></td><td>형식(길이), 방향(판정과 모순이면 기각), 숫자(관측에 없는 숫자면 기각)</td><td>교정</td></tr>
+      <tr><td><strong>2. 출력 검사</strong></td><td>형식(길이), 방향(판정과 모순이면 차단), 숫자(관측에 없는 숫자면 차단)</td><td>교정</td></tr>
       <tr><td><strong>3. 기본 문구</strong></td><td>검사에 걸리거나 LLM이 실패하면 "속도 줄이기" 같은 짧은 문구로 바꿔 내보낸다</td><td>보완</td></tr>
       <tr><td><strong>4. 안전 분리</strong></td><td>위험 심박 권고는 LLM을 거치지 않는다</td><td>안전전환</td></tr>
-      <tr><td><strong>5. 사람 개입 + 기록</strong></td><td>말하기 테스트로 판정 기준 정정, 설정 토글, 모든 호출 경로와 기각 사유를 세션에 기록</td><td>교정, 보완, 감사</td></tr>
+      <tr><td><strong>5. 사람 개입 + 기록</strong></td><td>말하기 테스트로 판정 기준 정정, 설정 토글, 모든 호출 경로와 차단 사유를 세션에 기록</td><td>교정, 보완, 사후 확인</td></tr>
     </tbody>
   </table>
   </div>
@@ -496,7 +403,7 @@
   <p class="note"><strong>평가 조건</strong>: 폰 안에서 실행하고, 실시간으로 문장을 내보내며, LLM을 사용할 수 없는 상황에도 코칭이 이어져야 한다는 조건에서 비교했다. 사람이 모든 출력을 미리 검토할 수 있는 서비스라면 2안의 평가가 달라질 수 있다.</p>
 
   <h3 class="num"><span>A4.</span>용어 대조(심사용)와 근거 문헌</h3>
-  <p class="note">개입 가능성 = intervenability(ISO/IEC 25059 제어가능성의 핵심) / 맡기는 일 자체를 좁히는 통제 = architectural containment(구조적 격리) / 실패 시 무손상 전환 = fail-safe fallback / 사람 개입 = HITL(루프 안 교정), HOTL(루프 위 감독) / 사후 확인 = audit(감사)</p>
+  <p class="note">개입 가능성 = intervenability(ISO/IEC 25059 제어가능성의 핵심) / 맡기는 일 자체를 좁히는 통제 = architectural containment(구조적 격리) / 실패 시 무손상 전환 = fail-safe fallback / 사람 개입 = HITL(루프 안 교정), HOTL(루프 위 감독) / 사후 확인 = audit</p>
   <p class="note">근거 문헌: ISO/IEC 25059(제어가능성 정의) / LLM 가드레일 계층 방어 서베이(구조적 격리가 가장 강한 층) / LLM 단독 판단 회피 권고 / 생성 결과 검사와 실패 경로 분리를 다룬 가드레일 연구</p>
   <p class="note">상세 = <code>arch/dp/dp-02-controllability/</code> (decision / research / counter-catalog)</p>
 
@@ -509,7 +416,7 @@
 
 <div class="deck-head">
   <h1>DP3. 기능적응성 — 사용자 응답으로 개인 경계를 조정하는 구조</h1>
-  <p>인증과제 샘플(씬스틸러) DP 형식 3장 + Appendix 1장 — 2026-08-03 v2(리뷰 반영: 개별화 채택안+상세 도식, 표현 교정) — 정본: <code>arch/dp/dp-03-adaptability/-decision.md</code>, 원고: <code>report/report-010</code></p>
+  <p>사용자 응답을 개인 경계에 반영하는 두 가지 방법을 비교한다.</p>
 </div>
 
 <!-- ======================= 슬라이드 1 ======================= -->
@@ -556,14 +463,14 @@
     <tbody>
       <tr>
         <th class="rowh">한 줄<br>소개</th>
-        <td class="win">사용자가 답할 때마다 폰 안에서 그 자리에서 경계를 조금씩 옮기는 구조</td>
+        <td class="win">사용자가 답할 때마다 폰 안에서 즉시 경계를 조금씩 옮기는 구조</td>
         <td>데이터를 서버로 모아 주기적으로 다시 학습한 모델을 배포하는 구조</td>
       </tr>
       <tr>
         <th class="rowh">구조</th>
         <td class="win">
           <div class="fig-frame"><img data-img="dp3-adopted" alt="1안 — 온라인 베이지안 개인 적응 아키텍처, 기능적응성 관점"></div>
-          <p class="note" style="margin-top:8px">경계를 평균과 불확실성으로 저장한다. 처음에는 나이와 안정심박으로 계산한 값에서 시작하고, 말하기 테스트 응답이 들어오면 Bayesian 방식으로 조금씩 갱신한다. 한 세션에 최대 10bpm까지만 움직이게 제한하고, 결과는 다음 세션의 시작값으로 저장한다</p>
+          <p class="note" style="margin-top:8px">경계를 평균과 불확실성으로 저장한다. 처음에는 나이와 안정심박으로 계산한 값에서 시작하고, 말하기 테스트 응답이 들어오면 베이지안 방식으로 조금씩 갱신한다. 한 세션에 최대 10bpm까지만 움직이게 제한하고, 결과는 다음 세션의 시작값으로 저장한다</p>
         </td>
         <td>
           <div class="fig-frame"><img data-img="dp3-counter" alt="2안 — 오프라인 재학습 개인화 아키텍처 다이어그램"></div>
@@ -573,19 +480,19 @@
       <tr>
         <th class="rowh">장점</th>
         <td class="win">
-          <p>기능적응성 <span class="stars">★★★★★</span><br><span class="note">답한 그 자리에서 반영 — 적응 지연이 분 단위</span></p>
+          <p>기능적응성 <span class="stars">★★★★★</span><br><span class="note">답한 즉시 반영 — 적응 지연이 분 단위</span></p>
           <p>테스트가능성 <span class="stars">★★★★★</span><br><span class="note">응답과 갱신 결과를 같은 입력으로 반복 확인할 수 있음</span></p>
         </td>
         <td>
           <p>기능적응성 <span class="stars">★★★★</span><br><span class="note">여러 사용자의 패턴을 함께 배울 잠재력 — 단 배포 전까지 반영되지 않음</span></p>
-          <p>강건성 <span class="stars">★★★★</span><br><span class="note">대량 평균화라 답 하나의 노이즈에 강함</span></p>
+          <p>강건성 <span class="stars">★★★★</span><br><span class="note">여러 사용자의 데이터를 함께 보므로 응답 하나의 영향이 작음</span></p>
         </td>
       </tr>
       <tr>
-        <th class="rowh">단점</th>
+        <th class="rowh">그 밖의<br>영향</th>
         <td class="win">
           <p>설명용이성 <span class="stars">★★★★★</span><br><span class="note">응답과 경계 이동을 직접 연결해 보여 줄 수 있음</span></p>
-          <p>강건성 <span class="stars">★★★★</span><br><span class="note">엉뚱한 답의 영향이 남는다 — 한도와 확신 폭이 제한할 뿐</span></p>
+          <p>강건성 <span class="stars">★★★★</span><br><span class="note">부정확한 응답의 영향이 남을 수 있어 이동 한도와 불확실성으로 제한함</span></p>
         </td>
         <td>
           <p>기능적응성 <span class="stars">★★</span><br><span class="note">적응이 수집, 재학습, 배포 주기에 묶인다 — 일/주 단위</span></p>
@@ -593,9 +500,9 @@
         </td>
       </tr>
       <tr>
-        <th class="rowh">Trade<br>Off</th>
-        <td class="win">변화가 그 자리에서 반영되고 근거가 검증 가능하다. 대신 모델이 단순해 복잡한 개인 패턴은 배우지 못한다</td>
-        <td>복잡한 패턴까지 배울 잠재력이 있다. 대신 적응이 배포 주기에 묶이고, 정답지가 없는 이 조건에서는 그 잠재를 채점할 기준도 없다</td>
+        <th class="rowh">절충</th>
+        <td class="win">변화가 즉시 반영되고 근거가 검증 가능하다. 대신 모델이 단순해 복잡한 개인 패턴은 배우지 못한다</td>
+        <td>복잡한 패턴까지 배울 잠재력이 있다. 대신 적응이 배포 주기에 묶이고, 정답지가 없는 이 조건에서는 그 효과를 확인할 기준도 없다</td>
       </tr>
     </tbody>
   </table>
@@ -607,25 +514,25 @@
 <!-- ======================= 슬라이드 3 ======================= -->
 <section class="slide">
   <div class="slide-head">
-    <h2>DP3. 설계결정 및 근거</h2>
+    <h2>DP3. 설계 결정과 근거</h2>
     <span class="sec-no">3</span>
   </div>
 
   <h3 class="num"><span>1.</span>최종 채택 구조</h3>
-  <p class="lead">후보 1: 온라인 베이지안 개인 적응 아키텍처 채택</p>
+  <p class="lead">1안: 온라인 베이지안 개인 적응 아키텍처 채택</p>
 
   <h3 class="num"><span>2.</span>채택 근거</h3>
   <ul>
-    <li><strong>적응이 그 자리에서 일어난다.</strong> 답한 순간 경계가 움직이고, 얼마나 움직였는지 화면에 보인다. 2안은 같은 답이 다음 재학습과 배포를 기다린다.</li>
+    <li><strong>적응이 즉시 일어난다.</strong> 답한 순간 경계가 움직이고, 얼마나 움직였는지 화면에 보인다. 2안은 같은 답이 다음 재학습과 배포를 기다린다.</li>
     <li><strong>관측한 응답과 갱신 결과를 연결할 수 있다.</strong> 어떤 응답 때문에 경계가 어느 방향으로 움직였는지 확인할 수 있다. 다만 이것이 실제 유산소 역치의 정확도를 뜻하지는 않는다.</li>
     <li><strong>한 번에 지나치게 움직이지 않는다.</strong> 불확실성을 반영해 이동 폭을 계산하고, 세션당 최대 이동을 10bpm으로 제한한다. 응답이 쌓이면 불확실성이 줄어 변화 폭도 작아진다.</li>
     <li><strong>과제 제약과 맞는다.</strong> 개인화 갱신은 서버 없이 폰에서 계산하고 저장한다. 심박과 개인화 값을 이 계산 때문에 외부 서버로 보내지 않는다.</li>
-    <li><strong>DP1, DP2와 같은 구조에서 나온다.</strong> 적응 상태(평균과 확신 폭)가 그대로 노출되어 설명이 되고(DP1), 이동 한도와 답 채널이 통제가 된다(DP2).</li>
+    <li><strong>DP1, DP2와 같은 구조에서 나온다.</strong> 적응 상태(평균과 확신 폭)가 그대로 노출되어 설명이 되고(DP1), 이동 한도와 사용자 응답이 통제 수단이 된다(DP2).</li>
   </ul>
 
   <h3 class="num"><span>3.</span>보완 계획</h3>
   <ul>
-    <li><strong>이번 과제에서 확인</strong>: 참임계 5종×시드 3종의 15개 사례 모두가 목표 오차에 들어왔다(100%, 15/15). 현재 모의 조건에서는 말하기 테스트 응답 10회 이내(1~2세션)에 도달했고, 응답 40회 뒤 최종 오차는 0.20~0.77bpm이었다. 별도의 기준 사례에서 마지막 4세션 경계 폭 3.04bpm과 세션당 최대 이동 9.97bpm을 확인했다.</li>
+    <li><strong>이번 과제에서 확인</strong>: 가상 러너의 목표 상한 5종과 시드 3종을 조합한 15개 사례 모두가 목표 오차에 들어왔다(100%, 15/15). 현재 모의 조건에서는 말하기 테스트 응답 10회 이내(1~2세션)에 도달했고, 응답 40회 뒤 최종 오차는 0.20~0.77bpm이었다. 별도의 기준 사례에서 마지막 4세션의 경계 범위 3.04bpm과 세션당 최대 이동 9.97bpm을 확인했다.</li>
     <li><strong>향후 확인</strong>: 이 수치는 시뮬레이션 결과다. 실제 사람의 유산소 역치를 같은 오차로 찾았다는 뜻이 아니며, 실사용 평가를 하게 되면 말하기 테스트 안내와 개인화 상수를 다시 조정한다.</li>
   </ul>
 
@@ -698,7 +605,7 @@
 
 <div class="deck-head">
   <h1>DP4. 강건성 — 흔들리는 입력에도 판정을 안정시키는 구조</h1>
-  <p>인증과제 샘플(씬스틸러) DP 형식 3장 + Appendix 1장 — 2026-08-03 v2(리뷰 반영: 개별화 채택안+상세 도식, 60초 기준 정정) — 정본: <code>arch/dp/dp-04-robustness/-decision.md</code>, 원고: <code>report/report-011</code></p>
+  <p>센서 오류와 경계 부근의 흔들림을 다루는 두 가지 방법을 비교한다.</p>
 </div>
 
 <!-- ======================= 슬라이드 1 ======================= -->
@@ -710,9 +617,9 @@
 
   <h3 class="num"><span>1.</span>배경</h3>
   <ul>
-    <li>이 앱에 들어오는 신호는 깨끗하지 않다. <strong>손목 광학 심박계는 달리는 중 팔 흔들림으로 값이 튀는 것이 알려진 한계</strong>이고, GPS도 잡음이 섞이며, 연결이 잠깐 끊기기도 한다.</li>
+    <li>이 앱에 들어오는 신호는 깨끗하지 않다. <strong>손목 광학 심박계는 달리는 중 팔 움직임 때문에 값이 튈 수 있다</strong>이고, GPS도 잡음이 섞이며, 연결이 잠깐 끊기기도 한다.</li>
     <li>판정 결과는 화면 표시로 끝나지 않고 <strong>"속도를 줄이세요" 같은 행동 지시로 이어진다.</strong> 튄 값 하나가 지시가 되면 사용자는 노이즈에 맞춰 달리게 된다.</li>
-    <li>그래서 <strong>노이즈가 일상인 신호에서 판정과 지시를 지키는 구조</strong>를 고르는 것이 이 설계 결정이다.</li>
+    <li>그래서 <strong>항상 잡음이 섞일 수 있는 신호에서 판정과 지시를 안정시키는 구조</strong>를 고르는 것이 이 설계 결정이다.</li>
   </ul>
 
   <h3 class="num"><span>2.</span>문제점</h3>
@@ -771,18 +678,18 @@
         </td>
       </tr>
       <tr>
-        <th class="rowh">단점</th>
+        <th class="rowh">그 밖의<br>영향</th>
         <td class="win">
           <p>강건성 <span class="stars">★★★★</span><br><span class="note">방어가 강한 만큼 실제 변화도 늦게 반영될 수 있음</span></p>
           <p>테스트가능성 <span class="stars">★★★★</span><br><span class="note">방어층이 늘어난 만큼 층별 시험을 함께 관리해야 함</span></p>
         </td>
         <td>
-          <p>강건성 <span class="stars">★★</span><br><span class="note">깜빡임과 스파이크가 통과한다 — 방어가 평활 하나</span></p>
-          <p>제어가능성 <span class="stars">★★★</span><br><span class="note">오판이 행동 지시로 직행한다 — 억제 층 없음</span></p>
+          <p>강건성 <span class="stars">★★</span><br><span class="note">깜빡임과 순간 이상값이 남을 수 있음 — 방어 수단이 짧은 이동평균뿐</span></p>
+          <p>제어가능성 <span class="stars">★★★</span><br><span class="note">잘못된 판정이 바로 행동 지시가 됨 — 이를 막을 별도 단계가 없음</span></p>
         </td>
       </tr>
       <tr>
-        <th class="rowh">Trade<br>Off</th>
+        <th class="rowh">절충</th>
         <td class="win">오판이 지시가 되는 것을 구조로 막는다. 대신 코칭 반응이 최대 60초 늦다(의도적 선택 — 화면 표시는 즉시)</td>
         <td>변화가 수 초 안에 반영되고 단순하다. 대신 평활이 놓친 노이즈가 그대로 지시가 되고, 경계 근처 번복을 막을 장치가 없다</td>
       </tr>
@@ -796,12 +703,12 @@
 <!-- ======================= 슬라이드 3 ======================= -->
 <section class="slide">
   <div class="slide-head">
-    <h2>DP4. 설계결정 및 근거</h2>
+    <h2>DP4. 설계 결정과 근거</h2>
     <span class="sec-no">3</span>
   </div>
 
   <h3 class="num"><span>1.</span>최종 채택 구조</h3>
-  <p class="lead">후보 1: 계층 방어 판정 아키텍처 채택</p>
+  <p class="lead">1안: 계층 방어 판정 아키텍처 채택</p>
 
   <h3 class="num"><span>2.</span>채택 근거</h3>
   <ul>
@@ -814,7 +721,7 @@
 
   <h3 class="num"><span>3.</span>보완 계획</h3>
   <ul>
-    <li><strong>이번 과제에서 확인</strong>: 범위 밖 입력 차단율 100%(50/50), 정상 입력 오차단율 0%(0/500)였다. 번복 감소 기준은 5개 시드 모두 충족했고(100%, 5/5), 실제 감소 폭은 67.1~74.7%였다. 시험에서 만든 +10bpm 계단 입력에는 1틱 만에 전환했다.</li>
+    <li><strong>이번 과제에서 확인</strong>: 범위 밖 입력 차단율 100%(50/50), 정상 입력 오차단율 0%(0/500)였다. 번복 감소 기준은 5개 시드 모두 충족했고(100%, 5/5), 실제 감소 폭은 67.1~74.7%였다. 시험에서 만든 +10bpm 계단 입력에는 한 번의 갱신(1틱) 만에 전환했다.</li>
     <li><strong>향후 확인</strong>: 이 결과는 결정론적 입력을 사용한 구조 회귀시험이며 실제 워치 센서의 정확도 시험이 아니다. 실제 주행 데이터를 확보하게 되면 60초 평균과 판정 기준을 다시 조정한다.</li>
   </ul>
 
@@ -885,7 +792,7 @@
 
 <div class="deck-head">
   <h1>DP5. 테스트가능성 — 같은 조건을 반복 검증하는 설계</h1>
-  <p>인증과제 샘플(씬스틸러) DP 형식 3장 + Appendix 1장 — 2026-08-03 v2(리뷰 반영: 개별화 채택안+상세 도식) — 정본: <code>arch/dp/dp-05-testability/-decision.md</code>, 원고: <code>report/report-012</code></p>
+  <p>실제 달리기를 반복하지 않고도 같은 조건을 시험하는 방법을 비교한다.</p>
 </div>
 
 <!-- ======================= 슬라이드 1 ======================= -->
@@ -907,7 +814,7 @@
     <li><strong>자극을 재현할 수 없다.</strong> 같은 심박 곡선을 두 번 만들 수 없으니 수정 전후를 같은 조건에서 비교할 수 없다.</li>
     <li><strong>위험한 시나리오를 만들 수 없다.</strong> 위험 심박, 신호 두절 같은 중요한 상황은 실주행으로 만들기 어렵거나 위험하다.</li>
     <li><strong>변경마다 실주행이면 검증이 생략된다.</strong> 변경 하나의 검증 비용이 러닝 한 번이면 자동화가 불가능하다.</li>
-    <li><strong>시뮬에는 함정이 있다.</strong> 시뮬을 만든 가정으로 시뮬을 채점하면 "정확하다"는 결론이 정의상 나온다. 시뮬의 역할 한계를 정직하게 그어야 한다.</li>
+    <li><strong>시뮬레이션에는 한계가 있다.</strong> 데이터를 만든 규칙으로 같은 데이터를 채점하면 좋은 결과가 당연히 나오기 쉽다. 따라서 시뮬레이션으로 확인할 수 있는 범위를 분명히 해야 한다.</li>
   </ul>
 
   <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
@@ -932,14 +839,14 @@
     <tbody>
       <tr>
         <th class="rowh">한 줄<br>소개</th>
-        <td class="win">입력 자리를 인터페이스로 만들어 실센서와 시뮬을 갈아끼우는 구조</td>
+        <td class="win">입력 부분을 공통 인터페이스로 분리해 실제 센서와 가상 입력을 바꿔 끼우는 구조</td>
         <td>센서를 직결하고 검증은 실기기 실주행으로 하는 구조</td>
       </tr>
       <tr>
         <th class="rowh">구조</th>
         <td class="win">
           <div class="fig-frame"><img data-img="dp5-adopted" alt="1안 — 입력 교체와 반복 시뮬레이션 구조"></div>
-          <p class="note" style="margin-top:8px">실제 센서, 가상 러너, 수동 입력이 같은 인터페이스를 사용한다. 뒤의 판정·개인화·분석 로직은 입력 출처와 분리된다. 경계를 정해 둔 가상 러너의 결과를 다음 세션 입력에 다시 반영해 개인화 수렴을 빠르게 확인하고, 기기와 분리한 로직은 JVM 단위시험으로 반복 검사한다. QA1~QA4 검증 경로 4개를 모두 워치 없이 실행하고, 같은 seed 5종의 입력이 정확히 재현되는지 확인한다</p>
+          <p class="note" style="margin-top:8px">실제 센서, 가상 러너, 수동 입력이 같은 인터페이스를 사용한다. 뒤의 판정·개인화·분석 로직은 입력 출처와 분리된다. 경계를 정해 둔 가상 러너의 결과를 다음 세션 입력에 다시 반영해 개인화 수렴을 빠르게 확인하고, 기기와 분리한 로직은 JVM 단위시험으로 반복 검사한다. QA1~QA4 검증 경로 4개를 모두 워치 없이 실행하고, 같은 시드 5종의 입력이 정확히 재현되는지 확인한다</p>
         </td>
         <td>
           <div class="fig-frame"><img data-img="dp5-counter" alt="2안 — 실기기 결합 검증 아키텍처 다이어그램"></div>
@@ -950,26 +857,26 @@
         <th class="rowh">장점</th>
         <td class="win">
           <p>테스트가능성 <span class="stars">★★★★★</span><br><span class="note">같은 자극 반복 주입 + 자동 회귀 + 분 단위 수렴 검증</span></p>
-          <p>강건성 <span class="stars">★★★★</span><br><span class="note">위험/엣지 시나리오를 안전하게 주입해 방어 로직 검증</span></p>
+          <p>강건성 <span class="stars">★★★★</span><br><span class="note">위험/극단·예외 상황를 안전하게 주입해 방어 로직 검증</span></p>
         </td>
         <td>
           <p>강건성 <span class="stars">★★★</span><br><span class="note">실제 센서 조건을 볼 수 있지만 위험하고 드문 상황은 반복하기 어렵다</span></p>
         </td>
       </tr>
       <tr>
-        <th class="rowh">단점</th>
+        <th class="rowh">그 밖의<br>영향</th>
         <td class="win">
           <p>강건성 <span class="stars">★★★★</span><br><span class="note">시뮬레이션 통과가 실제 사람과 센서의 정확도를 증명하지는 않는다</span></p>
           <p>테스트가능성 <span class="stars">★★★★</span><br><span class="note">가상 러너와 시험 시나리오를 함께 관리해야 한다</span></p>
         </td>
         <td>
           <p>테스트가능성 <span class="stars">★★</span><br><span class="note">재현도 자동화도 안 됨 — 변경 하나 검증이 러닝 한 번</span></p>
-          <p>강건성 <span class="stars">★★</span><br><span class="note">위험/엣지 시나리오를 검증 못 한 채 남는다</span></p>
+          <p>강건성 <span class="stars">★★</span><br><span class="note">위험/극단·예외 상황를 검증 못 한 채 남는다</span></p>
         </td>
       </tr>
       <tr>
-        <th class="rowh">Trade<br>Off</th>
-        <td class="win">재현, 자동화, 안전한 엣지 검증을 얻는다. 대신 시뮬의 결론을 "구조 검증"으로 정직하게 한정해야 하고, 실기기 확인이 사라지지는 않는다</td>
+        <th class="rowh">절충</th>
+        <td class="win">재현, 자동화, 안전한 예외 상황 검증을 얻는다. 대신 시뮬의 결론을 "구조 검증"으로 정직하게 한정해야 하고, 실기기 확인이 사라지지는 않는다</td>
         <td>실제 기기에서 확인한다는 장점이 있다. 대신 같은 조건의 재현과 자동화가 어렵고, 위험하거나 드문 상황은 충분히 확인하기 어렵다</td>
       </tr>
     </tbody>
@@ -982,12 +889,12 @@
 <!-- ======================= 슬라이드 3 ======================= -->
 <section class="slide">
   <div class="slide-head">
-    <h2>DP5. 설계결정 및 근거</h2>
+    <h2>DP5. 설계 결정과 근거</h2>
     <span class="sec-no">3</span>
   </div>
 
   <h3 class="num"><span>1.</span>최종 채택 구조</h3>
-  <p class="lead">후보 1: 입력 교체 + 반복 시뮬레이션 구조 채택</p>
+  <p class="lead">1안: 입력 교체 + 반복 시뮬레이션 구조 채택</p>
 
   <h3 class="num"><span>2.</span>채택 근거</h3>
   <ul>
@@ -1000,7 +907,7 @@
 
   <h3 class="num"><span>3.</span>보완 계획</h3>
   <ul>
-    <li><strong>이번 과제에서 확인</strong>: QA1~QA4 자동 검증 경로 4개를 모두 워치 없이 실행했다(4/4). 같은 seed로 다시 만든 입력은 5개 seed 모두 일치했고(100%, 5/5), 서로 다른 seed에서는 다른 심박 시퀀스가 생성됐다. 전체 JVM 단위시험은 153/153 통과했다.</li>
+    <li><strong>이번 과제에서 확인</strong>: QA1~QA4 자동 검증 경로 4개를 모두 워치 없이 실행했다(4/4). 같은 시드로 다시 만든 입력은 5개 시드 모두 일치했고(100%, 5/5), 서로 다른 시드에서는 다른 심박 시퀀스가 생성됐다. 전체 JVM 단위시험은 153/153 통과했다.</li>
     <li><strong>향후 확인</strong>: 실제 기기 연결, 실제 센서 성능, 사람에 대한 정확도는 자동시험이 답하지 못한다. 제품화를 검토할 때 별도의 기기·사용자 평가로 확인한다.</li>
   </ul>
 
@@ -1017,7 +924,7 @@
   <h3 class="num"><span>A1.</span>이 설계 결정이 다루는 품질 문제</h3>
   <ul>
     <li>같은 자극을 두 번 줄 수 없다 → 테스트가능성(재현 주입)</li>
-    <li>위험/엣지 시나리오를 실주행으로 못 만든다 → 테스트가능성, 강건성</li>
+    <li>위험/극단·예외 상황를 실주행으로 못 만든다 → 테스트가능성, 강건성</li>
     <li>변경마다 실주행 검증은 비용이 감당 불가 → 테스트가능성(자동 회귀)</li>
     <li>정답지가 없어 "정확하다" 채점 불가 → 시뮬 역할을 구조 검증으로 한정</li>
     <li>개인화 수렴에 여러 세션이 필요하다 → 결과를 다음 입력에 반영하는 반복 시뮬레이션</li>
@@ -1033,7 +940,7 @@
       <tr><th style="width:11em">요소</th><th>하는 일</th></tr>
     </thead>
     <tbody>
-      <tr><td><strong>1. 소스 추상화</strong></td><td>실센서/가상 러너/수동 시뮬이 같은 인터페이스로 꽂힌다 — 검증과 운영이 같은 코드 경로</td></tr>
+      <tr><td><strong>1. 소스 추상화</strong></td><td>실제 센서/가상 러너/수동 입력이 같은 인터페이스로 꽂힌다 — 검증과 운영이 같은 코드 경로</td></tr>
       <tr><td><strong>2. 반복 가상 러너</strong></td><td>경계를 정해 둔 가상 러너의 결과를 다음 세션 입력에 반영해 수렴 과정을 자동 실행</td></tr>
       <tr><td><strong>3. 순수 로직 분리</strong></td><td>판정 로직을 기기와 분리해 JVM 단위시험으로 자동 회귀 확인</td></tr>
       <tr><td><strong>4. 시뮬레이션 계측</strong></td><td>QA별로 정한 입력을 넣고 결과를 같은 지표로 기록</td></tr>
@@ -1071,7 +978,7 @@
 
 <div class="deck-head">
   <h1>최종 아키텍처 — 다섯 QAS를 하나의 구조로 연결</h1>
-  <p>거시 1장 + 모듈별 4장 — 최종 구현 상태(as-built)를 강의 AI System 용어로 표현 — 2026-08-01 v1 — 원고: <code>report/report-013</code>, 도식: <code>arch/diagrams/06*</code></p>
+  <p>다섯 QAS가 실제 구현 안에서 어떻게 연결되는지 전체 구조와 주요 흐름으로 설명한다.</p>
 </div>
 
 <section class="slide">
@@ -1086,9 +993,9 @@
       <tr><td>출력 가드레일</td><td>형식 가드 + DirectionGuard + NumberGuard + SafetyGuard</td><td>A8</td></tr>
       <tr><td>추론 제어</td><td>RunEngine(오케스트레이터)</td><td>A9</td></tr>
       <tr><td>설명 서비스</td><td>세션·개인화 설명 + 판단에 사용한 값과 LLM 생성 과정 기록</td><td>B</td></tr>
-      <tr><td>분석 서비스</td><td>세션 내/세션 간 분석 + 서빙 로그</td><td>C</td></tr>
-      <tr><td>운영 서비스 + HITL/HOTL</td><td>대시보드/리포트 UI + 말하기 테스트 + 설정/감사</td><td>D</td></tr>
-      <tr><td>Data Lake / Model Artifact</td><td>SessionStore(세션 이력) / LearnedZone(개인 경계)</td><td>E</td></tr>
+      <tr><td>분석 서비스</td><td>세션 내/세션 간 분석 + 실행 기록</td><td>C</td></tr>
+      <tr><td>운영 서비스 + 사용자 개입</td><td>대시보드/리포트 UI + 말하기 테스트 + 설정/사후 확인</td><td>D</td></tr>
+      <tr><td>세션·개인화 데이터</td><td>SessionStore(세션 이력) / LearnedZone(개인 경계)</td><td>E</td></tr>
       <tr><td>Model Construction / Retraining</td><td>말하기 테스트 응답으로 개인 경계를 갱신하는 온디바이스 적응</td><td>F1</td></tr>
       <tr><td>모델 테스팅</td><td>같은 입력을 반복하는 가상 러너와 자동시험</td><td>F2</td></tr>
       <tr><td>Model Registry (인접)</td><td>NanoModelManager(모델 상태/다운로드) + AICore/APK</td><td>A7-1/E4</td></tr>
@@ -1108,7 +1015,7 @@
 <section class="slide">
   <div class="slide-head"><h2>모듈 B+C: 설명 + 분석 서비스</h2><span class="sec-no">3</span></div>
   <div class="fig-frame"><img data-img="mod-bc" alt="모듈 B+C 설명 분석 상세"></div>
-  <p class="note">설명 모듈(B)은 판단에 실제로 사용한 값으로 세션과 개인화 설명을 만들고 저장한다. 세션 중 LLM을 호출하면 입력 사실, 프롬프트, 채택·기각·기본 문구 경로와 걸린 시간을 함께 기록한다. 분석 모듈(C)은 한 세션의 구간·경사·워밍업과 여러 세션의 비교·추세를 계산한다.</p>
+  <p class="note">설명 모듈(B)은 판단에 실제로 사용한 값으로 세션과 개인화 설명을 만들고 저장한다. 세션 중 LLM을 호출하면 입력 사실, 프롬프트, 채택·차단·기본 문구 경로와 걸린 시간을 함께 기록한다. 분석 모듈(C)은 한 세션의 구간·경사·워밍업과 여러 세션의 비교·추세를 계산한다.</p>
   <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
 </section>
 
@@ -1122,11 +1029,11 @@
 <section class="slide">
   <div class="slide-head"><h2>모듈 F: 개인 적응과 반복 검증</h2><span class="sec-no">3</span></div>
   <div class="fig-frame"><img data-img="mod-f" alt="모듈 F 적응 검증 상세"></div>
-  <p class="note">개인 적응(F1)은 말하기 테스트 응답이 들어올 때 Bayesian 방식으로 경계를 갱신하고 결과를 다음 세션에 이어 쓴다. 반복 검증 구조(F2)는 seed 기반 난수 입력으로 QA1~QA4를 반복 확인하고, 같은 seed의 결과가 재현되는지 검증한다. Nano 준비 관리자(A7-1)는 모델 상태를 확인하고 세션 밖에서 다운로드를 요청한다.</p>
+  <p class="note">개인 적응(F1)은 말하기 테스트 응답이 들어올 때 베이지안 방식으로 경계를 갱신하고 결과를 다음 세션에 이어 쓴다. 반복 검증 구조(F2)는 시드 기반 난수 입력으로 QA1~QA4를 반복 확인하고, 같은 시드의 결과가 재현되는지 검증한다. Nano 준비 관리자(A7-1)는 모델 상태를 확인하고 세션 밖에서 다운로드를 요청한다.</p>
 
   <h3 class="num"><span>■</span>DP 도식과의 관계 — 다섯 QAS가 한 아키텍처에 모인다</h3>
   <div class="tbl"><table class="decide">
-    <thead><tr><th style="width:4em">DP</th><th style="width:8em">QA</th><th>이 아키텍처의 어느 단면인가</th><th style="width:13em">카운터(2안)</th></tr></thead>
+    <thead><tr><th style="width:4em">DP</th><th style="width:8em">QA</th><th>이 아키텍처의 어느 단면인가</th><th style="width:13em">비교안(2안)</th></tr></thead>
     <tbody>
       <tr><td>DP1</td><td>설명용이성</td><td>규칙 판정(A4/A5) + 설명 서비스(B) + 판단 값과 생성 과정 기록(B2-1)</td><td>블랙박스 판정 뒤에 설명 추가</td></tr>
       <tr><td>DP2</td><td>제어가능성</td><td>LLM 권한 제한(A7) + 출력 검사(A8) + 기본 문구 + 사용자 설정과 기록(D3)</td><td>LLM에 판단 위임</td></tr>
@@ -1154,7 +1061,7 @@
 
 <div class="deck-head">
   <h1>구현 / QAS 검증 / 결론</h1>
-  <p>설계가 실제 기능으로 어떻게 구현됐는지 보여 주고, 네 가지 QAS의 자동 검증 결과와 한계를 정리한다.</p>
+  <p>설계가 실제 기능으로 어떻게 구현됐는지 보여 주고, 다섯 가지 QAS의 자동 검증 결과와 한계를 정리한다.</p>
 </div>
 
 <section class="slide">
@@ -1163,7 +1070,7 @@
     <tbody>
       <tr><th class="rowh">플랫폼</th><td>Android 폰 앱과 Wear OS 워치 앱, Kotlin</td></tr>
       <tr><th class="rowh">역할 분리</th><td>폰은 판정·분석·개인화·코칭을 담당하고, 워치는 심박을 측정해 보내고 판정 결과를 표시한다.</td></tr>
-      <tr><th class="rowh">AI 구성</th><td>규칙 판정 + 온라인 Bayesian 개인화 + 관측 통계 분석 + 온디바이스 LLM 문장 표현</td></tr>
+      <tr><th class="rowh">AI 구성</th><td>규칙 판정 + 온라인 베이지안 개인화 + 관측 통계 분석 + 온디바이스 LLM 문장 표현</td></tr>
       <tr><th class="rowh">통제 장치</th><td>입력 범위 검사, 판정 히스테리시스, LLM 방향·숫자 검사, 기본 문구, 규칙 우선 처리</td></tr>
       <tr><th class="rowh">외부 의존</th><td>워치 센서, GPS, AICore, Open-Meteo, OSM 지도 타일을 사용한다. 자체 서버는 없다.</td></tr>
       <tr><th class="rowh">데이터 경계</th><td>심박·개인화 값·세션 분석은 자체 서버나 외부 AI API로 보내지 않는다. 날씨와 지도는 외부 요청을 사용한다.</td></tr>
@@ -1236,11 +1143,11 @@
   <div class="tbl"><table class="decide">
     <thead><tr><th style="width:8em">품질 속성</th><th style="width:14em">적용한 설계</th><th>성공 기준과 결과</th><th style="width:4em">판정</th></tr></thead>
     <tbody>
-      <tr><td>QA1<br><strong>설명용이성</strong></td><td>규칙이 사실 확정, 숫자 가드, 근거 기록</td><td>미등록 숫자 차단율 <strong>100%(5/5)</strong><br>사실 문장 통과율 <strong>100%(3/3)</strong><br>근거 기록 저장·복원 시험 통과</td><td class="ok">달성</td></tr>
-      <tr><td>QA2<br><strong>기능적응성</strong></td><td>말하기 테스트와 제한된 Bayesian 갱신</td><td>15개 사례 목표 오차 도달률 <strong>100%(15/15)</strong><br>모의 응답 10회 이내 도달, 응답 40회 뒤 오차 <strong>0.20~0.77bpm</strong><br>기준 사례의 마지막 4세션 폭 <strong>3.04bpm</strong>, 세션 최대 이동 <strong>9.97bpm</strong></td><td class="ok">달성</td></tr>
+      <tr><td>QA1<br><strong>설명용이성</strong></td><td>규칙이 판단 사실을 확정하고 근거를 기록</td><td>대표 판정 근거 기록률 <strong>100%(3/3)</strong><br>미등록 숫자 차단율 <strong>100%(5/5)</strong><br>사실 문장 통과율 <strong>100%(3/3)</strong><br>관련 기록 시험 통과</td><td class="ok">달성</td></tr>
+      <tr><td>QA2<br><strong>기능적응성</strong></td><td>말하기 테스트와 이동 폭을 제한한 베이지안 갱신</td><td>15개 사례 목표 오차 도달률 <strong>100%(15/15)</strong><br>모의 응답 10회 이내 도달, 응답 40회 뒤 오차 <strong>0.20~0.77bpm</strong><br>기준 사례의 마지막 4세션 경계 범위 <strong>3.04bpm</strong>, 세션 최대 이동 <strong>9.97bpm</strong></td><td class="ok">달성</td></tr>
       <tr><td>QA3<br><strong>제어가능성</strong></td><td>방향·형식·숫자 가드와 기본 문구</td><td>의도적으로 만든 위반 문장 탐지율 <strong>100%(10/10)</strong><br>정상 문장 통과율 <strong>100%(5/5)</strong><br>LLM 미가용 경로의 기본 문구 전환 시험 통과</td><td class="ok">달성</td></tr>
-      <tr><td>QA4<br><strong>강건성</strong></td><td>입력 가드와 판정 히스테리시스</td><td>이상치 차단율 <strong>100%(50/50)</strong>, 정상 오차단율 <strong>0%(0/500)</strong><br>번복 감소 기준 충족률 <strong>100%(5/5 seed)</strong>, 실제 감소 폭 <strong>67.1~74.7%</strong><br>+10bpm 계단 입력 전환 <strong>1틱</strong></td><td class="ok">달성</td></tr>
-      <tr><td>QA5<br><strong>테스트가능성</strong></td><td>RunSource, seed 기반 가상 러너, 순수 로직 시험</td><td>QA1~QA4 워치 없는 자동 경로 <strong>100%(4/4) 제공</strong><br>동일 seed 재현율 <strong>100%(5/5)</strong><br>전체 JVM 단위시험 <strong>153/153 통과</strong></td><td class="ok">달성</td></tr>
+      <tr><td>QA4<br><strong>강건성</strong></td><td>입력 가드와 판정 히스테리시스</td><td>이상치 차단율 <strong>100%(50/50)</strong>, 정상 오차단율 <strong>0%(0/500)</strong><br>5개 시드 모두 번복 감소 기준 충족 <strong>100%(5/5)</strong>, 실제 감소 폭 <strong>67.1~74.7%</strong><br>+10bpm 계단 입력 전환 <strong>1틱</strong></td><td class="ok">달성</td></tr>
+      <tr><td>QA5<br><strong>테스트가능성</strong></td><td>RunSource, 시드 기반 가상 러너, 순수 로직 시험</td><td>QA1~QA4 워치 없는 자동 경로 <strong>100%(4/4) 제공</strong><br>동일 시드 재현율 <strong>100%(5/5)</strong><br>전체 JVM 단위시험 <strong>153/153 통과</strong></td><td class="ok">달성</td></tr>
     </tbody>
   </table></div>
   <p class="note">측정 코드는 QaMeasurementTest.kt에 있으며 결과는 app/app/build/qa-measurements에 저장된다.</p>
@@ -1252,15 +1159,15 @@
   <div class="tbl"><table class="decide">
     <thead><tr><th style="width:9em">항목</th><th>확인한 내용</th><th>이 결과로는 말할 수 없는 내용</th></tr></thead>
     <tbody>
-      <tr><td>설명용이성</td><td>선언한 문장 집합에서 근거에 없는 숫자를 차단했다.</td><td>모든 한국어 문장을 완벽하게 검사하거나 모든 사용자가 설명을 쉽게 이해한다는 뜻은 아니다.</td></tr>
+      <tr><td>설명용이성</td><td>대표 판정의 심박·개인 경계를 기록했고, 선언한 문장 집합에서 근거에 없는 숫자를 차단했다.</td><td>모든 한국어 문장을 완벽하게 검사하거나 모든 사용자가 설명을 쉽게 이해한다는 뜻은 아니다.</td></tr>
       <tr><td>기능적응성</td><td>가상 러너에서 개인화 값이 정해 둔 목표 안으로 수렴하고 안정됐다.</td><td>실제 사람의 유산소 역치를 0.20~0.77bpm 오차로 찾았다는 뜻은 아니다.</td></tr>
       <tr><td>제어가능성</td><td>선언한 위반 문장과 LLM 실패 경로를 규칙이 처리했다.</td><td>세상에 존재하는 모든 잘못된 표현을 막는다는 뜻은 아니다.</td></tr>
       <tr><td>강건성</td><td>정해 둔 이상값과 노이즈 입력에서 판정 규칙이 목표대로 동작했다.</td><td>실제 손목 센서의 정확도와 모든 실외 환경을 검증했다는 뜻은 아니다.</td></tr>
-      <tr><td>테스트가능성</td><td>같은 seed의 난수 입력을 다시 만들고 네 AI QAS를 워치 없이 실행했다.</td><td>시뮬레이션 결과가 실제 사람과 센서의 정확도를 대신한다는 뜻은 아니다.</td></tr>
+      <tr><td>테스트가능성</td><td>같은 시드의 난수 입력을 다시 만들고 네 AI QAS를 워치 없이 실행했다.</td><td>시뮬레이션 결과가 실제 사람과 센서의 정확도를 대신한다는 뜻은 아니다.</td></tr>
     </tbody>
   </table></div>
   <h3 class="num"><span>■</span>공통 검증 기반</h3>
-  <p>RunSource 교체, 가상 러너, 고정 seed, JVM 단위시험은 네 AI QAS를 워치 없이 반복 확인하게 해 준다. 전체 단위시험 153/153 통과는 제품 정확도가 아니라 자동 회귀 범위를 보여 주는 참고 정보다.</p>
+  <p>RunSource 교체, 가상 러너, 고정 시드, JVM 단위시험은 네 AI QAS를 워치 없이 반복 확인하게 해 준다. 전체 단위시험 153/153 통과는 제품 정확도가 아니라 자동 회귀 범위를 보여 주는 참고 정보다.</p>
   <h3 class="num"><span>■</span>보조 성능 확인</h3>
   <p>60분 분량 3600틱의 JVM 로직 비용은 틱당 0.1ms 미만이었다. 워치 통신, 화면, TTS, LLM을 포함하지 않으므로 실기기 전체 성능으로 일반화하지 않는다.</p>
   <div class="crumb">과제 소개 <span>요구사항</span> <span>설계</span> <b>구현/검증</b> <span>결론</span></div>
@@ -1297,7 +1204,7 @@
 
 <div class="deck-head">
   <h1>부록 — 아키텍처를 읽는 다섯 가지 관점</h1>
-  <p>인증 보고서 부록 뷰 5종(도식 6장 — C&amp;C는 상세/축약 2장) — 2026-08-01 v1 — 원고: <code>report/report-017</code>, 도식: <code>arch/diagrams/</code></p>
+  <p>같은 시스템을 사용자, 실행 흐름, 모듈, 데이터, 배포의 관점에서 나누어 본다.</p>
 </div>
 
 <section class="slide">

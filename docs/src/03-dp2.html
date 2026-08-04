@@ -24,7 +24,7 @@
     <li><strong>판단과 표현의 책임을 나눠야 한다.</strong> 코칭 방향과 근거 숫자는 규칙이 먼저 정하고, LLM은 그 범위 안에서 문장만 만든다.</li>
     <li><strong>LLM을 사용할 수 없는 상황도 있다.</strong> 지원하지 않는 기종, 첫 모델 다운로드 전, 응답 지연이나 실행 실패에도 코칭이 끊기지 않아야 한다.</li>
     <li><strong>정해 둔 고심박 규칙은 먼저 동작해야 한다.</strong> 설정된 임계값을 넘으면 LLM을 기다리지 않고 규칙 문구를 사용한다.</li>
-    <li><strong>자동 대응을 나중에 확인할 수 있어야 한다.</strong> 문장이 왜 기각되거나 기본 문구로 바뀌었는지 기록으로 남겨야 한다.</li>
+    <li><strong>자동 대응을 나중에 확인할 수 있어야 한다.</strong> 문장이 왜 차단되거나 기본 문구로 바뀌었는지 기록으로 남겨야 한다.</li>
   </ul>
 
   <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
@@ -56,7 +56,7 @@
         <th class="rowh">구조</th>
         <td class="win">
           <div class="fig-frame"><img data-img="dp2-adopted" alt="1안 — 규칙 확정 + LLM 표현 한정 아키텍처, 제어가능성 관점"></div>
-          <p class="note" style="margin-top:8px">규칙이 방향과 사실 숫자를 확정하면 LLM은 그 재료로 문장만 만든다. 나온 문장은 형식, 방향, 숫자 세 가지 검사를 거치고, 걸리거나 LLM이 실패하면 "속도 줄이기" 같은 짧은 문구로 바꿔 내보낸다. 위험 심박 권고는 LLM을 거치지 않고, 모든 호출의 경로와 기각 사유가 기록된다</p>
+          <p class="note" style="margin-top:8px">규칙이 방향과 사실 숫자를 확정하면 LLM은 그 재료로 문장만 만든다. 나온 문장은 형식, 방향, 숫자 세 가지 검사를 거치고, 걸리거나 LLM이 실패하면 "속도 줄이기" 같은 짧은 문구로 바꿔 내보낸다. 위험 심박 권고는 LLM을 거치지 않고, 모든 호출의 경로와 차단 사유가 기록된다</p>
         </td>
         <td>
           <div class="fig-frame"><img data-img="dp2-counter" alt="2안 — LLM 판단 위임 아키텍처 다이어그램"></div>
@@ -66,7 +66,7 @@
       <tr>
         <th class="rowh">장점</th>
         <td class="win">
-          <p>제어가능성 <span class="stars">★★★★★</span><br><span class="note">문장 기각(교정), 폴백(보완), 위험 시 LLM 우회(안전전환)가 구조에 있고 자동으로 작동한다</span></p>
+          <p>제어가능성 <span class="stars">★★★★★</span><br><span class="note">문장 차단(교정), 기본 문구 전환(보완), 위험 시 LLM 우회(안전전환)가 구조에 있고 자동으로 작동한다</span></p>
           <p>강건성 <span class="stars">★★★★★</span><br><span class="note">LLM이 실패해도 짧은 문구로 코칭이 이어진다</span></p>
         </td>
         <td>
@@ -75,7 +75,7 @@
         </td>
       </tr>
       <tr>
-        <th class="rowh">단점</th>
+        <th class="rowh">그 밖의<br>영향</th>
         <td class="win">
           <p>기능적응성 <span class="stars">★★★</span><br><span class="note">언제 무엇을 코칭할지는 규칙에 묶여, 새 상황은 규칙을 추가해야 한다</span></p>
           <p>테스트가능성 <span class="stars">★★★★★</span><br><span class="note">검사 조건과 기본 문구 전환을 자동시험으로 반복 확인할 수 있다</span></p>
@@ -86,9 +86,9 @@
         </td>
       </tr>
       <tr>
-        <th class="rowh">Trade<br>Off</th>
+        <th class="rowh">절충</th>
         <td class="win">어긋난 문장은 걸러지고 실패해도 코칭이 이어진다. 대신 코칭 내용의 자유도에 상한이 있다</td>
-        <td>문맥이 풍부한 코칭이 나올 수 있다. 대신 통제가 "LLM이 규정을 따라 준다"는 기대에 의존하고, 실패하면 갈아탈 판단 주체가 없다</td>
+        <td>문맥이 풍부한 코칭이 나올 수 있다. 대신 통제가 "LLM이 규정을 따라 준다"는 기대에 의존하고, 실패에 대비한 별도 판단 경로가 필요하다</td>
       </tr>
     </tbody>
   </table>
@@ -100,19 +100,19 @@
 <!-- ======================= 슬라이드 3 ======================= -->
 <section class="slide">
   <div class="slide-head">
-    <h2>DP2. 설계결정 및 근거</h2>
+    <h2>DP2. 설계 결정과 근거</h2>
     <span class="sec-no">3</span>
   </div>
 
   <h3 class="num"><span>1.</span>최종 채택 구조</h3>
-  <p class="lead">후보 1: 규칙 확정 + LLM 표현 한정 아키텍처 채택</p>
+  <p class="lead">1안: 규칙 확정 + LLM 표현 한정 아키텍처 채택</p>
 
   <h3 class="num"><span>2.</span>채택 근거</h3>
   <ul>
-    <li><strong>LLM 출력이 기준을 벗어나거나 모델을 사용할 수 없을 때 자동으로 대응한다.</strong> 기준을 벗어난 문장은 기각하고, LLM이 없으면 짧은 기본 문구로 바꾸며, 고심박 권고는 LLM을 거치지 않는다.</li>
+    <li><strong>LLM 출력이 기준을 벗어나거나 모델을 사용할 수 없을 때 자동으로 대응한다.</strong> 기준을 벗어난 문장은 차단하고, LLM이 없으면 짧은 기본 문구로 바꾸며, 고심박 권고는 LLM을 거치지 않는다.</li>
     <li><strong>통제 기준은 LLM 밖에 있다.</strong> 규칙이 방향·형식·숫자를 확인하고 기준에 맞지 않으면 기본 문구로 바꾼다. 2안은 판단과 표현을 모두 LLM에 맡기므로 실패 시 비교할 기준이 약하다.</li>
-    <li><strong>실패해도 코칭이 이어진다.</strong> LLM이 없거나 실패했을 때 1안의 최악은 "짧은 문구 코칭"이고, 2안의 최악은 "코칭 중단"이다.</li>
-    <li><strong>통제 작동을 데이터로 확인한다.</strong> 어떤 문장이 왜 기각됐고 언제 폴백했는지가 세션마다 기록되어 리포트에서 확인할 수 있다.</li>
+    <li><strong>실패해도 코칭이 이어진다.</strong> LLM이 없거나 실패했을 때 1안은 짧은 기본 문구로 코칭을 이어 간다. 2안은 별도 대체 경로를 두지 않으면 코칭이 중단될 수 있다.</li>
+    <li><strong>통제 작동을 데이터로 확인한다.</strong> 어떤 문장이 왜 차단됐고 언제 기본 문구로 바뀌었는지가 세션마다 기록되어 리포트에서 확인할 수 있다.</li>
     <li><strong>DP1과 같은 구조에서 나온다.</strong> 판단을 규칙에 두었기 때문에 설명이 실제 판단과 일치하고(DP1), 나온 문장을 검사할 정답도 시스템 안에 생긴다(DP2). 하나의 구조 선택이 두 품질을 함께 만든다.</li>
   </ul>
 
@@ -149,10 +149,10 @@
     </thead>
     <tbody>
       <tr><td><strong>1. 격리</strong></td><td>판단은 규칙, LLM은 문장만 — 맡기는 권한 자체를 좁힌다</td><td>예방</td></tr>
-      <tr><td><strong>2. 출력 검사</strong></td><td>형식(길이), 방향(판정과 모순이면 기각), 숫자(관측에 없는 숫자면 기각)</td><td>교정</td></tr>
+      <tr><td><strong>2. 출력 검사</strong></td><td>형식(길이), 방향(판정과 모순이면 차단), 숫자(관측에 없는 숫자면 차단)</td><td>교정</td></tr>
       <tr><td><strong>3. 기본 문구</strong></td><td>검사에 걸리거나 LLM이 실패하면 "속도 줄이기" 같은 짧은 문구로 바꿔 내보낸다</td><td>보완</td></tr>
       <tr><td><strong>4. 안전 분리</strong></td><td>위험 심박 권고는 LLM을 거치지 않는다</td><td>안전전환</td></tr>
-      <tr><td><strong>5. 사람 개입 + 기록</strong></td><td>말하기 테스트로 판정 기준 정정, 설정 토글, 모든 호출 경로와 기각 사유를 세션에 기록</td><td>교정, 보완, 감사</td></tr>
+      <tr><td><strong>5. 사람 개입 + 기록</strong></td><td>말하기 테스트로 판정 기준 정정, 설정 토글, 모든 호출 경로와 차단 사유를 세션에 기록</td><td>교정, 보완, 사후 확인</td></tr>
     </tbody>
   </table>
   </div>
@@ -174,7 +174,7 @@
   <p class="note"><strong>평가 조건</strong>: 폰 안에서 실행하고, 실시간으로 문장을 내보내며, LLM을 사용할 수 없는 상황에도 코칭이 이어져야 한다는 조건에서 비교했다. 사람이 모든 출력을 미리 검토할 수 있는 서비스라면 2안의 평가가 달라질 수 있다.</p>
 
   <h3 class="num"><span>A4.</span>용어 대조(심사용)와 근거 문헌</h3>
-  <p class="note">개입 가능성 = intervenability(ISO/IEC 25059 제어가능성의 핵심) / 맡기는 일 자체를 좁히는 통제 = architectural containment(구조적 격리) / 실패 시 무손상 전환 = fail-safe fallback / 사람 개입 = HITL(루프 안 교정), HOTL(루프 위 감독) / 사후 확인 = audit(감사)</p>
+  <p class="note">개입 가능성 = intervenability(ISO/IEC 25059 제어가능성의 핵심) / 맡기는 일 자체를 좁히는 통제 = architectural containment(구조적 격리) / 실패 시 무손상 전환 = fail-safe fallback / 사람 개입 = HITL(루프 안 교정), HOTL(루프 위 감독) / 사후 확인 = audit</p>
   <p class="note">근거 문헌: ISO/IEC 25059(제어가능성 정의) / LLM 가드레일 계층 방어 서베이(구조적 격리가 가장 강한 층) / LLM 단독 판단 회피 권고 / 생성 결과 검사와 실패 경로 분리를 다룬 가드레일 연구</p>
   <p class="note">상세 = <code>arch/dp/dp-02-controllability/</code> (decision / research / counter-catalog)</p>
 

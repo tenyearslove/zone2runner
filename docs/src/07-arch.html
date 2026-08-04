@@ -2,7 +2,7 @@
 
 <div class="deck-head">
   <h1>최종 아키텍처 — 다섯 QAS를 하나의 구조로 연결</h1>
-  <p>거시 1장 + 모듈별 4장 — 최종 구현 상태(as-built)를 강의 AI System 용어로 표현 — 2026-08-01 v1 — 원고: <code>report/report-013</code>, 도식: <code>arch/diagrams/06*</code></p>
+  <p>다섯 QAS가 실제 구현 안에서 어떻게 연결되는지 전체 구조와 주요 흐름으로 설명한다.</p>
 </div>
 
 <section class="slide">
@@ -17,9 +17,9 @@
       <tr><td>출력 가드레일</td><td>형식 가드 + DirectionGuard + NumberGuard + SafetyGuard</td><td>A8</td></tr>
       <tr><td>추론 제어</td><td>RunEngine(오케스트레이터)</td><td>A9</td></tr>
       <tr><td>설명 서비스</td><td>세션·개인화 설명 + 판단에 사용한 값과 LLM 생성 과정 기록</td><td>B</td></tr>
-      <tr><td>분석 서비스</td><td>세션 내/세션 간 분석 + 서빙 로그</td><td>C</td></tr>
-      <tr><td>운영 서비스 + HITL/HOTL</td><td>대시보드/리포트 UI + 말하기 테스트 + 설정/감사</td><td>D</td></tr>
-      <tr><td>Data Lake / Model Artifact</td><td>SessionStore(세션 이력) / LearnedZone(개인 경계)</td><td>E</td></tr>
+      <tr><td>분석 서비스</td><td>세션 내/세션 간 분석 + 실행 기록</td><td>C</td></tr>
+      <tr><td>운영 서비스 + 사용자 개입</td><td>대시보드/리포트 UI + 말하기 테스트 + 설정/사후 확인</td><td>D</td></tr>
+      <tr><td>세션·개인화 데이터</td><td>SessionStore(세션 이력) / LearnedZone(개인 경계)</td><td>E</td></tr>
       <tr><td>Model Construction / Retraining</td><td>말하기 테스트 응답으로 개인 경계를 갱신하는 온디바이스 적응</td><td>F1</td></tr>
       <tr><td>모델 테스팅</td><td>같은 입력을 반복하는 가상 러너와 자동시험</td><td>F2</td></tr>
       <tr><td>Model Registry (인접)</td><td>NanoModelManager(모델 상태/다운로드) + AICore/APK</td><td>A7-1/E4</td></tr>
@@ -39,7 +39,7 @@
 <section class="slide">
   <div class="slide-head"><h2>모듈 B+C: 설명 + 분석 서비스</h2><span class="sec-no">3</span></div>
   <div class="fig-frame"><img data-img="mod-bc" alt="모듈 B+C 설명 분석 상세"></div>
-  <p class="note">설명 모듈(B)은 판단에 실제로 사용한 값으로 세션과 개인화 설명을 만들고 저장한다. 세션 중 LLM을 호출하면 입력 사실, 프롬프트, 채택·기각·기본 문구 경로와 걸린 시간을 함께 기록한다. 분석 모듈(C)은 한 세션의 구간·경사·워밍업과 여러 세션의 비교·추세를 계산한다.</p>
+  <p class="note">설명 모듈(B)은 판단에 실제로 사용한 값으로 세션과 개인화 설명을 만들고 저장한다. 세션 중 LLM을 호출하면 입력 사실, 프롬프트, 채택·차단·기본 문구 경로와 걸린 시간을 함께 기록한다. 분석 모듈(C)은 한 세션의 구간·경사·워밍업과 여러 세션의 비교·추세를 계산한다.</p>
   <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
 </section>
 
@@ -53,11 +53,11 @@
 <section class="slide">
   <div class="slide-head"><h2>모듈 F: 개인 적응과 반복 검증</h2><span class="sec-no">3</span></div>
   <div class="fig-frame"><img data-img="mod-f" alt="모듈 F 적응 검증 상세"></div>
-  <p class="note">개인 적응(F1)은 말하기 테스트 응답이 들어올 때 Bayesian 방식으로 경계를 갱신하고 결과를 다음 세션에 이어 쓴다. 반복 검증 구조(F2)는 seed 기반 난수 입력으로 QA1~QA4를 반복 확인하고, 같은 seed의 결과가 재현되는지 검증한다. Nano 준비 관리자(A7-1)는 모델 상태를 확인하고 세션 밖에서 다운로드를 요청한다.</p>
+  <p class="note">개인 적응(F1)은 말하기 테스트 응답이 들어올 때 베이지안 방식으로 경계를 갱신하고 결과를 다음 세션에 이어 쓴다. 반복 검증 구조(F2)는 시드 기반 난수 입력으로 QA1~QA4를 반복 확인하고, 같은 시드의 결과가 재현되는지 검증한다. Nano 준비 관리자(A7-1)는 모델 상태를 확인하고 세션 밖에서 다운로드를 요청한다.</p>
 
   <h3 class="num"><span>■</span>DP 도식과의 관계 — 다섯 QAS가 한 아키텍처에 모인다</h3>
   <div class="tbl"><table class="decide">
-    <thead><tr><th style="width:4em">DP</th><th style="width:8em">QA</th><th>이 아키텍처의 어느 단면인가</th><th style="width:13em">카운터(2안)</th></tr></thead>
+    <thead><tr><th style="width:4em">DP</th><th style="width:8em">QA</th><th>이 아키텍처의 어느 단면인가</th><th style="width:13em">비교안(2안)</th></tr></thead>
     <tbody>
       <tr><td>DP1</td><td>설명용이성</td><td>규칙 판정(A4/A5) + 설명 서비스(B) + 판단 값과 생성 과정 기록(B2-1)</td><td>블랙박스 판정 뒤에 설명 추가</td></tr>
       <tr><td>DP2</td><td>제어가능성</td><td>LLM 권한 제한(A7) + 출력 검사(A8) + 기본 문구 + 사용자 설정과 기록(D3)</td><td>LLM에 판단 위임</td></tr>

@@ -1,10 +1,13 @@
 package com.zone2runner.app
 
+import com.zone2runner.app.coaching.CoachContext
+import com.zone2runner.app.coaching.CoachEvidence
 import com.zone2runner.app.coaching.CoachIntent
 import com.zone2runner.app.coaching.DirectionGuard
 import com.zone2runner.app.coaching.NumberGuard
 import com.zone2runner.app.coaching.RuleCoach
 import com.zone2runner.app.domain.Profile
+import com.zone2runner.app.domain.ZoneJudgment
 import com.zone2runner.app.domain.DisplayZoneJudge
 import com.zone2runner.app.domain.DisplayZones
 import com.zone2runner.app.pipeline.OutlierGuard
@@ -132,7 +135,7 @@ class QaMeasurementTest {
         assertTrue("오답 10% 주입에도 최종 오차 5bpm 이하 (실측 ${"%.2f".format(wrongFinal)})", wrongFinal <= 5.0)
     }
 
-    /** QA4 강건성 — 생리범위 밖 이상치 기각율 100% + 정상값 오탐 0. */
+    /** QA4 강건성 — 생리범위 밖 이상치 차단율 100% + 정상값 오탐 0. */
     @Test fun qa4_outlierRejection() {
         val rnd = Random(7)
         val valid = List(500) { 60 + rnd.nextInt(150) }        // 60~209
@@ -141,18 +144,18 @@ class QaMeasurementTest {
         val rejectedInvalid = invalid.count { !OutlierGuard.isValid(it) }
         val rejectedValid = valid.count { !OutlierGuard.isValid(it) }
         record("qa4-outlier", listOf(
-            "이상치 ${invalid.size}건 중 기각 ${rejectedInvalid}건 = 기각율 ${100 * rejectedInvalid / invalid.size}%",
-            "정상값 ${valid.size}건 중 오탐 기각 ${rejectedValid}건",
-            "경계값 검사: 40/220 유효, 39/221 기각 (off-by-one 확인)",
+            "이상치 ${invalid.size}건 중 차단 ${rejectedInvalid}건 = 차단율 ${100 * rejectedInvalid / invalid.size}%",
+            "정상값 ${valid.size}건 중 잘못 차단 ${rejectedValid}건",
+            "경계값 검사: 40/220 유효, 39/221 차단 (off-by-one 확인)",
             "성격: 구조 보증의 회귀 확인 — 가드 제거/완화 실수를 잡는 테스트(통과 자체가 성능 주장 아님)"
         ))
-        assertEquals("이상치 기각율 100%", invalid.size, rejectedInvalid)
+        assertEquals("이상치 차단율 100%", invalid.size, rejectedInvalid)
         assertEquals("정상값 오탐 0", 0, rejectedValid)
-        // 경계값(off-by-one): 포함 경계는 유효, 바로 밖은 기각
+        // 경계값(off-by-one): 포함 경계는 유효, 바로 밖은 차단
         assertTrue("경계 40 유효", OutlierGuard.isValid(40))
         assertTrue("경계 220 유효", OutlierGuard.isValid(220))
-        assertTrue("39 기각", !OutlierGuard.isValid(39))
-        assertTrue("221 기각", !OutlierGuard.isValid(221))
+        assertTrue("39 차단", !OutlierGuard.isValid(39))
+        assertTrue("221 차단", !OutlierGuard.isValid(221))
     }
 
     /**
@@ -203,7 +206,7 @@ class QaMeasurementTest {
         assertTrue("진짜 이동은 2틱 이내 전환 (실측 ${stepTicks}틱)", stepTicks <= 2)
     }
 
-    /** QA3 제어가능성 — 방향위반/무방향 문장 기각율 100% + 정상 문장 통과(과차단 0, 이 세트에서). */
+    /** QA3 제어가능성 — 방향 위반·방향 없음 문장 차단율 100% + 정상 문장 통과(과차단 0, 이 세트에서). */
     @Test fun qa3_directionViolationRejection() {
         val violations = listOf(
             Triple(CoachIntent.SLOW_DOWN, "조금만 더 속도를 올려봐요!", "역방향"),
@@ -227,15 +230,28 @@ class QaMeasurementTest {
         val rejected = violations.count { !DirectionGuard.ok(it.first, it.second) }
         val passed = legit.count { DirectionGuard.ok(it.first, it.second) }
         record("qa3-direction", listOf(
-            "방향위반/무방향 ${violations.size}문장 중 기각 ${rejected}건 = 기각율 ${100 * rejected / violations.size}%",
-            "정상 방향 ${legit.size}문장 중 통과 ${passed}건 (이 세트 과차단 0)"
+            "방향 위반·방향 없음 ${violations.size}문장 중 차단 ${rejected}건 = 차단율 ${100 * rejected / violations.size}%",
+            "정상 방향 ${legit.size}문장 중 통과 ${passed}건 (이 시험 집합의 정상 문장 오차단 0)"
         ))
-        assertEquals("방향위반 기각율 100%", violations.size, rejected)
+        assertEquals("방향 위반 차단율 100%", violations.size, rejected)
         assertEquals("정상 문장 통과", legit.size, passed)
     }
 
-    /** QA1 설명용이성 — 숫자 무결성: 근거에 없는 숫자가 실린 문장 기각율 100%("없는 숫자 금지" 기계 검증). */
-    @Test fun qa1_numberIntegrity() {
+    /** QA1 설명용이성 — 판정 근거 추적 + 표현의 숫자 무결성. */
+    @Test fun qa1_evidenceTraceAndNumberIntegrity() {
+        val evidenceCases = listOf(
+            ZoneJudgment.BELOW to "미달",
+            ZoneJudgment.IN to "Zone 2",
+            ZoneJudgment.ABOVE to "초과",
+        )
+        val evidencePassed = evidenceCases.count { (judgment, label) ->
+            val evidence = CoachEvidence.of(CoachContext(
+                judgment = judgment, slopePct = 0.0, paceMinKm = 6.0, elapsedSec = 300,
+                currentHr = 148, loBpm = 132, hiBpm = 152,
+            ))
+            evidence.contains("판정 $label") && evidence.contains("지속심박 148bpm") &&
+                evidence.contains("개인 경계 132~152bpm")
+        }
         val allowed = setOf(2L, 148L, 132L, 152L) // 관측: 현재심박 148, 경계 132~152 (+제품 용어 "Zone 2")
         val fabricated = listOf(
             "심박이 160이에요, 조금 낮춰요.",       // 관측에 없는 160
@@ -251,12 +267,14 @@ class QaMeasurementTest {
         )
         val rejected = fabricated.count { !NumberGuard.ok(allowed, it) }
         val passed = faithful.count { NumberGuard.ok(allowed, it) }
-        record("qa1-number-integrity", listOf(
+        record("qa1-evidence-integrity", listOf(
+            "대표 판정 근거 ${evidenceCases.size}건 중 판정·심박·개인 경계 추적 ${evidencePassed}건",
             "허용 숫자 집합=$allowed",
-            "지어낸 숫자 문장 ${fabricated.size}건 중 기각 ${rejected}건 = 기각율 ${100 * rejected / fabricated.size}%",
-            "사실 숫자/무숫자 문장 ${faithful.size}건 통과 ${passed}건"
+            "지어낸 숫자 문장 ${fabricated.size}건 중 차단 ${rejected}건 = 차단율 ${100 * rejected / fabricated.size}%",
+            "근거가 있는 숫자 또는 숫자가 없는 문장 ${faithful.size}건 통과 ${passed}건"
         ))
-        assertEquals("없는 숫자 기각율 100%", fabricated.size, rejected)
+        assertEquals("대표 판정 근거 추적률 100%", evidenceCases.size, evidencePassed)
+        assertEquals("없는 숫자 차단율 100%", fabricated.size, rejected)
         assertEquals("사실 기반 문장 통과", faithful.size, passed)
     }
 
