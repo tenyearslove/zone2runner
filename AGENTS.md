@@ -10,6 +10,11 @@
 
 ## 정본 우선순위
 
+### 현재 HTML 검수 단계의 예외
+
+- 사용자가 HTML 보고서를 검수하는 동안에는 `docs/src/*.html`과 실제 구현(`app/`, `wear/`, 관련 테스트·측정 코드)만 대조한다.
+- 이 단계에서는 `spec/`, `arch/`, `report/` 등 다른 문서와의 정합성을 검토하거나 함께 수정하지 않는다.
+- 다른 설계문서의 정합성 검토는 사용자가 별도로 시작하라고 요청한 뒤 진행한다.
 1. 실제 동작: `app/`, `wear/`
 2. 요구사항과 QA 정의: `spec/spec-001-requirements.md`, `spec/spec-002-quality-attributes.md`
 3. 아키텍처: `arch/architecture-overview.md`, `arch/component-catalog.md`, 활성 ADR, `arch/dp/`
