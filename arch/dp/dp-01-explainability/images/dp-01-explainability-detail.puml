@@ -1,90 +1,42 @@
 @startuml
-title DP2 채택안 상세 — 추상 블록을 하위 모듈(실제 클래스)까지 풀어 그린 설명용이성 경로
+title DP2 채택안 — 판단에 쓴 근거가 리포트까지 이어지는 순서
+
 skinparam defaultFontName "AppleGothic"
-skinparam componentStyle rectangle
 skinparam shadowing false
-skinparam packageStyle rectangle
-skinparam linetype ortho
+hide footbox
+skinparam sequence {
+  ArrowColor #5B7083
+  LifeLineBorderColor #5B7083
+  ParticipantBorderColor #5B7083
+  ParticipantBackgroundColor #E1F5FE
+  ActorBorderColor #5B7083
+}
 
+participant "센서·분석" as INPUT #FFF9C4
+participant "판정 규칙 ★" as DECISION #C8E6C9
+participant "문장 표현" as WORDS #BBDEFB
+database "근거 기록" as RECORD #CFD8DC
+participant "리포트" as REPORT #E1BEE7
 actor "사용자" as USER
-component "센서\nHR / GPS / 케이던스" as SENS #FFF9C4
-component "TTS 음성" as TTS #FFF9C4
 
-package "사실 확정 — 추상도의 «모델 서빙» 내부" {
-  component "OutlierGuard\n생리범위 밖 심박 기각" <<입력 가드레일>> as IG #FFE0B2
-  component "ZoneJudge\n지속심박 vs 개인 경계 비교\n(히스테리시스)" <<규칙 판정>> as JUDGE #BBDEFB
-  component "Personalization\n베이지안 경계 μ/σ\n말하기 테스트 라벨로 갱신" <<개인 적응>> as PERS #B2DFDB
-  component "AnalysisEngine\n드리프트/경사보정/케이던스\n관측 파생지표" <<분석>> as ANA #F8BBD0
-}
+INPUT -> DECISION : 정제한 심박 · 개인 경계 · 관측 지표
+activate DECISION
+DECISION -> DECISION : Zone 결과와 코칭 방향 확정
+DECISION -> WORDS : 확정한 사실만 전달
+DECISION -> RECORD : 판정 결과와 실제 사용값 기록
+deactivate DECISION
 
-package "표현 — LLM은 문장만 만든다" {
-  component "CoachPrompt\n확정 사실 숫자 + 임무\n→ 간결 프롬프트" as CP #E1F5FE
-  component "LlmCoach\nGemini Nano 문장 직생성" <<모델 서빙: LLM>> as LLM #BBDEFB
-}
+activate WORDS
+WORDS -> WORDS : 사실을 코칭 문장으로 표현
+WORDS -> RECORD : 생성 · 차단 · 기본 문구 사용 경로 기록
+WORDS -> REPORT : 코칭 문장
+deactivate WORDS
 
-package "출력 가드 3종 — 추상도의 «출력 가드레일» 내부" {
-  component "형식 가드\n길이 / 문장 수 / 이모지" as G1 #FFE0B2
-  component "DirectionGuard\n방향 모순·무방향 기각" as G2 #FFE0B2
-  component "NumberGuard\n출력 숫자 ⊆ 입력 사실" as G3 #FFE0B2
-}
+RECORD -> REPORT : 판정 근거와 생성 경로
+REPORT -> USER : 문장과 근거를 함께 표시
 
-package "설명 서비스 — 추상도의 «설명 서비스» 내부" {
-  component "CoachEvidence\n코칭 순간의 근거 관측 스냅샷\n(판정/심박/경계/경사/트리거)" as EV #C8E6C9
-  component "SessionExplainer\n세션 사실 요약(facts/article)\n→ 스토리 재료" as SE #C8E6C9
-  component "PersonalizationExplainer\n경계가 왜 이동했는지 facts" as PE #C8E6C9
-}
-
-package "프로비넌스 저장 — 추상도의 «저장» 내부" {
-  component "LlmCallLog\n호출 1건 = 기록 1건\n(근거/프롬프트/경로/출력/지연)" as LOG #CFD8DC
-  database "SessionStore\nRunReport.llmCalls + sessionStory\n(세션 JSON 영속)" as SS #CFD8DC
-  database "LearnedZone\n개인화 설명 + 생성 프롬프트" as LZ #CFD8DC
-}
-
-component "ReportActivity\n코칭 문장 터치 → 근거/프롬프트/출력\nLLM 사용 카드(채택/기각/지연)" <<운영: 열람>> as RPT #E1BEE7
-
-SENS --> IG
-IG --> JUDGE
-IG --> ANA
-PERS --> JUDGE : 개인 경계(학습값)
-USER ..> PERS : 말하기 테스트\n(HITL 정정, 즉시 반영)
-
-JUDGE --> CP : 판정+근거 숫자
-ANA --> CP : 파생지표(도출값)
-JUDGE --> EV
-ANA --> EV
-CP --> LLM
-LLM --> G1
-G1 --> G2
-G2 --> G3
-G3 --> TTS : 통과 문장\n(기각 시 단어 폴백)
-
-LLM ..> LOG : 프롬프트/경로/출력
-EV ..> LOG : 근거 관측
-LOG --> SS
-SE --> LLM : 세션 종료 1회\n(스토리 요약/풀이)
-JUDGE ..> SE
-ANA ..> SE
-PERS --> PE
-PE --> LZ
-SS --> RPT : 조회는 저장본만\n(LLM 재호출 없음)
-LZ --> RPT
-USER ..> RPT
-
-note bottom of EV
-  모든 숫자에 출처 표시
-  관측(A) / 학습(B) / 설계(C)
+note over DECISION, RECORD
+  설명을 나중에 추정하지 않고,
+  판단에 실제로 사용한 값을 같은 흐름에서 남긴다.
 end note
-
-legend right
-|= 색 |= 성격 |
-|<#FFE0B2>| 가드레일 (입·출력 통제) |
-|<#BBDEFB>| 모델 서빙 (투명 판정 / LLM) |
-|<#B2DFDB>| 개인 적응 (베이지안) |
-|<#F8BBD0>| 분석 (관측 파생지표) |
-|<#E1F5FE>| 데이터 준비 (프롬프트) |
-|<#C8E6C9>| 설명 서비스 |
-|<#CFD8DC>| 저장 (프로비넌스) |
-|<#E1BEE7>| 운영 (열람) |
-|<#FFF9C4>| 외부 |
-endlegend
 @enduml

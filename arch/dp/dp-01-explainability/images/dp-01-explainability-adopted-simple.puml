@@ -1,55 +1,27 @@
 @startuml
-title (1안) 투명한 규칙·관측 통계 + 사용자 응답
+!pragma layout smetana
+title (1안) 판단과 설명이 같은 근거를 사용
+
 skinparam defaultFontName "AppleGothic"
 skinparam componentStyle rectangle
 skinparam shadowing false
-skinparam packageStyle rectangle
 skinparam linetype ortho
+skinparam nodesep 24
+skinparam ranksep 28
+top to bottom direction
 
-actor "사용자" as User
-component "센서\nHR / GPS / 케이던스" as Sensors #FFF9C4
-component "Gemini Nano\n(AICore)" as Nano #FFF9C4
+component "판정에 사용할 값\n심박 · 개인 경계 · 관측 지표" as INPUT #FFF9C4
+component "판정과 근거 확정 ★\nZone 결과와 사용값" as FACT #C8E6C9
+component "코칭 문장 표현\n확정된 사실만 사용" as WORDS #BBDEFB
+component "근거 기록\n판정값 · 경계 · 생성 경로" as RECORD #CFD8DC
+component "리포트\n문장과 근거를 함께 표시" as REPORT #E1BEE7
+actor "사용자" as USER
 
-package "AI Operation Subsystem" {
-  component "OutlierGuard" <<입력 가드레일>> as IG #FFE0B2
-  component "판정과 개인화\n규칙 판정 + 베이지안 경계\n+ 관측 통계 + 온디바이스 LLM\n— 사용한 근거를 기록" <<모델 서빙>> as SERVE #BBDEFB
-  component "DirectionGuard / NumberGuard\n/ SafetyGuard" <<출력 가드레일>> as OG #FFE0B2
-  component "설명 서비스 ★\n판단에 쓴 값·규칙으로 설명\n+ 문장마다 근거와 생성 경로 기록" <<설명 서비스>> as EXP #C8E6C9
-  component "운영 서비스\nOperation UI + HITL/HOTL\n(리포트에서 근거 추적 열람)" as OPS #E1BEE7
-}
-
-package "AI Development (개인 적응으로 축소)" {
-  database "Data Lake\nSessionStore(근거 기록)\n/ LearnedZone" as DL #CFD8DC
-  component "개인 경계 갱신\n(세션마다 반영)" <<Retraining>> as RT #B2DFDB
-}
-
-Sensors --> IG
-IG --> SERVE
-Nano ..> SERVE : LLM 서빙(문장만)
-SERVE --> OG
-OG --> OPS : 코칭 문장 / TTS
-SERVE --> EXP : 실제 판단 근거\n(추정 아님)
-EXP --> OPS
-EXP ..> DL : 근거/프롬프트/경로 기록
-DL --> RT
-RT ..> SERVE : 다음 세션 초기 경계
-User ..> OPS
-OPS ..> SERVE : HITL 라벨(말하기 테스트)\n→ 즉시 반영·확인
-
-note right of EXP
-  설명은 별도 모듈의 추정이 아니라
-  판단이 실제로 쓴 값의 표시
-  = 어긋날 수 없음
-end note
-
-legend right
-|= 색 |= 컴포넌트 성격 |
-|<#FFE0B2>| 가드레일 (입출력 통제) |
-|<#BBDEFB>| 판정과 개인화 |
-|<#C8E6C9>| 설명 서비스 (★ 이 DP의 축) |
-|<#E1BEE7>| 운영 서비스 (HITL/HOTL) |
-|<#CFD8DC>| 저장 (근거 포함) |
-|<#B2DFDB>| 개인 경계 갱신 |
-|<#FFF9C4>| 외부 (센서 / LLM) |
-endlegend
+INPUT -right-> FACT
+FACT -down-> WORDS : 같은 사실 전달
+FACT -right-> RECORD : 실제 판단 근거
+WORDS -right-> REPORT : 코칭 문장
+WORDS -up-> RECORD : 생성 경로
+RECORD -down-> REPORT : 근거
+REPORT -right-> USER
 @enduml

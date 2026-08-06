@@ -1,47 +1,26 @@
 @startuml
-title (2안) 합성·공개 데이터 기반 ML + 사후 설명
+!pragma layout smetana
+title (2안) ML 판단 뒤에 이유를 별도로 추정
+
 skinparam defaultFontName "AppleGothic"
 skinparam componentStyle rectangle
 skinparam shadowing false
-skinparam packageStyle rectangle
 skinparam linetype ortho
+skinparam nodesep 24
+skinparam ranksep 28
+top to bottom direction
 
-actor "사용자" as User
-component "센서\n심박 / GPS / 케이던스" as Sensors #FFF9C4
+database "합성·공개 데이터\n개인별 기준값 부족" as DATA #CFD8DC
+component "ML 학습" as TRAIN #FFCCBC
+component "ML 판정·예측\n판단 근거를 직접\n확인하기 어려움" as MODEL #90A4AE
+component "판정 결과" as RESULT #BBDEFB
+component "사후 설명\n입력과 결과로\n이유를 다시 추정" as POST #C8E6C9
+actor "사용자" as USER
 
-package "학습 단계" {
-  database "합성·공개 데이터\n개인별 측정 정답 부족" as DATA #CFD8DC
-  component "ML 학습\nZone 판정 / 경계 추정\n심박 예측" as TRAIN #FFCCBC
-  component "학습 모델" as MODEL #90A4AE
-  DATA --> TRAIN
-  TRAIN --> MODEL
-}
-
-package "실행 단계" {
-  component "입력 검사" as INPUT #FFE0B2
-  component "ML 판정·예측\n내부 계산은 직접 확인하기 어려움" as INFER #90A4AE
-  component "사후 설명\n결정 뒤에 이유를 해석" as POST #C8E6C9
-  component "코칭 화면" as UI #E1BEE7
-  INPUT --> INFER
-  INFER --> UI : 판정 / 예측
-  INFER ..> POST : 입력 + 결과
-  POST --> UI : 추정한 설명
-}
-
-Sensors --> INPUT
-MODEL ..> INFER : 배포
-User ..> UI
-UI ..> INFER : 말하기 테스트 응답
-
-note right of DATA
-  가상 러너의 정답을 잘 맞혀도
-  실제 사람에게 맞는지는
-  별도 데이터로 검증해야 함
-end note
-
-note right of INFER
-  말하기 테스트로 조정한 경계와
-  ML 판정이 서로 다른 기준이
-  될 수 있음
-end note
+DATA -right-> TRAIN
+TRAIN -right-> MODEL
+MODEL -down-> RESULT
+MODEL -right-> POST : 입력과 결과
+RESULT -right-> USER
+POST -down-> USER : 추정한 설명
 @enduml

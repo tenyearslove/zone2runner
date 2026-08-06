@@ -1,50 +1,25 @@
 @startuml
-title 오프라인 재학습 개인화 아키텍처
-skinparam defaultFontName "Malgun Gothic"
+!pragma layout smetana
+title (2안) 서버 재학습으로 개인화를 반영
+
+skinparam defaultFontName "AppleGothic"
 skinparam componentStyle rectangle
 skinparam shadowing false
-skinparam packageStyle rectangle
 skinparam linetype ortho
+skinparam nodesep 24
+skinparam ranksep 28
+top to bottom direction
 
-actor "사용자" as User
-component "센서\nHR / GPS / 케이던스" as Sensors #FFF9C4
+actor "사용자" as USER
+component "러닝과 응답" as RUN #E1BEE7
+database "여러 사용자의\n기록 수집" as DATA #CFD8DC
+component "모델 재학습\n복잡한 패턴 학습" as TRAIN #FFCCBC
+component "검증과 배포" as DEPLOY #FFAB91
+component "새 개인화 모델\n이후 러닝부터 사용" as MODEL #90A4AE
 
-package "AI Operation Subsystem (폰)" {
-  component "이상값 필터" <<입력 가드레일>> as IG #FFE0B2
-  component "개인화 모델 서빙 (배포본 vN)\n경계 산출 - 배포 사이 고정" <<모델 서빙: 블랙박스>> as SERVE #90A4AE
-  component "운영 서비스\nOperation UI\n(피드백 = 다음 학습 재료)" as OPS #E1BEE7
-  component "라벨/세션 수집기\n관측 + 말하기 테스트 답 업로드" as COLL #E1F5FE
-  IG --> SERVE
-  SERVE --> OPS
-}
-
-package "AI Development Subsystem (서버) - 적응의 본체" {
-  database "Data Lake\n전체 사용자 세션/라벨(코호트)" as DL #CFD8DC
-  component "Model Construction\n주기 재학습 (일/주)" <<Retraining>> as MC #FFAB91
-  component "모델 테스팅 +\nModel Registry" as REG #FFAB91
-  DL --> MC
-  MC --> REG
-}
-
-Sensors --> IG
-User ..> OPS
-OPS ..> COLL : 답/피드백
-COLL --> DL : 업로드
-REG ..> SERVE : vN+1 배포\n(적응 반영 시점)
-note right of MC
-  개인 변화의 반영 =
-  수집 → 재학습 → 배포 주기
-  (실험실 기준값이 없어 목적함수 채점 어려움)
-end note
-
-legend right
-|= 색 |= 컴포넌트 성격 |
-|<#FFE0B2>| 가드레일 (입출력 통제) |
-|<#E1F5FE>| 데이터 준비/수집 |
-|<#90A4AE>| 모델 서빙 (블랙박스) |
-|<#E1BEE7>| 운영 서비스 (HITL/HOTL) |
-|<#CFD8DC>| 저장 (Data Lake) |
-|<#FFAB91>| 개발/학습 (오프라인) |
-|<#FFF9C4>| 외부 (센서) |
-endlegend
+USER -right-> RUN
+RUN -right-> DATA : 서버 전송
+DATA -down-> TRAIN : 충분한 데이터가 모이면
+TRAIN -right-> DEPLOY
+DEPLOY -right-> MODEL
 @enduml
