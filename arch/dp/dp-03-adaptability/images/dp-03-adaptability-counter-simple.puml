@@ -15,7 +15,9 @@ actor "사용자" as USER
 
 package "AI Operation Subsystem" {
   package "운영 서비스 (Operation)" {
-    component "세션·응답 수집\n사용 동의와 서버 전송" as COLLECT #E1BEE7
+    component "사용자 개입 (HITL)\n말하기 테스트 응답" as TALK #E1BEE7
+    component "세션 기록 수집\n사용 동의와 서버 전송" as COLLECT #E1BEE7
+    TALK --> COLLECT : 응답 당시 심박과 함께 기록
   }
   package "추론 서비스 (Inference)" {
     component "모델 서빙\n배포된 개인화 모델 사용" as SERVE #90A4AE
@@ -30,7 +32,7 @@ package "AI Development Subsystem" {
   database "Model Registry\n검증된 모델 등록" as REGISTRY #CFD8DC
 }
 
-USER --> COLLECT
+USER --> TALK
 COLLECT --> DATASET
 DATASET --> LAKE
 LAKE --> TRAIN : 충분한 데이터가 모이면
@@ -40,6 +42,7 @@ REGISTRY --> SERVE : 새 모델 배포
 SERVE --> USER : 이후 러닝부터 반영
 
 note bottom of SERVE
-  사용자 응답은 새 모델을 재학습·배포한 뒤에야 반영된다.
+  말하기 테스트 응답은 현재 경계를 바로 바꾸지 않는다.
+  새 모델을 재학습·배포한 뒤 이후 러닝부터 반영된다.
 end note
 @enduml

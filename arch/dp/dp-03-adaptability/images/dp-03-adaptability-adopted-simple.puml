@@ -18,7 +18,7 @@ package "AI Operation Subsystem" {
   package "추론 서비스 (Inference)" {
     component "데이터 준비\n프로필로 첫 경계 계산" as DATA #E1F5FE
     component "입력 가드레일\n심박 범위와 흐름 정제" as INPUT #FFE0B2
-    component "모델 서빙 ★\n개인 경계 판정·갱신\n추정 범위와 변경 폭 반영" as MODEL #B2DFDB
+    component "모델 서빙 ★\n개인 경계 갱신\n기존 경계와 새 응답을 함께 반영" as MODEL #B2DFDB
     DATA --> MODEL : 첫 경계
     INPUT --> MODEL : 정제한 심박
   }
@@ -28,7 +28,7 @@ package "AI Operation Subsystem" {
   }
 
   package "설명 서비스 (Explanation)" {
-    component "변경 근거\n응답 · 방향 · 변경량" as EXPLAIN #C8E6C9
+    component "변경 근거\n사용한 응답 · 이동 방향 · 새 경계" as EXPLAIN #C8E6C9
   }
 
   database "개인 상태 저장\n다음 경계\n최근 추정 범위(상태 표시용)" as STORE #CFD8DC
@@ -43,6 +43,7 @@ MODEL --> EXPLAIN
 EXPLAIN -right-> USER
 
 note bottom of MODEL
+  기존 경계를 버리지 않고 새 응답을 근거로 조금씩 수정한다.
   별도 모델 재학습 없이 운영 중 갱신한다.
 end note
 @enduml
