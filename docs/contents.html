@@ -62,7 +62,7 @@
   </table>
 
   <h2>검증 결과 재현</h2>
-  <p class="muted"><code>app</code> 폴더에서 <code>.\gradlew.bat :app:testDebugUnitTest --no-daemon --rerun-tasks</code>를 실행한다. 최근 결과는 167개 시험 통과다. 이 숫자는 제품 정확도가 아니라 자동 회귀 범위를 뜻하며, QA별 성공 판단은 <code>QaMeasurementTest.kt</code>가 기록한 지표를 사용한다.</p>
+  <p class="muted"><code>app</code> 폴더에서 <code>.\gradlew.bat :app:testDebugUnitTest --no-daemon --rerun-tasks</code>를 실행한다. 최근 결과는 167개 시험 통과다. 이 숫자는 제품 정확도가 아니라 자동 회귀 범위를 뜻한다. 자동 측정 결과와 아직 측정하지 않은 항목은 구현·검증 파트에서 구분한다.</p>
 
   <h2>검증 범위</h2>
   <p class="muted">자동시험은 설계와 핵심 로직의 동작을 확인한다. 실제 달리기, 사용자 연구, 의료적 정확도는 현재 검증 범위에 포함하지 않는다.</p>
