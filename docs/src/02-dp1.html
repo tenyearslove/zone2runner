@@ -66,7 +66,7 @@
       <tr>
         <th class="rowh">장점</th>
         <td class="win">
-          <p><strong>QA2 기능적응성</strong> <span class="stars">★★★★★</span><br><span class="note">별도 재학습 없이 실행 중 개인 경계를 조정한다. 5초 기준은 추가 측정이 필요하다.</span></p>
+          <p><strong>QA2 기능적응성</strong> <span class="stars">★★★★★</span><br><span class="note">별도 재학습 없이 실행 중 개인 경계를 조정한다. 1 Hz 가상 입력에서 판정 반영까지 최대 1.019초였다.</span></p>
           <p><strong>QA1 설명용이성</strong> <span class="stars">★★★★★</span><br><span class="note">경계 변경에 영향을 준 응답과 변경 결과를 직접 연결할 수 있다.</span></p>
           <p><strong>QA5 테스트가능성</strong> <span class="stars">★★★★★</span><br><span class="note">같은 응답을 넣어 경계가 어떻게 바뀌는지 반복 확인할 수 있다.</span></p>
         </td>
@@ -83,7 +83,7 @@
       </tr>
       <tr>
         <th class="rowh">Tradeoff</th>
-        <td class="win">QA1·QA5를 현재 조건에서 직접 확인할 수 있고, QA2는 별도 재학습 없이 실행 중 반영할 수 있다. 다만 5초 기준은 추가 측정이 필요하다.</td>
+        <td class="win">QA1·QA5를 현재 조건에서 직접 확인할 수 있고, QA2는 별도 재학습 없이 실행 중 반영할 수 있다. 1 Hz 가상 입력 측정에서 5초 기준도 충족했다.</td>
         <td>복잡한 개인 패턴을 학습할 가능성은 있다. 대신 QA2의 반영이 늦고, QA1·QA5를 충족하려면 개인별 기준값과 재학습 전 과정에 대한 별도 검증이 필요하다.</td>
       </tr>
     </tbody>
@@ -147,11 +147,11 @@
   </ul>
 
   <h3 class="num"><span>3.</span>검증 결과</h3>
-  <p><strong>QA2:</strong> 현재 구현은 말하기 테스트 답변을 받으면 실행 중인 개인 경계를 갱신해 이후 판정에 사용한다. 다만 답변부터 판정 반영까지 걸린 시간을 아직 측정하지 않아 5초 기준의 충족 여부는 판단할 수 없다.</p>
+  <p><strong>QA2:</strong> 실제 <code>RunEngine</code>에 1 Hz 가상 심박을 넣고, 답변 전달 직전부터 조정된 경계를 사용한 다음 판정이 반환될 때까지 5회 측정했다. 최대 1,018.75ms로 5초 기준을 충족했다.</p>
   <p class="note"><strong>QA1·QA5:</strong> 기존 자동시험은 입력한 응답과 경계 변경 결과를 기록하고 같은 조건에서 반복 비교한다. 수렴 오차와 세션당 변경 폭은 회귀시험의 참고값이며, QA2의 성공 기준이나 실제 사용자의 생리학적 정확도를 뜻하지 않는다.</p>
   <h3 class="num"><span>4.</span>보완 계획</h3>
   <ul>
-    <li><strong>단기 개선안</strong>: 답변을 받은 시점부터 조정된 경계가 판정에 사용되는 시점까지 기록해 5초 기준을 확인한다.</li>
+    <li><strong>단기 개선안</strong>: 이번 측정에서 제외한 워치·폰 간 응답 전송과 실제 화면 렌더링까지 포함해 실기기 전체 지연을 확인한다.</li>
     <li><strong>장기 개선안</strong>: 실제 달리기 기록과 말하기 응답을 확보할 수 있다면 응답별 보정량과 반영 정도를 다시 조정한다.</li>
   </ul>
 

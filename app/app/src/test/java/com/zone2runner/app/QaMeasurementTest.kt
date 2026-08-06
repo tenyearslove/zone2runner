@@ -7,6 +7,7 @@ import com.zone2runner.app.coaching.DirectionGuard
 import com.zone2runner.app.coaching.NumberGuard
 import com.zone2runner.app.coaching.RuleCoach
 import com.zone2runner.app.domain.Profile
+import com.zone2runner.app.domain.Sample
 import com.zone2runner.app.domain.ZoneJudgment
 import com.zone2runner.app.domain.DisplayZoneJudge
 import com.zone2runner.app.domain.DisplayZones
@@ -15,6 +16,7 @@ import com.zone2runner.app.pipeline.Personalization
 import com.zone2runner.app.pipeline.RunEngine
 import com.zone2runner.app.pipeline.TalkState
 import com.zone2runner.app.sim.RunSimulator
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -36,7 +38,60 @@ class QaMeasurementTest {
         lines.forEach { println("[QA:$name] $it") }
     }
 
-    /** QA2 기능적응성 — 참임계를 아는 라벨원으로 8세션 폐루프: 수렴 오차/안착/진동폭/세션당 이동 한도. */
+    /**
+     * QA2 기능 적응성: 말하기 테스트 응답 이후 갱신된 개인 경계가 다음 1 Hz 판정에
+     * 반영될 때까지의 경과 시간을 잰다. 실제 RunEngine 경로를 사용하되 JVM 가상 입력
+     * 환경의 측정이므로, 휴대전화·시계 간 전송 및 화면 렌더링 지연은 포함하지 않는다.
+     */
+    @Test fun qa2_adaptationLatency_reflectedInNextJudgment() = runBlocking {
+        val trials = mutableListOf<Double>()
+        repeat(5) { trial ->
+            val engine = RunEngine(Profile.default(35, 58), RuleCoach())
+
+            // 유효 심박과 지속 심박을 확보한다. 138 bpm의 '보통' 응답은 기본 상한을
+            // 위로 조정하므로 경계 변경 여부까지 함께 검증할 수 있다.
+            repeat(5) { t -> engine.onSample(sample(t, 138)) }
+            val before = engine.currentUFrac()
+
+            val startedAt = System.nanoTime()
+            engine.observeTalkTest(TalkState.BORDERLINE)
+            val adjusted = engine.currentUFrac()
+
+            // 응답이 1 Hz 샘플 직후 들어온 최악 조건을 재현한다.
+            delay(1_000L)
+            val reflected = engine.onSample(sample(5, 138))
+            val elapsedMs = (System.nanoTime() - startedAt) / 1_000_000.0
+
+            assertTrue("말하기 테스트 응답으로 경계가 조정돼야 함", adjusted > before)
+            assertEquals("다음 판정은 조정된 경계를 사용해야 함", adjusted, reflected.uEstFrac, 1e-9)
+            trials += elapsedMs
+            println("[QA:qa2-adaptation-latency] trial=${trial + 1}, elapsedMs=%.2f".format(elapsedMs))
+        }
+
+        val maxMs = trials.max()
+        record("qa2-adaptation-latency", listOf(
+            "환경=JVM 단위시험, 실제 RunEngine, 1 Hz 가상 심박 입력",
+            "측정 시작=말하기 테스트 응답 전달 직전",
+            "측정 종료=조정된 uEstFrac을 사용한 다음 판정 반환",
+            "반복=5회, 지연(ms)=" + trials.joinToString(", ") { "%.2f".format(it) },
+            "최대 지연=%.2f ms".format(maxMs),
+            "기준=5,000 ms 이하, 판정=${if (maxMs <= 5_000.0) "충족" else "미충족"}",
+            "제외 범위=휴대전화·시계 간 전송, 실제 화면 렌더링"
+        ))
+        assertTrue("QA2 반영 지연 5초 이하 (실측 최대 ${"%.2f".format(maxMs)} ms)", maxMs <= 5_000.0)
+    }
+
+    private fun sample(tSec: Int, hr: Int) = Sample(
+        tSec = tSec,
+        hr = hr,
+        paceMinKm = 6.5,
+        spm = 168,
+        slopePct = 0.0,
+        lat = Double.NaN,
+        lon = Double.NaN,
+    )
+
+    /** QA2 성공 기준이 아닌 보조 회귀시험: 개인화 경계의 장기 수렴과 세션 간 이동 한도. */
     @Test fun qa2_boundaryConvergence_overSessions() {
         val profile = Profile.default(35, 58)
         val trueUpper = 141.0 // 진짜 상한(bpm) — 공식 prior(~128, %HRmax 0.70×183)보다 12.9bpm 높은 러너
@@ -84,7 +139,7 @@ class QaMeasurementTest {
     }
 
     /**
-     * QA2 스윕 — 참임계 5종 × 시드 3종(단일 사례 일반화 방지) + 오답 라벨 10% 주입(주관 라벨 오류 내성).
+     * 보조 회귀시험 — 참임계 5종 × 시드 3종(단일 사례 일반화 방지) + 오답 라벨 10% 주입(주관 라벨 오류 내성).
      * 심사 방어: "안착 1세션이 표본 배치의 산물 아닌가"에 분포로 답한다.
      */
     @Test fun qa2_sweep_and_wrongLabelInjection() {
