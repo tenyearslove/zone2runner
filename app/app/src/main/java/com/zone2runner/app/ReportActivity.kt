@@ -139,7 +139,7 @@ class ReportActivity : AppCompatActivity() {
         val endBpm = (r.restingHr + r.uEstEndFrac * hrr).toInt()
         col.addView(card("개인 Zone 2 상단 학습", TextView(this).apply {
             text = "이번 세션 개인 상단: $startBpm → $endBpm bpm\n" +
-                "프로필 초기값에서 실주행 관측(말하기 테스트/드리프트)으로 개인 경계로 이동합니다."
+                "프로필 초기값에서 말하기 테스트 응답을 반영해 개인 경계로 이동합니다."
             textSize = 13f; setTextColor(C_TEXT)
         }))
 

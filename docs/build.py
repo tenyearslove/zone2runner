@@ -17,8 +17,8 @@ os.chdir(REPO)
 
 PARTS = [
     ('01-intro.html', 'intro'), ('02-dp1.html', 'dp1'), ('03-dp2.html', 'dp2'),
-    ('04-dp3.html', 'dp3'), ('05-dp4.html', 'dp4'), ('06-dp5.html', 'dp5'),
-    ('07-arch.html', 'arch'), ('08-impl.html', 'impl'), ('09-appendix.html', 'appendix'),
+    ('04-dp3.html', 'dp3'), ('07-arch.html', 'arch'), ('08-impl.html', 'impl'),
+    ('09-appendix.html', 'appendix'),
 ]
 full_parts = []
 for filename, anchor in PARTS:
