@@ -208,29 +208,25 @@
       <tr>
         <th class="rowh">장점</th>
         <td class="win">
-          <p><strong>QA2 기능적응성</strong><br><span class="note">응답을 처리하면 변경 결과가 개인 경계에 바로 반영된다.</span></p>
-          <p><strong>QA1 설명용이성</strong><br><span class="note">경계 변경에 영향을 준 응답과 변경 결과를 직접 연결할 수 있다.</span></p>
-          <p><strong>QA5 테스트가능성</strong><br><span class="note">같은 응답을 넣어 경계가 어떻게 바뀌는지 반복 확인할 수 있다.</span></p>
+          <p><strong>QA2 기능적응성</strong> <span class="stars">★★★★★</span><br><span class="note">응답을 처리하면 변경 결과가 개인 경계에 바로 반영된다.</span></p>
+          <p><strong>QA1 설명용이성</strong> <span class="stars">★★★★★</span><br><span class="note">경계 변경에 영향을 준 응답과 변경 결과를 직접 연결할 수 있다.</span></p>
+          <p><strong>QA5 테스트가능성</strong> <span class="stars">★★★★★</span><br><span class="note">같은 응답을 넣어 경계가 어떻게 바뀌는지 반복 확인할 수 있다.</span></p>
         </td>
-        <td>
-          <p><strong>QA2 기능적응성</strong><br><span class="note">실제 데이터가 충분하면 단순한 경계 조정보다 복잡한 개인 패턴을 학습할 가능성이 있다.</span></p>
-        </td>
+        <td style="text-align:center">—</td>
       </tr>
       <tr>
         <th class="rowh">단점</th>
-        <td class="win">
-          <p><strong>QA2 기능적응성</strong><br><span class="note">말하기 응답으로 개인 경계를 조정하는 단순한 모델이므로 복잡한 개인 패턴까지 학습하지는 못한다.</span></p>
-        </td>
+        <td class="win" style="text-align:center">—</td>
         <td>
-          <p><strong>QA2 기능적응성</strong><br><span class="note">사용자 응답의 반영이 데이터 수집·재학습·배포 주기만큼 늦어진다.</span></p>
-          <p><strong>QA1 설명용이성</strong><br><span class="note">한 사용자의 응답이 모델 변경에 미친 영향을 직접 연결하기 어렵다.</span></p>
-          <p><strong>QA5 테스트가능성</strong><br><span class="note">수집부터 재학습과 배포까지 전 과정을 같은 조건으로 반복하기 어렵다.</span></p>
+          <p><strong>QA2 기능적응성</strong> <span class="stars">★★</span><br><span class="note">사용자 응답의 반영이 데이터 수집·재학습·배포 주기만큼 늦어진다.</span></p>
+          <p><strong>QA1 설명용이성</strong> <span class="stars">★★</span><br><span class="note">한 사용자의 응답이 모델 변경에 미친 영향을 직접 연결하기 어렵다.</span></p>
+          <p><strong>QA5 테스트가능성</strong> <span class="stars">★★★</span><br><span class="note">ML의 데이터 구성·재학습·배포까지 같은 조건으로 다시 만들어야 하므로 현재 구조보다 테스트하기 어렵다.</span></p>
         </td>
       </tr>
       <tr>
         <th class="rowh">Tradeoff</th>
-        <td class="win">QA2에서 응답을 바로 반영하고 QA1·QA5에서 변경 과정도 확인할 수 있다. 다만 QA2의 적응 범위는 개인 경계를 조정하는 수준으로 제한된다.</td>
-        <td>QA2에서 복잡한 패턴을 학습할 가능성이 있다. 다만 반영이 배포 주기만큼 늦고, QA1·QA5를 충족하려면 개인별 기준값과 재학습 전 과정에 대한 별도 검증이 필요하다.</td>
+        <td class="win">QA1·QA2·QA5를 현재 조건에서 직접 확인할 수 있다. 대신 복잡한 개인 패턴을 학습하는 방안은 실제 데이터와 운영 환경이 마련된 뒤 다시 검토한다.</td>
+        <td>복잡한 개인 패턴을 학습할 가능성은 있다. 대신 QA2의 반영이 늦고, QA1·QA5를 충족하려면 개인별 기준값과 재학습 전 과정에 대한 별도 검증이 필요하다.</td>
       </tr>
     </tbody>
   </table>
@@ -286,15 +282,15 @@
 
   <h3 class="num"><span>2.</span>채택 근거</h3>
   <ul>
-    <li><strong>응답을 바로 반영할 수 있다.</strong> 응답이 들어오면 개인 경계를 조정하고 변경 폭을 화면에 보여 준다. 2안은 같은 응답을 반영하려면 다음 재학습과 배포까지 기다려야 한다.</li>
-    <li><strong>응답과 갱신 결과를 연결할 수 있다.</strong> 어떤 응답으로 경계가 어느 방향으로 바뀌었는지 확인할 수 있다. 다만 이 연결이 실제 유산소 역치의 정확성을 의미하지는 않는다.</li>
-    <li><strong>경계의 변화 폭을 제한할 수 있다.</strong> 응답의 정보량에 따라 반영 정도를 달리하고, 한 세션에서는 최대 10bpm까지만 바뀌도록 제한한다.</li>
-    <li><strong>과제의 제약을 충족한다.</strong> 개인화 계산과 저장을 기기에서 수행하므로 심박과 개인화 값을 외부 서버로 보낼 필요가 없다.</li>
-    <li><strong>DP2의 설명 구조와 일관된다.</strong> 개인 경계의 추정값과 최근 추정 범위를 설명 근거로 사용할 수 있다. 또한 응답과 변경 한도를 기록해 경계가 지나치게 바뀌지 않도록 통제한 과정도 확인할 수 있다.</li>
+    <li><strong>QA2 기능적응성:</strong> 응답이 들어오면 개인 경계를 조정해 다음 판정에 사용하고, 한 세션의 변경 폭은 최대 10bpm으로 제한한다. 2안은 같은 응답을 반영하려면 재학습과 배포를 기다려야 한다.</li>
+    <li><strong>QA1 설명용이성:</strong> 어떤 응답으로 경계가 어느 방향으로 바뀌었는지 기록해 개인화 화면과 리포트에서 확인할 수 있다. 다만 이 기록이 실제 유산소 역치의 정확성을 보장하지는 않는다.</li>
+    <li><strong>QA5 테스트가능성:</strong> 같은 프로필과 응답 순서를 다시 넣어 경계의 이동 방향과 변경 한도를 반복 확인할 수 있다.</li>
+    <li><strong>Tradeoff:</strong> 서버 없이 응답을 바로 반영하고 그 과정을 확인할 수 있는 대신, 여러 사용자의 복잡한 패턴을 학습하는 방안은 실제 데이터와 운영 환경이 마련된 뒤 다시 검토한다.</li>
   </ul>
 
   <h3 class="num"><span>3.</span>검증 결과</h3>
-  <p>말하기 가능 상한 5개와 시드 3개를 조합해 자동시험을 실행했다. 모든 조합에서 조정된 Zone 2 상한과 설정한 말하기 가능 상한의 차이가 3bpm 이하였다. 한 세션에서 경계가 바뀐 최대 폭은 9.97bpm으로, 제한값 10bpm을 넘지 않았다.</p>
+  <p><strong>QA2:</strong> 말하기 가능 상한 5개와 시드 3개를 조합해 자동시험을 실행했다. 모든 조합에서 조정된 Zone 2 상한과 설정한 말하기 가능 상한의 차이가 3bpm 이하였다. 한 세션에서 경계가 바뀐 최대 폭은 9.97bpm으로, 제한값 10bpm을 넘지 않았다.</p>
+  <p class="note"><strong>QA1·QA5:</strong> 시험에서는 입력한 응답과 경계 변경 결과를 함께 기록하고, 같은 조건을 반복해 결과를 비교했다. 이는 갱신 과정의 추적성과 반복 가능성을 확인한 것이며, 실제 사용자의 생리적 경계를 측정한 결과는 아니다.</p>
   <h3 class="num"><span>4.</span>보완 계획</h3>
   <ul>
     <li><strong>단기 개선안</strong>: 최근 말하기 응답으로 경계가 어느 방향으로 얼마나 바뀌었는지 개인화 화면에서 더 쉽게 설명한다.</li>
@@ -313,13 +309,9 @@
 
   <h3 class="num"><span>A1.</span>이 설계 결정이 다루는 품질 문제</h3>
   <ul>
-    <li>프로필 공식만으로는 개인차를 충분히 반영하기 어렵다 → 기능적응성</li>
-    <li>몸 상태가 변하면 이전에 조정한 경계가 현재 상태와 달라질 수 있다 → 기능적응성</li>
-    <li>개인별 경계를 비교할 측정 기준값이 없다 → 관측 가능한 말하기 테스트 응답을 갱신 근거로 사용</li>
-    <li>응답 횟수가 적고 내용도 주관적이다 → 한 번의 응답으로 경계가 바뀌는 폭을 제한할 필요</li>
-    <li>개인 경계가 왜 바뀌었는지 보여야 한다 → 설명용이성</li>
-    <li>같은 응답과 시드에서 경계 변경을 반복 확인할 수 있어야 한다 → 테스트가능성</li>
-    <li>사용자가 말하기 응답으로 적응에 개입할 수 있어야 한다 → 기능적응성</li>
+    <li><strong>QA2 기능적응성:</strong> 프로필 공식으로 시작하되, 몸 상태를 나타내는 말하기 응답으로 개인 경계를 계속 조정해야 한다.</li>
+    <li><strong>QA1 설명용이성:</strong> 개인별 측정 기준값이 없는 조건에서도 어떤 응답이 경계 변경에 사용됐는지 확인할 수 있어야 한다.</li>
+    <li><strong>QA5 테스트가능성:</strong> 적고 주관적인 응답을 사용하는 만큼 같은 프로필·응답·시드에서 변경 결과와 한도가 반복되어야 한다.</li>
   </ul>
 
   <h3 class="num"><span>A2.</span>채택안의 개인화 과정 5단계</h3>
@@ -327,14 +319,14 @@
   <div class="tbl">
   <table class="decide">
     <thead>
-      <tr><th style="width:9em">단계</th><th>하는 일</th></tr>
+      <tr><th style="width:9em">단계</th><th>하는 일</th><th style="width:8em">관련 QA</th></tr>
     </thead>
     <tbody>
-      <tr><td><strong>1. 초기값</strong></td><td>프로필로 초기 경계를 계산하고, 아직 개인화 근거가 적다는 점을 초기 추정 범위에 반영한다.</td></tr>
-      <tr><td><strong>2. 응답 수집</strong></td><td>달리는 중 말하기 테스트("지금 대화가 편한가요?") 응답을 받는다.</td></tr>
-      <tr><td><strong>3. 갱신</strong></td><td>응답이 들어오면 현재 경계와 응답의 신뢰 정도를 비교해 경계를 조정한다.</td></tr>
-      <tr><td><strong>4. 안전장치</strong></td><td>한 세션의 경계 이동을 제한한다. 최대심박과 안정심박의 입력값 또는 추정값은 세션 중 자동으로 바꾸지 않는다.</td></tr>
-      <tr><td><strong>5. 다음 세션 반영</strong></td><td>조정한 경계를 다음 세션의 시작값으로 저장한다. 최근 추정 범위는 개인화 진행 상태를 설명하기 위해 별도로 기록한다.</td></tr>
+      <tr><td><strong>1. 초기값</strong></td><td>프로필로 초기 경계를 계산하고, 아직 개인화 근거가 적다는 점을 초기 추정 범위에 반영한다.</td><td>QA2</td></tr>
+      <tr><td><strong>2. 응답 수집</strong></td><td>달리는 중 말하기 테스트("지금 대화가 편한가요?") 응답을 받는다.</td><td>QA2</td></tr>
+      <tr><td><strong>3. 갱신</strong></td><td>응답이 들어오면 현재 경계와 응답의 신뢰 정도를 비교해 경계를 조정한다.</td><td>QA2·QA5</td></tr>
+      <tr><td><strong>4. 안전장치</strong></td><td>한 세션의 경계 이동을 제한한다. 최대심박과 안정심박의 입력값 또는 추정값은 세션 중 자동으로 바꾸지 않는다.</td><td>QA2·QA5</td></tr>
+      <tr><td><strong>5. 다음 세션 반영</strong></td><td>조정한 경계를 다음 세션의 시작값으로 저장한다. 최근 추정 범위는 개인화 진행 상태를 설명하기 위해 별도로 기록한다.</td><td>QA1·QA2</td></tr>
     </tbody>
   </table>
   </div>
@@ -399,9 +391,9 @@
         <td><div class="fig-frame"><img data-img="dp2-counter" alt="AI 개발 서브시스템에서 학습한 ML의 판정 뒤에 설명을 별도로 추정하는 구조" width="1400"></div><p class="struct-note">비교안은 ML을 학습·검증·등록한 뒤 추론 서비스에 배포하고, 설명 서비스는 판정이 끝난 뒤 이유를 별도로 추정한다. 실제 사용자 데이터와 측정 기준값이 충분하다면 규칙에 없는 관계도 학습할 수 있지만, 이번 과제의 데이터로는 실제 사용자에게도 유효한지 확인하기 어렵다.</p></td>
       </tr>
       <tr><th class="rowh">확인 가능한 것</th><td class="win">판정에 사용한 심박·경계·규칙, 개인 경계가 바뀐 이유, 설명 문장의 숫자와 방향</td><td>가상 러너가 만든 기준값에 대한 점수와 학습 손실만 확인할 수 있다. 실제 사용자에 대한 정확도는 별도 데이터가 있어야 검증할 수 있다.</td></tr>
-      <tr><th class="rowh">장점</th><td class="win"><p><strong>QA1 설명용이성</strong><br><span class="note">판정에 사용한 값과 규칙을 그대로 기록해 근거를 따라갈 수 있다.</span></p><p><strong>QA2 기능적응성</strong><br><span class="note">사용자 응답으로 조정한 개인 경계를 다음 판정에 직접 사용한다.</span></p><p><strong>QA5 테스트가능성</strong><br><span class="note">같은 입력에서 판정과 근거 기록을 반복 확인할 수 있다.</span></p></td><td><p><strong>QA2 기능적응성</strong><br><span class="note">실제 데이터가 충분하면 규칙보다 복잡한 개인별 관계를 학습할 가능성이 있다.</span></p></td></tr>
-      <tr><th class="rowh">단점</th><td class="win"><p><strong>QA2 기능적응성</strong><br><span class="note">규칙과 관측 범위를 벗어난 복잡한 관계까지 학습하지는 못한다.</span></p></td><td><p><strong>QA1 설명용이성</strong><br><span class="note">ML 판정과 사후 설명이 서로 다른 근거를 사용할 수 있다.</span></p><p><strong>QA2 기능적응성</strong><br><span class="note">말하기 응답으로 조정한 경계와 ML 판정이 충돌할 수 있다.</span></p><p><strong>QA5 테스트가능성</strong><br><span class="note">현재 데이터에서 얻은 결과가 실제 사용자에게도 유지되는지 검증할 수 없다.</span></p></td></tr>
-      <tr><th class="rowh">Tradeoff</th><td class="win">QA1과 QA5에서 현재 확인 가능한 근거를 확보하는 대신, QA2에서 복잡한 관계를 학습하는 범위는 제한된다.</td><td>QA2에서 복잡한 관계를 학습할 가능성이 있지만, QA1과 QA5를 충족하려면 실제 사용자 데이터와 별도의 검증 기준이 필요하다.</td></tr>
+      <tr><th class="rowh">장점</th><td class="win"><p><strong>QA1 설명용이성</strong> <span class="stars">★★★★★</span><br><span class="note">판정에 사용한 값과 규칙을 그대로 기록하므로 리포트에서 근거를 따라갈 수 있다.</span></p><p><strong>QA2 기능적응성</strong> <span class="stars">★★★★★</span><br><span class="note">사용자 응답으로 조정한 개인 경계를 다음 판정에 그대로 사용한다.</span></p><p><strong>QA5 테스트가능성</strong> <span class="stars">★★★★★</span><br><span class="note">같은 입력에서 판정과 근거 기록이 같은지 반복해서 확인할 수 있다.</span></p></td><td style="text-align:center">—</td></tr>
+      <tr><th class="rowh">단점</th><td class="win" style="text-align:center">—</td><td><p><strong>QA1 설명용이성</strong> <span class="stars">★★</span><br><span class="note">ML 판정과 사후 설명이 서로 다른 근거를 사용할 수 있어, 리포트에 표시한 설명이 실제 판정 근거인지 별도로 확인해야 한다.</span></p><p><strong>QA2 기능적응성</strong> <span class="stars">★★</span><br><span class="note">말하기 응답으로 조정한 경계와 ML 판정이 서로 다른 기준을 사용할 수 있다.</span></p><p><strong>QA5 테스트가능성</strong> <span class="stars">★★★</span><br><span class="note">데이터 구성부터 학습과 배포까지 같은 조건으로 재현해야 판정과 설명을 함께 비교할 수 있다.</span></p></td></tr>
+      <tr><th class="rowh">Tradeoff</th><td class="win">QA1·QA2·QA5를 하나의 판단 근거로 연결해 현재 조건에서 반복 확인할 수 있다. 대신 복잡한 관계를 학습하는 방안은 실제 데이터와 검증 기준이 마련된 뒤 다시 검토한다.</td><td>복잡한 관계를 학습할 가능성은 있다. 대신 QA1·QA2·QA5를 충족하려면 판정과 개인화의 기준을 통일하고, 사후 설명의 일치 여부와 학습·배포 전 과정을 별도로 검증해야 한다.</td></tr>
     </tbody>
   </table></div>
   <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
@@ -413,14 +405,15 @@
   <p class="lead">이번 과제에서는 1안인 ‘투명한 규칙·관측 통계와 사용자 응답’ 구조를 채택했다.</p>
   <h3 class="num"><span>2.</span>결정 근거</h3>
   <ol>
-    <li><strong>현재 데이터만으로는 ML 판정을 실제 기능에 적용할 근거가 부족했다.</strong> 합성 데이터에서 얻은 점수만으로 실제 사용자의 Zone 2를 정확히 판정한다고 주장할 수 없다.</li>
-    <li><strong>판정 기준을 하나로 모았다.</strong> 모든 판정과 설명에서 현재 심박과 말하기 테스트로 조정한 개인 경계를 함께 사용한다.</li>
-    <li><strong>판단에 사용한 근거를 설명에도 그대로 사용한다.</strong> 판정 결과, 심박, 개인 경계와 경계 변경 이유를 하나의 기록에 남긴다. 따라서 설명을 만들 때 판단 근거를 다시 추정할 필요가 없다.</li>
-    <li><strong>추후 ML을 다시 검토할 수 있다.</strong> 실제 러닝 데이터가 충분히 확보되면 전체 판정 구조를 바꾸기 전에 규칙의 오차를 보정하는 작은 모델부터 검증할 수 있다.</li>
+    <li><strong>QA1 설명용이성:</strong> 판정 결과, 심박, 개인 경계와 경계 변경 이유를 하나의 근거 기록에 남긴다. 설명은 이 기록을 사용하므로 판정 이유를 사후에 다시 추정하지 않는다.</li>
+    <li><strong>QA2 기능적응성:</strong> 모든 판정과 설명에서 말하기 응답으로 조정한 동일한 개인 경계를 사용한다. ML 판정이 별도 기준을 사용해 개인화 결과와 충돌하는 구조를 피했다.</li>
+    <li><strong>QA5 테스트가능성:</strong> 입력, 판정, 근거 기록이 분리되어 있어 같은 입력에서 세 결과가 일치하는지 반복 확인할 수 있다. 비교안은 데이터 구성부터 학습과 배포까지 같은 조건으로 재현해야 한다.</li>
+    <li><strong>Tradeoff:</strong> 현재 데이터로 검증할 수 있는 규칙과 기록 구조를 선택했다. 실제 러닝 데이터와 비교 기준이 확보되면 규칙이 놓친 오차를 보정하는 작은 모델부터 다시 검토한다.</li>
   </ol>
   <h3 class="num"><span>3.</span>검증 결과</h3>
-  <p>Zone 2 아래·범위 안·위의 판정에 사용한 심박과 개인 경계를 모두 기록했다.</p>
-  <p class="note">이 결과로 미리 정한 세 가지 Zone 판정의 근거가 기록되고, 해당 기록을 사후 설명에 사용할 수 있음을 확인했다. 실제 Zone 2의 생리학적 정확도나 사용자가 설명을 이해하는 정도까지 확인한 것은 아니다.</p>
+  <p><strong>QA1:</strong> Zone 2 아래·범위 안·위의 판정에서 사용한 심박, 개인 경계와 판정 결과를 모두 기록했다. 대표 판정 근거의 기록률은 100%였다.</p>
+  <p><strong>QA2·QA5:</strong> 판정은 말하기 응답으로 조정한 개인 경계를 사용하며, 같은 입력에서는 판정과 근거 기록을 반복 비교할 수 있게 구성했다.</p>
+  <p class="note">이는 미리 정한 입력에서 판단 근거가 연결되고 반복 확인됨을 검증한 결과다. 실제 Zone 2의 생리학적 정확도나 사용자가 설명을 이해하는 정도까지 확인한 것은 아니다.</p>
   <h3 class="num"><span>4.</span>보완 계획</h3>
   <ul>
     <li><strong>단기 개선안</strong>: 판정·개인화·코칭 화면에서 같은 용어와 숫자를 사용하는지 확인하는 시험 사례를 확대한다.</li>
@@ -444,16 +437,25 @@
   <h3 class="num"><span>2.</span>채택안의 근거 흐름</h3>
   <figure style="margin:0 0 10px"><div class="fig-frame"><img data-img="dp2-detail" alt="DP2 채택안 — AI 운영 서브시스템에서 판단 근거가 서비스 사이에 전달되는 순서" width="1100"></div></figure>
   <div class="tbl"><table class="decide">
-    <thead><tr><th style="width:9em">단계</th><th>하는 일</th></tr></thead>
+    <thead><tr><th style="width:9em">단계</th><th>하는 일</th><th style="width:8em">관련 QA</th></tr></thead>
     <tbody>
-      <tr><td><strong>1. 판단값 확정</strong></td><td>판정에 사용할 심박과 개인 경계를 정하고 규칙으로 Zone을 판정한다.</td></tr>
-      <tr><td><strong>2. 근거 기록</strong></td><td>판정에 사용한 값과 개인 경계가 바뀐 이유를 함께 기록한다.</td></tr>
-      <tr><td><strong>3. 문장 생성</strong></td><td>LLM은 확정된 사실을 자연스러운 문장으로 표현한다.</td></tr>
-      <tr><td><strong>4. 출력 검사</strong></td><td>문장의 형식, 방향, 숫자가 허용 범위에 있는지 다시 확인한다.</td></tr>
-      <tr><td><strong>5. 근거 확인</strong></td><td>리포트에서 코칭 문장과 해당 문장을 생성할 때 사용한 근거를 함께 확인한다.</td></tr>
+      <tr><td><strong>1. 판단값 확정</strong></td><td>판정에 사용할 심박과 개인 경계를 정하고 규칙으로 Zone을 판정한다.</td><td>QA1·QA2</td></tr>
+      <tr><td><strong>2. 근거 기록</strong></td><td>판정에 사용한 값과 개인 경계가 바뀐 이유를 함께 기록한다.</td><td>QA1</td></tr>
+      <tr><td><strong>3. 문장 생성</strong></td><td>LLM은 확정된 사실을 자연스러운 문장으로 표현한다.</td><td>QA1</td></tr>
+      <tr><td><strong>4. 출력 검사</strong></td><td>문장의 형식, 방향, 숫자가 허용 범위에 있는지 다시 확인한다.</td><td>QA1·QA5</td></tr>
+      <tr><td><strong>5. 근거 확인</strong></td><td>리포트에서 코칭 문장과 해당 문장을 생성할 때 사용한 근거를 함께 확인한다.</td><td>QA1</td></tr>
     </tbody>
   </table></div>
-  <p class="note">모델별 시험 결과와 전환 근거는 별도의 개발 이력 문서에 기록했다.</p>
+  <h3 class="num"><span>3.</span>선정 품질에 미치는 영향</h3>
+  <div class="tbl"><table class="decide">
+    <thead><tr><th>품질 속성</th><th>(1안) 투명한 규칙·관측 통계와 사용자 응답</th><th>(2안) 합성·공개 데이터 기반 ML과 사후 설명</th></tr></thead>
+    <tbody>
+      <tr><td>설명용이성</td><td style="text-align:center"><span class="stars">★★★★★</span></td><td style="text-align:center"><span class="stars">★★</span></td></tr>
+      <tr><td>기능적응성</td><td style="text-align:center"><span class="stars">★★★★★</span></td><td style="text-align:center"><span class="stars">★★</span></td></tr>
+      <tr><td>테스트가능성</td><td style="text-align:center"><span class="stars">★★★★★</span></td><td style="text-align:center"><span class="stars">★★★</span></td></tr>
+    </tbody>
+  </table></div>
+  <p class="note"><strong>평가 조건</strong>: 실제 사용자 데이터와 생리학적 비교 기준이 없고, 같은 가상 조건을 반복해 구조를 검증해야 하는 이번 과제의 조건에서 비교했다. 모델별 시험 결과와 전환 근거는 별도의 개발 이력 문서에 기록했다.</p>
   <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
 </section>
 </div>
@@ -526,23 +528,19 @@
       <tr>
         <th class="rowh">장점</th>
         <td class="win">
-          <p><strong>QA3 제어가능성</strong><br><span class="note">문장 차단과 기본 문구 전환, 위험 심박 안내의 별도 처리가 자동으로 작동한다.</span></p>
-          <p><strong>QA1 설명용이성</strong><br><span class="note">판정에 사용한 규칙과 생성 문장의 처리 경로를 함께 기록할 수 있다.</span></p>
-          <p><strong>QA5 테스트가능성</strong><br><span class="note">같은 입력으로 출력 검사가 같은 기준으로 동작하는지 반복 확인할 수 있다.</span></p>
+          <p><strong>QA3 제어가능성</strong> <span class="stars">★★★★★</span><br><span class="note">문장 차단과 기본 문구 전환, 위험 심박 안내의 별도 처리가 자동으로 작동한다.</span></p>
+          <p><strong>QA1 설명용이성</strong> <span class="stars">★★★★★</span><br><span class="note">판정에 사용한 규칙과 생성 문장의 처리 경로를 함께 기록할 수 있다.</span></p>
+          <p><strong>QA5 테스트가능성</strong> <span class="stars">★★★★★</span><br><span class="note">같은 입력으로 출력 검사가 같은 기준으로 동작하는지 반복 확인할 수 있다.</span></p>
         </td>
-        <td>
-          <p class="note">확정한 QA 기준에서는 1안보다 분명하게 유리한 점을 확인하지 못했다.</p>
-        </td>
+        <td style="text-align:center">—</td>
       </tr>
       <tr>
         <th class="rowh">단점</th>
-        <td class="win">
-          <p><strong>QA3 제어가능성</strong><br><span class="note">통제할 상황과 코칭 방향을 규칙으로 정의해야 하므로 새로운 상황에는 통제 규칙을 추가해야 한다.</span></p>
-        </td>
+        <td class="win" style="text-align:center">—</td>
         <td>
-          <p><strong>QA3 제어가능성</strong><br><span class="note">판단을 직접 제한할 방법이 적어 프롬프트와 사후 필터에 크게 의존한다.</span></p>
-          <p><strong>QA1 설명용이성</strong><br><span class="note">생성한 설명이 실제 판단 근거와 일치하는지 별도로 확인해야 한다.</span></p>
-          <p><strong>QA5 테스트가능성</strong><br><span class="note">같은 입력에도 생성 결과가 달라질 수 있어 판정과 표현을 함께 검증하기 어렵다.</span></p>
+          <p><strong>QA3 제어가능성</strong> <span class="stars">★★</span><br><span class="note">판단을 직접 제한할 방법이 적어 프롬프트와 사후 필터에 크게 의존한다.</span></p>
+          <p><strong>QA1 설명용이성</strong> <span class="stars">★★</span><br><span class="note">생성한 설명이 실제 판단 근거와 일치하는지 별도로 확인해야 한다.</span></p>
+          <p><strong>QA5 테스트가능성</strong> <span class="stars">★★★</span><br><span class="note">같은 입력에도 생성 결과가 달라질 수 있어 판정과 표현을 함께 검증하기 어렵다.</span></p>
         </td>
       </tr>
       <tr>
@@ -569,15 +567,15 @@
 
   <h3 class="num"><span>2.</span>채택 근거</h3>
   <ul>
-    <li><strong>잘못된 출력을 자동으로 차단한다.</strong> 생성 문장이 확정된 방향·형식·숫자의 범위를 벗어나면 기본 문구로 전환한다. 위험 심박 안내는 문장 생성과 분리해 LLM을 거치지 않는다.</li>
-    <li><strong>LLM과 독립된 통제 기준이 있다.</strong> 시스템이 생성 문장을 대조할 방향·형식·숫자를 먼저 확정한다. 판단과 표현을 모두 LLM에 맡기는 2안은 결과를 독립적으로 확인할 기준을 별도로 마련해야 한다.</li>
-    <li><strong>LLM을 사용할 수 없어도 코칭을 이어 갈 수 있다.</strong> 모델 미지원·미설치·실행 오류가 확인되면 기본 문구를 사용한다. 2안은 별도 대체 경로가 없으면 코칭이 중단될 수 있다.</li>
-    <li><strong>통제 과정이 기록으로 남는다.</strong> 생성 문장이 차단되거나 기본 문구로 전환된 이유를 세션에 기록하고 리포트에서 확인할 수 있게 한다.</li>
-    <li><strong>DP2와 같은 책임 분리 원칙을 따른다.</strong> 규칙이 판단을 담당하므로 설명을 실제 판단과 연결할 수 있고(DP2), 시스템은 생성 문장을 검사할 기준도 유지할 수 있다(DP3).</li>
+    <li><strong>QA3 제어가능성:</strong> 시스템이 코칭의 방향·형식·숫자를 먼저 확정하고, 범위를 벗어난 문장은 차단한다. 모델 미지원·실행 오류에는 기본 문구를 사용하며, 위험 심박 안내는 LLM과 분리한다.</li>
+    <li><strong>QA1 설명용이성:</strong> 판정에 사용한 사실과 생성 경로, 문장이 차단되거나 기본 문구로 전환된 이유를 함께 기록해 리포트에서 확인할 수 있게 한다.</li>
+    <li><strong>QA5 테스트가능성:</strong> 방향과 숫자 검사를 독립된 규칙으로 두어 같은 시험 문장에 같은 차단 기준을 반복 적용할 수 있다.</li>
+    <li><strong>Tradeoff:</strong> 판단과 실패 대응을 규칙으로 통제하는 대신 코칭의 상황과 방향을 미리 정의해야 한다. 2안은 표현의 자유도가 높지만 QA1·QA3·QA5를 위한 외부 기준과 대체 경로가 추가로 필요하다.</li>
   </ul>
 
   <h3 class="num"><span>3.</span>검증 결과</h3>
-  <p>판정 방향과 어긋나는 시험 문장 10개와 허용되지 않은 숫자가 있는 시험 문장 5개는 모두 출력 검사에서 차단됐다. 두 측정의 출력 검사 통과율은 각각 0%였다. 이 결과는 미리 정의한 표현 범위에 대한 것으로, 모든 한국어 문장의 의미를 이해한다는 뜻은 아니다.</p>
+  <p><strong>QA3:</strong> 판정 방향과 어긋나는 시험 문장 10개와 허용되지 않은 숫자가 있는 시험 문장 5개는 모두 출력 검사에서 차단됐다. 두 측정의 출력 검사 통과율은 각각 0%였다.</p>
+  <p class="note"><strong>QA1·QA5:</strong> 출력 검사와 기본 문구 전환 경로를 기록하고, 같은 시험 문장에 동일한 검사 규칙을 반복 적용했다. 이는 미리 정의한 표현 범위에서 근거 추적과 반복 검사가 가능함을 확인한 것이며, 모든 한국어 문장의 의미를 이해한다는 뜻은 아니다.</p>
   <h3 class="num"><span>4.</span>보완 계획</h3>
   <ul>
     <li><strong>단기 개선안</strong>: 속도 조절을 나타내는 한국어 표현을 추가로 수집해 시험 문장과 차단 사유를 보강한다.</li>
@@ -596,10 +594,9 @@
 
   <h3 class="num"><span>A1.</span>이 설계 결정이 다루는 품질 문제</h3>
   <ul>
-    <li>실시간 출력마다 사람이 검토할 수 없다 → 제어가능성</li>
-    <li>모델 미지원, 다운로드 전, 지연이나 오류에도 코칭이 이어져야 한다 → 제어가능성</li>
-    <li>판단 근거와 생성 문장이 같은 사실을 사용해야 한다 → 설명용이성</li>
-    <li>같은 시험 문장에 출력 검사 규칙이 일관되게 동작해야 한다 → 테스트가능성</li>
+    <li><strong>QA3 제어가능성:</strong> 사람이 실시간 출력을 모두 검토할 수 없으므로 시스템이 범위를 벗어난 문장을 차단하고, LLM을 사용할 수 없을 때도 코칭을 이어 가야 한다.</li>
+    <li><strong>QA1 설명용이성:</strong> 판단 근거와 생성 문장이 같은 사실을 사용했는지, 어떤 경로로 최종 문장이 선택됐는지 확인할 수 있어야 한다.</li>
+    <li><strong>QA5 테스트가능성:</strong> 같은 시험 문장에는 방향과 숫자 검사 규칙이 같은 기준으로 동작해야 한다.</li>
   </ul>
 
   <h3 class="num"><span>A2.</span>채택안의 통제 단계 <span class="note" style="font-weight:400">(판단 권한 제한부터 기록까지 순서대로 적용)</span></h3>
@@ -607,14 +604,14 @@
   <div class="tbl">
   <table class="decide">
     <thead>
-      <tr><th style="width:9em">단계</th><th>하는 일</th><th style="width:11em">제어 유형</th></tr>
+      <tr><th style="width:9em">단계</th><th>하는 일</th><th style="width:11em">제어 유형</th><th style="width:8em">관련 QA</th></tr>
     </thead>
     <tbody>
-      <tr><td><strong>1. 격리</strong></td><td>판단은 규칙에 맡기고 LLM은 문장만 만들도록 권한을 제한한다.</td><td>예방</td></tr>
-      <tr><td><strong>2. 출력 검사</strong></td><td>문장의 길이와 형식을 확인하고, 판정과 모순되는 방향이나 관측값에 없는 숫자가 포함되면 차단한다.</td><td>교정</td></tr>
-      <tr><td><strong>3. 기본 문구</strong></td><td>출력 검사를 통과하지 못하거나 LLM 실행에 실패하면 "속도를 줄이세요"와 같은 기본 문구로 전환한다.</td><td>보완</td></tr>
-      <tr><td><strong>4. 안전 분리</strong></td><td>위험 심박 권고는 LLM을 거치지 않는다.</td><td>안전 전환</td></tr>
-      <tr><td><strong>5. 사용자 개입과 기록</strong></td><td>사용자는 말하기 테스트로 개인 경계를 조정하고 설정에서 LLM 사용 여부를 바꿀 수 있다. 시스템은 모든 호출 경로와 차단 사유를 세션에 기록한다.</td><td>교정, 보완, 사후 확인</td></tr>
+      <tr><td><strong>1. 격리</strong></td><td>판단은 규칙에 맡기고 LLM은 문장만 만들도록 권한을 제한한다.</td><td>예방</td><td>QA3</td></tr>
+      <tr><td><strong>2. 출력 검사</strong></td><td>문장의 길이와 형식을 확인하고, 판정과 모순되는 방향이나 관측값에 없는 숫자가 포함되면 차단한다.</td><td>교정</td><td>QA3·QA5</td></tr>
+      <tr><td><strong>3. 기본 문구</strong></td><td>출력 검사를 통과하지 못하거나 LLM 실행에 실패하면 "속도를 줄이세요"와 같은 기본 문구로 전환한다.</td><td>보완</td><td>QA3</td></tr>
+      <tr><td><strong>4. 안전 분리</strong></td><td>위험 심박 권고는 LLM을 거치지 않는다.</td><td>안전 전환</td><td>QA3</td></tr>
+      <tr><td><strong>5. 사용자 개입과 기록</strong></td><td>사용자는 말하기 테스트로 개인 경계를 조정하고 설정에서 LLM 사용 여부를 바꿀 수 있다. 시스템은 모든 호출 경로와 차단 사유를 세션에 기록한다.</td><td>교정, 보완, 사후 확인</td><td>QA1·QA3</td></tr>
     </tbody>
   </table>
   </div>

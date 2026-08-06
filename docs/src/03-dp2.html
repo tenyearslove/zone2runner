@@ -33,9 +33,9 @@
         <td><div class="fig-frame"><img data-img="dp2-counter" alt="AI 개발 서브시스템에서 학습한 ML의 판정 뒤에 설명을 별도로 추정하는 구조" width="1400"></div><p class="struct-note">비교안은 ML을 학습·검증·등록한 뒤 추론 서비스에 배포하고, 설명 서비스는 판정이 끝난 뒤 이유를 별도로 추정한다. 실제 사용자 데이터와 측정 기준값이 충분하다면 규칙에 없는 관계도 학습할 수 있지만, 이번 과제의 데이터로는 실제 사용자에게도 유효한지 확인하기 어렵다.</p></td>
       </tr>
       <tr><th class="rowh">확인 가능한 것</th><td class="win">판정에 사용한 심박·경계·규칙, 개인 경계가 바뀐 이유, 설명 문장의 숫자와 방향</td><td>가상 러너가 만든 기준값에 대한 점수와 학습 손실만 확인할 수 있다. 실제 사용자에 대한 정확도는 별도 데이터가 있어야 검증할 수 있다.</td></tr>
-      <tr><th class="rowh">장점</th><td class="win"><p><strong>QA1 설명용이성</strong><br><span class="note">판정에 사용한 값과 규칙을 그대로 기록해 근거를 따라갈 수 있다.</span></p><p><strong>QA2 기능적응성</strong><br><span class="note">사용자 응답으로 조정한 개인 경계를 다음 판정에 직접 사용한다.</span></p><p><strong>QA5 테스트가능성</strong><br><span class="note">같은 입력에서 판정과 근거 기록을 반복 확인할 수 있다.</span></p></td><td><p><strong>QA2 기능적응성</strong><br><span class="note">실제 데이터가 충분하면 규칙보다 복잡한 개인별 관계를 학습할 가능성이 있다.</span></p></td></tr>
-      <tr><th class="rowh">단점</th><td class="win"><p><strong>QA2 기능적응성</strong><br><span class="note">규칙과 관측 범위를 벗어난 복잡한 관계까지 학습하지는 못한다.</span></p></td><td><p><strong>QA1 설명용이성</strong><br><span class="note">ML 판정과 사후 설명이 서로 다른 근거를 사용할 수 있다.</span></p><p><strong>QA2 기능적응성</strong><br><span class="note">말하기 응답으로 조정한 경계와 ML 판정이 충돌할 수 있다.</span></p><p><strong>QA5 테스트가능성</strong><br><span class="note">현재 데이터에서 얻은 결과가 실제 사용자에게도 유지되는지 검증할 수 없다.</span></p></td></tr>
-      <tr><th class="rowh">Tradeoff</th><td class="win">QA1과 QA5에서 현재 확인 가능한 근거를 확보하는 대신, QA2에서 복잡한 관계를 학습하는 범위는 제한된다.</td><td>QA2에서 복잡한 관계를 학습할 가능성이 있지만, QA1과 QA5를 충족하려면 실제 사용자 데이터와 별도의 검증 기준이 필요하다.</td></tr>
+      <tr><th class="rowh">장점</th><td class="win"><p><strong>QA1 설명용이성</strong> <span class="stars">★★★★★</span><br><span class="note">판정에 사용한 값과 규칙을 그대로 기록하므로 리포트에서 근거를 따라갈 수 있다.</span></p><p><strong>QA2 기능적응성</strong> <span class="stars">★★★★★</span><br><span class="note">사용자 응답으로 조정한 개인 경계를 다음 판정에 그대로 사용한다.</span></p><p><strong>QA5 테스트가능성</strong> <span class="stars">★★★★★</span><br><span class="note">같은 입력에서 판정과 근거 기록이 같은지 반복해서 확인할 수 있다.</span></p></td><td style="text-align:center">—</td></tr>
+      <tr><th class="rowh">단점</th><td class="win" style="text-align:center">—</td><td><p><strong>QA1 설명용이성</strong> <span class="stars">★★</span><br><span class="note">ML 판정과 사후 설명이 서로 다른 근거를 사용할 수 있어, 리포트에 표시한 설명이 실제 판정 근거인지 별도로 확인해야 한다.</span></p><p><strong>QA2 기능적응성</strong> <span class="stars">★★</span><br><span class="note">말하기 응답으로 조정한 경계와 ML 판정이 서로 다른 기준을 사용할 수 있다.</span></p><p><strong>QA5 테스트가능성</strong> <span class="stars">★★★</span><br><span class="note">데이터 구성부터 학습과 배포까지 같은 조건으로 재현해야 판정과 설명을 함께 비교할 수 있다.</span></p></td></tr>
+      <tr><th class="rowh">Tradeoff</th><td class="win">QA1·QA2·QA5를 하나의 판단 근거로 연결해 현재 조건에서 반복 확인할 수 있다. 대신 복잡한 관계를 학습하는 방안은 실제 데이터와 검증 기준이 마련된 뒤 다시 검토한다.</td><td>복잡한 관계를 학습할 가능성은 있다. 대신 QA1·QA2·QA5를 충족하려면 판정과 개인화의 기준을 통일하고, 사후 설명의 일치 여부와 학습·배포 전 과정을 별도로 검증해야 한다.</td></tr>
     </tbody>
   </table></div>
   <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
@@ -47,14 +47,15 @@
   <p class="lead">이번 과제에서는 1안인 ‘투명한 규칙·관측 통계와 사용자 응답’ 구조를 채택했다.</p>
   <h3 class="num"><span>2.</span>결정 근거</h3>
   <ol>
-    <li><strong>현재 데이터만으로는 ML 판정을 실제 기능에 적용할 근거가 부족했다.</strong> 합성 데이터에서 얻은 점수만으로 실제 사용자의 Zone 2를 정확히 판정한다고 주장할 수 없다.</li>
-    <li><strong>판정 기준을 하나로 모았다.</strong> 모든 판정과 설명에서 현재 심박과 말하기 테스트로 조정한 개인 경계를 함께 사용한다.</li>
-    <li><strong>판단에 사용한 근거를 설명에도 그대로 사용한다.</strong> 판정 결과, 심박, 개인 경계와 경계 변경 이유를 하나의 기록에 남긴다. 따라서 설명을 만들 때 판단 근거를 다시 추정할 필요가 없다.</li>
-    <li><strong>추후 ML을 다시 검토할 수 있다.</strong> 실제 러닝 데이터가 충분히 확보되면 전체 판정 구조를 바꾸기 전에 규칙의 오차를 보정하는 작은 모델부터 검증할 수 있다.</li>
+    <li><strong>QA1 설명용이성:</strong> 판정 결과, 심박, 개인 경계와 경계 변경 이유를 하나의 근거 기록에 남긴다. 설명은 이 기록을 사용하므로 판정 이유를 사후에 다시 추정하지 않는다.</li>
+    <li><strong>QA2 기능적응성:</strong> 모든 판정과 설명에서 말하기 응답으로 조정한 동일한 개인 경계를 사용한다. ML 판정이 별도 기준을 사용해 개인화 결과와 충돌하는 구조를 피했다.</li>
+    <li><strong>QA5 테스트가능성:</strong> 입력, 판정, 근거 기록이 분리되어 있어 같은 입력에서 세 결과가 일치하는지 반복 확인할 수 있다. 비교안은 데이터 구성부터 학습과 배포까지 같은 조건으로 재현해야 한다.</li>
+    <li><strong>Tradeoff:</strong> 현재 데이터로 검증할 수 있는 규칙과 기록 구조를 선택했다. 실제 러닝 데이터와 비교 기준이 확보되면 규칙이 놓친 오차를 보정하는 작은 모델부터 다시 검토한다.</li>
   </ol>
   <h3 class="num"><span>3.</span>검증 결과</h3>
-  <p>Zone 2 아래·범위 안·위의 판정에 사용한 심박과 개인 경계를 모두 기록했다.</p>
-  <p class="note">이 결과로 미리 정한 세 가지 Zone 판정의 근거가 기록되고, 해당 기록을 사후 설명에 사용할 수 있음을 확인했다. 실제 Zone 2의 생리학적 정확도나 사용자가 설명을 이해하는 정도까지 확인한 것은 아니다.</p>
+  <p><strong>QA1:</strong> Zone 2 아래·범위 안·위의 판정에서 사용한 심박, 개인 경계와 판정 결과를 모두 기록했다. 대표 판정 근거의 기록률은 100%였다.</p>
+  <p><strong>QA2·QA5:</strong> 판정은 말하기 응답으로 조정한 개인 경계를 사용하며, 같은 입력에서는 판정과 근거 기록을 반복 비교할 수 있게 구성했다.</p>
+  <p class="note">이는 미리 정한 입력에서 판단 근거가 연결되고 반복 확인됨을 검증한 결과다. 실제 Zone 2의 생리학적 정확도나 사용자가 설명을 이해하는 정도까지 확인한 것은 아니다.</p>
   <h3 class="num"><span>4.</span>보완 계획</h3>
   <ul>
     <li><strong>단기 개선안</strong>: 판정·개인화·코칭 화면에서 같은 용어와 숫자를 사용하는지 확인하는 시험 사례를 확대한다.</li>
@@ -78,16 +79,25 @@
   <h3 class="num"><span>2.</span>채택안의 근거 흐름</h3>
   <figure style="margin:0 0 10px"><div class="fig-frame"><img data-img="dp2-detail" alt="DP2 채택안 — AI 운영 서브시스템에서 판단 근거가 서비스 사이에 전달되는 순서" width="1100"></div></figure>
   <div class="tbl"><table class="decide">
-    <thead><tr><th style="width:9em">단계</th><th>하는 일</th></tr></thead>
+    <thead><tr><th style="width:9em">단계</th><th>하는 일</th><th style="width:8em">관련 QA</th></tr></thead>
     <tbody>
-      <tr><td><strong>1. 판단값 확정</strong></td><td>판정에 사용할 심박과 개인 경계를 정하고 규칙으로 Zone을 판정한다.</td></tr>
-      <tr><td><strong>2. 근거 기록</strong></td><td>판정에 사용한 값과 개인 경계가 바뀐 이유를 함께 기록한다.</td></tr>
-      <tr><td><strong>3. 문장 생성</strong></td><td>LLM은 확정된 사실을 자연스러운 문장으로 표현한다.</td></tr>
-      <tr><td><strong>4. 출력 검사</strong></td><td>문장의 형식, 방향, 숫자가 허용 범위에 있는지 다시 확인한다.</td></tr>
-      <tr><td><strong>5. 근거 확인</strong></td><td>리포트에서 코칭 문장과 해당 문장을 생성할 때 사용한 근거를 함께 확인한다.</td></tr>
+      <tr><td><strong>1. 판단값 확정</strong></td><td>판정에 사용할 심박과 개인 경계를 정하고 규칙으로 Zone을 판정한다.</td><td>QA1·QA2</td></tr>
+      <tr><td><strong>2. 근거 기록</strong></td><td>판정에 사용한 값과 개인 경계가 바뀐 이유를 함께 기록한다.</td><td>QA1</td></tr>
+      <tr><td><strong>3. 문장 생성</strong></td><td>LLM은 확정된 사실을 자연스러운 문장으로 표현한다.</td><td>QA1</td></tr>
+      <tr><td><strong>4. 출력 검사</strong></td><td>문장의 형식, 방향, 숫자가 허용 범위에 있는지 다시 확인한다.</td><td>QA1·QA5</td></tr>
+      <tr><td><strong>5. 근거 확인</strong></td><td>리포트에서 코칭 문장과 해당 문장을 생성할 때 사용한 근거를 함께 확인한다.</td><td>QA1</td></tr>
     </tbody>
   </table></div>
-  <p class="note">모델별 시험 결과와 전환 근거는 별도의 개발 이력 문서에 기록했다.</p>
+  <h3 class="num"><span>3.</span>선정 품질에 미치는 영향</h3>
+  <div class="tbl"><table class="decide">
+    <thead><tr><th>품질 속성</th><th>(1안) 투명한 규칙·관측 통계와 사용자 응답</th><th>(2안) 합성·공개 데이터 기반 ML과 사후 설명</th></tr></thead>
+    <tbody>
+      <tr><td>설명용이성</td><td style="text-align:center"><span class="stars">★★★★★</span></td><td style="text-align:center"><span class="stars">★★</span></td></tr>
+      <tr><td>기능적응성</td><td style="text-align:center"><span class="stars">★★★★★</span></td><td style="text-align:center"><span class="stars">★★</span></td></tr>
+      <tr><td>테스트가능성</td><td style="text-align:center"><span class="stars">★★★★★</span></td><td style="text-align:center"><span class="stars">★★★</span></td></tr>
+    </tbody>
+  </table></div>
+  <p class="note"><strong>평가 조건</strong>: 실제 사용자 데이터와 생리학적 비교 기준이 없고, 같은 가상 조건을 반복해 구조를 검증해야 하는 이번 과제의 조건에서 비교했다. 모델별 시험 결과와 전환 근거는 별도의 개발 이력 문서에 기록했다.</p>
   <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
 </section>
 </div>
