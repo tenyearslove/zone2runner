@@ -486,7 +486,7 @@ class RunActivity : AppCompatActivity() {
             append("• Zone 2 = 유산소 기초 강도 ≈ 최대심박의 60~70% (San Millan/LT1 기준)\n")
             append("• 최대심박 ${p.maxHr} → 상단 ≈ 70% = $hi, 하단 ≈ ${loPct}% = $lo\n")
             append("• 지금 값 출처: $src\n")
-            append("• ★ 뛰면서 문장을 말해 본 뒤 '편함/보통/벅참'으로 답하면, 그때의 심박과 응답을 이 범위에 반영합니다.")
+            append("• ★ 뛰면서 말하기가 얼마나 편한지 '편함/보통/벅참'으로 답하면, 그때의 심박과 응답을 이 범위에 반영합니다.")
             append(hmaxNote)
         }
         val dialog = android.app.AlertDialog.Builder(this)
