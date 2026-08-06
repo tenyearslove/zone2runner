@@ -122,7 +122,7 @@
 <section class="slide">
   <div class="slide-head"><h2>품질 요구사항 — QAS</h2><span class="sec-no">2</span></div>
   <p class="note">현재 개발 환경에서는 실제 러닝과 심박센서 데이터를 충분히 수집해 반복 측정하기 어렵다. 이 때문에 실제 사용자의 생리학적 정확도나 심박센서의 성능을 기준으로 삼지 않고, 미리 정한 사례와 가상 조건에서 측정 방법과 성공 기준을 정의한다.</p>
-  <p class="note"><strong>말하기 테스트</strong>는 러닝 중 사용자가 현재 강도에서 말하기가 얼마나 편한지를 편함·보통·벅참 중 하나로 답하는 방식이다. 앱이 음성을 분석하는 기능은 아니다.</p>
+  <p class="note"><strong>말하기 테스트</strong>는 러닝 중 사용자가 현재 강도에서 말하기가 얼마나 편한지를 편함·보통·벅참 중 하나로 답하는 방식이다. 앱이 음성을 분석하는 기능은 아니다. 첫 질문은 세션 시작 2분 뒤부터 Zone 2 하한 이상 심박이 30초 유지되면 표시하고, 이후에는 같은 조건에서 약 3분 이상의 간격을 둔다. 유효한 심박은 있지만 10분 동안 질문이 없으면 한 번 더 묻고, 사용자는 건너뛸 수 있다.</p>
   <p class="note">시나리오에는 요청 주체·상황·대상(Source·Stimulus·Artifact·Environment), 시스템의 응답(Response), 성공 여부를 판단할 측정 기준(Response Measure)을 차례로 적었다.</p>
   <div class="tbl"><table class="decide qas-table">
     <thead><tr><th style="width:3em">ID</th><th style="width:4em">AI QA</th><th style="width:7em">QA</th><th style="width:9em">내용</th><th>시나리오</th><th style="width:4em">중요도</th><th style="width:4em">난이도</th></tr></thead>

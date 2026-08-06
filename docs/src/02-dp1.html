@@ -33,7 +33,7 @@
 <!-- ======================= 슬라이드 2 ======================= -->
 <section class="slide">
   <div class="slide-head">
-    <h2>DP1. 설계안 결정</h2>
+    <h2>DP1. 두 설계안의 비교</h2>
     <span class="sec-no">3</span>
   </div>
 
@@ -42,39 +42,45 @@
     <thead>
       <tr>
         <th class="rowh" style="background:var(--accent-soft)"></th>
-        <th>(1안) 온라인 베이지안 개인 적응 구조<span class="pick-badge">채택</span></th>
-        <th>(2안) 오프라인 재학습 개인화 구조</th>
+        <th>(1안) 온라인 베이지안 개인 적응 구조</th>
+        <th>(2안) 공통 모델·개인 보정 재학습 구조</th>
       </tr>
     </thead>
     <tbody>
       <tr>
         <th class="rowh">한 줄<br>소개</th>
-        <td class="win">말하기 테스트 응답이 들어올 때마다 개인 경계를 조금씩 조정하는 구조</td>
+        <td>말하기 테스트 응답이 들어올 때마다 개인 경계를 조금씩 조정하는 구조</td>
         <td>사용자 데이터를 서버에 모아 주기적으로 모델을 다시 학습하고 배포하는 구조</td>
       </tr>
       <tr>
         <th class="rowh">구조</th>
-        <td class="win">
+        <td>
           <div class="fig-frame"><img data-img="dp1-adopted" alt="1안 — AI 운영 서브시스템에서 사용자 응답으로 개인 경계를 갱신하는 구조"></div>
           <p class="note" style="margin-top:8px">추론·운영·설명 서비스가 하나의 운영 경로에서 개인화에 참여한다. 프로필로 계산한 초기값에서 시작해 말하기 테스트 응답이 들어올 때마다 개인 경계를 조정하고, 한 세션에서 바뀌는 폭은 최대 10bpm으로 제한한다. 조정한 경계는 다음 러닝의 시작값으로 저장하며, 추정 범위는 개인화 진행 상태를 설명하기 위해 기록한다. 이 과정에는 별도의 모델 재학습이 필요하지 않다.</p>
         </td>
         <td>
           <div class="fig-frame"><img data-img="dp1-counter" alt="2안 — AI 개발 서브시스템의 재학습과 배포로 개인화를 반영하는 구조"></div>
-          <p class="note" style="margin-top:8px">비교안은 데이터셋 구축, Model Construction, Model Testing, Model Registry를 거쳐 새 모델을 배포한다. 더 복잡한 패턴을 배울 수 있지만, 서버와 충분한 사용자 데이터가 필요하고 새 모델을 배포하기 전까지 개인화 결과가 바뀌지 않는다.</p>
+          <p class="note" style="margin-top:8px">Data Lake에는 동의받은 여러 사용자의 기록을 사용자별로 구분해 저장하며, 현재 사용자의 누적 기록도 그중 한 묶음으로 관리한다. 프로필, 세션의 심박·페이스·경사, 말하기 응답과 당시 심박을 입력으로 공통 관계를 학습하고 개인 기록으로 보정한다. 모델은 개인 Zone 2 상한 또는 상한 보정값을 출력하며, 새 응답은 재학습·검증·배포 후 반영된다.</p>
         </td>
       </tr>
       <tr>
         <th class="rowh">장점</th>
-        <td class="win">
+        <td>
           <p><strong>QA2 기능적응성</strong> <span class="stars">★★★★★</span><br><span class="note">별도 재학습 없이 실행 중 개인 경계를 조정한다. 1 Hz 가상 입력에서 판정 반영까지 최대 1.019초였다.</span></p>
           <p><strong>QA1 설명용이성</strong> <span class="stars">★★★★★</span><br><span class="note">경계 변경에 영향을 준 응답과 변경 결과를 직접 연결할 수 있다.</span></p>
           <p><strong>QA5 테스트가능성</strong> <span class="stars">★★★★★</span><br><span class="note">같은 응답을 넣어 경계가 어떻게 바뀌는지 반복 확인할 수 있다.</span></p>
         </td>
-        <td style="text-align:center">—</td>
+        <td>
+          <p><strong>학습 범위</strong><br><span class="note">여러 사용자에게 공통된 관계와 개인별 차이를 함께 학습할 가능성이 있다.</span></p>
+          <p><strong>확장성</strong><br><span class="note">충분한 실제 데이터가 있다면 프로필과 운동 기록 사이의 복잡한 관계를 모델에 반영할 수 있다.</span></p>
+        </td>
       </tr>
       <tr>
         <th class="rowh">단점</th>
-        <td class="win" style="text-align:center">—</td>
+        <td>
+          <p><strong>학습 범위</strong><br><span class="note">경계 갱신 방법을 미리 정하므로 규칙에 없는 복잡한 관계를 스스로 학습하지 못한다.</span></p>
+          <p><strong>응답 품질</strong><br><span class="note">응답이 적고 주관적이어서 잘못된 답의 영향을 완전히 없앨 수 없다.</span></p>
+        </td>
         <td>
           <p><strong>QA2 기능적응성</strong> <span class="stars">★★</span><br><span class="note">사용자 응답의 반영이 데이터 수집·재학습·배포 주기만큼 늦어진다.</span></p>
           <p><strong>QA1 설명용이성</strong> <span class="stars">★★</span><br><span class="note">한 사용자의 응답이 모델 변경에 미친 영향을 직접 연결하기 어렵다.</span></p>
@@ -83,12 +89,13 @@
       </tr>
       <tr>
         <th class="rowh">Tradeoff</th>
-        <td class="win">QA1·QA5를 현재 조건에서 직접 확인할 수 있고, QA2는 별도 재학습 없이 실행 중 반영할 수 있다. 1 Hz 가상 입력 측정에서 5초 기준도 충족했다.</td>
-        <td>복잡한 개인 패턴을 학습할 가능성은 있다. 대신 QA2의 반영이 늦고, QA1·QA5를 충족하려면 개인별 기준값과 재학습 전 과정에 대한 별도 검증이 필요하다.</td>
+        <td>응답을 빠르게 반영하고 변경 근거를 직접 추적할 수 있는 대신, 미리 정한 갱신 규칙을 넘어서는 복잡한 패턴은 학습하기 어렵다.</td>
+        <td>공통 패턴과 개인별 차이를 함께 학습할 가능성이 있지만, 충분한 데이터와 서버 운영이 필요하고 새 응답의 반영은 재학습·배포 주기만큼 늦어진다.</td>
       </tr>
     </tbody>
   </table>
   </div>
+  <p class="note"><strong>HITL(Human-in-the-Loop)</strong>은 사용자의 응답이 시스템의 판단이나 갱신 과정에 직접 들어가는 구조를 뜻한다. 2안도 말하기 응답을 학습 근거로 사용하므로, 여러 사용자의 기록을 학습하더라도 실제 유산소 역치의 정답을 확보하는 것은 아니다.</p>
 
   <div class="crumb">프로젝트 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
 </section>
@@ -96,7 +103,7 @@
 <!-- ======================= 개인화 계산 ======================= -->
 <section class="slide">
   <div class="slide-head">
-  <h2>DP1. 채택안의 개인화 원리</h2>
+  <h2>DP1. 1안의 개인화 원리</h2>
     <span class="sec-no">3</span>
   </div>
 
@@ -193,7 +200,7 @@
   <div class="tbl">
   <table class="decide">
     <thead>
-      <tr><th>품질 속성</th><th>(1안) 온라인 베이지안 개인 적응</th><th>(2안) 오프라인 재학습 개인화</th></tr>
+      <tr><th>품질 속성</th><th>(1안) 온라인 베이지안 개인 적응</th><th>(2안) 공통 모델·개인 보정 재학습</th></tr>
     </thead>
     <tbody>
       <tr><td>기능적응성</td><td style="text-align:center"><span class="stars">★★★★★</span></td><td style="text-align:center"><span class="stars">★★</span></td></tr>

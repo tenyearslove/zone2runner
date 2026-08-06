@@ -229,7 +229,7 @@
 <!-- ======================= 슬라이드 2 ======================= -->
 <section class="slide">
   <div class="slide-head">
-    <h2>DP3. 설계안 결정</h2>
+    <h2>DP3. 두 설계안의 비교</h2>
     <span class="sec-no">3</span>
   </div>
 
@@ -238,19 +238,19 @@
     <thead>
       <tr>
         <th class="rowh" style="background:var(--accent-soft)"></th>
-        <th>(1안) 규칙 판정과 LLM 표현 한정 구조<span class="pick-badge">채택</span></th>
+        <th>(1안) 규칙 판정과 LLM 표현 한정 구조</th>
         <th>(2안) LLM 판단 위임 구조</th>
       </tr>
     </thead>
     <tbody>
       <tr>
         <th class="rowh">한 줄<br>소개</th>
-        <td class="win">코칭 방향은 규칙이 정하고 LLM에는 문장 표현만 맡기는 구조</td>
+        <td>코칭 방향은 규칙이 정하고 LLM에는 문장 표현만 맡기는 구조</td>
         <td>심박과 페이스 등 관측 정보를 LLM에 주고, 코칭 내용까지 직접 판단하게 하는 구조</td>
       </tr>
       <tr>
         <th class="rowh">구조</th>
-        <td class="win">
+        <td>
           <div class="fig-frame"><img src="img/dp-02-controllability-adopted-simple.png?v=0886b57d" data-img="dp3-adopted" alt="1안 — AI 운영 서브시스템의 추론·운영·분석 서비스가 LLM의 권한과 실패를 통제하는 구조"></div>
           <p class="note" style="margin-top:8px">추론 서비스의 모델 서빙과 출력 가드레일, 운영 서비스의 추론 제어와 운영 조치, 분석 서비스의 서빙 로그가 통제 경로를 이룬다. 규칙이 코칭 방향과 사용할 숫자를 확정하면 LLM은 문장만 표현한다. 검사 탈락이나 생성 실패에는 기본 문구로 전환하고, 위험 심박 안내는 LLM을 거치지 않는다.</p>
         </td>
@@ -261,16 +261,22 @@
       </tr>
       <tr>
         <th class="rowh">장점</th>
-        <td class="win">
+        <td>
           <p><strong>QA3 제어가능성</strong> <span class="stars">★★★★★</span><br><span class="note">문장 차단과 기본 문구 전환, 위험 심박 안내의 별도 처리가 자동으로 작동한다.</span></p>
           <p><strong>QA1 설명용이성</strong> <span class="stars">★★★★★</span><br><span class="note">판정에 사용한 규칙과 생성 문장의 처리 경로를 함께 기록할 수 있다.</span></p>
           <p><strong>QA5 테스트가능성</strong> <span class="stars">★★★★★</span><br><span class="note">같은 입력으로 출력 검사가 같은 기준으로 동작하는지 반복 확인할 수 있다.</span></p>
         </td>
-        <td style="text-align:center">—</td>
+        <td>
+          <p><strong>표현 범위</strong><br><span class="note">관측 정보를 함께 고려해 규칙에 미리 적지 않은 상황에도 다양한 코칭을 만들 가능성이 있다.</span></p>
+          <p><strong>기능 확장</strong><br><span class="note">프롬프트와 입력 맥락을 넓혀 새로운 코칭 상황을 비교적 빠르게 실험할 수 있다.</span></p>
+        </td>
       </tr>
       <tr>
         <th class="rowh">단점</th>
-        <td class="win" style="text-align:center">—</td>
+        <td>
+          <p><strong>사전 정의 비용</strong><br><span class="note">코칭 방향과 통제할 상황을 규칙과 시험 사례로 미리 정의해야 한다.</span></p>
+          <p><strong>표현 제약</strong><br><span class="note">허용한 사실과 방향 안에서만 문장을 만들기 때문에 생성 모델의 자유도가 줄어든다.</span></p>
+        </td>
         <td>
           <p><strong>QA3 제어가능성</strong> <span class="stars">★★</span><br><span class="note">판단을 직접 제한할 방법이 적어 프롬프트와 사후 필터에 크게 의존한다.</span></p>
           <p><strong>QA1 설명용이성</strong> <span class="stars">★★</span><br><span class="note">생성한 설명이 실제 판단 근거와 일치하는지 별도로 확인해야 한다.</span></p>
@@ -279,7 +285,7 @@
       </tr>
       <tr>
         <th class="rowh">Tradeoff</th>
-        <td class="win">QA1·QA3·QA5를 독립된 규칙으로 확인할 수 있는 대신, 통제할 상황과 코칭 방향을 미리 정의해야 한다.</td>
+        <td>판정 방향과 실패 대응을 독립된 규칙으로 확인할 수 있는 대신, 통제할 상황과 코칭 방향을 미리 정의해야 한다.</td>
         <td>문장 생성의 자유도는 높지만, QA1·QA3·QA5를 충족하려면 LLM 밖에 판정 기준과 실패 대응 경로를 추가해야 한다.</td>
       </tr>
     </tbody>

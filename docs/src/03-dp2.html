@@ -25,16 +25,16 @@
 <section class="slide">
   <div class="slide-head"><h2>DP2. 두 설계안의 비교</h2><span class="sec-no">3</span></div>
   <div class="tbl"><table class="decide">
-    <thead><tr><th class="rowh" style="background:var(--accent-soft)"></th><th>(1안) 투명한 규칙·관측 통계와 사용자 응답<span class="pick-badge">채택</span></th><th>(2안) 합성·공개 데이터 기반 ML과 사후 설명</th></tr></thead>
+    <thead><tr><th class="rowh" style="background:var(--accent-soft)"></th><th>(1안) 투명한 규칙·관측 통계와 사용자 응답</th><th>(2안) 합성·공개 데이터 기반 ML과 사후 설명</th></tr></thead>
     <tbody>
-      <tr><th class="rowh">한 줄<br>소개</th><td class="win">판단에 쓴 값과 규칙을 기록하고, 사용자의 말하기 테스트 응답으로 개인 경계를 조정한다.</td><td>ML이 판정하거나 값을 예측하고, 그 이유는 판정이 끝난 뒤 별도로 분석해 설명한다.</td></tr>
+      <tr><th class="rowh">한 줄<br>소개</th><td>판단에 쓴 값과 규칙을 기록하고, 사용자의 말하기 테스트 응답으로 개인 경계를 조정한다.</td><td>ML이 판정하거나 값을 예측하고, 그 이유는 판정이 끝난 뒤 별도로 분석해 설명한다.</td></tr>
       <tr><th class="rowh">구조</th>
-        <td class="win"><div class="fig-frame"><img data-img="dp2-adopted" alt="AI 운영 서브시스템의 추론·설명·분석·운영 서비스가 같은 판단 근거를 사용하는 구조" width="1400"></div><p class="struct-note">추론 서비스가 판정과 근거를 확정하고, 설명·분석·운영 서비스가 같은 근거를 전달·기록·표시한다. 현재 심박과 개인 경계를 직접 비교해 Zone을 판정하며, LLM은 시스템이 확정한 사실을 자연스러운 문장으로 표현한다.</p></td>
-        <td><div class="fig-frame"><img data-img="dp2-counter" alt="AI 개발 서브시스템에서 학습한 ML의 판정 뒤에 설명을 별도로 추정하는 구조" width="1400"></div><p class="struct-note">비교안은 ML을 학습·검증·등록한 뒤 추론 서비스에 배포하고, 설명 서비스는 판정이 끝난 뒤 이유를 별도로 추정한다. 실제 사용자 데이터와 측정 기준값이 충분하다면 규칙에 없는 관계도 학습할 수 있지만, 현재 확보한 데이터로는 실제 사용자에게도 유효한지 확인하기 어렵다.</p></td>
+        <td><div class="fig-frame"><img data-img="dp2-adopted" alt="AI 운영 서브시스템의 추론·설명·분석·운영 서비스가 같은 판단 근거를 사용하는 구조" width="1400"></div><p class="struct-note">추론 서비스가 판정과 근거를 확정하고, 설명·분석·운영 서비스가 같은 근거를 전달·기록·표시한다. 현재 심박과 개인 경계를 직접 비교해 Zone을 판정하며, LLM은 시스템이 확정한 사실을 자연스러운 문장으로 표현한다.</p></td>
+        <td><div class="fig-frame"><img data-img="dp2-counter" alt="AI 개발 서브시스템에서 학습한 ML의 판정 뒤에 설명을 별도로 추정하는 구조" width="1400"></div><p class="struct-note">2안은 ML을 학습·검증·등록한 뒤 추론 서비스에 배포하고, 설명 서비스는 판정이 끝난 뒤 이유를 별도로 추정한다. 실제 사용자 데이터와 측정 기준값이 충분하다면 규칙에 없는 관계도 학습할 수 있지만, 현재 확보한 데이터로는 실제 사용자에게도 유효한지 확인하기 어렵다.</p></td>
       </tr>
-      <tr><th class="rowh">장점</th><td class="win"><p><strong>QA1 설명용이성</strong> <span class="stars">★★★★★</span><br><span class="note">판정에 사용한 값과 규칙을 그대로 기록하므로 리포트에서 근거를 따라갈 수 있다.</span></p><p><strong>QA5 테스트가능성</strong> <span class="stars">★★★★★</span><br><span class="note">같은 입력에서 판정과 근거 기록이 같은지 반복해서 확인할 수 있다.</span></p></td><td style="text-align:center">—</td></tr>
-      <tr><th class="rowh">단점</th><td class="win" style="text-align:center">—</td><td><p><strong>QA1 설명용이성</strong> <span class="stars">★★</span><br><span class="note">ML 판정과 사후 설명이 서로 다른 근거를 사용할 수 있어, 리포트에 표시한 설명이 실제 판정 근거인지 별도로 확인해야 한다.</span></p><p><strong>QA5 테스트가능성</strong> <span class="stars">★★★</span><br><span class="note">데이터 구성부터 학습과 배포까지 같은 조건으로 재현해야 판정과 설명을 함께 비교할 수 있다.</span></p></td></tr>
-      <tr><th class="rowh">Tradeoff</th><td class="win">QA1·QA5를 하나의 판단 근거로 연결해 현재 조건에서 반복 확인할 수 있다. 대신 복잡한 관계를 학습하는 방안은 실제 데이터와 검증 기준이 마련된 뒤 다시 검토한다.</td><td>복잡한 관계를 학습할 가능성은 있다. 대신 QA1·QA5를 충족하려면 사후 설명의 일치 여부와 학습·배포 전 과정을 별도로 검증해야 한다.</td></tr>
+      <tr><th class="rowh">장점</th><td><p><strong>QA1 설명용이성</strong> <span class="stars">★★★★★</span><br><span class="note">판정에 사용한 값과 규칙을 그대로 기록하므로 리포트에서 근거를 따라갈 수 있다.</span></p><p><strong>QA5 테스트가능성</strong> <span class="stars">★★★★★</span><br><span class="note">같은 입력에서 판정과 근거 기록이 같은지 반복해서 확인할 수 있다.</span></p></td><td><p><strong>학습 범위</strong><br><span class="note">충분한 실제 데이터와 기준값이 있다면 여러 입력 사이의 비선형 관계를 학습할 수 있다.</span></p><p><strong>기능 확장</strong><br><span class="note">규칙으로 일일이 표현하기 어려운 판정이나 예측 문제로 확장할 가능성이 있다.</span></p></td></tr>
+      <tr><th class="rowh">단점</th><td><p><strong>규칙 범위</strong><br><span class="note">판정 기준과 관측 지표를 미리 정의해야 하므로 알려지지 않은 관계를 자동으로 찾아내지 못한다.</span></p><p><strong>유지보수</strong><br><span class="note">상황이 늘어나면 규칙과 검증 사례도 함께 관리해야 한다.</span></p></td><td><p><strong>QA1 설명용이성</strong> <span class="stars">★★</span><br><span class="note">ML 판정과 사후 설명이 서로 다른 근거를 사용할 수 있어, 리포트에 표시한 설명이 실제 판정 근거인지 별도로 확인해야 한다.</span></p><p><strong>QA5 테스트가능성</strong> <span class="stars">★★★</span><br><span class="note">데이터 구성부터 학습과 배포까지 같은 조건으로 재현해야 판정과 설명을 함께 비교할 수 있다.</span></p></td></tr>
+      <tr><th class="rowh">Tradeoff</th><td>판정과 설명을 같은 근거로 연결해 현재 조건에서 반복 확인할 수 있는 대신, 규칙이 다루지 않은 복잡한 관계는 학습하지 못한다.</td><td>복잡한 관계를 학습할 가능성이 있지만, 사후 설명이 실제 판정 근거와 일치하는지와 학습·배포 전 과정을 별도로 검증해야 한다.</td></tr>
     </tbody>
   </table></div>
   <div class="crumb">프로젝트 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
@@ -47,7 +47,7 @@
   <h3 class="num"><span>2.</span>결정 근거</h3>
   <ol>
     <li><strong>QA1 설명용이성:</strong> 판정 결과, 심박, 개인 경계와 경계 변경 이유를 하나의 근거 기록에 남긴다. 설명은 이 기록을 사용하므로 판정 이유를 사후에 다시 추정하지 않는다.</li>
-    <li><strong>QA5 테스트가능성:</strong> 입력, 판정, 근거 기록이 분리되어 있어 같은 입력에서 세 결과가 일치하는지 반복 확인할 수 있다. 비교안은 데이터 구성부터 학습과 배포까지 같은 조건으로 재현해야 한다.</li>
+    <li><strong>QA5 테스트가능성:</strong> 입력, 판정, 근거 기록이 분리되어 있어 같은 입력에서 세 결과가 일치하는지 반복 확인할 수 있다. 2안은 데이터 구성부터 학습과 배포까지 같은 조건으로 재현해야 한다.</li>
     <li><strong>Tradeoff:</strong> 현재 데이터로 검증할 수 있는 규칙과 기록 구조를 선택했다. 실제 러닝 데이터와 비교 기준이 확보되면 규칙이 놓친 오차를 보정하는 작은 모델부터 다시 검토한다.</li>
   </ol>
   <h3 class="num"><span>3.</span>검증 결과</h3>
