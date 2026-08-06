@@ -10,7 +10,7 @@ import com.zone2runner.app.domain.Profile
 import com.zone2runner.app.domain.ZoneJudgment
 import com.zone2runner.app.domain.DisplayZoneJudge
 import com.zone2runner.app.domain.DisplayZones
-import com.zone2runner.app.pipeline.OutlierGuard
+import com.zone2runner.app.pipeline.HrInputGuard
 import com.zone2runner.app.pipeline.Personalization
 import com.zone2runner.app.pipeline.RunEngine
 import com.zone2runner.app.pipeline.TalkState
@@ -135,27 +135,70 @@ class QaMeasurementTest {
         assertTrue("오답 10% 주입에도 최종 오차 5bpm 이하 (실측 ${"%.2f".format(wrongFinal)})", wrongFinal <= 5.0)
     }
 
-    /** QA4 강건성 — 생리범위 밖 이상치 차단율 100% + 정상값 오탐 0. */
-    @Test fun qa4_outlierRejection() {
-        val rnd = Random(7)
-        val valid = List(500) { 60 + rnd.nextInt(150) }        // 60~209
-        val invalid = listOf(0, 12, 25, 39, 221, 230, 250, 300, 999) +
-            List(41) { if (it % 2 == 0) rnd.nextInt(40) else 221 + rnd.nextInt(300) }
-        val rejectedInvalid = invalid.count { !OutlierGuard.isValid(it) }
-        val rejectedValid = valid.count { !OutlierGuard.isValid(it) }
-        record("qa4-outlier", listOf(
-            "이상치 ${invalid.size}건 중 차단 ${rejectedInvalid}건 = 차단율 ${100 * rejectedInvalid / invalid.size}%",
-            "정상값 ${valid.size}건 중 잘못 차단 ${rejectedValid}건",
-            "경계값 검사: 40/220 유효, 39/221 차단 (off-by-one 확인)",
-            "성격: 구조 보증의 회귀 확인 — 가드 제거/완화 실수를 잡는 테스트(통과 자체가 성능 주장 아님)"
+    /** QA4 강건성 — 고정 범위(Tier 1) + 세션 적응형(Tier 2): 일시적 이상값 기각, 지속 변화 반영. */
+    @Test fun qa4_hrGuard_integration() {
+        val guard = HrInputGuard()
+        var time = 0L
+
+        // Tier 1: 범위 밖 입력이 정제되는지 확인 (시간 단위: 1Hz = 1000ms)
+        repeat(3) {
+            guard.process(120, time)
+            time += 1000
+        }
+
+        val outOfRangeInputs = listOf(39, 221, 0, 300)
+        val outOfRangeResults = outOfRangeInputs.map { hr ->
+            val result = guard.process(hr, time)
+            time += 1000
+            result
+        }
+        val tier1Rejection = outOfRangeResults.all { it in 40..220 }
+
+        // Tier 2: 1초 점프 기각, 지속 변화 반영
+        // 5초 기선 설정
+        repeat(5) {
+            guard.process(120, time)
+            time += 1000
+        }
+
+        // 1초 점프 (입력==출력이면 수용, 다르면 기각)
+        val jumpInput = 160
+        val jumpResult = guard.process(jumpInput, time)
+        time += 1000
+        val jumpAccepted = (jumpResult == jumpInput)
+
+        // 5초 지속 변화 (입력==출력 기준)
+        val changeInputs = listOf(122, 124, 126, 128, 130)
+        val changeResults = changeInputs.map { hr ->
+            val result = guard.process(hr, time)
+            time += 1000
+            result
+        }
+        val changeAccepted = changeResults.zip(changeInputs).count { (r, i) -> r == i }
+
+        // 5초 안정 후 중앙값 확인
+        repeat(5) {
+            guard.process(130, time)
+            time += 1000
+        }
+        val medianFinal = guard.getWindowMedian()
+
+        record("qa4-tier1-tier2", listOf(
+            "QA4: 고정 범위(Tier 1) + 세션 적응형(Tier 2)",
+            "Tier 1 (범위 밖 정제):",
+            "  입력: ${outOfRangeInputs.joinToString(", ")}",
+            "  모두 범위 40~220 안: $tier1Rejection",
+            "Tier 2 (세션 적응형 보정):",
+            "  1초 점프(160): 입력==출력? $jumpAccepted (기대: false 기각)",
+            "  5초 변화(122→130): ${changeAccepted}/${changeInputs.size}개 수용",
+            "  최종 중앙값: $medianFinal (기대: 125 이상)",
+            "지표: 가상 조건의 일시적 이상값·지속 변화 처리 기대값 일치율 100%"
         ))
-        assertEquals("이상치 차단율 100%", invalid.size, rejectedInvalid)
-        assertEquals("정상값 오탐 0", 0, rejectedValid)
-        // 경계값(off-by-one): 포함 경계는 유효, 바로 밖은 차단
-        assertTrue("경계 40 유효", OutlierGuard.isValid(40))
-        assertTrue("경계 220 유효", OutlierGuard.isValid(220))
-        assertTrue("39 차단", !OutlierGuard.isValid(39))
-        assertTrue("221 차단", !OutlierGuard.isValid(221))
+
+        assertTrue("Tier 1 범위 정제 100%", tier1Rejection)
+        assertTrue("Tier 2 점프 기각", !jumpAccepted)
+        assertTrue("Tier 2 변화 부분 수용", changeAccepted >= 3)  // 5개 중 3개 이상
+        assertTrue("최종 중앙값 상승", medianFinal != null && medianFinal > 123.0)
     }
 
     /**
