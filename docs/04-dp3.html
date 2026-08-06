@@ -217,9 +217,9 @@
 
   <h3 class="num"><span>2.</span>문제점</h3>
   <ul>
-    <li><strong>판단과 표현의 책임을 나눠야 한다.</strong> 코칭 방향과 근거가 되는 숫자는 규칙이 먼저 정하고, LLM은 그 범위 안에서 문장만 만든다.</li>
+    <li><strong>판단과 표현의 책임 범위를 정해야 한다.</strong> 코칭 방향과 숫자까지 LLM에 맡길지, 시스템이 사실을 먼저 확정하고 LLM에는 표현만 맡길지 결정해야 한다.</li>
     <li><strong>LLM을 사용할 수 없는 상황도 있다.</strong> 지원하지 않는 기종, 모델 미설치, 응답 지연이나 실행 실패에도 규칙 기반 코칭을 제공할 수 있어야 한다. 다만 모델 상태를 확인하는 동안에는 생성 코칭을 잠시 보류한다.</li>
-    <li><strong>고심박 대응 규칙은 먼저 동작해야 한다.</strong> 설정된 임계값을 넘으면 LLM을 기다리지 않고 규칙 문구를 사용한다.</li>
+    <li><strong>고심박 대응은 문장 생성을 기다리면 안 된다.</strong> 설정된 임계값을 넘으면 생성 결과와 관계없이 즉시 안내할 별도 경로가 필요하다.</li>
     <li><strong>자동 대응을 나중에 확인할 수 있어야 한다.</strong> 문장이 왜 차단되거나 기본 문구로 바뀌었는지 기록으로 남겨야 한다.</li>
   </ul>
 
@@ -263,22 +263,22 @@
         <th class="rowh">장점</th>
         <td class="win">
           <p>제어가능성 <span class="stars">★★★★★</span><br><span class="note">문장 차단, 기본 문구 전환, 고심박 시 LLM 우회가 자동으로 작동한다.</span></p>
-          <p>강건성 <span class="stars">★★★★★</span><br><span class="note">LLM이 실패해도 짧은 문구로 코칭이 이어진다.</span></p>
+          <p>실패 대응 <span class="stars">★★★★★</span><br><span class="note">LLM이 실패해도 짧은 문구로 코칭이 이어진다.</span></p>
         </td>
         <td>
-          <p>기능적응성 <span class="stars">★★★★</span><br><span class="note">규칙에 없는 상황에도 문맥을 반영한 코칭을 만들 가능성이 있다.</span></p>
+          <p>상황 대응 범위 <span class="stars">★★★★</span><br><span class="note">규칙에 없는 상황에도 문맥을 반영한 코칭을 만들 가능성이 있다.</span></p>
           <p>설명용이성 <span class="stars">★★★</span><br><span class="note">문맥을 풍부하게 표현할 수 있지만 판단 근거와의 연결은 별도로 확인해야 한다.</span></p>
         </td>
       </tr>
       <tr>
         <th class="rowh">그 밖의<br>영향</th>
         <td class="win">
-          <p>기능적응성 <span class="stars">★★★</span><br><span class="note">언제 무엇을 코칭할지는 규칙에 묶여, 새 상황에는 규칙을 추가해야 한다.</span></p>
+          <p>상황 대응 범위 <span class="stars">★★★</span><br><span class="note">언제 무엇을 코칭할지는 규칙에 묶여, 새 상황에는 규칙을 추가해야 한다.</span></p>
           <p>테스트가능성 <span class="stars">★★★★★</span><br><span class="note">같은 시험 문장을 반복 입력해 출력 검사가 같은 기준으로 동작하는지 확인할 수 있다.</span></p>
         </td>
         <td>
           <p>제어가능성 <span class="stars">★★</span><br><span class="note">판단을 직접 제한할 방법이 적어 프롬프트와 사후 필터에 크게 의존한다.</span></p>
-          <p>강건성 <span class="stars">★★</span><br><span class="note">별도 규칙 경로를 추가하지 않으면 판단과 코칭이 함께 멈출 수 있다.</span></p>
+          <p>실패 대응 <span class="stars">★★</span><br><span class="note">별도 규칙 경로를 추가하지 않으면 판단과 코칭이 함께 멈출 수 있다.</span></p>
         </td>
       </tr>
       <tr>
@@ -313,7 +313,7 @@
   </ul>
 
   <h3 class="num"><span>3.</span>검증 결과</h3>
-  <p>정해진 방향 위반 시험 문장은 모두 출력 검사에서 차단했다. 이 결과는 미리 정의한 표현 범위에 대한 것으로, 모든 한국어 문장의 의미를 이해한다는 뜻은 아니다.</p>
+  <p>판정 방향과 어긋나는 시험 문장 10개와 허용되지 않은 숫자가 있는 시험 문장 5개는 모두 출력 검사에서 차단됐다. 두 측정의 출력 검사 통과율은 각각 0%였다. 이 결과는 미리 정의한 표현 범위에 대한 것으로, 모든 한국어 문장의 의미를 이해한다는 뜻은 아니다.</p>
   <h3 class="num"><span>4.</span>보완 계획</h3>
   <ul>
     <li><strong>단기 개선안</strong>: 속도 조절을 뜻하는 한국어 표현을 더 수집해 시험 문장과 차단 사유를 보강한다.</li>
@@ -333,7 +333,7 @@
   <h3 class="num"><span>A1.</span>이 설계 결정이 다루는 품질 문제</h3>
   <ul>
     <li>실시간 출력마다 사람이 검토할 수 없다 → 제어가능성</li>
-    <li>모델 미지원, 다운로드 전, 지연이나 오류에도 코칭이 이어져야 한다 → 강건성</li>
+    <li>모델 미지원, 다운로드 전, 지연이나 오류에도 코칭이 이어져야 한다 → 제어가능성</li>
     <li>판단 근거와 생성 문장이 같은 사실을 사용해야 한다 → 설명용이성</li>
     <li>같은 시험 문장에 출력 검사 규칙이 일관되게 동작해야 한다 → 테스트가능성</li>
   </ul>
@@ -363,7 +363,6 @@
     </thead>
     <tbody>
       <tr><td>제어가능성</td><td style="text-align:center"><span class="stars">★★★★★</span></td><td style="text-align:center"><span class="stars">★★</span></td></tr>
-      <tr><td>강건성</td><td style="text-align:center"><span class="stars">★★★★★</span></td><td style="text-align:center"><span class="stars">★★</span></td></tr>
       <tr><td>설명용이성</td><td style="text-align:center"><span class="stars">★★★★★</span></td><td style="text-align:center"><span class="stars">★★</span></td></tr>
       <tr><td>테스트가능성</td><td style="text-align:center"><span class="stars">★★★★★</span></td><td style="text-align:center"><span class="stars">★★★</span></td></tr>
     </tbody>
