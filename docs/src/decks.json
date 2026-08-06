@@ -25,6 +25,14 @@
     "decks":  [
                   {
                       "out":  "index.html",
+                      "src":  "10-full-report-parts.html",
+                      "title":  "Zone2Runner 인증 보고서 — 전문 (통합본)",
+                      "deckCss":  true,
+                      "dataImg":  true,
+                      "nav":  true
+                  },
+                  {
+                      "out":  "contents.html",
                       "src":  "00-index.html",
                       "title":  "Zone2Runner 인증 보고서 — 문서 인덱스",
                       "deckCss":  false
