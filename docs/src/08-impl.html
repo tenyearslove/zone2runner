@@ -89,7 +89,7 @@
 
 <section class="slide">
   <div class="slide-head"><h2>QAS별 검증 결과</h2><span class="sec-no">4</span></div>
-  <p class="note">아래 결과는 실제 사람이나 워치에서 측정한 성능이 아니다. 미리 정한 사례와 가상 조건에 측정 항목을 적용한 결과다.</p>
+  <p class="note">아래 결과는 실제 사용자의 생리학적 정확도나 실제 심박센서의 성능을 측정한 것이 아니다. 미리 정한 사례와 가상 조건에 측정 항목을 적용한 결과다.</p>
   <p class="note">QAS와 같은 순서로 시나리오와 대표 지표를 반복하고, 오른쪽에 실제 결과를 적었다.</p>
   <div class="tbl"><table class="decide qas-table">
     <thead><tr><th style="width:3em">ID</th><th style="width:4em">AI QA</th><th style="width:7em">QA</th><th style="width:7em">내용</th><th>시나리오</th><th style="width:14em">검증 결과</th></tr></thead>
@@ -98,7 +98,7 @@
       <tr><td>QA2</td><td>●</td><td><strong>기능적응성</strong></td><td>응답 기반 개인 경계 조정</td><td class="qas-scenario"><div>사용자가 개인 Zone 2 범위에 맞춰 달리다가, 현재 강도에서 말하기가 얼마나 편한지를 편함·보통·벅참 중 하나로 답한다.</div><div class="qas-response"><strong>[응답]</strong> 시스템은 응답 당시 심박과 편함 정도를 이용해 편하게 말할 수 있는 심박의 상한을 추정한다. Zone 2 상한을 그 값에 가깝게 조정하고 다음 러닝의 시작값으로 저장하되, 한 세션에서 바뀔 수 있는 폭은 제한한다.</div><div class="measure-line"><strong>[측정2]</strong> 말하기 가능 상한과 조정된 Zone 2 상한의 차이 3bpm 이하<br><strong>[측정3]</strong> 세션당 경계 변경 폭 10bpm 이하</div></td><td>말하기 가능 상한 5개와 시드 3개를 조합한 결과, Zone 2 조정 상한 오차는 모두 3bpm 이하였다. 세션당 최대 변경 폭은 9.97bpm이었다.</td></tr>
       <tr><td>QA3</td><td>●</td><td><strong>제어가능성</strong></td><td>AI 출력 검사와 기본 안내</td><td class="qas-scenario"><div>실시간 코칭이 필요한 순간, AI가 현재 판정과 어긋나는 문장을 만들거나 코칭을 생성하지 못한다.</div><div class="qas-response"><strong>[응답]</strong> 시스템은 코칭 문장이 확정된 판정·형식·숫자의 범위를 지키는지 확인한다. 기준을 벗어나거나 생성에 실패하면 미리 정한 기본 안내를 제공한다.</div><div class="measure-line"><strong>[측정4]</strong> 방향 위반 문장의 출력 검사 통과율 0%<br><strong>[측정5]</strong> 허용되지 않은 숫자가 있는 문장의 출력 검사 통과율 0%</div></td><td>판정 방향과 어긋나는 시험 문장 10개와 허용되지 않은 숫자가 있는 시험 문장 5개는 모두 차단돼 각각의 출력 검사 통과율은 0%였다.</td></tr>
       <tr><td>QA4</td><td>●</td><td><strong>강건성</strong></td><td>2단계 심박 입력 보정</td><td class="qas-scenario"><div>달리는 중 측정 범위를 벗어나거나 최근 심박 흐름과 크게 다른 값이 들어온다. 운동 강도가 실제로 바뀌어 달라진 심박이 계속 들어올 수도 있다.</div><div class="qas-response"><strong>[응답]</strong> 시스템은 신뢰하기 어려운 입력이 판정에 반영되지 않게 하고, 변화가 계속되면 새 심박 흐름에 맞춰 판정을 이어 간다.</div><div class="measure-line"><strong>[측정6]</strong> 판정에 반영되지 않은 비정상 심박값의 비율 100%</div></td><td>범위 밖 심박 4개와 최근 흐름에서 크게 벗어난 심박 1개가 모두 판정에 직접 반영되지 않아 비율은 100%였다.</td></tr>
-      <tr><td>QA5</td><td>—</td><td><strong>테스트가능성</strong></td><td>같은 조건의 반복 시험</td><td class="qas-scenario"><div>실제 러닝과 워치 측정을 매번 반복하기 어려운 개발 환경에서 같은 조건으로 핵심 기능을 다시 확인한다.</div><div class="qas-response"><strong>[응답]</strong> 시스템은 같은 조건의 심박·페이스·경사 입력을 반복해서 제공하고 그 결과를 비교할 수 있게 한다.</div><div class="measure-line"><strong>[측정7]</strong> 같은 조건으로 다시 만든 심박·페이스·경사 입력의 일치율 100%</div></td><td>시드 5개로 각각 만든 5분 입력을 다시 생성한 결과, 심박·페이스·경사 입력의 일치율은 100%였다.</td></tr>
+      <tr><td>QA5</td><td>—</td><td><strong>테스트가능성</strong></td><td>같은 조건의 반복 시험</td><td class="qas-scenario"><div>실제 러닝과 심박센서 측정을 매번 반복하기 어려운 개발 환경에서 같은 조건으로 핵심 기능을 다시 확인한다.</div><div class="qas-response"><strong>[응답]</strong> 시스템은 같은 조건의 심박·페이스·경사 입력을 반복해서 제공하고 그 결과를 비교할 수 있게 한다.</div><div class="measure-line"><strong>[측정7]</strong> 같은 조건으로 다시 만든 심박·페이스·경사 입력의 일치율 100%</div></td><td>시드 5개로 각각 만든 5분 입력을 다시 생성한 결과, 심박·페이스·경사 입력의 일치율은 100%였다.</td></tr>
     </tbody>
   </table></div>
   <p class="note">●는 AI 시스템의 품질을 직접 다루는 항목이며, 입력·판단·출력 통제를 포함한다. 100%와 0%는 위 사례와 가상 조건에서의 결과이며 모든 실제 입력에 대한 보장은 아니다. 전체 단위시험 167개도 실패 없이 통과했다.</p>
@@ -118,7 +118,7 @@
     </tbody>
   </table></div>
   <h3 class="num"><span>■</span>공통 검증 기반</h3>
-  <p>RunSource 교체, 가상 러너, 고정 시드, 코드 시험은 다섯 QAS를 워치 없이 반복 확인하게 해 준다. 전체 단위시험 167개 통과는 제품 정확도가 아니라 변경 후 자동으로 다시 확인할 수 있는 범위를 보여 주는 참고 정보다.</p>
+  <p>RunSource 교체, 가상 러너, 고정 시드, 코드 시험은 다섯 QAS를 실제 심박센서 없이 반복 확인하게 해 준다. 전체 단위시험 167개 통과는 제품 정확도가 아니라 변경 후 자동으로 다시 확인할 수 있는 범위를 보여 주는 참고 정보다.</p>
 
 
   <div class="crumb">과제 소개 <span>요구사항</span> <span>설계</span> <b>구현/검증</b> <span>결론</span></div>

@@ -100,7 +100,7 @@
     <thead><tr><th style="width:3.5em">ID</th><th style="width:13em">기능</th><th>설명</th><th style="width:5em">AI 관련</th></tr></thead>
     <tbody>
       <tr><td>FR1</td><td>프로필과 초기 경계</td><td>프로필로 첫 러닝의 Zone 2 초기 범위를 계산한다. 최대심박은 사용자가 입력한 값을 우선하고, 없으면 나이 기반 공식으로 계산한다. 안정심박도 입력값을 우선하며, 모르면 러닝 수준과 주간 운동 횟수로 추정한다.</td><td></td></tr>
-      <tr><td>FR2</td><td>심박 수집과 존 판정</td><td>워치 심박을 주기적으로 받아 현재 Zone을 판정한다. 측정 범위를 벗어나거나 최근 심박 흐름에서 크게 벗어난 값은 판정에 바로 반영하지 않는다.</td><td></td></tr>
+      <tr><td>FR2</td><td>심박 수집과 존 판정</td><td>심박센서에서 측정값을 주기적으로 받아 현재 Zone을 판정한다. 측정 범위를 벗어나거나 최근 심박 흐름에서 크게 벗어난 값은 판정에 바로 반영하지 않는다.</td><td></td></tr>
       <tr><td>FR3</td><td>관측 데이터 분석</td><td>같은 속도인데도 운동 중 심박이 서서히 오르는 정도(심박 드리프트)와, 오르막·내리막 영향을 제외한 평지 기준 속도(경사 보정 페이스)를 계산한다. 분당 발걸음 수의 안정성, 비슷한 속도에서의 평균 심박, 속도를 낮춘 뒤 60초 동안의 심박 감소량도 분석한다.</td><td></td></tr>
       <tr><td>FR4</td><td>개인화</td><td>러닝 중 사용자가 현재 강도에서 말하기가 얼마나 편한지를 편함·보통·벅참으로 답하면, 응답과 당시 심박을 반영해 개인의 Zone 2 상한을 조정한다.</td><td style="text-align:center">●</td></tr>
       <tr><td>FR5</td><td>실시간 코칭과 가드</td><td>현재 판정과 관측값에 맞는 실시간 코칭을 제공한다. 코칭 내용이 판정과 어긋나거나 AI 기능을 사용할 수 없을 때는 미리 정한 기본 안내를 제공한다.</td><td style="text-align:center">●</td></tr>
@@ -112,7 +112,7 @@
     <thead><tr><th style="width:3.5em">ID</th><th style="width:13em">제약</th><th>설명</th></tr></thead>
     <tbody>
       <tr><td>C01</td><td>별도 운영 비용 없음</td><td>자체 서버를 운영하거나 유료 AI API를 사용할 수 없다.</td></tr>
-      <tr><td>C02</td><td>실제 데이터 수집 어려움</td><td>과제 개발 환경에서는 실제 러닝에서 워치 데이터를 충분히 수집해 반복 측정하기 어렵고, 개인별 심박 특성을 학습할 대규모 데이터도 확보할 수 없다.</td></tr>
+      <tr><td>C02</td><td>실제 데이터 수집 어려움</td><td>과제 개발 환경에서는 실제 러닝에서 심박센서 데이터를 충분히 수집해 반복 측정하기 어렵고, 개인별 심박 특성을 학습할 대규모 데이터도 확보할 수 없다.</td></tr>
       <tr><td>C03</td><td>개인별 정답 측정 어려움</td><td>개인의 정확한 유산소 역치는 실험실 장비 없이는 측정하기 어렵다. 따라서 실제 사용자의 Zone 2 경계가 정확한지를 자동시험의 성공 기준으로 삼지 않는다.</td></tr>
     </tbody>
   </table></div>
@@ -121,7 +121,7 @@
 
 <section class="slide">
   <div class="slide-head"><h2>품질 요구사항 — QAS</h2><span class="sec-no">2</span></div>
-  <p class="note">과제 개발 환경에서는 실제 러닝과 워치 데이터를 충분히 수집해 반복 측정하기 어렵다. 이 때문에 실제 사람이나 워치의 성능을 기준으로 삼지 않고, 미리 정한 사례와 가상 조건에서 측정 방법과 성공 기준을 정의한다.</p>
+  <p class="note">과제 개발 환경에서는 실제 러닝과 심박센서 데이터를 충분히 수집해 반복 측정하기 어렵다. 이 때문에 실제 사용자의 생리학적 정확도나 심박센서의 성능을 기준으로 삼지 않고, 미리 정한 사례와 가상 조건에서 측정 방법과 성공 기준을 정의한다.</p>
   <p class="note"><strong>말하기 테스트</strong>는 러닝 중 사용자가 현재 강도에서 말하기가 얼마나 편한지를 편함·보통·벅참 중 하나로 답하는 방식이다. 앱이 음성을 분석하는 기능은 아니다.</p>
   <p class="note">시나리오에는 요청 주체·상황·대상(Source·Stimulus·Artifact·Environment), 시스템의 응답(Response), 성공 여부를 판단할 측정 기준(Response Measure)을 차례로 적었다.</p>
   <div class="tbl"><table class="decide qas-table">
@@ -131,7 +131,7 @@
       <tr><td>QA2</td><td>●</td><td><strong>기능적응성</strong></td><td>말하기 테스트 응답을 반영해 개인의 Zone 2 경계를 조정한다.</td><td class="qas-scenario"><div>사용자가 개인 Zone 2 범위에 맞춰 달리다가, 현재 강도에서 말하기가 얼마나 편한지를 편함·보통·벅참 중 하나로 답한다.</div><div class="qas-response"><strong>[응답]</strong> 시스템은 응답 당시 심박과 편함 정도를 이용해 편하게 말할 수 있는 심박의 상한을 추정한다. Zone 2 상한을 그 값에 가깝게 조정하고 다음 러닝의 시작값으로 저장하되, 한 세션에서 바뀔 수 있는 폭은 제한한다.</div><div class="measure-line"><strong>[측정2]</strong> 말하기 가능 상한과 조정된 Zone 2 상한의 차이 3bpm 이하<br><strong>[측정3]</strong> 세션당 경계 변경 폭 10bpm 이하</div></td><td>9</td><td>8</td></tr>
       <tr><td>QA3</td><td>●</td><td><strong>제어가능성</strong></td><td>AI가 작성한 코칭이 시스템이 확정한 판정과 사실의 범위를 벗어나지 않게 한다.</td><td class="qas-scenario"><div>실시간 코칭이 필요한 순간, AI가 현재 판정과 어긋나는 문장을 만들거나 코칭을 생성하지 못한다.</div><div class="qas-response"><strong>[응답]</strong> 시스템은 코칭 문장이 확정된 판정·형식·숫자의 범위를 지키는지 확인한다. 기준을 벗어나거나 생성에 실패하면 미리 정한 기본 안내를 제공한다.</div><div class="measure-line"><strong>[측정4]</strong> 방향 위반 문장의 출력 검사 통과율 0%<br><strong>[측정5]</strong> 허용되지 않은 숫자가 있는 문장의 출력 검사 통과율 0%</div></td><td>8</td><td>7</td></tr>
       <tr><td>QA4</td><td>●</td><td><strong>강건성</strong></td><td>센서 이상값과 앞선 심박 흐름에서 크게 벗어난 값이 판정에 영향을 주지 않게 한다.</td><td class="qas-scenario"><div>달리는 중 측정 범위를 벗어나거나 최근 심박 흐름과 크게 다른 값이 들어온다. 운동 강도가 실제로 바뀌어 달라진 심박이 계속 들어올 수도 있다.</div><div class="qas-response"><strong>[응답]</strong> 시스템은 신뢰하기 어려운 입력이 판정에 반영되지 않게 하고, 변화가 계속되면 새 심박 흐름에 맞춰 판정을 이어 간다.</div><div class="measure-line"><strong>[측정6]</strong> 판정에 반영되지 않은 비정상 심박값의 비율 100%</div></td><td>7</td><td>6</td></tr>
-      <tr><td>QA5</td><td>—</td><td><strong>테스트가능성</strong></td><td>실제 러닝이나 워치 없이도 같은 조건으로 핵심 로직을 반복 검증한다.</td><td class="qas-scenario"><div>실제 러닝과 워치 측정을 매번 반복하기 어려운 개발 환경에서 같은 조건으로 핵심 기능을 다시 확인한다.</div><div class="qas-response"><strong>[응답]</strong> 시스템은 같은 조건의 심박·페이스·경사 입력을 반복해서 제공하고 그 결과를 비교할 수 있게 한다.</div><div class="measure-line"><strong>[측정7]</strong> 같은 조건으로 다시 만든 심박·페이스·경사 입력의 일치율 100%</div></td><td>6</td><td>6</td></tr>
+      <tr><td>QA5</td><td>—</td><td><strong>테스트가능성</strong></td><td>실제 러닝이나 심박센서 없이도 같은 조건으로 핵심 로직을 반복 검증한다.</td><td class="qas-scenario"><div>실제 러닝과 심박센서 측정을 매번 반복하기 어려운 개발 환경에서 같은 조건으로 핵심 기능을 다시 확인한다.</div><div class="qas-response"><strong>[응답]</strong> 시스템은 같은 조건의 심박·페이스·경사 입력을 반복해서 제공하고 그 결과를 비교할 수 있게 한다.</div><div class="measure-line"><strong>[측정7]</strong> 같은 조건으로 다시 만든 심박·페이스·경사 입력의 일치율 100%</div></td><td>6</td><td>6</td></tr>
     </tbody>
   </table></div>
   <p class="note">●는 AI 기능의 품질과 관련된 항목이다. AI 기능 자체뿐 아니라 입력·판단·출력의 품질 통제도 포함한다. QA1~QA4는 AI QA이고, QA5는 이를 지원하는 공통 테스트가능성이다. 중요도와 난이도는 10점 기준이다.</p>
