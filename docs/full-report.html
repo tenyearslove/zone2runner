@@ -335,7 +335,7 @@
       <tr><td>QA1</td><td>●</td><td><strong>설명용이성</strong></td><td>판정·개인화·코칭의 근거를 사용자가 확인할 수 있게 한다.</td><td class="qas-scenario"><div>러닝 중 사용자가 판정이나 코칭의 이유 확인을 요청하면, 요청이 설명 서비스에 전달된다.</div><div class="measure-line"><strong>[응답]</strong> 시스템은 실제 판정에 사용한 근거만 보여 주고, 근거에 없는 숫자가 포함된 문장은 출력 검사에서 차단한다.<br><strong>[측정]</strong> 판정 근거 기록률 100%, 허용되지 않은 숫자가 있는 문장의 출력 검사 통과율 0%</div></td><td>8</td><td>7</td></tr>
       <tr><td>QA2</td><td>●</td><td><strong>기능적응성</strong></td><td>말하기 테스트 응답을 반영해 개인의 Zone 2 경계를 조정한다.</td><td class="qas-scenario"><div>초기 경계 또는 이전 세션에서 조정한 경계를 사용하는 러닝 중, 사용자가 말하기 테스트에 답하면 당시 심박과 응답이 개인화 모듈에 전달된다.</div><div class="measure-line"><strong>[응답]</strong> 시스템은 사용자 응답에 따라 개인 경계를 조정하고, 변경된 값을 다음 세션의 시작값으로 저장한다. 한 세션의 경계 변경 폭은 제한한다.<br><strong>[측정]</strong> 가상 러너의 말하기 응답 기준과 앱이 조정한 Zone 2 상한의 차이 3bpm 이하, 세션당 경계 변경 폭 10bpm 이하</div></td><td>9</td><td>8</td></tr>
       <tr><td>QA3</td><td>●</td><td><strong>제어가능성</strong></td><td>LLM이 규칙이 정한 판단과 사실의 범위를 벗어난 코칭을 내보내지 않게 한다.</td><td class="qas-scenario"><div>실시간 코칭 중 LLM이 만든 문장이나 모델의 미가용·오류 상태가 출력 처리 모듈에 전달된다.</div><div class="measure-line"><strong>[응답]</strong> 시스템은 규칙이 정한 방향·형식·숫자와 문장을 대조한다. 기준을 벗어난 문장은 차단하고, LLM을 사용할 수 없으면 기본 문구를 제공한다.<br><strong>[측정]</strong> 방향 위반 문장의 출력 검사 통과율 0%</div></td><td>8</td><td>7</td></tr>
-      <tr><td>QA4</td><td>—</td><td><strong>강건성</strong></td><td>센서 이상값이 판정에 영향을 주지 않게 한다.</td><td class="qas-scenario"><div>러닝 중 주기적으로 들어오는 심박에 측정 범위를 벗어난 값이 포함되면, 입력 검사 모듈에 전달된다.</div><div class="measure-line"><strong>[응답]</strong> 시스템은 센서 이상값을 판정에서 제외한다.<br><strong>[측정]</strong> 정상·범위 밖 심박 입력의 판별 정확도 100%</div></td><td>7</td><td>6</td></tr>
+      <tr><td>QA4</td><td>—</td><td><strong>강건성</strong></td><td>센서 이상값과 최근 세션 흐름에서 벗어난 일시적 심박이 판정에 영향을 주지 않게 한다.</td><td class="qas-scenario"><div>러닝 중 주기적으로 들어오는 심박에 측정 범위를 벗어난 값이나, 최근 심박 흐름과 크게 다른 한 번의 점프가 포함된다. 반대로 조금씩 변한 심박이 계속 들어올 수도 있다.</div><div class="measure-line"><strong>[응답]</strong> 시스템은 범위 밖 입력을 제외하고, 최근 10초 심박의 중앙값과 변동폭을 기준으로 한 번의 점프를 직전 유효값으로 바꾼다. 변화가 이어지면 최근 기준값에 반영한다.<br><strong>[측정]</strong> 가상 조건의 범위 밖 입력·일시적 점프·지속 변화 처리 기대값 일치율 100%</div></td><td>7</td><td>6</td></tr>
       <tr><td>QA5</td><td>—</td><td><strong>테스트가능성</strong></td><td>실제 달리기나 워치 없이도 같은 조건으로 핵심 로직을 반복 검증한다.</td><td class="qas-scenario"><div>실제 달리기나 워치를 사용하기 어려운 개발 환경에서 자동시험을 실행한다. 가상 입력은 실제 센서와 같은 입력 통로를 사용한다.</div><div class="measure-line"><strong>[응답]</strong> 자동시험은 같은 가상 러너·설정·시드로 입력을 만들고, QA1~QA4의 측정 코드를 실행해 QA별 결과 파일을 저장한다.<br><strong>[측정]</strong> 동일 시드로 만든 입력의 대표 항목 일치, QA1~QA4 자동 측정 결과 생성 성공</div></td><td>8</td><td>6</td></tr>
     </tbody>
   </table></div>
@@ -866,7 +866,7 @@
   <div class="tbl"><table class="decide">
     <thead><tr><th>강의 AI System 컴포넌트</th><th>이 시스템의 구현</th><th style="width:5em">모듈</th></tr></thead>
     <tbody>
-      <tr><td>입력 가드레일</td><td>OutlierGuard(허용 범위를 벗어난 값과 너무 늦게 도착한 값 검사)와 분석 보류 조건</td><td>A2</td></tr>
+      <tr><td>입력 가드레일</td><td>HrInputGuard: 40~220bpm 범위 검사 뒤 최근 10초 심박의 중앙값·변동폭으로 일시적 점프를 한 번 더 검사</td><td>A2</td></tr>
       <tr><td>모델 서빙</td><td>규칙 판정, 베이지안 경계, 관측 분석 엔진, 온디바이스 LLM</td><td>A4~A7</td></tr>
       <tr><td>출력 가드레일</td><td>형식 검사, DirectionGuard, NumberGuard, SafetyGuard</td><td>A8</td></tr>
       <tr><td>추론 제어</td><td>RunEngine(오케스트레이터)</td><td>A9</td></tr>
@@ -910,7 +910,7 @@
   <p class="note">개인 적응(F1)은 말하기 테스트 응답이 들어올 때 베이지안 방식으로 경계를 갱신하고 조정한 경계를 다음 세션의 시작값으로 저장한다. 반복 검증 구조(F2)는 가상 센서 입력과 미리 준비한 확인 문장으로 QA1~QA4를 반복 확인하고, 같은 설정과 시드로 만든 입력의 대표 항목이 일치하는지 검증한다. Nano 모델 관리 모듈(A7-1)은 모델 상태를 확인하고 세션 밖에서 다운로드를 요청한다.</p>
 
   <h3 class="num"><span>■</span>세 설계 결정이 한 아키텍처에 모이는 방식</h3>
-  <p>DP1의 개인 경계 갱신, DP2의 규칙 중심 판정과 근거 기록, DP3의 LLM 출력 검사가 하나의 실행 흐름으로 이어진다. QA4 강건성은 입력 검사와 경계 여유 구간에, QA5 테스트가능성은 입력 교체와 시드 기반 시뮬레이션에 공통 구조로 반영했다.</p>
+  <p>DP1의 개인 경계 갱신, DP2의 규칙 중심 판정과 근거 기록, DP3의 LLM 출력 검사가 하나의 실행 흐름으로 이어진다. QA4 강건성은 고정 범위 검사와 최근 세션 흐름에 적응하는 입력 보정에, QA5 테스트가능성은 입력 교체와 시드 기반 시뮬레이션에 공통 구조로 반영했다.</p>
   <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
 </section>
 
@@ -1015,7 +1015,7 @@
       <tr><td>QA1</td><td>●</td><td><strong>설명용이성</strong></td><td>판정과 생성 근거 확인</td><td class="qas-scenario"><div>러닝 중 사용자가 판정이나 코칭의 이유 확인을 요청하면, 요청이 설명 서비스에 전달된다.</div><div class="measure-line"><strong>[응답]</strong> 시스템은 실제 판정에 사용한 근거만 보여 주고, 근거에 없는 숫자가 포함된 문장은 출력 검사에서 차단한다.<br><strong>[측정]</strong> 판정 근거 기록률 100%, 허용되지 않은 숫자가 있는 문장의 출력 검사 통과율 0%</div></td><td>Zone 2 아래·범위 안·위 판정에서 근거가 모두 기록돼 기록률은 100%였다. 근거 없는 숫자를 넣은 시험 문장 5개는 모두 차단돼 출력 검사 통과율은 0%였다.</td></tr>
       <tr><td>QA2</td><td>●</td><td><strong>기능적응성</strong></td><td>응답 기반 개인 경계 조정</td><td class="qas-scenario"><div>초기 경계 또는 이전 세션에서 조정한 경계를 사용하는 러닝 중, 사용자가 말하기 테스트에 답하면 당시 심박과 응답이 개인화 모듈에 전달된다.</div><div class="measure-line"><strong>[응답]</strong> 시스템은 사용자 응답에 따라 개인 경계를 조정하고, 변경된 값을 다음 세션의 시작값으로 저장한다. 한 세션의 경계 변경 폭은 제한한다.<br><strong>[측정]</strong> 가상 러너의 말하기 응답 기준과 앱이 조정한 Zone 2 상한의 차이 3bpm 이하, 세션당 경계 변경 폭 10bpm 이하</div></td><td>가상 러너의 말하기 응답 기준 5개와 시드 3개를 조합한 결과, 앱이 조정한 Zone 2 상한의 차이는 모두 3bpm 이하였다. 세션당 최대 변경 폭은 9.97bpm이었다.</td></tr>
       <tr><td>QA3</td><td>●</td><td><strong>제어가능성</strong></td><td>LLM 출력 검사와 기본 문구</td><td class="qas-scenario"><div>실시간 코칭 중 LLM이 만든 문장이나 모델의 미가용·오류 상태가 출력 처리 모듈에 전달된다.</div><div class="measure-line"><strong>[응답]</strong> 시스템은 규칙이 정한 방향·형식·숫자와 문장을 대조한다. 기준을 벗어난 문장은 차단하고, LLM을 사용할 수 없으면 기본 문구를 제공한다.<br><strong>[측정]</strong> 방향 위반 문장의 출력 검사 통과율 0%</div></td><td>판정 방향과 어긋나는 시험 문장 10개가 모두 차단돼 출력 검사 통과율은 0%였다.</td></tr>
-      <tr><td>QA4</td><td>—</td><td><strong>강건성</strong></td><td>센서 이상값 차단</td><td class="qas-scenario"><div>러닝 중 주기적으로 들어오는 심박에 측정 범위를 벗어난 값이 포함되면, 입력 검사 모듈에 전달된다.</div><div class="measure-line"><strong>[응답]</strong> 시스템은 센서 이상값을 판정에서 제외한다.<br><strong>[측정]</strong> 정상·범위 밖 심박 입력의 판별 정확도 100%</div></td><td>이상값 50개와 정상값 500개를 모두 올바르게 구분해 판별 정확도는 100%였다.</td></tr>
+      <tr><td>QA4</td><td>—</td><td><strong>강건성</strong></td><td>2단계 심박 입력 보정</td><td class="qas-scenario"><div>러닝 중 주기적으로 들어오는 심박에 측정 범위를 벗어난 값이나, 최근 심박 흐름과 크게 다른 한 번의 점프가 포함된다. 반대로 조금씩 변한 심박이 계속 들어올 수도 있다.</div><div class="measure-line"><strong>[응답]</strong> 시스템은 범위 밖 입력을 제외하고, 최근 10초 심박의 중앙값과 변동폭을 기준으로 한 번의 점프를 직전 유효값으로 바꾼다. 변화가 이어지면 최근 기준값에 반영한다.<br><strong>[측정]</strong> 가상 조건의 범위 밖 입력·일시적 점프·지속 변화 처리 기대값 일치율 100%</div></td><td>범위 밖 4개 입력은 모두 정제됐다. 120bpm 구간의 1초 160bpm 점프는 기각됐다. 122→130bpm의 5초 변화 중 3개가 수용됐고, 130bpm이 이어진 뒤 최근 중앙값은 130bpm까지 올라갔다.</td></tr>
       <tr><td>QA5</td><td>—</td><td><strong>테스트가능성</strong></td><td>같은 조건의 반복 시험</td><td class="qas-scenario"><div>실제 달리기나 워치를 사용하기 어려운 개발 환경에서 자동시험을 실행한다. 가상 입력은 실제 센서와 같은 입력 통로를 사용한다.</div><div class="measure-line"><strong>[응답]</strong> 자동시험은 같은 가상 러너·설정·시드로 입력을 만들고, QA1~QA4의 측정 코드를 실행해 QA별 결과 파일을 저장한다.<br><strong>[측정]</strong> 동일 시드로 만든 입력의 대표 항목 일치, QA1~QA4 자동 측정 결과 생성 성공</div></td><td>동일 시드로 생성한 5분 세션에서 표본 수, 첫 심박, 마지막 페이스가 일치했다. QA1~QA4의 측정 코드는 자동시험에서 실행돼 결과 파일을 생성한다.</td></tr>
     </tbody>
   </table></div>
@@ -1031,7 +1031,7 @@
       <tr><td>설명용이성</td><td>대표 판정의 심박·개인 경계를 기록했고, 미리 정한 시험 문장에서 근거에 없는 숫자를 차단했다.</td><td>모든 한국어 문장을 완벽하게 검사하거나 모든 사용자가 설명을 쉽게 이해한다는 뜻은 아니다.</td></tr>
       <tr><td>기능적응성</td><td>가상 러너의 말하기 응답 기준과 앱이 조정한 Zone 2 상한의 차이가 3bpm 이하였고, 세션당 변경 한도를 지켰다.</td><td>실제 사람의 유산소 역치를 오차 3bpm 이내로 찾았다는 뜻은 아니다.</td></tr>
       <tr><td>제어가능성</td><td>미리 정한 위반 문장이 출력 검사를 통과하지 못하도록 규칙이 차단했다.</td><td>세상에 존재하는 모든 잘못된 표현을 막는다는 뜻은 아니다.</td></tr>
-      <tr><td>강건성</td><td>범위 밖 심박 입력을 차단해 판정에 반영하지 않았다.</td><td>실제 손목 센서의 정확도와 모든 실외 환경을 검증했다는 뜻은 아니다.</td></tr>
+      <tr><td>강건성</td><td>범위 밖 심박과 한 번의 큰 점프는 제외했고, 지속된 변화는 최근 세션 기준값에 반영했다.</td><td>실제 손목 센서의 정확도와 모든 실외 환경을 검증했다는 뜻은 아니다.</td></tr>
       <tr><td>테스트가능성</td><td>같은 조건의 입력을 다시 만들고, 개발용 자동시험으로 QA1~QA4의 측정 코드와 결과 파일 생성을 확인했다.</td><td>시뮬레이션 결과가 실제 사람과 센서의 정확도를 대신한다는 뜻은 아니다.</td></tr>
     </tbody>
   </table></div>
