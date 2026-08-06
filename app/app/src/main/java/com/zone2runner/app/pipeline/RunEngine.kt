@@ -51,6 +51,7 @@ class RunEngine(
     private val extractor = FeatureExtractor()
     private val personalization = Personalization(profile, priorUFrac)
     private val judge = ZoneJudge()
+    private val hrInputGuard = HrInputGuard()  // QA4 강건성: Tier 1(40~220) + Tier 2(세션 적응형)
     private val safety = SafetyGuard() // 안전 가드(spec-008) — 위험 심박 규칙 권고, LLM 우회
     private val uEstStart = personalization.boundary().uFrac
 
@@ -127,8 +128,8 @@ class RunEngine(
         // 실센서에서 아직 안 뛰거나 뛰다가 멈춘 경우 — HR 파이프라인이 멈춰도 피드백을 준다.
         maybeIdleCoach(s)
 
-        val clean = OutlierGuard.clean(s.hr, lastValidHr)
-        if (clean == null) return liveState(s) // 아직 유효 HR 없음
+        // QA4: HR 입력 검증 (Tier 1 범위 + Tier 2 세션 적응형)
+        val clean = hrInputGuard.process(s.hr, (s.tSec * 1000).toLong())
         lastValidHr = clean
         if (firstHr < 0) firstHr = clean // 워밍업 상승폭 기준
 
