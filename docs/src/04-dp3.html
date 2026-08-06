@@ -56,17 +56,25 @@
         <th class="rowh">구조</th>
         <td>
           <div class="fig-frame"><img data-img="dp3-adopted" alt="1안 — AI 운영 서브시스템의 추론·운영·분석 서비스가 LLM의 권한과 실패를 통제하는 구조"></div>
-          <p class="note" style="margin-top:8px">추론 서비스의 모델 서빙과 출력 가드레일, 운영 서비스의 추론 제어와 운영 조치, 분석 서비스의 서빙 로그가 통제 경로를 이룬다. 규칙이 코칭 방향과 사용할 숫자를 확정하면 LLM은 문장만 표현한다. 검사 탈락이나 생성 실패에는 기본 문구로 전환하고, 위험 심박 안내는 LLM을 거치지 않는다.</p>
+          <ul class="struct-list">
+            <li><strong>판단 확정</strong>: 규칙이 심박과 세션 상태를 바탕으로 코칭 방향과 문장에 사용할 숫자를 먼저 정한다.</li>
+            <li><strong>표현 위임</strong>: LLM은 시스템이 확정한 사실과 방향 안에서 코칭 문장만 작성한다.</li>
+            <li><strong>검사와 실패 대응</strong>: 출력 가드레일이 형식·방향·숫자를 확인한다. 검사 탈락이나 생성 실패에는 기본 문구로 전환하고, 위험 심박 안내는 LLM을 거치지 않는다. 처리 경로와 전환 이유는 기록으로 남긴다.</li>
+          </ul>
         </td>
         <td>
           <div class="fig-frame"><img data-img="dp3-counter" alt="2안 — 추론 서비스의 LLM 모델 서빙에 판단과 표현을 함께 맡기는 구조"></div>
-          <p class="note" style="margin-top:8px">추론 서비스의 LLM 모델 서빙이 코칭 방향과 문장을 함께 정한다. 운영 서비스의 프롬프트 규정과 간단한 출력 가드레일로 잘못된 문장을 줄이지만, LLM 밖에 독립된 판정 기준이 없다.</p>
+          <ul class="struct-list">
+            <li><strong>정보 전달</strong>: 심박·페이스·세션 상태와 자연어 지침을 LLM에 함께 전달한다.</li>
+            <li><strong>판단과 표현 위임</strong>: LLM이 속도를 올릴지·유지할지·낮출지 판단하고 코칭 문장까지 만든다.</li>
+            <li><strong>출력 통제</strong>: 프롬프트 규정과 형식·금칙어·숫자 검사를 적용할 수 있지만, LLM 밖에 결과를 대조할 독립된 코칭 방향은 없다.</li>
+          </ul>
         </td>
       </tr>
       <tr>
         <th class="rowh">장점</th>
         <td>
-          <p><strong>QA3 제어가능성</strong> <span class="stars">★★★★★</span><br><span class="note">문장 차단과 기본 문구 전환, 위험 심박 안내의 별도 처리가 자동으로 작동한다.</span></p>
+          <p><strong>QA3 제어가능성</strong> <span class="stars">★★★★★</span><br><span class="note">문장 차단, 기본 문구 전환과 위험 심박 안내를 각각 독립된 통제 경로로 둔다.</span></p>
           <p><strong>QA1 설명용이성</strong> <span class="stars">★★★★★</span><br><span class="note">판정에 사용한 규칙과 생성 문장의 처리 경로를 함께 기록할 수 있다.</span></p>
           <p><strong>QA5 테스트가능성</strong> <span class="stars">★★★★★</span><br><span class="note">같은 입력으로 출력 검사가 같은 기준으로 동작하는지 반복 확인할 수 있다.</span></p>
         </td>
