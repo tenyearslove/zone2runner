@@ -20,9 +20,11 @@ package com.zone2runner.app.pipeline
  */
 class SessionAdaptiveGuard {
     companion object {
-        private const val WINDOW_SIZE_MS = 10_000  // 10초 윈도우
-        private const val OUTLIER_THRESHOLD = 2.0  // IQR의 배수
-        private const val MIN_IQR = 1.0  // IQR 최소값 (정상 심박 변동 하한)
+        private const val WINDOW_SIZE_MS = 10_000  // 10초 윈도우 (종류 C: spec-003)
+        private const val OUTLIER_THRESHOLD = 3.0  // IQR의 배수 (종류 C: Tukey 기준, 상향조정)
+        // 1초 급격한 점프(+20~40 bpm): 초기 윈도우 95%가 정상값이므로 IQR이 작아 범위 밖 → 기각
+        // 5초 선형 상승(매초 +4 bpm): 윈도우에 정상과 변화값 섞임 → IQR 증가 → 3·IQR 범위 안으로 수용
+        private const val MIN_IQR = 2.0  // IQR 최소값 (정상 심박 변동 하한, 상향조정)
     }
 
     private data class Sample(val hr: Int, val timestampMs: Long)
