@@ -23,6 +23,7 @@
                    "dp3-detail":  "arch/dp/dp-02-controllability/images/dp-02-controllability-detail.png",
                    "screen-home":  "docs/media/screens/phone-home.png",
                    "screen-profile":  "docs/media/screens/phone-profile-personalization.png",
+                   "screen-zone-explanation":  "docs/media/screens/phone-zone-explanation.png",
                    "screen-run":  "docs/media/screens/phone-run-active.png",
                    "screen-run-after":  "docs/media/screens/phone-run-after-response.png",
                    "screen-talk-phone":  "docs/media/screens/phone-talk-test.png",

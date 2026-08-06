@@ -46,7 +46,7 @@
       <tr><th class="rowh">자동 검증</th><td>기기 없이 실행할 수 있는 단위시험 168개가 통과했다. 자동시험을 다시 실행하면 관련 QAS 측정 결과도 새로 생성된다.</td></tr>
     </tbody>
   </table></div>
-  <p class="note">아래 화면과 영상은 2026년 8월 6일 연결된 폰과 워치에서 직접 촬영했다. 폰의 러닝 입력은 반복 가능한 시뮬레이션을 사용했으며, 실제 사용자의 생리학적 정확도나 실외 주행 효과를 보여 주는 자료는 아니다.</p>
+  <p class="note">아래 화면과 영상은 2026년 8월 6~7일 연결된 폰과 워치에서 직접 촬영했다. 폰의 러닝 입력은 반복 가능한 시뮬레이션을 사용했으며, 실제 사용자의 생리학적 정확도나 실외 주행 효과를 보여 주는 자료는 아니다.</p>
   <div class="capture-grid">
     <figure class="capture phone"><img data-img="screen-run" alt="폰에서 실행 중인 Zone2Runner 러닝 화면"><figcaption><strong>폰 러닝 화면</strong>현재 심박, 화면용 Zone, 개인 목표 구간과 코칭 기준을 한 화면에서 확인한다.</figcaption></figure>
     <figure class="capture watch"><img data-img="screen-watch-run" alt="워치에서 실행 중인 Zone2Runner 러닝 화면"><figcaption><strong>워치 러닝 화면</strong>폰이 확정한 Zone과 정제된 심박을 손목 화면에 표시한다.</figcaption></figure>
@@ -59,12 +59,13 @@
   <ul>
     <li><strong>Zone 2 목표</strong>: 프로필 정보로 첫 러닝의 경계를 계산하고 홈 화면에 범위를 표시한다.</li>
     <li><strong>개인화 진행</strong>: 말하기 테스트 응답이 쌓이면 공식으로 계산한 초기값에서 경계가 바뀐 정도와 반영된 응답 수를 표시한다.</li>
-    <li><strong>근거 설명</strong>: 개인화 카드에서 현재 경계를 계산하고 조정한 근거를 확인할 수 있다.</li>
+    <li><strong>근거 설명</strong>: 러닝 화면의 Zone 구간을 누르면 현재 심박의 판정 결과와 개인 범위가 만들어진 과정을 함께 확인할 수 있다.</li>
     <li><strong>모델 상태</strong>: 온디바이스 LLM이 지원되지 않거나 사용할 수 없으면 규칙 기반 기본 코칭으로 전환한다.</li>
   </ul>
   <div class="capture-grid">
     <figure class="capture phone"><img data-img="screen-home" alt="Zone2Runner 홈 화면"><figcaption><strong>홈 — 현재 목표 구간</strong>프로필 공식의 초기 구간과 말하기 응답을 반영한 현재 구간을 함께 보여 준다.</figcaption></figure>
     <figure class="capture phone"><img data-img="screen-profile" alt="Zone2Runner 개인화 진행 화면"><figcaption><strong>프로필 — 개인화 진행</strong>초기 경계, 현재 경계, 세션별 변화와 설명을 확인한다. 화면의 횟수는 반복 시뮬레이션으로 축적한 데모 데이터다.</figcaption></figure>
+    <figure class="capture phone wide"><img data-img="screen-zone-explanation" alt="현재 심박의 Zone 판정과 개인 범위 형성 과정을 보여 주는 화면"><figcaption><strong>현재 Zone 판정 근거</strong>현재 심박을 개인 범위와 비교한 결과, 화면 표시와 코칭에 적용하는 시간 기준, 프로필로 계산한 초기 범위와 말하기 응답을 반영한 현재 범위를 한 화면에서 연결한다. 응답 횟수는 반복 시뮬레이션으로 누적한 데모 데이터다.</figcaption></figure>
   </div>
   <div class="crumb">프로젝트 소개 <span>요구사항</span> <span>설계</span> <b>구현/검증</b> <span>결론</span></div>
 </section>
@@ -130,7 +131,7 @@
   <div class="tbl"><table class="decide">
     <thead><tr><th style="width:9em">QAS</th><th>화면에서 확인되는 구현</th><th style="width:16em">대응 화면</th></tr></thead>
     <tbody>
-      <tr><td><strong>QA1 설명용이성</strong></td><td>개인 경계의 변화와 판정·코칭에 사용한 근거, 프롬프트와 생성 경로를 다시 확인할 수 있다.</td><td>프로필, 리포트, 문장별 생성 근거</td></tr>
+      <tr><td><strong>QA1 설명용이성</strong></td><td>현재 심박을 개인 범위와 비교한 판정, 개인 범위의 변화, 코칭에 사용한 근거와 생성 경로를 다시 확인할 수 있다.</td><td>현재 Zone 판정 근거, 프로필, 리포트, 문장별 생성 근거</td></tr>
       <tr><td><strong>QA2 기능적응성</strong></td><td>사용자가 말하기 테스트에 답하면 세션 중 개인 상한이 조정되고 이후 판정에 사용된다.</td><td>말하기 테스트, 응답 반영 화면</td></tr>
       <tr><td><strong>QA3 제어가능성</strong></td><td>규칙이 정한 방향과 LLM의 실제 출력, 채택 또는 기본 문구 전환 경로를 함께 기록한다.</td><td>문장별 생성 근거, LLM 사용 기록</td></tr>
       <tr><td><strong>QA4 강건성</strong></td><td>화면과 워치에는 원시 입력이 아니라 입력 검사를 거친 심박과 확정된 Zone만 표시한다.</td><td>폰·워치 러닝 화면</td></tr>

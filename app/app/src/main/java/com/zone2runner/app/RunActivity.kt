@@ -99,6 +99,7 @@ class RunActivity : AppCompatActivity() {
 
     private var source: RunSource? = null
     private var engine: RunEngine? = null
+    private var latestLiveState: LiveState? = null
     private var coach: LlmCoach? = null
     // LLM 프롬프트 프로비넌스/사용 기록(spec-027) — 세션 단위. 앱 프로세스 PSS만 관측(Nano는 AICore 별도 프로세스).
     private var llmLog: com.zone2runner.app.coaching.LlmCallLog? = null
@@ -462,47 +463,73 @@ class RunActivity : AppCompatActivity() {
         }
     }
 
-    /** Zone 2 계산 근거 팝업 — 규칙 기반 설명(항상) + LLM 자연어 설명(가능 시 비동기 교체). */
+    /** 현재 Zone 판정과 개인 범위가 만들어진 과정을 함께 보여 주는 설명 팝업. */
     private fun showZoneExplanation() {
         val p = profile ?: return
         val learned = com.zone2runner.app.data.LearnedZone.uFrac(this)
-        val nSess = com.zone2runner.app.data.LearnedZone.sessionCount(this)
-        val nTalk = com.zone2runner.app.data.LearnedZone.talkObs(this)
-        val uFrac = learned ?: com.zone2runner.app.domain.Zone2Prior.of(p).uFrac0
+        val savedTalk = com.zone2runner.app.data.LearnedZone.talkObs(this)
+        val currentTalk = savedTalk + (engine?.talkObservations() ?: 0)
+        val prior = com.zone2runner.app.domain.Zone2Prior.of(p)
+        val uFrac = latestLiveState?.uEstFrac ?: engine?.currentUFrac() ?: learned ?: prior.uFrac0
         val hrr = p.hrr
         val hi = (p.restingHr + uFrac * hrr).toInt()
         val lo = (p.restingHr + (uFrac - com.zone2runner.app.domain.Zone2Prior.BAND) * hrr).toInt()
+        val priorHi = (p.restingHr + prior.uFrac0 * hrr).toInt()
+        val priorLo = (p.restingHr + (prior.uFrac0 - com.zone2runner.app.domain.Zone2Prior.BAND) * hrr).toInt()
         val tanaka = com.zone2runner.app.domain.Profile.tanakaMaxHr(p.age).toInt()
-        val loPct = lo * 100 / p.maxHr; val hiPct = hi * 100 / p.maxHr // %최대심박(재보정 기준)
-        val src = if (learned != null && nTalk > 0) "${nSess}회 러닝에서 말하기 응답 ${nTalk}회를 반영함"
-                  else "프로필 기반 초기값 (말하기 응답 반영 전)"
+        val maxHrSource = if (com.zone2runner.app.data.ProfileStore.maxHrOverride(this) > 0)
+            "프로필에 입력한 값" else "나이 공식으로 추정한 값"
+        val restingHrSource = if (p.rhrEstimated) "러닝 수준으로 추정" else "프로필에 입력"
+        val bodyLabel = com.zone2runner.app.domain.Zone2Prior.BODY_LABELS[p.bodyType.coerceIn(1, 5) - 1]
+        val fitnessLabel = com.zone2runner.app.domain.Zone2Prior.FITNESS_LABELS[p.fitnessLevel.coerceIn(1, 5) - 1]
+        val freqLabel = com.zone2runner.app.domain.Zone2Prior.FREQ_LABELS[p.weeklyFreq.coerceIn(1, 5) - 1]
+        val deltaHi = hi - priorHi
+        val adaptedLine = if (learned != null || currentTalk > 0)
+            "말하기 응답 ${currentTalk}회 반영: 상한 ${priorHi} → ${hi} bpm (${if (deltaHi >= 0) "+" else ""}${deltaHi} bpm)"
+        else "아직 말하기 응답이 없어 초기 범위를 사용 중"
+        val live = latestLiveState
+        val currentJudgment = if (live == null || live.hr <= 0) {
+            "• 러닝 시작 전이라 현재 심박 판정은 없음"
+        } else {
+            val relation = when {
+                live.hr < lo -> "하한보다 ${lo - live.hr} bpm 낮아"
+                live.hr > hi -> "상한보다 ${live.hr - hi} bpm 높아"
+                else -> "개인 범위 안이므로"
+            }
+            val shownZone = displayZone?.let { "${it.short} ${it.desc}" }
+                ?: live.judgment?.label ?: "판정 준비 중"
+            "• 정제된 현재 심박 ${live.hr} bpm · $relation $shownZone"
+        }
         val hrMaxHigh = p.maxHr > tanaka + 8
         val hmaxNote = if (hrMaxHigh)
             "\n\n※ 최대심박이 ${p.maxHr}으로 설정돼 있어요(${p.age}세 표준 추정은 약 ${tanaka}). 실제로 전력질주해서 나온 값이면 맞습니다."
         else ""
         val ruleText = buildString {
-            append("현재 Zone 2 목표: $lo ~ $hi bpm  (최대심박의 ${loPct}~${hiPct}%)\n\n")
-            append("어떻게 계산됐나\n")
-            append("• Zone 2 = 유산소 기초 강도 ≈ 최대심박의 60~70% (San Millan/LT1 기준)\n")
-            append("• 최대심박 ${p.maxHr} → 상단 ≈ 70% = $hi, 하단 ≈ ${loPct}% = $lo\n")
-            append("• 지금 값 출처: $src\n")
-            append("• ★ 뛰면서 말하기가 얼마나 편한지 '편함/보통/벅참'으로 답하면, 그때의 심박과 응답을 이 범위에 반영합니다.")
+            append("현재 Zone 2 목표  $lo ~ $hi bpm\n\n")
+            append("지금 화면의 Zone 판정\n")
+            append(currentJudgment)
+            append("\n• 경계 부근에서 표시가 반복해서 바뀌지 않도록 이전 판정을 함께 고려")
+            append("\n• 화면은 현재 심박, 코칭과 통계는 60초 평균 심박을 사용\n\n")
+            append("개인 범위가 만들어진 과정\n")
+            append("1. 최대심박 ${p.maxHr} bpm($maxHrSource) · 안정 심박 ${p.restingHr} bpm($restingHrSource)\n")
+            append("2. 체형 $bodyLabel · 러닝 수준 $fitnessLabel · 운동 빈도 ${freqLabel}을 반영한 초기 범위: $priorLo ~ $priorHi bpm\n")
+            append("3. $adaptedLine\n")
+            append("※ 키와 몸무게는 체형 선택을 제안하는 데 사용합니다.")
             append(hmaxNote)
         }
         val dialog = android.app.AlertDialog.Builder(this)
-            .setTitle("Zone 2가 왜 이 범위인가요?")
+            .setTitle("현재 Zone 판정 근거")
             .setMessage(ruleText)
             .setPositiveButton("확인", null)
             .show()
         // LLM으로 더 쉬운 설명(가능 시 교체)
         val c = coach ?: LlmCoach(this)
         lifecycleScope.launch {
-            val prompt = "러닝 코치입니다. 사용자의 Zone 2 심박 구간이 $lo~$hi bpm(최대심박 ${p.maxHr}의 ${loPct}~${hiPct}%)으로 계산됐습니다. " +
-                "Zone 2는 최대심박 60~70%의 유산소 기초 강도입니다. 지금 값 출처: $src. " +
-                "왜 이 범위인지, 그리고 실제로 뛰며 편함/보통/벅참 버튼을 누르면 개인에 맞게 보정된다는 점을 3~4문장으로 쉽게 설명하세요. 따옴표/이모지 없이."
+            val prompt = "러닝 코치입니다. 프로필 초기 Zone 2는 $priorLo~$priorHi bpm이고, 말하기 응답 ${currentTalk}회를 반영한 현재 범위는 $lo~$hi bpm입니다. " +
+                "현재 심박 판정은 다음과 같습니다: $currentJudgment. 주어진 숫자와 사실만 사용해 왜 이 범위와 판정이 나왔는지 3문장으로 쉽게 설명하세요. 따옴표와 이모지는 쓰지 마세요."
             val llm = c.freeform(prompt, purpose = "zone2-explain") // 세션 중이면 프로비넌스 기록(spec-027)
             if (llm != null && dialog.isShowing) {
-                dialog.setMessage(llm + "\n\n─ 계산 근거 ─\n" + ruleText)
+                dialog.setMessage(llm + "\n\n─ 확인 가능한 계산 근거 ─\n" + ruleText)
             }
         }
     }
@@ -655,6 +682,7 @@ class RunActivity : AppCompatActivity() {
         src.start(lifecycleScope, onSample = sample@{ s ->
             if (remoteStopRequested) { finalizeSession(); return@sample } // 워치에서 종료
             val state = eng.onSample(s)
+            latestLiveState = state
             src.onFeedback(state) // 폐루프: 판정을 소스로 되먹임(가상러너가 코칭에 반응)
             log.sample(s, state, watchProvider?.lastAgeMs() ?: -1L)
             // 표시 존 판정(adr-023): 순간심박+히스테리시스. 화면 칩/밴드 마커/워치 존의 유일 기준.
