@@ -42,4 +42,9 @@ MODEL --> POST : 입력과 결과
 MODEL --> UI : 판정 결과
 POST --> UI : 추정한 설명
 UI --> USER
+
+note bottom of POST
+  판정 뒤에 이유를 다시 추정하므로,
+  설명이 실제 판단 근거와 다를 수 있다.
+end note
 @enduml

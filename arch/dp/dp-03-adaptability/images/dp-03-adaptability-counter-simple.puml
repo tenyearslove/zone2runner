@@ -38,4 +38,8 @@ TRAIN --> TEST
 TEST --> REGISTRY
 REGISTRY --> SERVE : 새 모델 배포
 SERVE --> USER : 이후 러닝부터 반영
+
+note bottom of SERVE
+  사용자 응답은 새 모델을 재학습·배포한 뒤에야 반영된다.
+end note
 @enduml

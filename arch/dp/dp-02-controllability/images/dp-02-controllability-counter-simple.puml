@@ -36,4 +36,9 @@ SENSOR --> DATA
 UI --> LLM : 자연어 규정
 OUTPUT --> USER : 코칭 문장
 LLM --> LOG
+
+note bottom of LLM
+  판단 기준도 LLM 안에 있어,
+  결과를 독립적으로 대조하기 어렵다.
+end note
 @enduml
