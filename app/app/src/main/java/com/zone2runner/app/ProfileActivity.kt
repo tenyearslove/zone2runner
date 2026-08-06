@@ -372,7 +372,7 @@ class ProfileActivity : AppCompatActivity() {
             "초기 Zone 2: $lo ~ $hi bpm  (신뢰도 ±%.0f bpm)\n".format(prior.sigma0Bpm) +
             "최대 심박 ${cur.maxHr} · HRR ${cur.hrr.toInt()} · 상한 %.1f%% HRR (기본 70%% %+.1f%%p)\n".format(
                 prior.uFrac0 * 100, prior.offset * 100) +
-            "러닝을 반복할수록 실측 데이터로 이 범위가 보정됩니다"
+            "러닝 중 말하기 응답이 쌓이면 이 범위가 보정됩니다"
     }
 
     private fun save() {

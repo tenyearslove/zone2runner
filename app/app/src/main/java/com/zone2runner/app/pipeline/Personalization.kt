@@ -8,7 +8,7 @@ import com.zone2runner.app.domain.Zone2Prior
  * 개인화 Zone2 상한 추정 — 켤레 가우시안(Bayesian) 적응 (adr-004, spec-004, personalization.py 포팅).
  * 사전분포는 프로필 factor 기반 prior(adr-012/spec-013: 체형/러닝수준/빈도 → uFrac0, σ0).
  * factor 미입력이면 공식(%HRmax 0.70)/σ 8bpm과 동일 — 하위 호환.
- * 세션마다 decoupling에서 뽑은 관측 z(bpm)로 갱신. 신경망 아님(float 산술). 누적될수록 개인 경계로 수렴(QA3).
+ * 세션 중 말하기 테스트에서 얻은 관측 z(bpm)로 갱신한다. 신경망이 아닌 수치 갱신이며, 응답이 누적될수록 개인 경계로 수렴한다.
  */
 class Personalization(private val profile: Profile, priorUFrac: Double? = null) {
     private val prior = Zone2Prior.of(profile)

@@ -467,14 +467,15 @@ class RunActivity : AppCompatActivity() {
         val p = profile ?: return
         val learned = com.zone2runner.app.data.LearnedZone.uFrac(this)
         val nSess = com.zone2runner.app.data.LearnedZone.sessionCount(this)
+        val nTalk = com.zone2runner.app.data.LearnedZone.talkObs(this)
         val uFrac = learned ?: com.zone2runner.app.domain.Zone2Prior.of(p).uFrac0
         val hrr = p.hrr
         val hi = (p.restingHr + uFrac * hrr).toInt()
         val lo = (p.restingHr + (uFrac - com.zone2runner.app.domain.Zone2Prior.BAND) * hrr).toInt()
         val tanaka = com.zone2runner.app.domain.Profile.tanakaMaxHr(p.age).toInt()
         val loPct = lo * 100 / p.maxHr; val hiPct = hi * 100 / p.maxHr // %최대심박(재보정 기준)
-        val src = if (learned != null) "${nSess}회 러닝으로 보정됨 (말하기 테스트/드리프트 → 개인 맞춤)"
-                  else "프로필 기반 초기값 (아직 러닝 보정 전)"
+        val src = if (learned != null && nTalk > 0) "${nSess}회 러닝에서 말하기 응답 ${nTalk}회를 반영함"
+                  else "프로필 기반 초기값 (말하기 응답 반영 전)"
         val hrMaxHigh = p.maxHr > tanaka + 8
         val hmaxNote = if (hrMaxHigh)
             "\n\n※ 최대심박이 ${p.maxHr}으로 설정돼 있어요(${p.age}세 표준 추정은 약 ${tanaka}). 실제로 전력질주해서 나온 값이면 맞습니다."
@@ -485,7 +486,7 @@ class RunActivity : AppCompatActivity() {
             append("• Zone 2 = 유산소 기초 강도 ≈ 최대심박의 60~70% (San Millan/LT1 기준)\n")
             append("• 최대심박 ${p.maxHr} → 상단 ≈ 70% = $hi, 하단 ≈ ${loPct}% = $lo\n")
             append("• 지금 값 출처: $src\n")
-            append("• ★ 뛰면서 '편함/보통/벅참'을 누르면 이 범위가 당신 몸에 맞게 이동합니다. 편한데 미달로 나오면 '편함'을 누르세요 — 다음 세션부터 내려갑니다.")
+            append("• ★ 뛰면서 문장을 말해 본 뒤 '편함/보통/벅참'으로 답하면, 그때의 심박과 응답을 이 범위에 반영합니다.")
             append(hmaxNote)
         }
         val dialog = android.app.AlertDialog.Builder(this)
@@ -736,7 +737,7 @@ class RunActivity : AppCompatActivity() {
         source?.stop()
         val eng = engine ?: run { logger?.close(); logger = null; return }
         // 세션 종료 시 개인 Zone2 경계 누적(adr-025): 개인화는 온라인 Bayesian이 전담한다.
-        // 토크테스트(정답에 가장 가까운 라벨) + 디커플링으로 세션 중 갱신된 '최종 경계'를 저장 →
+        // 말하기 테스트 응답으로 세션 중 갱신된 '최종 경계'를 저장 →
         // 다음 세션이 여기서 시작 → 실주행 말하기 테스트가 세션을 넘어 누적/수렴.
         val finalU = eng.currentUFrac()
         com.zone2runner.app.data.LearnedZone.set(this, finalU, eng.talkObservations(), eng.currentSigmaBpm()) // uFrac 이력 + 관측 + σ(spec-020)

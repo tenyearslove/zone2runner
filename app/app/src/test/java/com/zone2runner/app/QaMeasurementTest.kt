@@ -24,7 +24,7 @@ import java.util.Random
 import kotlin.math.abs
 
 /**
- * 품질속성 검증 실측(spec-002 QA1~QA6) — 인증 보고서 "품질속성 검증" 표의 측정치 산출 도구.
+ * 품질속성 검증 실측(QA1~QA5)과 보조 회귀시험 — 인증 보고서 "품질속성 검증" 표의 측정치 산출 도구.
  * 각 테스트는 판정(assert)과 함께 측정값을 build/qa-measurements 폴더의 txt로 남긴다.
  * 시뮬 측정은 구조 검증이지 실인간 정확도가 아니다(QA5 단서) — 표에도 같은 단서를 명시한다.
  */
@@ -202,11 +202,12 @@ class QaMeasurementTest {
     }
 
     /**
-     * QA4 강건성 — 경계 근처 진동 입력에서 판정 번복(Flicker) 억제율.
+     * 보조 회귀시험 — 경계 근처 진동 입력에서 판정 번복(Flicker) 억제율.
+     * 공식 QA4 측정 지표에는 포함하지 않는다.
      * 신호 정의(정직): 경계값 + 정현 진폭 2bpm + 백색 노이즈 σ1.5bpm(표준편차 약 2bpm의 진동).
      * 노이즈 크기는 설계 선택(종류 C) — 시드 5종 스윕으로 단일 시드 의존을 제거한다.
      */
-    @Test fun qa4_flickerSuppression_nearBoundary() {
+    @Test fun supplementary_flickerSuppression_nearBoundary() {
         val lo = 132; val hi = 150; val maxHr = 190
         val suppressions = mutableListOf<Double>()
         var firstRawFlips = 0; var firstJudgedFlips = 0
@@ -238,7 +239,7 @@ class QaMeasurementTest {
             while (judge.judge(hi + 10, lo, hi, maxHr).idx <= 2 && ticks < 10) ticks++
             ticks + 1
         }
-        record("qa4-flicker", listOf(
+        record("supplementary-flicker", listOf(
             "경계 진동(정현 2bpm + 백색 σ1.5bpm) 300초, 시드 5종 스윕:",
             "  대표(시드 3): 순간값 번복=${firstRawFlips}회, 히스테리시스 번복=${firstJudgedFlips}회 (%.3f→%.3f회/초)".format(
                 firstRawFlips / 300.0, firstJudgedFlips / 300.0),
@@ -321,8 +322,8 @@ class QaMeasurementTest {
         assertEquals("사실 기반 문장 통과", faithful.size, passed)
     }
 
-    /** QA6 수행효율성 — 60분 세션(3600틱) 전 파이프라인 처리 시간: 1Hz 주기 대비 여유(JVM 로직 비용). */
-    @Test fun qa6_tickBudget_fullPipeline() = runBlocking {
+    /** 보조 회귀시험 — 60분 세션(3600틱) 전 파이프라인 처리 시간: 1Hz 주기 대비 여유(JVM 로직 비용). */
+    @Test fun supplementary_tickBudget_fullPipeline() = runBlocking {
         val engine = RunEngine(Profile.default(35, 58), RuleCoach())
         val session = RunSimulator(seed = 21L).generate(durationMin = 60)
         val t0 = System.nanoTime()
@@ -330,7 +331,7 @@ class QaMeasurementTest {
         val r = engine.report()
         val totalMs = (System.nanoTime() - t0) / 1_000_000.0
         val perTickMs = totalMs / session.samples.size
-        record("qa6-tick-budget", listOf(
+        record("supplementary-tick-budget", listOf(
             "3600틱(60분 세션) 전 파이프라인 처리=%.0f ms, 틱당 평균=%.3f ms".format(totalMs, perTickMs),
             "1Hz 주기(1000ms) 대비 %.4f%% 사용 — JVM 로직 비용(기기 실측은 별도)".format(100 * perTickMs / 1000.0),
             "세션 산출 확인: 리포트 시계열=${r.series.size}, 코칭=${r.coachingLines.size}건"
