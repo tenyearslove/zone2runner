@@ -49,4 +49,9 @@ EXPLAIN --> LOG
 OUTPUT --> UI : 코칭 문장
 LOG --> UI : 근거
 UI --> USER
+
+note bottom of UI
+  설명을 나중에 추정하지 않는다.
+  판정에 실제 사용한 값을 그대로 기록한다.
+end note
 @enduml

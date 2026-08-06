@@ -49,4 +49,9 @@ CONTROL --> LOG : 실패 전환
 ACTION --> USER
 LOG --> UI
 USER --> UI
+
+note bottom of ACTION
+  판정 기준이 LLM 밖에 있어 출력을 검사·차단할 수 있다.
+  생성에 실패해도 기본 안내로 전환한다.
+end note
 @enduml

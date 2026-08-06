@@ -18,7 +18,7 @@ package "AI Operation Subsystem" {
   package "추론 서비스 (Inference)" {
     component "데이터 준비\n프로필로 첫 경계 계산" as DATA #E1F5FE
     component "입력 가드레일\n심박 범위와 흐름 정제" as INPUT #FFE0B2
-    component "모델 서빙 ★\n개인 경계 판정·갱신\n불확실성과 변경 폭 반영" as MODEL #B2DFDB
+    component "모델 서빙 ★\n개인 경계 판정·갱신\n추정 범위와 변경 폭 반영" as MODEL #B2DFDB
     DATA --> MODEL : 첫 경계
     INPUT --> MODEL : 정제한 심박
   }
@@ -31,14 +31,14 @@ package "AI Operation Subsystem" {
     component "변경 근거\n응답 · 방향 · 변경량" as EXPLAIN #C8E6C9
   }
 
-  database "개인 상태 저장\n다음 경계 · 불확실성" as STORE #CFD8DC
+  database "개인 상태 저장\n다음 경계\n최근 추정 범위(상태 표시용)" as STORE #CFD8DC
 }
 
 SENSOR --> INPUT
 USER -left-> HITL
 HITL --> MODEL : 응답 당시 심박과 함께 전달
 MODEL --> STORE : 세션 종료 저장
-STORE ..> MODEL : 다음 러닝 시작값
+STORE ..> MODEL : 다음 경계만 시작값으로 사용
 MODEL --> EXPLAIN
 EXPLAIN -right-> USER
 

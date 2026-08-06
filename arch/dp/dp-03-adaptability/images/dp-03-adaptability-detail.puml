@@ -18,9 +18,9 @@ package "AI Operation Subsystem" {
   package "추론 서비스 (Inference)" {
     component "데이터 준비\n프로필과 입력값으로\n첫 Zone 2 경계 계산" as PREP #E1F5FE
     component "입력 가드레일\n심박 범위와 최근 흐름 확인" as INPUT #FFE0B2
-    component "모델 서빙 ★\n베이지안 개인 경계 갱신\n현재 경계와 응답의 불확실성 반영" as UPDATE #B2DFDB
+    component "모델 서빙 ★\n베이지안 개인 경계 갱신\n현재 경계와 응답의 추정 범위 반영" as UPDATE #B2DFDB
     component "출력 가드레일\n한 세션 변경 폭 최대 ±10bpm" as OUTPUT #FFE0B2
-    PREP --> UPDATE : 첫 경계와 초기 불확실성
+    PREP --> UPDATE : 첫 경계와 초기 추정 범위
     INPUT --> UPDATE : 응답 당시 심박
     UPDATE --> OUTPUT
   }
@@ -33,19 +33,19 @@ package "AI Operation Subsystem" {
     component "개인화 결과 표시\n어떤 응답으로\n얼마나 바뀌었는지" as EXPLAIN #C8E6C9
   }
 
-  database "개인 상태 저장\n조정한 경계 · 불확실성\n관측 횟수" as STORE #CFD8DC
+  database "개인 상태 저장\n조정한 경계 · 관측 횟수\n최근 추정 범위(상태 표시용)" as STORE #CFD8DC
 }
 
 SENSOR --> INPUT
 USER -left-> TALK
 TALK --> UPDATE
 OUTPUT --> STORE
-STORE ..> UPDATE : 다음 러닝의 시작값
+STORE ..> UPDATE : 다음 경계만 시작값으로 사용
 OUTPUT --> EXPLAIN
 EXPLAIN -right-> USER
 
 note bottom of OUTPUT
   운영 중 적응은 Model Construction이나 Retraining이 아니다.
-  저장한 개인 상태를 다음 추론의 시작값으로 사용한다.
+  조정한 경계를 다음 추론의 시작값으로 사용한다.
 end note
 @enduml
