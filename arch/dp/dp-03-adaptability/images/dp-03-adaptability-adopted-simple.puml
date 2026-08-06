@@ -1,9 +1,10 @@
 @startuml
 !pragma layout smetana
-title (1안) 말하기 응답을 다음 개인 경계에 반영
+title (1안) 운영 중 사용자 응답으로 개인 경계를 갱신
 
 skinparam defaultFontName "AppleGothic"
 skinparam componentStyle rectangle
+skinparam packageStyle rectangle
 skinparam shadowing false
 skinparam linetype ortho
 skinparam nodesep 24
@@ -11,20 +12,37 @@ skinparam ranksep 28
 top to bottom direction
 
 actor "사용자" as USER
-component "프로필\n첫 경계 계산" as PROFILE #E1F5FE
-component "현재 개인 경계\n이번 러닝의 판정 기준" as BOUNDARY #BBDEFB
-component "러닝" as RUN #FFF9C4
-component "말하기 응답\n편함 · 보통 · 벅참" as TALK #E1BEE7
-component "개인 경계 갱신 ★\n불확실성 반영\n변경 폭 제한" as UPDATE #B2DFDB
-database "다음 개인 경계\n다음 러닝의 시작값" as NEXT #CFD8DC
-component "변경 근거\n응답 · 방향 · 변경량" as EXPLAIN #C8E6C9
+component "심박 센서" as SENSOR #FFF9C4
 
-PROFILE -right-> BOUNDARY : 첫 러닝
-BOUNDARY -right-> RUN : 판정에 사용
-RUN -down-> TALK : 응답 당시 심박
-USER -right-> TALK
-TALK -right-> UPDATE
-UPDATE -right-> NEXT
-UPDATE -down-> EXPLAIN
-EXPLAIN -left-> USER
+package "AI Operation Subsystem" {
+  package "추론 서비스 (Inference)" {
+    component "데이터 준비\n프로필로 첫 경계 계산" as DATA #E1F5FE
+    component "입력 가드레일\n심박 범위와 흐름 정제" as INPUT #FFE0B2
+    component "모델 서빙 ★\n개인 경계 판정·갱신\n불확실성과 변경 폭 반영" as MODEL #B2DFDB
+    DATA --> MODEL : 첫 경계
+    INPUT --> MODEL : 정제한 심박
+  }
+
+  package "운영 서비스 (Operation)" {
+    component "사용자 개입 (HITL)\n말하기 응답" as HITL #E1BEE7
+  }
+
+  package "설명 서비스 (Explanation)" {
+    component "변경 근거\n응답 · 방향 · 변경량" as EXPLAIN #C8E6C9
+  }
+
+  database "개인 상태 저장\n다음 경계 · 불확실성" as STORE #CFD8DC
+}
+
+SENSOR --> INPUT
+USER -left-> HITL
+HITL --> MODEL : 응답 당시 심박과 함께 전달
+MODEL --> STORE : 세션 종료 저장
+STORE ..> MODEL : 다음 러닝 시작값
+MODEL --> EXPLAIN
+EXPLAIN -right-> USER
+
+note bottom of MODEL
+  별도 모델 재학습 없이 운영 중 갱신한다.
+end note
 @enduml

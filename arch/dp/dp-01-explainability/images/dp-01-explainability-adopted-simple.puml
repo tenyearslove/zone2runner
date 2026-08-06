@@ -1,27 +1,52 @@
 @startuml
 !pragma layout smetana
-title (1안) 판단과 설명이 같은 근거를 사용
+title (1안) 운영 서비스들이 같은 판단 근거를 공유
 
 skinparam defaultFontName "AppleGothic"
 skinparam componentStyle rectangle
+skinparam packageStyle rectangle
 skinparam shadowing false
 skinparam linetype ortho
 skinparam nodesep 24
 skinparam ranksep 28
 top to bottom direction
 
-component "판정에 사용할 값\n심박 · 개인 경계 · 관측 지표" as INPUT #FFF9C4
-component "판정과 근거 확정 ★\nZone 결과와 사용값" as FACT #C8E6C9
-component "코칭 문장 표현\n확정된 사실만 사용" as WORDS #BBDEFB
-component "근거 기록\n판정값 · 경계 · 생성 경로" as RECORD #CFD8DC
-component "리포트\n문장과 근거를 함께 표시" as REPORT #E1BEE7
+component "심박 센서" as SENSOR #FFF9C4
 actor "사용자" as USER
 
-INPUT -right-> FACT
-FACT -down-> WORDS : 같은 사실 전달
-FACT -right-> RECORD : 실제 판단 근거
-WORDS -right-> REPORT : 코칭 문장
-WORDS -up-> RECORD : 생성 경로
-RECORD -down-> REPORT : 근거
-REPORT -right-> USER
+package "AI Operation Subsystem" {
+  package "추론 서비스 (Inference)" {
+    component "데이터 준비\n심박 · 관측 지표" as DATA #E1F5FE
+    component "입력 가드레일\n센서 입력 정제" as INPUT #FFE0B2
+    component "개인 경계 모델 서빙\n현재 개인 경계 제공" as PERSONAL #B2DFDB
+    component "판정 규칙 ★\nZone 결과와 실제 사용값 확정" as DECISION #C8E6C9
+    component "문장 생성 모델 서빙\n확정된 사실만 표현" as WORDS #BBDEFB
+    component "출력 가드레일\n문장 방향과 숫자 확인" as OUTPUT #FFE0B2
+    DATA --> DECISION
+    INPUT --> DECISION
+    PERSONAL --> DECISION
+    DECISION --> WORDS : 같은 사실 전달
+    WORDS --> OUTPUT
+  }
+
+  package "설명 서비스 (Explanation)" {
+    component "설명 생성 ★\n판정에 실제로 쓴 값과\n생성 경로를 함께 정리" as EXPLAIN #C8E6C9
+  }
+
+  package "분석 서비스 (Analysis)" {
+    database "서빙 로그\n판정값 · 경계 · 생성 경로" as LOG #CFD8DC
+  }
+
+  package "운영 서비스 (Operation)" {
+    component "Operation UI\n리포트에서 문장과 근거 확인" as UI #E1BEE7
+  }
+}
+
+SENSOR --> INPUT
+DECISION --> EXPLAIN : 실제 판단 근거
+WORDS --> EXPLAIN : 생성 경로
+EXPLAIN --> LOG
+OUTPUT --> UI : 코칭 문장
+LOG --> UI : 근거
+UI --> USER
 @enduml

@@ -1,25 +1,39 @@
 @startuml
 !pragma layout smetana
-title (2안) LLM에 판단과 표현을 함께 맡김
+title (2안) LLM 모델 서빙에 판단과 표현을 함께 위임
 
 skinparam defaultFontName "AppleGothic"
 skinparam componentStyle rectangle
+skinparam packageStyle rectangle
 skinparam shadowing false
 skinparam linetype ortho
 skinparam nodesep 24
 skinparam ranksep 28
 top to bottom direction
 
-component "심박 · 페이스\n세션 상태" as INPUT #FFF9C4
-component "프롬프트 규정\n할 일과 금지 사항" as PROMPT #CFD8DC
-component "LLM 판단과 문장 생성\n코칭 여부 · 방향 · 내용 결정" as LLM #90A4AE
-component "간단한 출력 검사\n길이 · 금칙어 · 숫자 범위" as FILTER #FFE0B2
-component "코칭 출력" as OUTPUT #E1BEE7
+component "심박 센서" as SENSOR #FFF9C4
 actor "사용자" as USER
 
-INPUT --> LLM
-PROMPT --> LLM
-LLM --> FILTER
-FILTER --> OUTPUT
-OUTPUT --> USER
+package "AI Operation Subsystem" {
+  package "운영 서비스 (Operation)" {
+    component "Operation UI\n프롬프트 규정 관리\n할 일과 금지 사항" as UI #E1BEE7
+  }
+
+  package "추론 서비스 (Inference)" {
+    component "데이터 준비\n심박 · 페이스 · 세션 상태" as DATA #E1F5FE
+    component "LLM 모델 서빙\n코칭 여부 · 방향 · 내용 결정" as LLM #90A4AE
+    component "출력 가드레일\n길이 · 금칙어 · 숫자 범위" as OUTPUT #FFE0B2
+    DATA --> LLM
+    LLM --> OUTPUT
+  }
+
+  package "분석 서비스 (Analysis)" {
+    database "서빙 로그\n프롬프트와 생성 문장" as LOG #CFD8DC
+  }
+}
+
+SENSOR --> DATA
+UI --> LLM : 자연어 규정
+OUTPUT --> USER : 코칭 문장
+LLM --> LOG
 @enduml

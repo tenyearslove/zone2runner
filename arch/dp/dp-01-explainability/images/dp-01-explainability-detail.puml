@@ -1,5 +1,5 @@
 @startuml
-title DP2 채택안 — 판단에 쓴 근거가 리포트까지 이어지는 순서
+title DP2 채택안 — 운영 서브시스템에서 판단 근거가 전달되는 순서
 
 skinparam defaultFontName "AppleGothic"
 skinparam shadowing false
@@ -12,31 +12,37 @@ skinparam sequence {
   ActorBorderColor #5B7083
 }
 
-participant "센서·분석" as INPUT #FFF9C4
-participant "판정 규칙 ★" as DECISION #C8E6C9
-participant "문장 표현" as WORDS #BBDEFB
-database "근거 기록" as RECORD #CFD8DC
-participant "리포트" as REPORT #E1BEE7
+participant "심박 센서·\n관측 분석" as INPUT #FFF9C4
+
+box "AI Operation Subsystem" #F7F9FB
+participant "추론 서비스\n(Inference)\n규칙 판정" as DECISION #C8E6C9
+participant "추론 서비스\n(Inference)\n문장 모델 서빙" as WORDS #BBDEFB
+participant "설명 서비스\n(Explanation)\n근거 정리" as EXPLAIN #C8E6C9
+database "분석 서비스\n(Analysis)\n서빙 로그" as RECORD #CFD8DC
+participant "운영 서비스\n(Operation)\n리포트" as REPORT #E1BEE7
+end box
+
 actor "사용자" as USER
 
 INPUT -> DECISION : 정제한 심박 · 개인 경계 · 관측 지표
 activate DECISION
 DECISION -> DECISION : Zone 결과와 코칭 방향 확정
 DECISION -> WORDS : 확정한 사실만 전달
-DECISION -> RECORD : 판정 결과와 실제 사용값 기록
+DECISION -> EXPLAIN : 판정 결과와 실제 사용값
 deactivate DECISION
 
 activate WORDS
 WORDS -> WORDS : 사실을 코칭 문장으로 표현
-WORDS -> RECORD : 생성 · 차단 · 기본 문구 사용 경로 기록
-WORDS -> REPORT : 코칭 문장
+WORDS -> EXPLAIN : 생성 · 차단 · 기본 문구 사용 경로
+WORDS -> REPORT : 검사에 통과한 코칭 문장
 deactivate WORDS
 
-RECORD -> REPORT : 판정 근거와 생성 경로
+EXPLAIN -> RECORD : 판정 근거와 생성 경로 기록
+RECORD -> REPORT : 저장된 근거
 REPORT -> USER : 문장과 근거를 함께 표시
 
 note over DECISION, RECORD
   설명을 나중에 추정하지 않고,
-  판단에 실제로 사용한 값을 같은 흐름에서 남긴다.
+  판단에 실제로 사용한 값을 서비스 사이에 전달한다.
 end note
 @enduml

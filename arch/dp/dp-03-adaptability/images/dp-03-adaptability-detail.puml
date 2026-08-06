@@ -1,52 +1,51 @@
 @startuml
 !pragma layout smetana
-title DP1 채택안 — 한 번의 응답이 다음 개인 경계에 반영되는 과정
+title DP1 채택안 — 강의의 운영 서브시스템에 배치한 개인화 흐름
 
 skinparam defaultFontName "AppleGothic"
 skinparam componentStyle rectangle
-skinparam shadowing false
 skinparam packageStyle rectangle
+skinparam shadowing false
 skinparam linetype ortho
-skinparam nodesep 30
-skinparam ranksep 32
+skinparam nodesep 26
+skinparam ranksep 30
 top to bottom direction
 
 actor "사용자" as USER
+component "심박 센서" as SENSOR #FFF9C4
 
-package "1. 초기값" {
-  component "프로필\n최대심박 · 안정심박\n체형 · 러닝 수준 · 운동 횟수" as PROFILE #E1F5FE
-  component "첫 Zone 2 경계\n추정값 + 초기 불확실성" as INITIAL #E1F5FE
-  PROFILE --> INITIAL
+package "AI Operation Subsystem" {
+  package "추론 서비스 (Inference)" {
+    component "데이터 준비\n프로필과 입력값으로\n첫 Zone 2 경계 계산" as PREP #E1F5FE
+    component "입력 가드레일\n심박 범위와 최근 흐름 확인" as INPUT #FFE0B2
+    component "모델 서빙 ★\n베이지안 개인 경계 갱신\n현재 경계와 응답의 불확실성 반영" as UPDATE #B2DFDB
+    component "출력 가드레일\n한 세션 변경 폭 최대 ±10bpm" as OUTPUT #FFE0B2
+    PREP --> UPDATE : 첫 경계와 초기 불확실성
+    INPUT --> UPDATE : 응답 당시 심박
+    UPDATE --> OUTPUT
+  }
+
+  package "운영 서비스 (Operation)" {
+    component "사용자 개입 (HITL)\n말하기 응답\n편함 · 보통 · 벅참" as TALK #E1BEE7
+  }
+
+  package "설명 서비스 (Explanation)" {
+    component "개인화 결과 표시\n어떤 응답으로\n얼마나 바뀌었는지" as EXPLAIN #C8E6C9
+  }
+
+  database "개인 상태 저장\n조정한 경계 · 불확실성\n관측 횟수" as STORE #CFD8DC
 }
 
-package "2. 러닝 중 응답" {
-  component "현재 심박" as HR #FFF9C4
-  component "말하기 응답\n편함 · 보통 · 벅참" as TALK #E1BEE7
-}
+SENSOR --> INPUT
+USER -left-> TALK
+TALK --> UPDATE
+OUTPUT --> STORE
+STORE ..> UPDATE : 다음 러닝의 시작값
+OUTPUT --> EXPLAIN
+EXPLAIN -right-> USER
 
-package "3. 개인화 갱신 ★" {
-  component "응답을 관측값으로 환산\n편함 +5 · 보통 현재값 · 벅참 -5" as MAP #B2DFDB
-  component "베이지안 갱신\n현재 경계와 새 응답의\n불확실성을 함께 반영" as UPDATE #B2DFDB
-  component "변경 폭 제한\n한 세션에서 최대 ±10bpm" as LIMIT #FFE0B2
-  MAP --> UPDATE
-  UPDATE --> LIMIT
-}
-
-package "4. 저장과 설명" {
-  database "조정한 개인 경계\n다음 러닝의 시작값" as STORE #CFD8DC
-  component "사용자에게 표시\n어떤 응답으로\n얼마나 바뀌었는지" as EXPLAIN #C8E6C9
-}
-
-USER --> TALK
-HR --> MAP : 응답 당시 값
-TALK --> MAP
-INITIAL --> UPDATE : 현재 경계
-LIMIT --> STORE
-LIMIT --> EXPLAIN
-EXPLAIN --> USER
-
-note bottom of LIMIT
-  응답의 불확실성과 변경 한도를 함께 두어
-  한 번의 응답이 경계를 과도하게 바꾸지 않게 한다.
+note bottom of OUTPUT
+  운영 중 적응은 Model Construction이나 Retraining이 아니다.
+  저장한 개인 상태를 다음 추론의 시작값으로 사용한다.
 end note
 @enduml

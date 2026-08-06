@@ -1,33 +1,52 @@
 @startuml
 !pragma layout smetana
-title (1안) LLM의 권한을 문장 표현으로 제한
+title (1안) 추론·운영 서비스가 LLM의 권한과 실패를 통제
 
 skinparam defaultFontName "AppleGothic"
 skinparam componentStyle rectangle
+skinparam packageStyle rectangle
 skinparam shadowing false
 skinparam linetype ortho
 skinparam nodesep 24
 skinparam ranksep 28
 top to bottom direction
 
-component "시스템 판단 ★\n코칭 방향과 숫자 확정" as DECISION #BBDEFB
-component "LLM\n확정된 사실로\n문장만 생성" as LLM #E1F5FE
-component "출력 검사 ★\n형식 · 방향 · 숫자" as GUARD #FFE0B2
-component "생성 코칭" as PASS #C8E6C9
-component "기본 안내\n생성 실패 또는 검사 탈락" as FALLBACK #FFF3E0
-component "위험 심박 안내\nLLM을 거치지 않음" as SAFETY #FFCCBC
-component "사용자 안내" as OUTPUT #E1BEE7
-database "처리 기록\n채택 · 차단 · 전환 이유" as LOG #CFD8DC
+component "심박 센서" as SENSOR #FFF9C4
+actor "사용자" as USER
 
-DECISION --> LLM : 표현할 사실
-LLM --> GUARD
-GUARD --> PASS : 통과
-GUARD --> FALLBACK : 기준 위반
-LLM --> FALLBACK : 사용할 수 없음
-DECISION --> SAFETY : 위험 심박
-PASS --> OUTPUT
-FALLBACK --> OUTPUT
-SAFETY --> OUTPUT
-GUARD --> LOG
-FALLBACK --> LOG
+package "AI Operation Subsystem" {
+  package "추론 서비스 (Inference)" {
+    component "데이터 준비\n심박 · 페이스 · 세션 상태" as DATA #E1F5FE
+    component "입력 가드레일\n센서 입력 정제" as INPUT #FFE0B2
+    component "판정 규칙 ★\n코칭 방향과 숫자 확정" as DECISION #BBDEFB
+    component "LLM 모델 서빙\n확정된 사실로 문장만 생성" as LLM #E1F5FE
+    component "출력 가드레일 ★\n형식 · 방향 · 숫자 검사" as OUTPUT #FFE0B2
+    DATA --> DECISION
+    INPUT --> DECISION
+    DECISION --> LLM : 표현할 사실
+    LLM --> OUTPUT
+  }
+
+  package "운영 서비스 (Operation)" {
+    component "추론 제어\nLLM 사용 여부와 실패 전환" as CONTROL #E1BEE7
+    component "운영 조치 ★\n기본 안내 · 위험 심박 안내" as ACTION #FFCCBC
+    component "Operation UI\n사용자 개입(HITL) · 운영 정책(HOTL)\n설정과 처리 결과 확인" as UI #E1BEE7
+    UI --> CONTROL
+    CONTROL --> ACTION : 생성 실패
+  }
+
+  package "분석 서비스 (Analysis)" {
+    database "서빙 로그\n채택 · 차단 · 전환 이유" as LOG #CFD8DC
+  }
+}
+
+SENSOR --> INPUT
+CONTROL --> LLM : 사용 허용
+DECISION --> ACTION : 위험 심박
+OUTPUT --> ACTION : 통과 또는 탈락
+OUTPUT --> LOG : 검사 결과
+CONTROL --> LOG : 실패 전환
+ACTION --> USER
+LOG --> UI
+USER --> UI
 @enduml

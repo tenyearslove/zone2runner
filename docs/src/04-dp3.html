@@ -55,12 +55,12 @@
       <tr>
         <th class="rowh">구조</th>
         <td class="win">
-          <div class="fig-frame"><img data-img="dp3-adopted" alt="1안 — LLM의 권한을 문장 표현으로 제한하는 구조"></div>
-          <p class="note" style="margin-top:8px">규칙이 코칭 방향과 사용할 숫자를 확정하면 LLM은 그 내용을 문장으로 표현한다. 생성된 문장은 형식·방향·숫자 검사를 거치며, 검사를 통과하지 못하거나 LLM을 사용할 수 없으면 "속도를 줄이세요"와 같은 기본 문구로 전환한다. 위험 심박 안내는 LLM을 거치지 않으며, 모든 LLM 호출 경로와 차단 사유를 기록한다.</p>
+          <div class="fig-frame"><img data-img="dp3-adopted" alt="1안 — AI 운영 서브시스템의 추론·운영·분석 서비스가 LLM의 권한과 실패를 통제하는 구조"></div>
+          <p class="note" style="margin-top:8px">강의의 AI Operation Subsystem에서 추론 서비스의 모델 서빙과 출력 가드레일, 운영 서비스의 추론 제어와 운영 조치, 분석 서비스의 서빙 로그가 통제 경로를 이룬다. 규칙이 코칭 방향과 사용할 숫자를 확정하면 LLM은 문장만 표현한다. 검사 탈락이나 생성 실패에는 기본 문구로 전환하고, 위험 심박 안내는 LLM을 거치지 않는다.</p>
         </td>
         <td>
-          <div class="fig-frame"><img data-img="dp3-counter" alt="2안 — LLM에 판단과 표현을 함께 맡기는 구조"></div>
-          <p class="note" style="margin-top:8px">심박과 페이스를 프롬프트로 주고 LLM이 코칭 방향과 문장을 함께 정한다. 프롬프트 지시와 간단한 출력 필터로 잘못된 문장을 줄인다.</p>
+          <div class="fig-frame"><img data-img="dp3-counter" alt="2안 — 추론 서비스의 LLM 모델 서빙에 판단과 표현을 함께 맡기는 구조"></div>
+          <p class="note" style="margin-top:8px">추론 서비스의 LLM 모델 서빙이 코칭 방향과 문장을 함께 정한다. 운영 서비스의 프롬프트 규정과 간단한 출력 가드레일로 잘못된 문장을 줄이지만, LLM 밖에 독립된 판정 기준이 없다.</p>
         </td>
       </tr>
       <tr>
@@ -143,7 +143,7 @@
   </ul>
 
   <h3 class="num"><span>A2.</span>채택안의 통제 단계 <span class="note" style="font-weight:400">(판단 권한 제한부터 기록까지 순서대로 적용)</span></h3>
-  <figure style="margin:0 0 12px"><div class="fig-frame"><img data-img="dp3-detail" alt="DP3 채택안 — 생성 결과를 통제하고 실패에 대응하는 순서" width="1100"></div></figure>
+  <figure style="margin:0 0 12px"><div class="fig-frame"><img data-img="dp3-detail" alt="DP3 채택안 — AI 운영 서브시스템의 서비스별 통제와 실패 대응 순서" width="1100"></div></figure>
   <div class="tbl">
   <table class="decide">
     <thead>

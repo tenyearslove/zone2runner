@@ -1,9 +1,10 @@
 @startuml
 !pragma layout smetana
-title (2안) 서버 재학습으로 개인화를 반영
+title (2안) 개발 서브시스템의 재학습·배포로 개인화를 반영
 
 skinparam defaultFontName "AppleGothic"
 skinparam componentStyle rectangle
+skinparam packageStyle rectangle
 skinparam shadowing false
 skinparam linetype ortho
 skinparam nodesep 24
@@ -11,15 +12,30 @@ skinparam ranksep 28
 top to bottom direction
 
 actor "사용자" as USER
-component "러닝과 응답" as RUN #E1BEE7
-database "여러 사용자의\n기록 수집" as DATA #CFD8DC
-component "모델 재학습\n복잡한 패턴 학습" as TRAIN #FFCCBC
-component "검증과 배포" as DEPLOY #FFAB91
-component "새 개인화 모델\n이후 러닝부터 사용" as MODEL #90A4AE
 
-USER -right-> RUN
-RUN -right-> DATA : 서버 전송
-DATA -down-> TRAIN : 충분한 데이터가 모이면
-TRAIN -right-> DEPLOY
-DEPLOY -right-> MODEL
+package "AI Operation Subsystem" {
+  package "운영 서비스 (Operation)" {
+    component "세션·응답 수집\n사용 동의와 서버 전송" as COLLECT #E1BEE7
+  }
+  package "추론 서비스 (Inference)" {
+    component "모델 서빙\n배포된 개인화 모델 사용" as SERVE #90A4AE
+  }
+}
+
+package "AI Development Subsystem" {
+  component "데이터셋 구축" as DATASET #FFCCBC
+  database "Data Lake\n여러 사용자의 기록" as LAKE #CFD8DC
+  component "Model Construction\n개인화 모델 재학습" as TRAIN #FFCCBC
+  component "Model Testing\n새 모델 검증" as TEST #FFAB91
+  database "Model Registry\n검증된 모델 등록" as REGISTRY #CFD8DC
+}
+
+USER --> COLLECT
+COLLECT --> DATASET
+DATASET --> LAKE
+LAKE --> TRAIN : 충분한 데이터가 모이면
+TRAIN --> TEST
+TEST --> REGISTRY
+REGISTRY --> SERVE : 새 모델 배포
+SERVE --> USER : 이후 러닝부터 반영
 @enduml
