@@ -20,7 +20,18 @@
                    "dp2-adopted":  "arch/dp/dp-01-explainability/images/dp-01-explainability-adopted-simple.png",
                    "dp2-detail":  "arch/dp/dp-01-explainability/images/dp-01-explainability-detail.png",
                    "dp3-adopted":  "arch/dp/dp-02-controllability/images/dp-02-controllability-adopted-simple.png",
-                   "dp3-detail":  "arch/dp/dp-02-controllability/images/dp-02-controllability-detail.png"
+                   "dp3-detail":  "arch/dp/dp-02-controllability/images/dp-02-controllability-detail.png",
+                   "screen-home":  "docs/media/screens/phone-home.png",
+                   "screen-profile":  "docs/media/screens/phone-profile-personalization.png",
+                   "screen-run":  "docs/media/screens/phone-run-active.png",
+                   "screen-run-after":  "docs/media/screens/phone-run-after-response.png",
+                   "screen-talk-phone":  "docs/media/screens/phone-talk-test.png",
+                   "screen-sim-controls":  "docs/media/screens/phone-simulation-controls.png",
+                   "screen-report-summary":  "docs/media/screens/phone-report-summary.png",
+                   "screen-report-provenance":  "docs/media/screens/phone-report-provenance.png",
+                   "screen-report-llm":  "docs/media/screens/phone-report-llm-usage.png",
+                   "screen-watch-run":  "docs/media/screens/watch-run-active.png",
+                   "screen-watch-talk":  "docs/media/screens/watch-talk-test.png"
                },
     "decks":  [
                   {
@@ -88,7 +99,8 @@
                       "out":  "08-impl.html",
                       "src":  "08-impl.html",
                       "title":  "구현 / 품질속성 검증 / 결론 — Zone2Runner 설계 보고서",
-                      "deckCss":  true
+                      "deckCss":  true,
+                      "dataImg":  true
                   },
                   {
                       "out":  "09-appendix.html",

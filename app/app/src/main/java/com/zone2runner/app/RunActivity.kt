@@ -188,7 +188,7 @@ class RunActivity : AppCompatActivity() {
     private fun updateSubtitle() {
         val model = "규칙 판정 + 개인화"
         subtitle.text = when (mode) {
-            MODE_LIVE -> "$model · 실센서(GPS+워치HR) — 실기기 필요"
+            MODE_LIVE -> "$model · 실센서(GPS+심박센서) — 실기기 필요"
             else -> "$model · 시뮬레이션 재생"
         }
     }

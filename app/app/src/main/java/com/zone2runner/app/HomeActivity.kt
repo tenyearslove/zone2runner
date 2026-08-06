@@ -60,13 +60,8 @@ class HomeActivity : AppCompatActivity() {
             setPadding(dpi(18), dpi(24), dpi(18), dpi(28))
         }
 
-        // 인증 과제 타이틀(사용자 요청): 프로그램명 + 앱명
-        col.addView(TextView(this).apply {
-            text = "AI Specialist"; textSize = 12f; setTextColor(Palette.ACCENT)
-            letterSpacing = 0.12f; setTypeface(typeface, android.graphics.Typeface.BOLD)
-        })
         col.addView(title("Zone2Runner"))
-        col.addView(subtitle("개인화 유산소(Zone 2) 러닝 코칭 · 온디바이스 AI"))
+        col.addView(subtitle("개인화 Zone 2 러닝 코칭 · 온디바이스 AI"))
 
         // AI 모델 준비 배너(adr-027): 미다운로드면 자동 다운로드 + 진행률. 준비 전에도 규칙 코칭은 무중단.
         col.addView(nanoModelBanner())
@@ -88,7 +83,7 @@ class HomeActivity : AppCompatActivity() {
         col.addView(bigButton("러닝 시작 (시뮬레이션)", Palette.ACCENT) {
             startActivity(Intent(this, RunActivity::class.java).putExtra(RunActivity.EXTRA_MODE, RunActivity.MODE_SIM))
         })
-        col.addView(bigButton("실센서 러닝 (GPS+워치)", Palette.CARD) {
+        col.addView(bigButton("실센서 러닝 (GPS+심박센서)", Palette.CARD) {
             startActivity(Intent(this, RunActivity::class.java).putExtra(RunActivity.EXTRA_MODE, RunActivity.MODE_LIVE))
         })
         // 가짜 라이브(Mock)는 수동 러너 시뮬(spec-022)이 상위호환이라 제거(2026-07-08 사용자 결정)
@@ -143,8 +138,8 @@ class HomeActivity : AppCompatActivity() {
             val dir = when { dHi > 0 -> "상단 +$dHi bpm 상향"; dHi < 0 -> "상단 ${dHi} bpm 하향"; else -> "변동 없음" }
             grid.addView(TextView(this).apply {
                 text = "프로필 공식 기준: $fLo ~ $fHi bpm  →  학습 후 $dir\n" +
-                    "근거: 실주행 관측 누적(말하기 테스트 + 심박·속도 드리프트)을 Bayesian으로 갱신.\n" +
-                    "느낌과 판정이 다르면 러닝 중 솔직히 답하세요 — 벅찬데 아직 Zone 2로 나오면 '벅참'이 상한을 낮추고, 편한데 초과로 나오면 '편함'이 상한을 올립니다."
+                    "근거: 러닝 중 '편함·보통·벅참' 응답을 누적해 Zone 2 상한을 조정합니다.\n" +
+                    "현재 느낌과 판정이 다르면 그대로 답해 주세요. '벅참'은 상한을 낮추고, '편함'은 올리는 근거가 됩니다."
                 textSize = 11f; setTextColor(Palette.MUTED); setPadding(0, dpi(4), 0, 0)
             })
         } else {
