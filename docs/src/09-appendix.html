@@ -2,16 +2,16 @@
 
 <div class="deck-head">
   <h1>부록 — 아키텍처를 읽는 다섯 가지 관점</h1>
-  <p>같은 시스템을 사용자, 실행 흐름, 모듈, 데이터, 배포의 관점에서 나누어 본다.</p>
+  <p>하나의 시스템을 사용자, 실행 흐름, 모듈, 데이터와 배포의 다섯 관점으로 나누어 설명한다.</p>
 </div>
 
 <section class="slide">
   <div class="slide-head"><h2>부록. 사용 사례(Use Case)</h2><span class="sec-no">A</span></div>
   <div class="fig-frame"><img data-img="usecase" alt="Use Case 다이어그램"></div>
   <ul>
-    <li>그림에는 <strong>러너</strong>와 <strong>개발·검증 담당자</strong>가 나온다. 러너는 앱 기능을 사용하고, 개발·검증 담당자는 시험 입력으로 다섯 QAS를 반복 확인한다. 검증용 기능은 과제 검증을 위한 것이며 일반 사용자 기능은 아니다.</li>
+    <li>그림의 사용자는 <strong>러너</strong>와 <strong>개발·검증 담당자</strong>다. 러너는 앱의 러닝 기능을 사용하고, 개발·검증 담당자는 시험 입력으로 다섯 QAS를 반복 검증한다. 검증용 기능은 과제 수행을 위한 도구이며 일반 사용자에게 제공하는 기능은 아니다.</li>
     <li>러너의 흐름은 프로필 등록 → 세션 시작 → 존 확인과 음성 코칭 → 말하기 테스트 응답 → 리포트와 코칭 근거 확인 순서다. 말하기 테스트 응답은 개인 경계 갱신에 사용된다.</li>
-    <li>설정에서는 코칭 빈도·음성·말투 등을 바꿀 수 있고, 홈과 설정 화면에서 Gemini Nano 모델의 상태와 다운로드 필요 여부를 확인할 수 있다.</li>
+    <li>설정에서 코칭 빈도·음성·말투 등을 변경할 수 있다. 홈과 설정 화면에서는 Gemini Nano 모델의 상태와 다운로드 필요 여부를 확인할 수 있다.</li>
   </ul>
   <div class="crumb">과제 소개 <span>요구사항</span> <span>설계</span> <span>구현/검증</span> <span>결론</span> <b>Appendix</b></div>
 </section>
@@ -20,9 +20,9 @@
   <div class="slide-head"><h2>부록. 시스템 관계도(Context View)</h2><span class="sec-no">A</span></div>
   <div class="fig-frame"><img data-img="context" alt="Context 다이어그램"></div>
   <ul>
-    <li>Zone2Runner는 폰 앱과 워치 앱으로 구성된다. 워치는 심박·케이던스를 측정하고 화면에 표시하며, 폰은 판정·분석·개인화·코칭을 담당한다.</li>
-    <li>외부 연결은 Health Services, 폰 GPS, 기기 안의 별도 프로세스인 Gemini Nano/AICore, Open-Meteo, OSM 지도 타일 서버다. 날씨 조회 때 반올림한 위도·경도가 Open-Meteo로 전송되고, 지도 화면은 OSM 타일을 요청한다. 심박·개인화·세션 분석은 자체 서버나 외부 AI API로 보내지 않는다.</li>
-    <li>LLM에는 규칙이 확정한 값과 문장 작성 지시만 전달한다. 결과가 방향·숫자·형식 검사를 통과하지 못하면 차단하고 기본 문구를 사용한다. 리포트에는 판정값과 생성 경로를 함께 남긴다.</li>
+    <li>Zone2Runner는 폰 앱과 워치 앱으로 구성된다. 워치는 심박과 케이던스를 측정해 폰으로 보내고 화면에 러닝 정보를 표시한다. 폰은 판정·분석·개인화·코칭을 담당한다.</li>
+    <li>외부 시스템은 Health Services, 폰 GPS, 기기의 별도 프로세스에서 실행되는 Gemini Nano/AICore, Open-Meteo와 OSM 지도 타일 서버다. 날씨를 조회할 때는 반올림한 위도와 경도를 Open-Meteo로 전송하고, 지도 화면에서는 OSM 타일을 요청한다. 심박·개인화·세션 분석 데이터는 자체 서버나 외부 AI API로 보내지 않는다.</li>
+    <li>LLM에는 규칙이 확정한 값과 문장 작성 지시만 전달한다. 생성 결과가 방향·숫자·형식 검사를 통과하지 못하면 차단하고 기본 문구로 전환한다. 리포트에는 판정값과 문장 생성 경로를 함께 기록한다.</li>
   </ul>
   <div class="crumb">과제 소개 <span>요구사항</span> <span>설계</span> <span>구현/검증</span> <span>결론</span> <b>Appendix</b></div>
 </section>
@@ -31,9 +31,9 @@
   <div class="slide-head"><h2>부록. 모듈 구조(Module View)</h2><span class="sec-no">A</span></div>
   <div class="fig-frame"><img data-img="module-view" alt="Module View 다이어그램"></div>
   <ul>
-    <li>이 그림은 파일 목록이 아니라 모듈 사이의 의존 방향을 보여 준다. 공통 데이터 모델은 안드로이드 기능에 의존하지 않으며, 판정·개인화·분석의 핵심 계산도 기기와 분리돼 있다.</li>
-    <li>이 분리 덕분에 기기 없이 단위시험 167개를 실행했다. 이 숫자는 제품 정확도가 아니라 변경 후 자동으로 다시 확인할 수 있는 범위를 뜻한다.</li>
-    <li>실제 센서와 시험 입력은 같은 RunSource 인터페이스를 사용한다. 따라서 입력 이후의 판정 경로를 바꾸지 않고 같은 시험 시나리오를 반복할 수 있다.</li>
+    <li>이 그림은 파일 목록이 아니라 모듈 사이의 의존 방향을 보여 준다. 공통 데이터 모델은 Android 플랫폼 기능에 의존하지 않으며, 판정·개인화·분석의 핵심 계산도 기기 기능과 분리돼 있다.</li>
+    <li>이러한 분리 덕분에 기기 없이 단위시험 167개를 실행할 수 있다. 이 숫자는 제품의 정확도가 아니라 코드 변경 후 자동으로 다시 확인할 수 있는 범위를 뜻한다.</li>
+    <li>실제 센서와 시험 입력은 같은 RunSource 인터페이스를 사용한다. 따라서 입력 이후의 판정 흐름을 바꾸지 않고 같은 시험 시나리오를 반복할 수 있다.</li>
   </ul>
   <div class="crumb">과제 소개 <span>요구사항</span> <span>설계</span> <span>구현/검증</span> <span>결론</span> <b>Appendix</b></div>
 </section>
@@ -43,7 +43,7 @@
   <div class="fig-frame"><img data-img="cnc-simple" alt="C&C View 다이어그램(축약)"></div>
   <ul>
     <li>실행 흐름은 센서 입력 → 입력 검사 → 규칙 판정·개인 경계·분석·LLM 표현 → 출력 검사 → 화면·음성·리포트 순서다. 세션 결과와 개인 경계는 폰에 저장된다.</li>
-    <li>DP1~DP3은 같은 아키텍처에서 기능적응성·설명용이성·제어가능성과 관련된 경로를 각각 강조한 그림이다. 강건성과 테스트가능성은 이 구조 전반을 받치는 공통 설계로 반영했다.</li>
+    <li>DP1~DP3의 그림은 같은 아키텍처에서 기능적응성·설명용이성·제어가능성과 관련된 경로를 각각 강조한다. 강건성과 테스트가능성은 전체 실행 흐름을 지원하는 공통 설계로 반영했다.</li>
   </ul>
   <div class="crumb">과제 소개 <span>요구사항</span> <span>설계</span> <span>구현/검증</span> <span>결론</span> <b>Appendix</b></div>
 </section>
@@ -52,7 +52,7 @@
   <div class="slide-head"><h2>부록. 실행 구조 상세(C&amp;C View)</h2><span class="sec-no">A</span></div>
   <div class="fig-frame"><img data-img="cnc-detail" alt="C&C View 상세 다이어그램"></div>
   <ul>
-    <li>상세 그림은 입력 출처부터 판정, 개인 경계, 분석, 코칭 문장, 출력 검사, 저장까지의 연결을 모두 보여 준다. 화살표를 따라가면 어떤 값이 판정과 설명 기록에 사용되는지 확인할 수 있다.</li>
+    <li>상세 그림은 입력 출처부터 판정, 개인 경계, 분석, 코칭 문장, 출력 검사와 저장까지의 연결을 보여 준다. 화살표를 따라가면 각 단계에서 어떤 값이 판정과 설명 기록에 사용되는지 확인할 수 있다.</li>
     <li>각 컴포넌트의 책임과 입력·출력, 구현 위치는 별도의 컴포넌트 목록에 정리했다.</li>
   </ul>
   <div class="crumb">과제 소개 <span>요구사항</span> <span>설계</span> <span>구현/검증</span> <span>결론</span> <b>Appendix</b></div>
@@ -62,9 +62,9 @@
   <div class="slide-head"><h2>부록. 배포 구조(Deployment View)</h2><span class="sec-no">A</span></div>
   <div class="fig-frame"><img data-img="deployment" alt="Deployment 다이어그램"></div>
   <ul>
-    <li>시스템은 워치, 폰, 기기 안의 AICore와 외부의 Open-Meteo·OSM 타일 서버에 배포된다. 세션과 개인화 값은 폰에 저장된다.</li>
-    <li>워치가 측정한 심박과 응답은 Wearable Data Layer로 폰에 전달된다. 폰이 확정한 화면용 존은 <strong>/run/live</strong> 경로로 매초 워치에 보내므로, 판정을 폰에서만 내린다는 설계가 배포 구조에서도 유지된다.</li>
-    <li>Nano는 AICore라는 별도 프로세스에서 실행되므로 앱은 AICore 프로세스의 CPU와 메모리를 직접 측정하지 못한다. 보고서에는 측정 가능한 호출 시간과 처리 경로, 앱 메모리만 기록한다.</li>
+    <li>시스템은 워치, 폰, 기기의 AICore 프로세스와 외부 Open-Meteo·OSM 타일 서버에 배포된다. 세션과 개인화 값은 폰에 저장한다.</li>
+    <li>워치에서 측정한 심박과 사용자 응답은 Wearable Data Layer를 통해 폰으로 전달된다. 폰은 확정한 화면용 Zone을 <strong>/run/live</strong> 경로로 매초 워치에 전송한다. 따라서 Zone 판정을 폰에서만 수행한다는 원칙이 배포 구조에서도 유지된다.</li>
+    <li>Gemini Nano는 AICore라는 별도 프로세스에서 실행되므로 앱에서 AICore 프로세스의 CPU와 메모리를 직접 측정할 수 없다. 보고서에는 앱에서 측정할 수 있는 호출 시간과 처리 경로, 앱 메모리만 기록한다.</li>
   </ul>
   <div class="crumb">과제 소개 <span>요구사항</span> <span>설계</span> <span>구현/검증</span> <span>결론</span> <b>Appendix</b></div>
 </section>
