@@ -66,29 +66,29 @@
       <tr>
         <th class="rowh">장점</th>
         <td class="win">
-          <p>기능적응성 <span class="stars">★★★★★</span><br><span class="note">응답을 처리하면 변경 결과가 개인 경계에 바로 반영된다.</span></p>
-          <p>테스트가능성 <span class="stars">★★★★★</span><br><span class="note">같은 응답을 넣어 경계가 어떻게 바뀌는지 반복 확인할 수 있다.</span></p>
+          <p><strong>QA2 기능적응성</strong><br><span class="note">응답을 처리하면 변경 결과가 개인 경계에 바로 반영된다.</span></p>
+          <p><strong>QA1 설명용이성</strong><br><span class="note">경계 변경에 영향을 준 응답과 변경 결과를 직접 연결할 수 있다.</span></p>
+          <p><strong>QA5 테스트가능성</strong><br><span class="note">같은 응답을 넣어 경계가 어떻게 바뀌는지 반복 확인할 수 있다.</span></p>
         </td>
         <td>
-          <p>기능적응성 <span class="stars">★★★★</span><br><span class="note">여러 사용자의 패턴을 함께 배울 수 있지만, 새 모델을 배포하기 전에는 반영되지 않는다.</span></p>
-          <p>오답 영향 억제 <span class="stars">★★★★</span><br><span class="note">여러 사용자의 데이터를 함께 학습하므로 한 번의 응답이 미치는 영향이 작다.</span></p>
+          <p><strong>QA2 기능적응성</strong><br><span class="note">실제 데이터가 충분하면 단순한 경계 조정보다 복잡한 개인 패턴을 학습할 가능성이 있다.</span></p>
         </td>
       </tr>
       <tr>
-        <th class="rowh">그 밖의<br>영향</th>
+        <th class="rowh">단점</th>
         <td class="win">
-          <p>설명용이성 <span class="stars">★★★★★</span><br><span class="note">경계 변경에 영향을 준 응답과 변경 결과를 직접 보여 줄 수 있다.</span></p>
-          <p>오답 영향 억제 <span class="stars">★★★★</span><br><span class="note">부정확한 응답이 경계에 영향을 줄 수 있으므로 응답별 반영 정도와 변경 한도로 그 영향을 제한한다.</span></p>
+          <p><strong>QA2 기능적응성</strong><br><span class="note">말하기 응답으로 개인 경계를 조정하는 단순한 모델이므로 복잡한 개인 패턴까지 학습하지는 못한다.</span></p>
         </td>
         <td>
-          <p>기능적응성 <span class="stars">★★</span><br><span class="note">사용자 응답의 반영이 데이터 수집·재학습·배포 주기에 따라 며칠 이상 늦어질 수 있다.</span></p>
-          <p>테스트가능성 <span class="stars">★★★</span><br><span class="note">수집부터 재학습과 배포까지 전 과정을 반복 검증하기 어렵다.</span></p>
+          <p><strong>QA2 기능적응성</strong><br><span class="note">사용자 응답의 반영이 데이터 수집·재학습·배포 주기만큼 늦어진다.</span></p>
+          <p><strong>QA1 설명용이성</strong><br><span class="note">한 사용자의 응답이 모델 변경에 미친 영향을 직접 연결하기 어렵다.</span></p>
+          <p><strong>QA5 테스트가능성</strong><br><span class="note">수집부터 재학습과 배포까지 전 과정을 같은 조건으로 반복하기 어렵다.</span></p>
         </td>
       </tr>
       <tr>
-        <th class="rowh">절충</th>
-        <td class="win">응답이 바로 반영되고 경계가 바뀐 이유를 확인할 수 있다. 다만 단순한 갱신 모델이므로 복잡한 개인 패턴을 학습하지는 못한다.</td>
-        <td>복잡한 패턴을 학습할 가능성이 있다. 다만 변경 결과가 배포 주기에 따라 늦게 반영되고, 개인별 기준값을 직접 측정할 수 없는 현재 조건에서는 효과를 확인하기 어렵다.</td>
+        <th class="rowh">Tradeoff</th>
+        <td class="win">QA2에서 응답을 바로 반영하고 QA1·QA5에서 변경 과정도 확인할 수 있다. 다만 QA2의 적응 범위는 개인 경계를 조정하는 수준으로 제한된다.</td>
+        <td>QA2에서 복잡한 패턴을 학습할 가능성이 있다. 다만 반영이 배포 주기만큼 늦고, QA1·QA5를 충족하려면 개인별 기준값과 재학습 전 과정에 대한 별도 검증이 필요하다.</td>
       </tr>
     </tbody>
   </table>
