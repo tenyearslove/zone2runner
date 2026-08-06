@@ -8,9 +8,9 @@
 <section class="slide">
   <div class="slide-head"><h2>최종 아키텍처 (1/2) — 전체 구조</h2><span class="sec-no">3</span></div>
   <div class="fig-frame"><img data-img="macro" alt="최종 아키텍처 거시 다이어그램"></div>
-  <h3 class="num"><span>■</span>강의 표준 용어와 구현의 대응</h3>
+  <h3 class="num"><span>■</span>AI 시스템 구성요소와 구현의 대응</h3>
   <div class="tbl"><table class="decide">
-    <thead><tr><th>강의 AI System 컴포넌트</th><th>이 시스템의 구현</th><th style="width:5em">모듈</th></tr></thead>
+    <thead><tr><th>AI System 컴포넌트</th><th>이 시스템의 구현</th><th style="width:5em">모듈</th></tr></thead>
     <tbody>
       <tr><td>입력 가드레일</td><td>HrInputGuard: 40~220bpm 범위를 먼저 검사하고, 최근 10초 심박의 중앙값과 변동폭으로 최근 흐름과 맞지 않는 입력을 다시 검사한다.</td><td>A2</td></tr>
       <tr><td>모델 서빙</td><td>규칙 판정, 베이지안 경계, 관측 분석 엔진, 온디바이스 LLM</td><td>A4~A7</td></tr>

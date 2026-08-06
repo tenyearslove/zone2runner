@@ -252,11 +252,11 @@
         <th class="rowh">구조</th>
         <td class="win">
           <div class="fig-frame"><img src="img/dp-03-adaptability-adopted-simple.png?v=a50e55be" data-img="dp1-adopted" alt="1안 — AI 운영 서브시스템에서 사용자 응답으로 개인 경계를 갱신하는 구조"></div>
-          <p class="note" style="margin-top:8px">강의의 AI Operation Subsystem 안에서 추론·운영·설명 서비스가 개인화에 참여한다. 개인 경계의 추정값과 불확실성을 함께 저장하고, 프로필로 계산한 초기값에서 시작해 말하기 테스트 응답이 들어올 때마다 베이지안 방식으로 갱신한다. 한 세션에서 경계가 바뀌는 폭은 최대 10bpm으로 제한한다. 이 갱신은 별도의 모델 재학습이 아니라 저장한 개인 상태를 다음 추론의 시작값으로 사용하는 과정이다.</p>
+          <p class="note" style="margin-top:8px">추론·운영·설명 서비스가 하나의 운영 경로에서 개인화에 참여한다. 개인 경계의 추정값과 불확실성을 함께 저장하고, 프로필로 계산한 초기값에서 시작해 말하기 테스트 응답이 들어올 때마다 베이지안 방식으로 갱신한다. 한 세션에서 경계가 바뀌는 폭은 최대 10bpm으로 제한한다. 이 갱신은 별도의 모델 재학습이 아니라 저장한 개인 상태를 다음 추론의 시작값으로 사용하는 과정이다.</p>
         </td>
         <td>
           <div class="fig-frame"><img src="img/dp-03-adaptability-counter-simple.png?v=04e93cc4" data-img="dp1-counter" alt="2안 — AI 개발 서브시스템의 재학습과 배포로 개인화를 반영하는 구조"></div>
-          <p class="note" style="margin-top:8px">강의의 AI Development Subsystem에서 데이터셋 구축, Model Construction, Model Testing, Model Registry를 거쳐 새 모델을 배포한다. 더 복잡한 패턴을 배울 수 있지만, 서버와 충분한 사용자 데이터가 필요하고 새 모델을 배포하기 전까지 개인화 결과가 바뀌지 않는다.</p>
+          <p class="note" style="margin-top:8px">비교안은 데이터셋 구축, Model Construction, Model Testing, Model Registry를 거쳐 새 모델을 배포한다. 더 복잡한 패턴을 배울 수 있지만, 서버와 충분한 사용자 데이터가 필요하고 새 모델을 배포하기 전까지 개인화 결과가 바뀌지 않는다.</p>
         </td>
       </tr>
       <tr>
@@ -374,7 +374,7 @@
   </ul>
 
   <h3 class="num"><span>A2.</span>채택안의 개인화 과정 5단계</h3>
-  <figure style="margin:0 0 12px"><div class="fig-frame"><img src="img/dp-03-adaptability-detail.png?v=2f894a77" data-img="dp1-detail" alt="DP1 채택안 — AI 운영 서브시스템에 배치한 개인화 상세 흐름" width="1100"></div></figure>
+  <figure style="margin:0 0 12px"><div class="fig-frame"><img src="img/dp-03-adaptability-detail.png?v=7c4ca1d2" data-img="dp1-detail" alt="DP1 채택안 — AI 운영 서브시스템에 배치한 개인화 상세 흐름" width="1100"></div></figure>
   <div class="tbl">
   <table class="decide">
     <thead>

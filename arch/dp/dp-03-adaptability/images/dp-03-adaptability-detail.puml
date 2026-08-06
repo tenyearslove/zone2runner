@@ -1,6 +1,6 @@
 @startuml
 !pragma layout smetana
-title DP1 채택안 — 강의의 운영 서브시스템에 배치한 개인화 흐름
+title DP1 채택안 — 운영 서브시스템의 개인화 흐름
 
 skinparam defaultFontName "AppleGothic"
 skinparam componentStyle rectangle
