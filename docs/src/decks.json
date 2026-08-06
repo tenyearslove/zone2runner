@@ -26,7 +26,7 @@
                   {
                       "out":  "index.html",
                       "src":  "10-full-report-parts.html",
-                      "title":  "Zone2Runner 인증 보고서 — 전문 (통합본)",
+                      "title":  "Zone2Runner AI 시스템 설계 보고서 — 통합본",
                       "deckCss":  true,
                       "dataImg":  true,
                       "nav":  true
@@ -34,26 +34,26 @@
                   {
                       "out":  "contents.html",
                       "src":  "00-index.html",
-                      "title":  "Zone2Runner 인증 보고서 — 문서 인덱스",
+                      "title":  "Zone2Runner AI 시스템 설계 문서 — 인덱스",
                       "deckCss":  false
                   },
                   {
                       "out":  "01-intro.html",
                       "src":  "01-intro.html",
-                      "title":  "과제 소개 / 요구사항 — Zone2Runner 인증 보고서",
+                      "title":  "프로젝트 소개 / 요구사항 — Zone2Runner 설계 보고서",
                       "deckCss":  true
                   },
                   {
                       "out":  "02-dp1.html",
                       "src":  "02-dp1.html",
-                      "title":  "DP1 기능적응성 — Zone2Runner 인증 보고서 설계 파트",
+                      "title":  "DP1 기능적응성 — Zone2Runner 설계 보고서",
                       "deckCss":  true,
                       "dataImg":  true
                   },
                   {
                       "out":  "03-dp2.html",
                       "src":  "03-dp2.html",
-                      "title":  "DP2 설명용이성 — Zone2Runner 인증 보고서 설계 파트",
+                      "title":  "DP2 설명용이성 — Zone2Runner 설계 보고서",
                       "deckCss":  true,
                       "dataImg":  true,
                       "placeholders":  {
@@ -63,7 +63,7 @@
                   {
                       "out":  "04-dp3.html",
                       "src":  "04-dp3.html",
-                      "title":  "DP3 제어가능성 — Zone2Runner 인증 보고서 설계 파트",
+                      "title":  "DP3 제어가능성 — Zone2Runner 설계 보고서",
                       "deckCss":  true,
                       "dataImg":  true,
                       "placeholders":  {
@@ -73,7 +73,7 @@
                   {
                       "out":  "07-arch.html",
                       "src":  "07-arch.html",
-                      "title":  "최종 아키텍처 — Zone2Runner 인증 보고서 설계 파트",
+                      "title":  "최종 아키텍처 — Zone2Runner 설계 보고서",
                       "deckCss":  true,
                       "dataImg":  true,
                       "placeholders":  {
@@ -87,7 +87,7 @@
                   {
                       "out":  "08-impl.html",
                       "src":  "08-impl.html",
-                      "title":  "구현 / 품질속성 검증 / 결론 — Zone2Runner 인증 보고서",
+                      "title":  "구현 / 품질속성 검증 / 결론 — Zone2Runner 설계 보고서",
                       "deckCss":  true
                   },
                   {
@@ -108,7 +108,7 @@
                   {
                       "out":  "full-report.html",
                       "src":  "10-full-report-parts.html",
-                      "title":  "Zone2Runner 인증 보고서 — 전문 (통합본)",
+                      "title":  "Zone2Runner AI 시스템 설계 보고서 — 통합본",
                       "deckCss":  true,
                       "dataImg":  true,
                       "nav":  true

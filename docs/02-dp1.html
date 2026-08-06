@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>DP1 기능적응성 — Zone2Runner 인증 보고서 설계 파트</title>
+<title>DP1 기능적응성 — Zone2Runner 설계 보고서</title>
 <style>*,*::before,*::after{box-sizing:border-box}img{max-width:100%;height:auto}</style>
 <style>
   :root {
@@ -217,13 +217,13 @@
 
   <h3 class="num"><span>2.</span>문제점</h3>
   <ul>
-    <li><strong>개인 경계의 기준값을 직접 측정하기 어렵다.</strong> 이번 과제에서는 실제 유산소 역치를 별도로 측정하지 않는다. 사용자의 말하기 테스트 응답을 조정 근거로 삼고, 경계가 응답에 맞는 방향으로 바뀌는지를 확인한다.</li>
+    <li><strong>개인 경계의 기준값을 직접 측정하기 어렵다.</strong> 현재 개발 범위에서는 실제 유산소 역치를 별도로 측정하지 않는다. 사용자의 말하기 테스트 응답을 조정 근거로 삼고, 경계가 응답에 맞는 방향으로 바뀌는지를 확인한다.</li>
     <li><strong>응답 횟수가 적고 내용도 주관적이다.</strong> 말하기 테스트 응답은 한 세션에서 제한된 횟수만 수집하며, 사용자가 자신의 상태를 잘못 판단할 수도 있다. 제한된 응답을 반영하되 한 번의 응답으로 경계가 지나치게 바뀌지 않아야 한다.</li>
     <li><strong>몸 상태는 시간에 따라 달라질 수 있다.</strong> 한 번 조정한 경계도 시간이 지나면 현재 몸 상태와 달라질 수 있다. 적응은 한 번으로 끝나지 않고 계속되어야 한다.</li>
     <li><strong>개인화 처리는 서버 없이 기기에서 수행해야 한다.</strong> 서버 기반 학습 환경을 구축하거나 별도 운영 비용을 들일 수 없는 조건이다.</li>
   </ul>
 
-  <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
+  <div class="crumb">프로젝트 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
 </section>
 
 <!-- ======================= 슬라이드 2 ======================= -->
@@ -286,7 +286,7 @@
   </table>
   </div>
 
-  <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
+  <div class="crumb">프로젝트 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
 </section>
 
 <!-- ======================= 개인화 계산 ======================= -->
@@ -322,7 +322,7 @@
     <li>조정한 상한은 다음 러닝의 시작값으로 저장한다. 최근 추정 범위는 개인화 상태 표시용으로 별도 기록한다.</li>
   </ul>
 
-  <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
+  <div class="crumb">프로젝트 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
 </section>
 <!-- ======================= 슬라이드 3 ======================= -->
 <section class="slide">
@@ -351,7 +351,7 @@
     <li><strong>장기 개선안</strong>: 실제 달리기 기록과 말하기 응답을 확보할 수 있다면 응답별 보정량과 반영 정도를 다시 조정한다.</li>
   </ul>
 
-  <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
+  <div class="crumb">프로젝트 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
 </section>
 
 <!-- ======================= Appendix ======================= -->
@@ -398,14 +398,14 @@
     </tbody>
   </table>
   </div>
-  <p class="note"><strong>평가 조건</strong>: 1인 과제, 온디바이스 실행, 적은 사용자 응답, 서버 없음이라는 조건에서 두 안을 비교했다. 충분한 사용자 데이터와 서버 운영 환경이 있다면 평가 결과가 달라질 수 있다. 별점은 실제 사용자의 유산소 역치 정확도를 평가한 점수가 아니다.</p>
+  <p class="note"><strong>평가 조건</strong>: 1인 개발, 온디바이스 실행, 적은 사용자 응답, 서버 없음이라는 조건에서 두 안을 비교했다. 충분한 사용자 데이터와 서버 운영 환경이 있다면 평가 결과가 달라질 수 있다. 별점은 실제 사용자의 유산소 역치 정확도를 평가한 점수가 아니다.</p>
 
-  <h3 class="num"><span>A4.</span>용어 대조(심사용)와 근거 문헌</h3>
+  <h3 class="num"><span>A4.</span>용어와 근거 문헌</h3>
   <p class="note">첫 추정값을 prior(사전값), 새로운 근거로 추정값을 수정하는 방법을 Bayesian update(베이지안 갱신)라고 한다. 데이터가 없는 초기 상태는 cold start, 변화가 발생한 뒤 시스템에 반영되기까지 걸리는 시간은 적응 지연(adaptation latency)이라고 한다.</p>
   <p class="note">근거 문헌은 베이지안 켤레 갱신을 다룬 표준 통계 교과서(Gelman 외), 변화 대응 온라인 학습 서베이(Gama 외, 2014), 말하기 테스트를 제1환기역치의 실용 지표로 검토한 연구(Persinger, 2004), 나이 기반 최대심박 공식의 개인 오차를 다룬 연구(Tanaka, 2001)다.</p>
   <p class="note">상세 설계와 참고 문헌은 별도의 DP1 설계 문서에 기록했다.</p>
 
-  <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
+  <div class="crumb">프로젝트 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
 </section>
 
 </div>

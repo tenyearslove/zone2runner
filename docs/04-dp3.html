@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>DP3 제어가능성 — Zone2Runner 인증 보고서 설계 파트</title>
+<title>DP3 제어가능성 — Zone2Runner 설계 보고서</title>
 <style>*,*::before,*::after{box-sizing:border-box}img{max-width:100%;height:auto}</style>
 <style>
   :root {
@@ -223,7 +223,7 @@
     <li><strong>자동 대응의 근거를 사후에 확인할 수 있어야 한다.</strong> 생성 문장이 차단되거나 기본 문구로 전환된 이유를 기록으로 남겨야 한다.</li>
   </ul>
 
-  <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
+  <div class="crumb">프로젝트 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
 </section>
 
 <!-- ======================= 슬라이드 2 ======================= -->
@@ -286,7 +286,7 @@
   </table>
   </div>
 
-  <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
+  <div class="crumb">프로젝트 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
 </section>
 
 <!-- ======================= 슬라이드 3 ======================= -->
@@ -316,7 +316,7 @@
     <li><strong>장기 개선안</strong>: 실제 사용 기록이 쌓이면 사람이 문장 방향을 판정한 결과와 출력 검사 결과를 비교해 누락과 오차단을 줄인다.</li>
   </ul>
 
-  <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
+  <div class="crumb">프로젝트 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
 </section>
 
 <!-- ======================= Appendix ======================= -->
@@ -365,12 +365,12 @@
   </div>
   <p class="note"><strong>평가 조건</strong>: 기기에서 LLM을 실행하고 실시간으로 코칭 문장을 제공하며, LLM을 사용할 수 없는 상황에도 코칭을 이어 가야 한다는 조건에서 두 안을 비교했다. 사람이 모든 출력을 미리 검토할 수 있는 서비스라면 2안의 평가가 달라질 수 있다.</p>
 
-  <h3 class="num"><span>A4.</span>용어 대조(심사용)와 근거 문헌</h3>
+  <h3 class="num"><span>A4.</span>용어와 근거 문헌</h3>
   <p class="note">ISO/IEC 25059에서 제어가능성의 핵심으로 다루는 개념은 개입 가능성(intervenability)이다. 모델에 맡기는 일의 범위를 구조적으로 좁히는 방식은 architectural containment(구조적 격리), 실패 시 기본 문구로 전환하는 방식은 fail-safe fallback에 해당한다. 사람의 개입은 HITL(루프 안 교정)과 HOTL(루프 위 감독), 사후 확인은 audit에 대응한다.</p>
   <p class="note">근거 문헌은 ISO/IEC 25059의 제어가능성 정의, LLM 가드레일의 계층 방어와 구조적 격리를 다룬 서베이, LLM 단독 판단 회피 권고, 생성 결과 검사와 실패 경로 분리에 관한 연구다.</p>
   <p class="note">상세 설계와 참고 문헌은 별도의 DP3 설계 문서에 기록했다.</p>
 
-  <div class="crumb">과제 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
+  <div class="crumb">프로젝트 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
 </section>
 
 </div>
