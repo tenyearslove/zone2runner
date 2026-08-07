@@ -39,6 +39,7 @@ class VirtualRunnerTest {
         }
     }
 
+    /** QA5 측정7: 같은 시드로 다시 만든 심박·페이스·경사 입력의 일치율 100%. */
     @Test fun ac2_deterministicBySeed_andVariesAcrossSeeds() {
         val runner = VirtualRunner.DEFAULT
         for (seed in listOf(3L, 7L, 11L, 21L, 42L)) {

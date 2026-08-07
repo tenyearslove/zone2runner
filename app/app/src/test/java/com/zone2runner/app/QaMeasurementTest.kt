@@ -39,7 +39,65 @@ class QaMeasurementTest {
     }
 
     /**
-     * QA2 기능 적응성: 말하기 테스트 응답 이후 갱신된 개인 경계가 다음 1 Hz 판정에
+     * QA2 측정2 기능 적응성: 편함·보통·벅참 응답이 의미에 맞게 경계를
+     * 상향·하향·유지하고, 그 결과가 다음 판정 상태에 전달되는지 확인한다.
+     */
+    @Test fun qa2_adaptationOutcome_reflectedInNextJudgment() = runBlocking {
+        data class AdaptationCase(
+            val label: String,
+            val state: TalkState,
+            val hrOffsetFromUpper: Int,
+            val expectedMove: Int, // +1 상향, -1 하향, 0 유지
+        )
+        data class CaseResult(
+            val label: String,
+            val directionOk: Boolean,
+            val reflectionOk: Boolean,
+        )
+
+        val cases = listOf(
+            AdaptationCase("편함·상향", TalkState.COMFORTABLE, +8, +1),
+            AdaptationCase("보통·상향", TalkState.BORDERLINE, +8, +1),
+            AdaptationCase("벅참·하향", TalkState.HARD, -8, -1),
+            AdaptationCase("보통·하향", TalkState.BORDERLINE, -8, -1),
+            AdaptationCase("편함·유지", TalkState.COMFORTABLE, -20, 0),
+            AdaptationCase("벅참·유지", TalkState.HARD, +20, 0),
+        )
+
+        val profile = Profile.default(35, 58)
+        val results = cases.map { case ->
+            val engine = RunEngine(profile, RuleCoach())
+            val initialUpper = profile.restingHr + engine.currentUFrac() * profile.hrr
+            val hr = initialUpper.toInt() + case.hrOffsetFromUpper
+            repeat(5) { t -> engine.onSample(sample(t, hr)) }
+
+            val before = engine.currentUFrac()
+            engine.observeTalkTest(case.state)
+            val adjusted = engine.currentUFrac()
+            val reflected = engine.onSample(sample(5, hr))
+            val directionOk = when (case.expectedMove) {
+                +1 -> adjusted > before + 1e-9
+                -1 -> adjusted < before - 1e-9
+                else -> abs(adjusted - before) <= 1e-9
+            }
+            val reflectionOk = abs(reflected.uEstFrac - adjusted) <= 1e-9 && reflected.judgment != null
+            CaseResult(case.label, directionOk, reflectionOk)
+        }
+
+        val passed = results.count { it.directionOk && it.reflectionOk }
+        val successRate = 100.0 * passed / results.size
+        record("qa2-adaptation-outcome", listOf(
+            "사례=${results.size}건(상향 2·하향 2·유지 2)",
+            *results.map {
+                "${it.label}: 경계 조정=${if (it.directionOk) "일치" else "불일치"}, 다음 판정 반영=${if (it.reflectionOk) "일치" else "불일치"}"
+            }.toTypedArray(),
+            "성공=$passed/${results.size}, 성공률=%.0f%%".format(successRate),
+        ))
+        assertEquals("QA2 응답별 경계 조정·판정 반영 성공률 100%", results.size, passed)
+    }
+
+    /**
+     * QA2 측정3 기능 적응성: 말하기 테스트 응답 이후 갱신된 개인 경계가 다음 1 Hz 판정에
      * 반영될 때까지의 경과 시간을 잰다. 실제 RunEngine 경로를 사용하되 JVM 가상 입력
      * 환경의 측정이므로, 휴대전화·시계 간 전송 및 화면 렌더링 지연은 포함하지 않는다.
      */
@@ -190,7 +248,7 @@ class QaMeasurementTest {
         assertTrue("오답 10% 주입에도 최종 오차 5bpm 이하 (실측 ${"%.2f".format(wrongFinal)})", wrongFinal <= 5.0)
     }
 
-    /** QA4 강건성 — 고정 범위(Tier 1) + 세션 적응형(Tier 2): 일시적 이상값 기각, 지속 변화 반영. */
+    /** QA4 측정6 강건성 — 고정 범위(Tier 1) + 세션 적응형(Tier 2): 일시적 이상값 기각, 지속 변화 반영. */
     @Test fun qa4_hrGuard_integration() {
         val guard = HrInputGuard()
         var time = 0L
@@ -230,6 +288,9 @@ class QaMeasurementTest {
             result
         }
         val changeAccepted = changeResults.zip(changeInputs).count { (r, i) -> r == i }
+        val abnormalCount = outOfRangeInputs.size + 1 // 범위 밖 4개 + 최근 흐름과 다른 1초 점프
+        val abnormalNotReflected = outOfRangeResults.zip(outOfRangeInputs).count { (r, i) -> r != i } +
+            if (!jumpAccepted) 1 else 0
 
         // 5초 안정 후 중앙값 확인
         repeat(5) {
@@ -247,11 +308,12 @@ class QaMeasurementTest {
             "  1초 점프(160): 입력==출력? $jumpAccepted (기대: false 기각)",
             "  5초 변화(122→130): ${changeAccepted}/${changeInputs.size}개 수용",
             "  최종 중앙값: $medianFinal (기대: 125 이상)",
-            "지표: 가상 조건의 일시적 이상값·지속 변화 처리 기대값 일치율 100%"
+            "비정상 심박 미반영=$abnormalNotReflected/$abnormalCount, 비율=${100 * abnormalNotReflected / abnormalCount}%"
         ))
 
         assertTrue("Tier 1 범위 정제 100%", tier1Rejection)
         assertTrue("Tier 2 점프 기각", !jumpAccepted)
+        assertEquals("QA4 비정상 심박값 미반영률 100%", abnormalCount, abnormalNotReflected)
         assertTrue("Tier 2 변화 부분 수용", changeAccepted >= 3)  // 5개 중 3개 이상
         assertTrue("최종 중앙값 상승", medianFinal != null && medianFinal > 123.0)
     }
@@ -305,7 +367,7 @@ class QaMeasurementTest {
         assertTrue("진짜 이동은 2틱 이내 전환 (실측 ${stepTicks}틱)", stepTicks <= 2)
     }
 
-    /** QA3 제어가능성 — 방향 위반·방향 없음 문장 차단율 100% + 정상 문장 통과(과차단 0, 이 세트에서). */
+    /** QA3 측정4 제어가능성 — 방향 위반·방향 없음 문장 차단율 100% + 정상 문장 통과. */
     @Test fun qa3_directionViolationRejection() {
         val violations = listOf(
             Triple(CoachIntent.SLOW_DOWN, "조금만 더 속도를 올려봐요!", "역방향"),
@@ -336,21 +398,8 @@ class QaMeasurementTest {
         assertEquals("정상 문장 통과", legit.size, passed)
     }
 
-    /** QA1 설명용이성 — 판정 근거 추적 + 표현의 숫자 무결성. */
-    @Test fun qa1_evidenceTraceAndNumberIntegrity() {
-        val evidenceCases = listOf(
-            ZoneJudgment.BELOW to "미달",
-            ZoneJudgment.IN to "Zone 2",
-            ZoneJudgment.ABOVE to "초과",
-        )
-        val evidencePassed = evidenceCases.count { (judgment, label) ->
-            val evidence = CoachEvidence.of(CoachContext(
-                judgment = judgment, slopePct = 0.0, paceMinKm = 6.0, elapsedSec = 300,
-                currentHr = 148, loBpm = 132, hiBpm = 152,
-            ))
-            evidence.contains("판정 $label") && evidence.contains("지속심박 148bpm") &&
-                evidence.contains("개인 경계 132~152bpm")
-        }
+    /** QA3 측정5 제어가능성 — 허용되지 않은 숫자가 있는 문장의 출력 검사 통과율 0%. */
+    @Test fun qa3_numberViolationRejection() {
         val allowed = setOf(2L, 148L, 132L, 152L) // 관측: 현재심박 148, 경계 132~152 (+제품 용어 "Zone 2")
         val fabricated = listOf(
             "심박이 160이에요, 조금 낮춰요.",       // 관측에 없는 160
@@ -366,15 +415,35 @@ class QaMeasurementTest {
         )
         val rejected = fabricated.count { !NumberGuard.ok(allowed, it) }
         val passed = faithful.count { NumberGuard.ok(allowed, it) }
-        record("qa1-evidence-integrity", listOf(
-            "대표 판정 근거 ${evidenceCases.size}건 중 판정·심박·개인 경계 추적 ${evidencePassed}건",
+        record("qa3-number", listOf(
             "허용 숫자 집합=$allowed",
-            "지어낸 숫자 문장 ${fabricated.size}건 중 차단 ${rejected}건 = 차단율 ${100 * rejected / fabricated.size}%",
+            "허용되지 않은 숫자가 있는 문장 ${fabricated.size}건 중 차단 ${rejected}건, 출력 검사 통과율=${100 * (fabricated.size - rejected) / fabricated.size}%",
             "근거가 있는 숫자 또는 숫자가 없는 문장 ${faithful.size}건 통과 ${passed}건"
         ))
-        assertEquals("대표 판정 근거 추적률 100%", evidenceCases.size, evidencePassed)
-        assertEquals("없는 숫자 차단율 100%", fabricated.size, rejected)
+        assertEquals("허용되지 않은 숫자가 있는 문장의 출력 검사 통과율 0%", fabricated.size, rejected)
         assertEquals("사실 기반 문장 통과", faithful.size, passed)
+    }
+
+    /** QA1 측정1 설명용이성 — 대표 Zone 판정의 근거 기록률 100%. */
+    @Test fun qa1_evidenceTrace() {
+        val evidenceCases = listOf(
+            ZoneJudgment.BELOW to "미달",
+            ZoneJudgment.IN to "Zone 2",
+            ZoneJudgment.ABOVE to "초과",
+        )
+        val evidencePassed = evidenceCases.count { (judgment, label) ->
+            val evidence = CoachEvidence.of(CoachContext(
+                judgment = judgment, slopePct = 0.0, paceMinKm = 6.0, elapsedSec = 300,
+                currentHr = 148, loBpm = 132, hiBpm = 152,
+            ))
+            evidence.contains("판정 $label") && evidence.contains("지속심박 148bpm") &&
+                evidence.contains("개인 경계 132~152bpm")
+        }
+        record("qa1-evidence", listOf(
+            "대표 판정 근거 ${evidenceCases.size}건 중 판정·심박·개인 경계 추적 ${evidencePassed}건",
+            "판정 근거 기록률=${100 * evidencePassed / evidenceCases.size}%"
+        ))
+        assertEquals("대표 판정 근거 추적률 100%", evidenceCases.size, evidencePassed)
     }
 
     /** 보조 회귀시험 — 60분 세션(3600틱) 전 파이프라인 처리 시간: 1Hz 주기 대비 여유(JVM 로직 비용). */
