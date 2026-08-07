@@ -12,7 +12,7 @@ skinparam sequence {
   ActorBorderColor #5B7083
 }
 
-participant "심박 센서·\n관측 분석" as INPUT #FFF9C4
+participant "심박 입력·\n개인 경계" as INPUT #FFF9C4
 
 box "AI Operation Subsystem" #F7F9FB
 participant "추론 서비스\n(Inference)\n규칙 판정" as DECISION #C8E6C9
@@ -24,10 +24,10 @@ end box
 
 actor "사용자" as USER
 
-INPUT -> DECISION : 정제한 심박 · 개인 경계 · 관측 지표
+INPUT -> DECISION : 정제한 심박 · 개인 경계
 activate DECISION
 DECISION -> DECISION : Zone 결과와 코칭 방향 확정
-DECISION -> WORDS : 확정한 사실만 전달
+DECISION -> WORDS : 판정과 관측 사실만 전달
 DECISION -> EXPLAIN : 판정 결과와 실제 사용값
 deactivate DECISION
 

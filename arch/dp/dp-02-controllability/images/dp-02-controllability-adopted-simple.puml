@@ -28,11 +28,11 @@ package "AI Operation Subsystem" {
   }
 
   package "운영 서비스 (Operation)" {
-    component "추론 제어\nLLM 사용 여부와 실패 전환" as CONTROL #E1BEE7
+    component "추론 제어\n모델 준비 상태와 실패 전환" as CONTROL #E1BEE7
     component "운영 조치 ★\n기본 안내 · 위험 심박 안내" as ACTION #FFCCBC
-    component "Operation UI\n사용자 개입(HITL) · 운영 정책(HOTL)\n설정과 처리 결과 확인" as UI #E1BEE7
-    UI --> CONTROL
+    component "Operation UI\n모델 상태 · 처리 결과 확인" as UI #E1BEE7
     CONTROL --> ACTION : 생성 실패
+    CONTROL --> UI : 모델 상태
   }
 
   package "분석 서비스 (Analysis)" {
@@ -41,7 +41,7 @@ package "AI Operation Subsystem" {
 }
 
 SENSOR --> INPUT
-CONTROL --> LLM : 사용 허용
+CONTROL --> LLM : 준비 완료
 DECISION --> ACTION : 위험 심박
 OUTPUT --> ACTION : 통과 또는 탈락
 OUTPUT --> LOG : 검사 결과

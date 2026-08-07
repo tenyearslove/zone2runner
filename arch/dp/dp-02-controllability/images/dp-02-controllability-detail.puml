@@ -1,5 +1,5 @@
 @startuml
-title DP3 채택안 — AI Operation Subsystem 안의 통제 흐름
+title DP3 채택안 — 문장 생성과 실패 대응의 통제 흐름
 
 skinparam defaultFontName "AppleGothic"
 skinparam shadowing false
@@ -15,7 +15,11 @@ skinparam activity {
 |추론 서비스\n(Inference)|
 start
 :입력 가드레일로\n센서 입력을 정제한다; <<#FFE0B2>>
-:모델 서빙에서 코칭 방향과\n사용할 숫자를 확정한다; <<#BBDEFB>>
+:판정 규칙에서 코칭 방향과\n사용할 사실을 확정한다; <<#BBDEFB>>
+note right
+  판단 기준을 LLM 밖에서 먼저 확정해
+  생성 결과를 독립적으로 검사한다.
+end note
 
 if (위험 심박인가?) then (예)
   |운영 서비스\n(Operation)|
