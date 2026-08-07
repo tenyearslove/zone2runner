@@ -539,7 +539,7 @@
       </tr>
       <tr>
         <td><strong>[측정3]</strong><br>판정 반영 시간</td>
-        <td>말하기 테스트 답변 뒤 조정된 경계가 다음 1 Hz 판정에 사용될 때까지의 시간을 5회 측정했다.</td>
+        <td>말하기 테스트 답변 뒤 조정된 경계가 판정 결과에 반영될 때까지의 시간을 5회 측정했다.</td>
         <td><strong>최대 1,008.42ms</strong><br><span class="note">5초 이하 기준 충족</span></td>
       </tr>
     </tbody>
@@ -551,60 +551,6 @@
     <li><strong>단기 개선안</strong>: 이번 측정에서 제외한 워치·폰 간 응답 전송과 실제 화면 렌더링까지 포함해 실기기 전체 지연을 확인한다.</li>
     <li><strong>장기 개선안</strong>: 실제 달리기 기록과 말하기 응답을 확보할 수 있다면 응답별 보정량과 반영 정도를 다시 조정한다.</li>
   </ul>
-
-  <div class="crumb">프로젝트 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
-</section>
-
-<!-- ======================= Appendix ======================= -->
-<section class="slide">
-  <div class="slide-head">
-    <h2>Appendix. DP1 상세 설계 내역</h2>
-    <span class="sec-no">A</span>
-  </div>
-
-  <h3 class="num"><span>A1.</span>이 설계 결정이 다루는 품질 문제</h3>
-  <ul>
-    <li><strong>QA2 기능적응성:</strong> 프로필 공식으로 시작하되, 몸 상태를 나타내는 말하기 응답으로 개인 경계를 계속 조정해야 한다.</li>
-    <li><strong>QA1 설명용이성:</strong> 개인별 측정 기준값이 없는 조건에서도 어떤 응답이 경계 변경에 사용됐는지 확인할 수 있어야 한다.</li>
-    <li><strong>QA5 테스트가능성:</strong> 적고 주관적인 응답을 사용하는 만큼 같은 프로필·응답·시드에서 변경 결과와 한도가 반복되어야 한다.</li>
-  </ul>
-
-  <h3 class="num"><span>A2.</span>채택안의 개인화 과정 5단계</h3>
-  <figure style="margin:0 0 12px"><div class="fig-frame"><img src="img/dp-03-adaptability-detail.png?v=dd6c5a6c" data-img="dp1-detail" alt="DP1 채택안 — AI 운영 서브시스템에 배치한 개인화 상세 흐름" width="1100"></div></figure>
-  <div class="tbl">
-  <table class="decide">
-    <thead>
-      <tr><th style="width:9em">단계</th><th>하는 일</th><th style="width:8em">관련 QA</th></tr>
-    </thead>
-    <tbody>
-      <tr><td><strong>1. 초기값</strong></td><td>프로필로 초기 경계를 계산하고, 아직 개인화 근거가 적다는 점을 초기 추정 범위에 반영한다.</td><td>QA2</td></tr>
-      <tr><td><strong>2. 응답 수집</strong></td><td>달리는 중 말하기 테스트("지금 대화가 편한가요?") 응답을 받는다.</td><td>QA2</td></tr>
-      <tr><td><strong>3. 갱신</strong></td><td>응답이 들어오면 현재 경계와 응답의 신뢰 정도를 비교해 경계를 조정한다.</td><td>QA2·QA5</td></tr>
-      <tr><td><strong>4. 안전장치</strong></td><td>한 세션의 경계 이동을 제한한다. 최대심박과 안정심박의 입력값 또는 추정값은 세션 중 자동으로 바꾸지 않는다.</td><td>QA5</td></tr>
-      <tr><td><strong>5. 다음 세션 반영</strong></td><td>조정한 경계를 다음 세션의 시작값으로 저장한다. 최근 추정 범위는 개인화 진행 상태를 설명하기 위해 별도로 기록한다.</td><td>QA1·QA2</td></tr>
-    </tbody>
-  </table>
-  </div>
-
-  <h3 class="num"><span>A3.</span>선정 품질에 미치는 영향</h3>
-  <div class="tbl">
-  <table class="decide">
-    <thead>
-      <tr><th>품질 속성</th><th>(1안) 온라인 베이지안 개인 적응</th><th>(2안) 공통 모델·개인 보정 재학습</th></tr>
-    </thead>
-    <tbody>
-      <tr><td>기능적응성</td><td style="text-align:center"><span class="stars">★★★★★</span></td><td style="text-align:center"><span class="stars">★★</span></td></tr>
-      <tr><td>설명용이성</td><td style="text-align:center"><span class="stars">★★★★★</span></td><td style="text-align:center"><span class="stars">★★</span></td></tr>
-      <tr><td>테스트가능성</td><td style="text-align:center"><span class="stars">★★★★★</span></td><td style="text-align:center"><span class="stars">★★★</span></td></tr>
-    </tbody>
-  </table>
-  </div>
-  <p class="note"><strong>평가 조건</strong>: 1인 개발, 온디바이스 실행, 적은 사용자 응답, 서버 없음이라는 조건에서 두 안을 비교했다. 충분한 사용자 데이터와 서버 운영 환경이 있다면 평가 결과가 달라질 수 있다. 별점은 실제 사용자의 유산소 역치 정확도를 평가한 점수가 아니다.</p>
-
-  <h3 class="num"><span>A4.</span>용어와 근거 문헌</h3>
-  <p class="note">첫 추정값을 prior(사전값), 새로운 근거로 추정값을 수정하는 방법을 Bayesian update(베이지안 갱신)라고 한다. 데이터가 없는 초기 상태는 cold start, 변화가 발생한 뒤 시스템에 반영되기까지 걸리는 시간은 적응 지연(adaptation latency)이라고 한다.</p>
-  <p class="note">근거 문헌은 베이지안 켤레 갱신을 다룬 표준 통계 교과서(Gelman 외), 변화 대응 온라인 학습 서베이(Gama 외, 2014), 말하기 테스트를 제1환기역치의 실용 지표로 검토한 연구(Persinger, 2004), 나이 기반 최대심박 공식의 개인 오차를 다룬 연구(Tanaka, 2001)다.</p>
-  <p class="note">상세 설계와 참고 문헌은 별도의 DP1 설계 문서에 기록했다.</p>
 
   <div class="crumb">프로젝트 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
 </section>
