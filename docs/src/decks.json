@@ -106,7 +106,7 @@
                   {
                       "out":  "09-appendix.html",
                       "src":  "09-appendix.html",
-                      "title":  "부록 아키텍처 뷰 — Use Case/Context/Module/C\u0026C/Deployment",
+                      "title":  "부록 — 심박 관련 ML 검토와 아키텍처 상세",
                       "deckCss":  true,
                       "dataImg":  true,
                       "placeholders":  {
