@@ -327,7 +327,7 @@
       <tr><td>FR2</td><td>심박 수집과 존 판정</td><td>심박센서에서 측정값을 주기적으로 받아 현재 Zone을 판정한다. 측정 범위를 벗어나거나 최근 심박 흐름에서 크게 벗어난 값은 판정에 바로 반영하지 않는다.</td><td></td></tr>
       <tr><td>FR3</td><td>관측 데이터 분석</td><td>같은 속도인데도 운동 중 심박이 서서히 오르는 정도(심박 드리프트)와, 오르막·내리막 영향을 제외한 평지 기준 속도(경사 보정 페이스)를 계산한다. 분당 발걸음 수의 안정성, 비슷한 속도에서의 평균 심박, 속도를 낮춘 뒤 60초 동안의 심박 감소량도 분석한다.</td><td></td></tr>
       <tr><td>FR4</td><td>개인화</td><td>러닝 중 사용자가 현재 강도에서 말하기가 얼마나 편한지를 편함·보통·벅참으로 답하면, 응답과 당시 심박을 반영해 개인의 Zone 2 상한을 조정한다.</td><td style="text-align:center">●</td></tr>
-      <tr><td>FR5</td><td>실시간 코칭과 가드</td><td>현재 판정과 관측값에 맞는 실시간 코칭을 제공한다. 코칭 내용이 판정과 어긋나거나 AI 기능을 사용할 수 없을 때는 미리 정한 기본 안내를 제공한다.</td><td style="text-align:center">●</td></tr>
+      <tr><td>FR5</td><td>실시간 코칭</td><td>현재 판정과 관측값에 맞는 코칭을 제공한다. AI가 만든 내용이 판정과 어긋나거나 사용할 수 없는 경우에는 유효하지 않은 생성 결과를 코칭으로 제공하지 않는다.</td><td style="text-align:center">●</td></tr>
       <tr><td>FR6</td><td>리포트와 근거 설명</td><td>세션 결과와 분석 지표를 보여 주고, 판정·개인화·코칭에 사용한 근거를 확인할 수 있게 한다.</td><td style="text-align:center">●</td></tr>
     </tbody>
   </table></div>
@@ -351,9 +351,9 @@
   <div class="tbl"><table class="decide qas-table">
     <thead><tr><th style="width:3em">ID</th><th style="width:4em">AI QA</th><th style="width:7em">QA</th><th style="width:9em">내용</th><th>시나리오</th><th style="width:4em">중요도</th><th style="width:4em">난이도</th></tr></thead>
     <tbody>
-      <tr><td>QA1</td><td>●</td><td><strong>설명용이성</strong></td><td>판정·개인화·코칭의 근거를 사용자가 확인할 수 있게 한다.</td><td class="qas-scenario"><div>러닝이 끝난 뒤 사용자가 리포트나 개인화 화면에서 Zone 판정과 경계 조정, 코칭의 근거를 확인한다.</div><div class="qas-response"><strong>[응답]</strong> 시스템은 Zone 판정과 경계 조정, 코칭에 실제로 사용한 근거를 기록해 보여 준다.</div><div class="measure-line"><strong>[측정1]</strong> 판정 근거 기록률 100%</div></td><td>8</td><td>7</td></tr>
+      <tr><td>QA1</td><td>●</td><td><strong>설명용이성</strong></td><td>판정·개인화·코칭의 근거를 사용자가 확인할 수 있게 한다.</td><td class="qas-scenario"><div>러닝이 끝난 뒤 사용자가 리포트나 개인화 화면에서 Zone 판정과 경계 조정, 코칭의 근거를 확인한다.</div><div class="qas-response"><strong>[응답]</strong> 시스템은 Zone 판정과 경계 조정, 코칭의 설명을 당시 실제 입력과 결과까지 거슬러 확인할 수 있게 한다.</div><div class="measure-line"><strong>[측정1]</strong> 판정 근거 기록률 100%</div></td><td>8</td><td>7</td></tr>
       <tr><td>QA2</td><td>●</td><td><strong>기능적응성</strong></td><td>말하기 테스트 응답을 반영해 개인의 Zone 2 경계를 조정한다.</td><td class="qas-scenario"><div>사용자가 개인 Zone 2 범위에 맞춰 달리다가, 현재 강도에서 말하기가 얼마나 편한지를 편함·보통·벅참 중 하나로 답한다.</div><div class="qas-response"><strong>[응답]</strong> 시스템은 답변 당시 심박과 선택한 항목의 의미에 맞게 개인 Zone 2 경계를 조정하고 이후 판정에 반영한다.</div><div class="measure-line"><strong>[측정2]</strong> 말하기 응답별 경계 조정·판정 반영 성공률 100%<br><strong>[측정3]</strong> 말하기 테스트 답변 후 조정된 경계가 판정에 반영되기까지 5초 이하</div></td><td>9</td><td>8</td></tr>
-      <tr><td>QA3</td><td>●</td><td><strong>제어가능성</strong></td><td>AI가 작성한 코칭이 시스템이 확정한 판정과 사실의 범위를 벗어나지 않게 한다.</td><td class="qas-scenario"><div>실시간 코칭이 필요한 순간, AI가 현재 판정과 어긋나는 문장을 만들거나 코칭을 생성하지 못한다.</div><div class="qas-response"><strong>[응답]</strong> 시스템은 코칭 문장이 확정된 판정·형식·숫자의 범위를 지키는지 확인한다. 기준을 벗어나거나 생성에 실패하면 미리 정한 기본 안내를 제공한다.</div><div class="measure-line"><strong>[측정4]</strong> 방향 위반 문장의 출력 검사 통과율 0%<br><strong>[측정5]</strong> 허용되지 않은 숫자가 있는 문장의 출력 검사 통과율 0%</div></td><td>8</td><td>7</td></tr>
+      <tr><td>QA3</td><td>●</td><td><strong>제어가능성</strong></td><td>생성형 코칭이 현재 Zone 판정과 관측된 사실을 벗어나지 않고, 유효하지 않은 AI 결과가 사용자에게 전달되지 않게 한다.</td><td class="qas-scenario"><div>실시간 코칭이 필요한 순간, AI가 현재 판정과 어긋나는 문장을 만들거나 코칭을 생성하지 못한다.</div><div class="qas-response"><strong>[응답]</strong> 시스템은 현재 Zone 판정과 관측된 사실에 맞는 안내만 사용자에게 제공하며, AI가 유효한 결과를 만들지 못하면 그 결과를 코칭에 사용하지 않는다.</div><div class="measure-line"><strong>[측정4]</strong> 판정 방향과 어긋나는 생성 문장의 코칭 채택률 0%<br><strong>[측정5]</strong> 허용되지 않은 숫자를 포함한 생성 문장의 코칭 채택률 0%</div></td><td>8</td><td>7</td></tr>
       <tr><td>QA4</td><td>●</td><td><strong>강건성</strong></td><td>센서 이상값과 앞선 심박 흐름에서 크게 벗어난 값이 판정에 영향을 주지 않게 한다.</td><td class="qas-scenario"><div>달리는 중 측정 범위를 벗어나거나 최근 심박 흐름과 크게 다른 값이 들어온다. 운동 강도가 실제로 바뀌어 달라진 심박이 계속 들어올 수도 있다.</div><div class="qas-response"><strong>[응답]</strong> 시스템은 신뢰하기 어려운 입력이 판정에 반영되지 않게 하고, 변화가 계속되면 새 심박 흐름에 맞춰 판정을 이어 간다.</div><div class="measure-line"><strong>[측정6]</strong> 판정에 반영되지 않은 비정상 심박값의 비율 100%</div></td><td>7</td><td>6</td></tr>
       <tr><td>QA5</td><td>—</td><td><strong>테스트가능성</strong></td><td>실제 러닝이나 심박센서 없이도 같은 조건으로 핵심 로직을 반복 검증한다.</td><td class="qas-scenario"><div>실제 러닝과 심박센서 측정을 매번 반복하기 어려운 개발 환경에서 같은 조건으로 핵심 기능을 다시 확인한다.</div><div class="qas-response"><strong>[응답]</strong> 시스템은 같은 조건의 심박·페이스·경사 입력을 반복해서 제공하고 그 결과를 비교할 수 있게 한다.</div><div class="measure-line"><strong>[측정7]</strong> 같은 조건으로 다시 만든 심박·페이스·경사 입력의 일치율 100%</div></td><td>6</td><td>6</td></tr>
     </tbody>
@@ -367,8 +367,8 @@
 <div class="deck" id="part-dp1">
 
 <div class="deck-head">
-  <h1>DP1. 기능적응성 — 사용자 응답으로 개인 경계를 조정하는 구조</h1>
-  <p>사용자 응답을 개인 경계에 반영하는 두 가지 방법을 비교한다.</p>
+  <h1>DP1. 기능적응성 — 개인 경계의 적응 방식</h1>
+  <p>제한된 사용자 응답으로 개인 경계를 갱신하는 두 가지 방법을 비교한다.</p>
 </div>
 
 <!-- ======================= 슬라이드 1 ======================= -->
@@ -382,16 +382,19 @@
   <ul>
     <li>Zone 2 코칭에는 사용자마다 다른 <strong>개인 경계</strong>가 필요하다. 같은 사용자도 몸 상태와 훈련 정도에 따라 적절한 경계가 달라질 수 있다.</li>
     <li>프로필로 계산한 값은 개인별 측정값이 아니라 첫 러닝을 위한 추정값이다. 이 값이 실제 상태와 다르면 코칭 기준도 어긋날 수 있다.</li>
-    <li>따라서 <strong>말하기 테스트 답변을 실행 중 개인 경계에 빠르게 반영하는 기능</strong>(기능적응성)을 핵심 품질로 선정했다. 이 설계 결정에서는 사용자 응답을 개인 경계에 반영하는 구조를 다룬다.</li>
+    <li>러닝 중 수집하는 말하기 테스트 답변은 현재 강도에 대한 사용자의 관측이지만, 실험실에서 측정한 유산소 역치의 정답은 아니다.</li>
   </ul>
 
-  <h3 class="num"><span>2.</span>문제점</h3>
+  <h3 class="num"><span>2.</span>설계 난점</h3>
   <ul>
-    <li><strong>개인 경계의 기준값을 직접 측정하기 어렵다.</strong> 현재 개발 범위에서는 실제 유산소 역치를 별도로 측정하지 않는다. 따라서 생리학적 정확도가 아니라, 말하기 테스트 답변으로 조정한 경계가 판정에 반영되기까지 걸린 시간을 측정한다.</li>
-    <li><strong>응답 횟수가 적고 내용도 주관적이다.</strong> 말하기 테스트 응답은 한 세션에서 제한된 횟수만 수집하며, 사용자가 자신의 상태를 잘못 판단할 수도 있다. 제한된 응답을 반영하되 한 번의 응답으로 경계가 지나치게 바뀌지 않아야 한다.</li>
-    <li><strong>몸 상태는 시간에 따라 달라질 수 있다.</strong> 한 번 조정한 경계도 시간이 지나면 현재 몸 상태와 달라질 수 있다. 적응은 한 번으로 끝나지 않고 계속되어야 한다.</li>
-    <li><strong>개인화 처리는 서버 없이 기기에서 수행해야 한다.</strong> 서버 기반 학습 환경을 구축하거나 별도 운영 비용을 들일 수 없는 조건이다.</li>
+    <li><strong>개인 경계의 기준값을 직접 측정하기 어렵다.</strong> 현재 개발 범위에서는 실제 유산소 역치를 별도로 측정하지 않으므로, 응답이 가리키는 방향은 알 수 있어도 경계의 정답과 비교할 수는 없다.</li>
+    <li><strong>응답 횟수가 적고 내용도 주관적이다.</strong> 한 세션에서 얻는 응답이 제한적이고 사용자가 자신의 상태를 다르게 해석할 수도 있다.</li>
+    <li><strong>적응 속도와 안정성이 충돌한다.</strong> 새 응답을 빨리 반영하면 현재 상태를 따라갈 수 있지만, 한 번의 응답에 크게 반응하면 경계가 흔들릴 수 있다.</li>
+    <li><strong>사용할 수 있는 데이터와 운영 환경이 제한돼 있다.</strong> 개인별 특성을 학습할 대규모 데이터가 없고 자체 서버도 운영할 수 없다.</li>
   </ul>
+
+  <h3 class="num"><span>3.</span>설계 질문</h3>
+  <p class="lead">기준값이 없고 응답이 적고 주관적인 상황에서, 새 응답에 적응하면서도 한 번의 응답에 경계가 과도하게 흔들리지 않도록 어떻게 갱신할 것인가?</p>
 
   <div class="crumb">프로젝트 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
 </section>
@@ -438,29 +441,26 @@
         </td>
       </tr>
       <tr>
-        <th class="rowh">장점</th>
+        <th class="rowh">QA2<br>기능적응성</th>
         <td>
-          <p><strong>QA2 기능적응성</strong> <span class="stars">★★★★★</span><br><span class="note">별도 재학습이나 배포를 기다리지 않고 실행 중 개인 경계를 조정해 이후 판정에 사용한다.</span></p>
-          <p><strong>QA1 설명용이성</strong> <span class="stars">★★★★★</span><br><span class="note">경계 변경에 영향을 준 응답과 변경 결과를 직접 연결할 수 있다.</span></p>
-          <p><strong>QA5 테스트가능성</strong> <span class="stars">★★★★★</span><br><span class="note">같은 응답을 넣어 경계가 어떻게 바뀌는지 반복 확인할 수 있다.</span></p>
+          응답이 들어오면 별도 재학습이나 배포를 기다리지 않고 실행 중 경계를 조정해 이후 판정에 사용한다.
         </td>
         <td>
-          <p><strong>학습 범위</strong><br><span class="note">여러 사용자에게 공통된 관계와 개인별 차이를 함께 학습할 가능성이 있다.</span></p>
-          <p><strong>확장성</strong><br><span class="note">충분한 실제 데이터가 있다면 프로필과 운동 기록 사이의 복잡한 관계를 모델에 반영할 수 있다.</span></p>
+          새 응답은 데이터 수집·재학습·검증·배포 뒤에 반영되므로 실행 중 5초 이내 반영 기준을 충족하기 어렵다.
         </td>
       </tr>
       <tr>
-        <th class="rowh">단점</th>
+        <th class="rowh">QA1<br>설명용이성</th>
         <td>
-          <p><strong>학습 범위</strong><br><span class="note">경계 갱신 방법을 미리 정하므로 규칙에 없는 복잡한 관계를 스스로 학습하지 못한다.</span></p>
-          <p><strong>사용자 간 학습</strong><br><span class="note">각 사용자의 응답으로 해당 사용자의 경계만 조정하므로, 여러 사용자에게서 발견한 공통 패턴을 자동으로 공유하지 못한다.</span></p>
+          경계 변경에 영향을 준 응답과 변경 결과를 직접 연결해 설명할 수 있다.
         </td>
         <td>
-          <p><strong>QA2 기능적응성</strong> <span class="stars">★★</span><br><span class="note">사용자 응답의 반영이 데이터 수집·재학습·배포 주기만큼 늦어진다.</span></p>
-          <p><strong>QA1 설명용이성</strong> <span class="stars">★★</span><br><span class="note">한 사용자의 응답이 모델 변경에 미친 영향을 직접 연결하기 어렵다.</span></p>
-          <p><strong>QA5 테스트가능성</strong> <span class="stars">★★★</span><br><span class="note">ML의 데이터 구성·재학습·배포 전 과정을 같은 조건으로 다시 만들어야 하므로 테스트 범위가 넓다.</span></p>
+          여러 사용자의 기록이 함께 학습되므로 한 사용자의 응답이 모델 변경에 미친 영향을 직접 연결하기 어렵다.
         </td>
       </tr>
+      <tr><th class="rowh">QA5<br>테스트가능성</th><td>같은 프로필과 응답 순서를 넣어 경계 변화와 한도를 기기에서 반복 확인할 수 있다.</td><td>데이터 구성부터 학습·검증·배포까지 같은 조건으로 다시 만들어야 해 검증 범위가 넓다.</td></tr>
+      <tr><th class="rowh">제약<br>C01·C02</th><td>기기 안에서 처리하므로 별도 서버가 필요 없고 현재 확보한 개인 응답만으로 동작한다.</td><td>대규모 실제 데이터와 서버 기반 학습·배포 환경이 필요해 현재 제약에서는 구현할 수 없다.</td></tr>
+      <tr><th class="rowh">학습 범위</th><td>미리 정한 갱신 방법을 넘어서는 복잡한 관계나 사용자 간 공통 패턴을 스스로 학습하지 못한다.</td><td>충분한 데이터가 있다면 여러 사용자에게 공통된 관계와 개인별 차이를 함께 학습할 가능성이 있다.</td></tr>
       <tr>
         <th class="rowh">Tradeoff</th>
         <td>응답을 빠르게 반영하고 변경 근거를 직접 추적할 수 있는 대신, 미리 정한 갱신 규칙을 넘어서는 복잡한 패턴은 학습하기 어렵다.</td>
@@ -469,7 +469,7 @@
     </tbody>
   </table>
   </div>
-  <p class="note"><strong>HITL(Human-in-the-Loop)</strong>은 사용자의 응답이 시스템의 판단이나 갱신 과정에 직접 들어가는 구조를 뜻한다. 2안도 말하기 응답을 학습 근거로 사용하므로, 여러 사용자의 기록을 학습하더라도 실제 유산소 역치의 정답을 확보하는 것은 아니다.</p>
+  <p class="note"><strong>HITL(Human-in-the-Loop)</strong>은 사용자의 응답이 시스템의 판단이나 갱신 과정에 직접 들어가는 구조를 뜻한다. 2안은 산업적으로 가능한 접근이지만 C01·C02 때문에 현재 과제의 실행 가능한 후보에서 제외했다. 여러 사용자의 기록을 학습하더라도 실제 유산소 역치의 정답이 생기는 것은 아니다.</p>
 
   <div class="crumb">프로젝트 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
 </section>
@@ -477,7 +477,7 @@
 <!-- ======================= 개인화 계산 ======================= -->
 <section class="slide">
   <div class="slide-head">
-  <h2>DP1. 1안의 개인화 원리</h2>
+  <h2>DP1. 채택 구조의 개인화 원리</h2>
     <span class="sec-no">3</span>
   </div>
 
@@ -517,7 +517,7 @@
   </div>
 
   <h3 class="num"><span>1.</span>최종 채택 구조</h3>
-  <p class="lead">1안인 온라인 베이지안 개인 적응 구조를 채택했다.</p>
+  <p class="lead">온라인 베이지안 개인 적응 구조를 채택했다.</p>
 
   <h3 class="num"><span>2.</span>채택 근거</h3>
   <ul>
@@ -559,8 +559,8 @@
 
 <div class="deck" id="part-dp2">
 <div class="deck-head">
-  <h1>DP2. 설명용이성 — 판단에 사용한 근거를 그대로 설명하는 구조</h1>
-  <p>판정의 근거를 직접 기록하는 방법과, ML 판정 뒤에 이유를 다시 추정하는 방법을 비교한다.</p>
+  <h1>DP2. 설명용이성 — Zone 판정 근거의 설명 방식</h1>
+  <p>여러 단계에서 만들어지는 Zone 판정과 코칭의 이유를 보존하고 설명하는 두 가지 방법을 비교한다.</p>
 </div>
 
 <!-- ======================= 슬라이드 1 ======================= -->
@@ -570,17 +570,20 @@
   <h3 class="num"><span>1.</span>배경</h3>
   <ul>
     <li>사용자는 러닝 중 현재 Zone 판정을 확인하고, 러닝이 끝난 뒤에는 리포트와 개인화 화면에서 <strong>왜 해당 Zone으로 판정됐고 어떤 근거로 코칭했는지</strong> 확인할 수 있어야 한다.</li>
-    <li>설명은 결과와 어울리는 문장을 만드는 것에 그치지 않고, 판정에 실제로 사용한 심박과 개인 경계까지 거슬러 확인할 수 있어야 한다.</li>
-    <li>따라서 판정과 근거를 함께 확정하는 구조와, ML 판정 뒤에 입력과 결과로 이유를 다시 추정하는 구조를 비교해야 한다.</li>
+    <li>Zone 판정은 센서 입력을 정제하고 당시의 개인 경계와 비교하는 과정을 거치며, 개인 경계는 말하기 응답에 따라 러닝 중에도 달라질 수 있다.</li>
+    <li>판정·개인화·코칭은 서로 다른 시점에 처리되고, 각 결과는 러닝 화면과 리포트에서 다시 사용된다.</li>
   </ul>
 
-  <h3 class="num"><span>2.</span>문제점</h3>
+  <h3 class="num"><span>2.</span>설계 난점</h3>
   <ul>
-    <li><strong>판정 구조에 따라 설명의 근거가 달라진다.</strong> 심박과 개인 경계를 직접 비교하면 사용한 값을 그대로 남길 수 있지만, 모델 내부의 판단은 입력과 결과만으로 확인하기 어렵다.</li>
-    <li><strong>개인 경계와 Zone 판정이 같은 기준을 사용해야 한다.</strong> 말하기 응답으로 조정한 개인 경계와 별도의 판정기가 같은 심박을 다르게 해석하면 어느 결과를 설명해야 하는지 모호해진다.</li>
-    <li><strong>판정 뒤에 만든 설명은 실제 판단 근거와 다를 수 있다.</strong> 입력과 결과만 보고 이유를 다시 추정하면 모델 내부에서 무엇이 결정에 영향을 줬는지 확인하기 어렵다.</li>
-    <li><strong>판정·개인화·코칭이 같은 사실을 사용해야 한다.</strong> 설명을 위한 별도 추측이 아니라, 각 기능이 실제로 사용한 심박·개인 경계·판정 결과와 처리 경로를 남길 구조가 필요하다.</li>
+    <li><strong>결과만으로는 당시 판단 조건을 알기 어렵다.</strong> 같은 Zone 결과라도 사용한 심박과 개인 경계, 입력 정제 상태가 다를 수 있다.</li>
+    <li><strong>시간이 지나면 경계가 달라질 수 있다.</strong> 나중에 보는 현재 경계로 과거 판정을 설명하면 판정 당시의 조건과 어긋날 수 있다.</li>
+    <li><strong>처리 단계 사이에서 연결이 끊길 수 있다.</strong> 판정·개인화·코칭이 서로 다른 시점에 처리되므로, 최종 결과만 남기면 어떤 입력과 중간 결과가 이어졌는지 복원하기 어렵다.</li>
+    <li><strong>판정 방식에 따라 설명 가능성이 달라진다.</strong> 명시적 기준을 사용한 판정은 비교 과정을 확인할 수 있지만, ML 모델의 내부 판단은 입력과 출력만으로 바로 드러나지 않는다.</li>
   </ul>
+
+  <h3 class="num"><span>3.</span>설계 질문</h3>
+  <p class="lead">여러 단계와 시점에 걸쳐 만들어진 Zone 판정과 코칭의 이유를, 어떤 방식으로 보존하고 사용자에게 설명할 것인가?</p>
 
   <div class="crumb">프로젝트 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
 </section>
@@ -600,9 +603,9 @@
         <td>
           <div class="fig-frame"><img src="img/dp-01-explainability-adopted-simple.png?v=5bbb1cc7" data-img="dp2-adopted" alt="1안 — AI 운영 서브시스템의 추론·설명·분석·운영 서비스가 같은 판단 근거를 사용하는 구조" width="1400"></div>
           <ul class="struct-list">
-            <li><strong>판정과 근거 확정</strong>: 정제한 심박과 개인 경계를 직접 비교해 Zone과 판정에 사용한 값을 함께 확정한다.</li>
-            <li><strong>같은 사실 공유</strong>: 설명·분석·운영 서비스는 판정을 다시 해석하지 않고, 확정된 사실과 생성 경로를 전달받아 기록한다.</li>
-            <li><strong>표현만 위임</strong>: LLM은 전달받은 사실을 문장으로 표현하지만 Zone 판정이나 근거값은 변경하지 않는다.</li>
+            <li><strong>판정과 시점 정보 확정</strong>: 정제한 심박과 당시 개인 경계를 비교해 Zone 결과와 실제 사용한 값을 함께 묶는다.</li>
+            <li><strong>근거 전달</strong>: 판정 결과와 당시 값은 코칭·설명 기능에 함께 전달하고, 개인화 변경은 응답과 당시 심박에 연결한다.</li>
+            <li><strong>기록과 표시</strong>: 판정 당시의 심박·경계·결과와 경계 변경 이력을 저장하고 현재 화면과 리포트에서 보여 준다.</li>
           </ul>
         </td>
         <td>
@@ -614,26 +617,11 @@
           </ul>
         </td>
       </tr>
-      <tr><th class="rowh">장점</th>
-        <td>
-          <p><strong>QA1 설명용이성</strong> <span class="stars">★★★★★</span><br><span class="note">판정에 사용한 값과 생성 경로를 그대로 기록하므로 리포트에서 근거를 따라갈 수 있다.</span></p>
-          <p><strong>QA5 테스트가능성</strong> <span class="stars">★★★★★</span><br><span class="note">같은 입력에서 판정과 근거 기록이 일치하는지 반복 확인할 수 있다.</span></p>
-        </td>
-        <td>
-          <p><strong>학습 범위</strong><br><span class="note">충분한 실제 데이터와 기준값이 있다면 여러 입력 사이의 비선형 관계를 학습할 수 있다.</span></p>
-          <p><strong>기능 확장</strong><br><span class="note">규칙으로 표현하기 어려운 다양한 운동 상태의 판정으로 확장할 가능성이 있다.</span></p>
-        </td>
-      </tr>
-      <tr><th class="rowh">단점</th>
-        <td>
-          <p><strong>규칙 범위</strong><br><span class="note">판정 기준과 기록할 근거를 미리 정의해야 하므로 알려지지 않은 관계를 자동으로 찾아내지 못한다.</span></p>
-          <p><strong>유지보수</strong><br><span class="note">판정 상황이 늘어나면 규칙과 근거 기록, 검증 사례를 함께 관리해야 한다.</span></p>
-        </td>
-        <td>
-          <p><strong>QA1 설명용이성</strong> <span class="stars">★★</span><br><span class="note">사후 설명이 모델의 실제 판단 근거와 일치하는지 별도로 확인해야 한다.</span></p>
-          <p><strong>QA5 테스트가능성</strong> <span class="stars">★★★</span><br><span class="note">데이터 구성부터 학습·배포와 설명까지 같은 조건으로 재현해야 한다.</span></p>
-        </td>
-      </tr>
+      <tr><th class="rowh">QA1<br>설명용이성</th><td>판정 결과와 당시 사용한 심박·개인 경계를 함께 연결하므로 설명을 실제 값까지 거슬러 확인할 수 있다.</td><td>설명은 입력과 출력으로 이유를 다시 추정하므로 모델 내부의 실제 판단 근거와 일치하는지 별도로 검증해야 한다.</td></tr>
+      <tr><th class="rowh">QA5<br>테스트가능성</th><td>같은 입력에서 판정 결과와 근거 정보가 함께 만들어지는지 반복 확인할 수 있다.</td><td>데이터 구성, 모델 학습·배포와 사후 설명까지 전체 경로를 같은 조건으로 재현해야 한다.</td></tr>
+      <tr><th class="rowh">제약<br>C01·C02</th><td>정해진 판정 기준과 기기 안의 기록만 사용하므로 별도 학습 서버나 대규모 데이터가 필요하지 않다.</td><td>판정 모델을 학습·검증할 기준 데이터와 배포 환경이 필요해 현재 데이터·운영 제약과 맞지 않는다.</td></tr>
+      <tr><th class="rowh">학습·확장</th><td>판정 기준과 기록할 근거를 미리 정의해야 하며 알려지지 않은 비선형 관계를 자동으로 찾지 못한다.</td><td>충분한 실제 데이터와 기준값이 있다면 여러 입력 사이의 복잡한 관계와 새로운 판정 상황을 학습할 가능성이 있다.</td></tr>
+      <tr><th class="rowh">유지 범위</th><td>판정 상황이 늘어나면 규칙, 근거 정보와 검증 사례를 함께 관리해야 한다.</td><td>모델뿐 아니라 사후 설명의 충실도와 학습·배포 경로를 함께 관리해야 한다.</td></tr>
       <tr><th class="rowh">Tradeoff</th>
         <td>판정과 설명을 같은 근거로 연결해 현재 조건에서 반복 확인할 수 있는 대신, 규칙이 다루지 않은 복잡한 관계는 학습하지 못한다.</td>
         <td>복잡한 관계를 학습할 가능성이 있지만, 사후 설명이 실제 판단 근거와 일치하는지와 학습·배포 전 과정을 별도로 검증해야 한다.</td>
@@ -645,24 +633,24 @@
 
 <!-- ======================= 슬라이드 3 ======================= -->
 <section class="slide">
-  <div class="slide-head"><h2>DP2. 1안의 판단과 설명 원리</h2><span class="sec-no">3</span></div>
+  <div class="slide-head"><h2>DP2. 채택 구조의 근거 연결 원리</h2><span class="sec-no">3</span></div>
   <p class="lead">설명은 판정 뒤에 이유를 새로 추측하는 과정이 아니다. 판정에 실제로 사용한 사실을 서비스 사이에 전달하고, 같은 기록을 사용자에게 보여 주는 과정이다.</p>
 
-  <h3 class="num"><span>1.</span>판단 근거가 전달되는 순서</h3>
+  <h3 class="num"><span>1.</span>판정 근거가 전달되는 순서</h3>
   <figure style="margin:0 0 12px"><div class="fig-frame"><img src="img/dp-01-explainability-detail.png?v=495c056b" data-img="dp2-detail" alt="DP2 채택안 — AI 운영 서브시스템에서 판단 근거가 서비스 사이에 전달되는 순서" width="1100"></div></figure>
 
   <h3 class="num"><span>2.</span>설명을 만드는 5단계</h3>
   <div class="tbl"><table class="decide">
     <thead><tr><th style="width:9em">단계</th><th>하는 일</th><th style="width:8em">관련 QA</th></tr></thead>
     <tbody>
-      <tr><td><strong>1. 입력 정제</strong></td><td>심박센서 입력을 정제하고 판정에 사용할 개인 경계를 준비한다.</td><td>QA1·QA5</td></tr>
-      <tr><td><strong>2. 판정 확정</strong></td><td>정제한 심박과 개인 경계를 비교해 Zone 결과와 코칭 방향을 정하고, 실제 사용한 값을 함께 묶는다.</td><td>QA1</td></tr>
-      <tr><td><strong>3. 문장 표현</strong></td><td>LLM에는 확정된 사실만 전달하고 자연스러운 코칭 문장으로 표현하게 한다.</td><td>QA1</td></tr>
-      <tr><td><strong>4. 출력 확인</strong></td><td>문장이 확정된 방향과 숫자의 범위를 벗어나지 않았는지 확인한다.</td><td>QA1·QA5</td></tr>
-      <tr><td><strong>5. 기록과 표시</strong></td><td>판정 근거와 문장 생성 경로를 저장하고, 리포트에서 코칭 문장과 함께 보여 준다.</td><td>QA1</td></tr>
+      <tr><td><strong>1. 입력 정제</strong></td><td>심박센서 입력을 정제하고 판정 시점의 개인 경계를 준비한다.</td><td>QA1·QA5</td></tr>
+      <tr><td><strong>2. 판정과 근거 결합</strong></td><td>정제한 심박과 개인 경계를 비교해 Zone 결과를 정하고, 실제 사용한 값을 같은 시점 정보로 묶는다.</td><td>QA1</td></tr>
+      <tr><td><strong>3. 근거 전달</strong></td><td>판정 결과와 당시 심박·개인 경계를 코칭·설명 기능에 함께 전달하고, 개인화 변경은 응답과 당시 심박에 연결한다.</td><td>QA1</td></tr>
+      <tr><td><strong>4. 이력 기록</strong></td><td>판정 당시 값, 경계 변경과 코칭에 사용한 관측 정보를 나중에 연결할 수 있도록 저장한다.</td><td>QA1·QA5</td></tr>
+      <tr><td><strong>5. 사용자 확인</strong></td><td>러닝 중에는 현재 판정 근거를, 러닝 뒤에는 개인화 화면과 리포트에서 관련 이력을 보여 준다.</td><td>QA1</td></tr>
     </tbody>
   </table></div>
-  <p class="note">이 구조는 설명이 판정에 사용한 사실과 연결돼 있음을 보장하지만, 판정 자체의 생리학적 정확도나 모든 사용자가 설명을 쉽게 이해한다는 점까지 보장하지는 않는다.</p>
+  <p class="note">위 도식은 코칭까지 이어지는 전체 실행 경로를 함께 보여 준다. DP2의 범위는 판정에 사용한 사실의 전달·기록·표시이며, LLM 문장의 생성 권한과 출력 검사는 DP3에서 다룬다. 이 구조는 설명과 실제 판정 사실의 연결을 보장하지만, 판정 자체의 생리학적 정확도나 모든 사용자가 설명을 쉽게 이해한다는 점까지 보장하지는 않는다.</p>
 
   <div class="crumb">프로젝트 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
 </section>
@@ -671,11 +659,11 @@
 <section class="slide">
   <div class="slide-head"><h2>DP2. 설계 결정과 근거</h2><span class="sec-no">3</span></div>
   <h3 class="num"><span>1.</span>최종 채택 구조</h3>
-  <p class="lead">1안인 판단 근거 공유 구조를 채택했다.</p>
+  <p class="lead">판단 근거 공유 구조를 채택했다.</p>
 
   <h3 class="num"><span>2.</span>채택 근거</h3>
   <ul>
-    <li><strong>QA1 설명용이성:</strong> 판정 결과, 심박, 개인 경계와 문장 생성 경로를 하나의 근거 기록으로 연결한다. 설명은 이 기록을 사용하므로 판정 이유를 사후에 다시 추정하지 않는다.</li>
+    <li><strong>QA1 설명용이성:</strong> 판정 결과, 당시 심박·개인 경계와 개인화·코칭에 전달한 사실을 하나의 근거 흐름으로 연결한다. 설명은 이 기록을 사용하므로 판정 이유를 사후에 다시 추정하지 않는다.</li>
     <li><strong>QA5 테스트가능성:</strong> 같은 입력에서 판정 결과와 근거 기록이 함께 만들어지는지 반복 확인할 수 있다. 2안은 데이터 구성부터 학습·배포와 설명까지 같은 조건으로 재현해야 한다.</li>
     <li><strong>Tradeoff:</strong> 현재 확보한 근거로 판정과 설명의 연결을 검증할 수 있는 대신, 규칙이 놓친 복잡한 관계는 자동으로 학습하지 못한다.</li>
   </ul>
@@ -704,8 +692,8 @@
 <div class="deck" id="part-dp3">
 
 <div class="deck-head">
-  <h1>DP3. 제어가능성 — 생성 모델의 권한과 실패를 통제하는 구조</h1>
-  <p>판단과 표현을 분리하는 방법과, 생성 모델에 코칭 판단까지 맡기는 방법을 비교한다.</p>
+  <h1>DP3. 제어가능성 — 생성형 코칭의 판단 권한과 실패 대응</h1>
+  <p>생성 모델에 맡길 판단 범위와 잘못된 출력·생성 실패에 대응하는 두 가지 구조를 비교한다.</p>
 </div>
 
 <!-- ======================= 슬라이드 1 ======================= -->
@@ -716,17 +704,20 @@
   <ul>
     <li>이 앱은 달리는 중 전달할 코칭 문장을 자연스럽게 표현하기 위해 기기에서 실행되는 LLM을 사용한다.</li>
     <li>LLM의 출력은 항상 같지 않으며 요청한 방향과 형식, 제공된 숫자의 범위를 벗어날 수 있다.</li>
-    <li>실시간 코칭은 사람이 문장마다 미리 확인할 수 없다. 따라서 <strong>LLM이 맡을 수 있는 판단의 범위와 실패했을 때의 대응을 시스템 구조로 제한해야 한다.</strong></li>
+    <li>러닝 중 생성되는 코칭은 사람이 문장마다 미리 검토할 수 없고, 기기 지원 여부와 모델 준비 상태에 따라 필요한 시점에 결과를 얻지 못할 수도 있다.</li>
   </ul>
 
-  <h3 class="num"><span>2.</span>문제점</h3>
+  <h3 class="num"><span>2.</span>설계 난점</h3>
   <ul>
-    <li><strong>판단과 표현의 책임을 나눠야 한다.</strong> 속도를 올릴지·유지할지·낮출지까지 LLM에 맡길지, 시스템이 방향을 먼저 정하고 LLM에는 문장 표현만 맡길지 결정해야 한다.</li>
-    <li><strong>생성 결과를 독립된 기준으로 확인해야 한다.</strong> 프롬프트 지시만으로는 판정과 반대되는 문장이나 관측되지 않은 숫자가 나오는 상황을 막기 어렵다.</li>
-    <li><strong>LLM을 사용할 수 없어도 코칭은 이어져야 한다.</strong> 모델 미지원·미설치, 빈 출력, 응답 지연과 실행 오류에 사용할 대체 경로가 필요하다.</li>
-    <li><strong>위험 심박 안내는 생성 결과에 의존할 수 없다.</strong> 위험 상태에서는 LLM의 준비나 문장 생성 여부와 관계없이 안내해야 한다.</li>
-    <li><strong>자동 대응의 이유를 남겨야 한다.</strong> 생성 문장을 채택했는지, 왜 차단하거나 기본 안내로 바꿨는지 나중에 확인할 수 있어야 한다.</li>
+    <li><strong>자율성과 예측 가능성이 충돌한다.</strong> LLM에 더 많은 판단을 맡기면 다양한 상황을 다룰 수 있지만 같은 입력의 결과를 예측하고 반복 검증하기는 어려워진다.</li>
+    <li><strong>잘못된 문장이 바로 사용자에게 전달될 수 있다.</strong> 현재 판정과 반대되는 조언이나 관측되지 않은 숫자가 러닝 중 행동에 영향을 줄 수 있다.</li>
+    <li><strong>필요한 시점에 출력이 없을 수 있다.</strong> 모델 미지원·미설치, 빈 출력, 응답 지연과 실행 오류는 코칭 공백으로 이어질 수 있다.</li>
+    <li><strong>위험 상태에서는 실패의 영향이 더 크다.</strong> 일반 코칭과 달리 위험 심박 안내가 잘못되거나 늦어지면 안전 관련 대응이 지연될 수 있다.</li>
+    <li><strong>결과만으로는 처리 과정을 구분하기 어렵다.</strong> 최종 문장만 남으면 어떤 생성 경로를 거쳤고 AI 실패나 시스템 개입이 있었는지 알기 어렵다.</li>
   </ul>
+
+  <h3 class="num"><span>3.</span>설계 질문</h3>
+  <p class="lead">생성 모델에 코칭 판단 권한을 어디까지 맡기고, 잘못된 출력이나 생성 실패가 발생했을 때 최종 출력 책임을 어느 구성요소가 맡을 것인가?</p>
 
   <div class="crumb">프로젝트 소개 <span>요구사항</span> <b>설계</b> <span>구현/검증</span> <span>결론</span></div>
 </section>
@@ -760,28 +751,11 @@
           </ul>
         </td>
       </tr>
-      <tr><th class="rowh">장점</th>
-        <td>
-          <p><strong>QA3 제어가능성</strong> <span class="stars">★★★★★</span><br><span class="note">문장 검사, 기본 안내 전환과 위험 심박 안내를 독립된 통제 경로로 둔다.</span></p>
-          <p><strong>QA1 설명용이성</strong> <span class="stars">★★★★★</span><br><span class="note">판정에 사용한 사실과 생성 문장의 처리 경로를 함께 기록할 수 있다.</span></p>
-          <p><strong>QA5 테스트가능성</strong> <span class="stars">★★★★★</span><br><span class="note">같은 문장에 방향과 숫자 검사 기준을 반복 적용할 수 있다.</span></p>
-        </td>
-        <td>
-          <p><strong>표현 범위</strong><br><span class="note">여러 관측 정보를 함께 고려해 규칙에 미리 적지 않은 상황에도 다양한 코칭을 만들 가능성이 있다.</span></p>
-          <p><strong>기능 확장</strong><br><span class="note">프롬프트와 입력 맥락을 넓혀 새로운 코칭 상황을 비교적 빠르게 실험할 수 있다.</span></p>
-        </td>
-      </tr>
-      <tr><th class="rowh">단점</th>
-        <td>
-          <p><strong>사전 정의 비용</strong><br><span class="note">코칭 방향, 허용할 사실과 실패 대응을 규칙과 검증 사례로 미리 정의해야 한다.</span></p>
-          <p><strong>표현 제약</strong><br><span class="note">허용한 사실과 방향 안에서만 문장을 만들기 때문에 생성 모델의 자유도가 줄어든다.</span></p>
-        </td>
-        <td>
-          <p><strong>QA3 제어가능성</strong> <span class="stars">★★</span><br><span class="note">판단을 직접 제한할 기준이 LLM 밖에 없어 프롬프트와 사후 필터에 크게 의존한다.</span></p>
-          <p><strong>QA1 설명용이성</strong> <span class="stars">★★</span><br><span class="note">생성한 설명이 실제 판단 근거와 일치하는지 별도로 확인해야 한다.</span></p>
-          <p><strong>QA5 테스트가능성</strong> <span class="stars">★★★</span><br><span class="note">같은 입력에도 생성 결과가 달라질 수 있어 판정과 표현을 함께 검증하기 어렵다.</span></p>
-        </td>
-      </tr>
+      <tr><th class="rowh">QA3<br>제어가능성</th><td>코칭 방향과 사용할 사실이 LLM 밖에 있어 생성 문장을 독립된 기준과 대조할 수 있다.</td><td>LLM이 방향까지 결정하므로 프롬프트나 형식 검사만으로 판단 자체의 적절성을 대조하기 어렵다.</td></tr>
+      <tr><th class="rowh">실패<br>연속성</th><td>모델 미지원·실행 실패와 기준을 벗어난 출력에는 기본 안내를 사용하고, 위험 심박은 별도 경로로 처리한다.</td><td>출력이 없거나 늦을 때 사용할 별도 판단과 안내를 추가하지 않으면 코칭 공백이 생긴다.</td></tr>
+      <tr><th class="rowh">QA1<br>설명용이성</th><td>판정에 사용한 사실과 생성 문장의 채택·차단·전환 경로를 함께 기록할 수 있다.</td><td>생성 결과가 어떤 판단 과정을 거쳤는지와 사후 설명이 실제 이유와 같은지 별도로 확인해야 한다.</td></tr>
+      <tr><th class="rowh">QA5<br>테스트가능성</th><td>같은 문장에 방향·숫자 검사와 실패 대응 기준을 반복 적용할 수 있다.</td><td>같은 입력에도 판단과 문장이 달라질 수 있어 가능한 출력 범위와 실패 상황을 함께 검증해야 한다.</td></tr>
+      <tr><th class="rowh">표현·확장</th><td>허용한 사실과 방향 안에서만 문장을 만들기 때문에 자유도가 줄고 기준을 미리 정의해야 한다.</td><td>여러 관측 정보를 함께 고려해 규칙에 없는 상황을 다루고 새로운 코칭을 빠르게 실험할 가능성이 있다.</td></tr>
       <tr><th class="rowh">Tradeoff</th>
         <td>판단 기준과 실패 대응을 독립된 규칙으로 통제할 수 있는 대신, 코칭 방향과 허용 범위를 미리 정의해야 한다.</td>
         <td>판단과 표현의 자유도는 높지만, QA1·QA3·QA5를 충족하려면 LLM 밖에 판정 기준과 대체 경로를 추가해야 한다.</td>
@@ -793,7 +767,7 @@
 
 <!-- ======================= 슬라이드 3 ======================= -->
 <section class="slide">
-  <div class="slide-head"><h2>DP3. 1안의 통제 원리</h2><span class="sec-no">3</span></div>
+  <div class="slide-head"><h2>DP3. 채택 구조의 통제 원리</h2><span class="sec-no">3</span></div>
   <p class="lead">LLM의 출력은 프롬프트만으로 통제하지 않는다. 판단 권한을 LLM 밖에 두고, 생성 전·후와 실패 경로에 서로 다른 통제를 적용한다.</p>
 
   <h3 class="num"><span>1.</span>문장 생성과 실패 대응 순서</h3>
@@ -819,7 +793,7 @@
 <section class="slide">
   <div class="slide-head"><h2>DP3. 설계 결정과 근거</h2><span class="sec-no">3</span></div>
   <h3 class="num"><span>1.</span>최종 채택 구조</h3>
-  <p class="lead">1안인 규칙 판정과 LLM 표현 한정 구조를 채택했다.</p>
+  <p class="lead">규칙 판정과 LLM 표현 한정 구조를 채택했다.</p>
 
   <h3 class="num"><span>2.</span>채택 근거</h3>
   <ul>
@@ -834,18 +808,18 @@
     <thead><tr><th style="width:10em">측정</th><th>살펴본 내용</th><th style="width:13em">결과</th></tr></thead>
     <tbody>
       <tr>
-        <td><strong>[측정4]</strong><br>방향 검사</td>
-        <td>확정된 코칭 방향과 어긋나거나 필요한 방향을 전달하지 않는 문장이 출력 검사를 통과하는지 확인했다.</td>
-        <td><strong>0/10건 통과<br>통과율 0%</strong></td>
+        <td><strong>[측정4]</strong><br>방향 위반 문장 채택</td>
+        <td>확정된 코칭 방향과 어긋나거나 필요한 방향을 전달하지 않는 생성 문장이 실제 코칭으로 채택되는지 확인했다.</td>
+        <td><strong>0/10건 채택<br>채택률 0%</strong></td>
       </tr>
       <tr>
-        <td><strong>[측정5]</strong><br>숫자 검사</td>
-        <td>관측값에 없는 심박·시간·Zone 번호가 포함된 문장이 출력 검사를 통과하는지 확인했다.</td>
-        <td><strong>0/5건 통과<br>통과율 0%</strong></td>
+        <td><strong>[측정5]</strong><br>허용되지 않은 숫자 채택</td>
+        <td>관측값에 없는 심박·시간·Zone 번호가 포함된 생성 문장이 실제 코칭으로 채택되는지 확인했다.</td>
+        <td><strong>0/5건 채택<br>채택률 0%</strong></td>
       </tr>
     </tbody>
   </table></div>
-  <p>두 검사 모두 기준을 벗어난 문장을 차단했다. 같은 시험에서 방향에 맞는 문장 5개와 허용된 숫자만 사용하거나 숫자가 없는 문장 3개는 통과해, 모든 문장을 일괄 차단한 결과가 아님도 함께 확인했다.</p>
+  <p>두 검사 모두 기준을 벗어난 생성 문장을 코칭으로 채택하지 않았다. 같은 시험에서 방향에 맞는 문장 5개와 허용된 숫자만 사용하거나 숫자가 없는 문장 3개는 채택해, 모든 문장을 일괄 차단한 결과가 아님도 함께 확인했다.</p>
   <p class="note"><strong>검증 범위:</strong> 미리 정한 문장에 출력 검사 기준을 적용한 결과다. 가능한 모든 잘못된 한국어 표현을 찾아낸다는 뜻은 아니다.</p>
 
   <h3 class="num"><span>4.</span>보완 계획</h3>
@@ -1076,7 +1050,7 @@
     <tbody>
       <tr><td>QA1</td><td>●</td><td><strong>설명용이성</strong></td><td>판정·개인화·코칭 근거 확인</td><td class="qas-scenario"><div>러닝이 끝난 뒤 사용자가 리포트나 개인화 화면에서 Zone 판정과 경계 조정, 코칭의 근거를 확인한다.</div><div class="qas-response"><strong>[응답]</strong> 시스템은 Zone 판정과 경계 조정, 코칭에 실제로 사용한 근거를 기록해 보여 준다.</div><div class="measure-line"><strong>[측정1]</strong> 판정 근거 기록률 100%</div></td><td>Zone 2 아래·범위 안·위의 세 판정 모두에서 근거가 기록돼 기록률은 100%였다.</td></tr>
       <tr><td>QA2</td><td>●</td><td><strong>기능적응성</strong></td><td>응답 기반 개인 경계 조정</td><td class="qas-scenario"><div>사용자가 개인 Zone 2 범위에 맞춰 달리다가, 현재 강도에서 말하기가 얼마나 편한지를 편함·보통·벅참 중 하나로 답한다.</div><div class="qas-response"><strong>[응답]</strong> 시스템은 답변 당시 심박과 선택한 항목의 의미에 맞게 개인 Zone 2 경계를 조정하고 이후 판정에 반영한다.</div><div class="measure-line"><strong>[측정2]</strong> 말하기 응답별 경계 조정·판정 반영 성공률 100%<br><strong>[측정3]</strong> 말하기 테스트 답변 후 조정된 경계가 판정에 반영되기까지 5초 이하</div></td><td>상향 2건·하향 2건·유지 2건에서 경계 조정과 다음 판정 반영이 모두 일치해 성공률은 100%였다. 1 Hz 가상 심박으로 5회 측정한 반영 시간도 최대 1,008.42ms로 5초 기준을 충족했다.</td></tr>
-      <tr><td>QA3</td><td>●</td><td><strong>제어가능성</strong></td><td>AI 출력 검사와 기본 안내</td><td class="qas-scenario"><div>실시간 코칭이 필요한 순간, AI가 현재 판정과 어긋나는 문장을 만들거나 코칭을 생성하지 못한다.</div><div class="qas-response"><strong>[응답]</strong> 시스템은 코칭 문장이 확정된 판정·형식·숫자의 범위를 지키는지 확인한다. 기준을 벗어나거나 생성에 실패하면 미리 정한 기본 안내를 제공한다.</div><div class="measure-line"><strong>[측정4]</strong> 방향 위반 문장의 출력 검사 통과율 0%<br><strong>[측정5]</strong> 허용되지 않은 숫자가 있는 문장의 출력 검사 통과율 0%</div></td><td>판정 방향과 어긋나는 문장 10개와 허용되지 않은 숫자가 있는 문장 5개를 모두 차단했다. 두 측정의 출력 검사 통과율은 각각 0%였다.</td></tr>
+      <tr><td>QA3</td><td>●</td><td><strong>제어가능성</strong></td><td>AI 출력 검사와 기본 안내</td><td class="qas-scenario"><div>실시간 코칭이 필요한 순간, AI가 현재 판정과 어긋나는 문장을 만들거나 코칭을 생성하지 못한다.</div><div class="qas-response"><strong>[응답]</strong> 시스템은 코칭 문장이 확정된 판정·형식·숫자의 범위를 지키는지 확인한다. 기준을 벗어나거나 생성에 실패하면 미리 정한 기본 안내를 제공한다.</div><div class="measure-line"><strong>[측정4]</strong> 판정 방향과 어긋나는 생성 문장의 코칭 채택률 0%<br><strong>[측정5]</strong> 허용되지 않은 숫자를 포함한 생성 문장의 코칭 채택률 0%</div></td><td>판정 방향과 어긋나는 생성 문장 10개와 허용되지 않은 숫자가 있는 생성 문장 5개를 모두 차단해 코칭으로 채택하지 않았다. 두 측정의 채택률은 각각 0%였다.</td></tr>
       <tr><td>QA4</td><td>●</td><td><strong>강건성</strong></td><td>2단계 심박 입력 보정</td><td class="qas-scenario"><div>달리는 중 측정 범위를 벗어나거나 최근 심박 흐름과 크게 다른 값이 들어온다. 운동 강도가 실제로 바뀌어 달라진 심박이 계속 들어올 수도 있다.</div><div class="qas-response"><strong>[응답]</strong> 시스템은 신뢰하기 어려운 입력이 판정에 반영되지 않게 하고, 변화가 계속되면 새 심박 흐름에 맞춰 판정을 이어 간다.</div><div class="measure-line"><strong>[측정6]</strong> 판정에 반영되지 않은 비정상 심박값의 비율 100%</div></td><td>측정 범위를 벗어난 심박 4개와 최근 흐름에서 크게 벗어난 심박 1개는 모두 판정에 직접 반영되지 않았다. 비정상 심박값의 미반영 비율은 100%였다.</td></tr>
       <tr><td>QA5</td><td>—</td><td><strong>테스트가능성</strong></td><td>같은 조건의 반복 시험</td><td class="qas-scenario"><div>실제 러닝과 심박센서 측정을 매번 반복하기 어려운 개발 환경에서 같은 조건으로 핵심 기능을 다시 확인한다.</div><div class="qas-response"><strong>[응답]</strong> 시스템은 같은 조건의 심박·페이스·경사 입력을 반복해서 제공하고 그 결과를 비교할 수 있게 한다.</div><div class="measure-line"><strong>[측정7]</strong> 같은 조건으로 다시 만든 심박·페이스·경사 입력의 일치율 100%</div></td><td>시드 5개로 각각 만든 5분 입력을 다시 생성한 결과, 심박·페이스·경사 입력의 일치율은 100%였다.</td></tr>
     </tbody>
